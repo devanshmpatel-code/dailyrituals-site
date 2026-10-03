@@ -84,7 +84,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   // title block
   const mood = it.mood ? MOODS[it.mood] : undefined;
   const eyebrow = $('.buy .eyebrow')!;
-  eyebrow.innerHTML = mood ? `<span class="swatch" style="background:${mood.swatch}"></span>${mood.label}` : `<span class="d">[Confirm: scent family]</span>`;
+  eyebrow.innerHTML = mood ? `<span class="swatch" style="background:${mood.swatch}"></span>${mood.label}` : `<span class="d confirm">[Confirm: scent family]</span>`;
   $('.buy h1')!.textContent = it.scent;
   const metaRow = $('.buy h1')!.nextElementSibling as HTMLElement;
   const metaSpan = metaRow.querySelector('span')!;
@@ -107,7 +107,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   notes.classList.remove('d');
   if (liveNotes.length) notes.innerHTML = liveNotes.map(([k, v]) => `<div><span class="eyebrow">${k}</span><span>${esc(v)}</span></div>`).join('');
   else if (scentCopy) { notes.classList.add('d'); notes.innerHTML = ['Top', 'Heart', 'Base'].map((k, n) => `<div><span class="eyebrow">${k}</span><span>${esc(scentCopy.notes[n])}</span></div>`).join(''); }
-  else notes.innerHTML = `<div><span class="eyebrow">Notes</span><span>[Confirm: top, heart and base notes]</span></div>`;
+  else notes.innerHTML = `<div class="d confirm"><span class="eyebrow">Notes</span><span>[Confirm: top, heart and base notes]</span></div>`;
 
   // "Also in" chips across formats
   const siblings = items.filter(i => i.scent.toLowerCase() === it.scent.toLowerCase());
@@ -173,15 +173,15 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   const paras = (arr: string[]) => arr.map(t => `<p>${esc(t)}</p>`).join('');
   panel(0).innerHTML = copy
     ? `<p>${esc(copy.about)}</p><p><b style="color:var(--ink)">Best for:</b> <span class="d">${esc(copy.best)}</span></p>`
-    : paras(aboutParas.slice(0, 1)) || '<p><span class="d">[Confirm: product description]</span></p>';
+    : paras(aboutParas.slice(0, 1)) || '<p><span class="d confirm">[Confirm: product description]</span></p>';
   panel(1).innerHTML = (copy
     ? `<ul style="padding-left:18px;display:flex;flex-direction:column;gap:6px">${copy.use.map(u => `<li>${esc(u)}</li>`).join('')}</ul>`
-    : '') + paras(useParas) || '<p><span class="d">[Confirm: how to use]</span></p>';
+    : '') + paras(useParas) || '<p><span class="d confirm">[Confirm: how to use]</span></p>';
   panel(2).innerHTML = (aboutParas.length ? `${paras(aboutParas)}<p class="small muted">From the product information in the store.</p>` : '')
     + '<p><span class="d">Full ingredient list to be added by Claire.</span></p>';
   // Shipping: the store's own policy text, then the canvas lines. They disagree, so both stay visible for Claire.
   panel(3).innerHTML = shipParas.length
-    ? `${paras(shipParas)}<p class="small muted">From the product information in the store.</p><p><span class="d">[Confirm: the canvas says "Ships in 2 to 3 business days. Free over $75 in Canada" and "10 days to start a return"; the store text above says otherwise. Which is current?]</span></p>`
+    ? `${paras(shipParas)}<p class="small muted">From the product information in the store.</p><p><span class="d confirm">[Confirm: the canvas says "Ships in 2 to 3 business days. Free over $75 in Canada" and "10 days to start a return"; the store text above says otherwise. Which is current?]</span></p>`
     : `<p><span class="d">Ships in 2 to 3 business days. Free over $75 in Canada.</span></p><p>If something isn't right, you have 10 days from the date your order arrives to reach out and start the return process.</p>`;
 
   // You may also like: same scent family, then same format
@@ -201,6 +201,6 @@ function renderNotInStore(app: HTMLElement, slug: string) {
   const name = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   app.innerHTML = `<div class="wrap" style="padding:clamp(64px,8vw,112px) 0;display:flex;flex-direction:column;gap:16px;max-width:640px">
     <span class="eyebrow">Concept product</span><h1 style="font-size:clamp(36px,5vw,56px)">${esc(name)}</h1>
-    <p class="muted">This product appears in the design canvas but is not in the live store yet. <span class="d">[Confirm: add to the store or remove from the design]</span></p>
+    <p class="muted">This product appears in the design canvas but is not in the live store yet. <span class="d confirm">[Confirm: add to the store or remove from the design]</span></p>
     <a class="btn" href="#/shop" style="align-self:flex-start">Browse the shop</a></div>`;
 }

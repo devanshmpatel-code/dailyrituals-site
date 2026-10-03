@@ -3,7 +3,7 @@ import './site.css';
 import Header from './canvas/header.html?raw';
 import Footer from './canvas/footer.html?raw';
 import Drawer from './canvas/drawer.html?raw';
-import { WRITES_ENABLED, FREE_SHIPPING_THRESHOLD } from './config';
+import { WRITES_ENABLED, LOYALTY_ENABLED, FREE_SHIPPING_THRESHOLD } from './config';
 import { hasClient, money } from './wix';
 import { fixImages, esc, toast } from './ui';
 import { getLines, count, subtotal, setQty, onCart, checkout } from './cart';
@@ -56,7 +56,7 @@ function renderDrawer() {
   const db = drawer.querySelector<HTMLElement>('.db')!;
   db.innerHTML = `
     <div class="ship"><span>${away > 0 ? `You are <b>${money(away)}</b> away from <span class="d">free shipping</span>.` : 'Your order ships <span class="d">free</span> in Canada.'}</span><div class="meter"><div style="width:${Math.min(100, (sub / FREE_SHIPPING_THRESHOLD) * 100)}%"></div></div></div>
-    ${lines.length ? `<div class="points"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A5410" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span>This order earns <b>${Math.floor(sub)} Ritual Points</b> <span class="d">(1 point per $1)</span></span></div>` : ''}
+    ${lines.length && LOYALTY_ENABLED ? `<div class="points"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A5410" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span>This order earns <b>${Math.floor(sub)} Ritual Points</b> <span class="d">(1 point per $1)</span></span></div>` : ''}
     ${lines.map(l => `<div class="li"><img src="${l.image}" alt=""><div style="display:flex;flex-direction:column;gap:6px"><a href="#/product/${l.slug}" style="font-weight:600;line-height:1.25;text-decoration:none">${esc(l.name)}</a>${l.choice ? `<span class="small muted">${esc(l.choice)}</span>` : ''}<div class="qty" style="transform:scale(.85);transform-origin:left;align-self:flex-start"><button data-dec="${esc(l.key)}" aria-label="Decrease ${esc(l.name)}">−</button><span>${l.qty}</span><button data-inc="${esc(l.key)}" aria-label="Increase ${esc(l.name)}">+</button></div></div><b style="font-weight:500">${money(l.price * l.qty)}</b></div>`).join('')
       || '<p class="muted" style="padding:24px 0">Your cart is empty. <a href="#/shop" data-x>Browse the shop</a></p>'}`;
   const df = drawer.querySelector<HTMLElement>('.df')!;

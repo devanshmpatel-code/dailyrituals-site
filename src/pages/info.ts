@@ -11,7 +11,8 @@ const head = (crumb: string, title: string, lead: string) => `
   <div class="phead"><div class="crumbs"><a href="#/">Home</a> / ${esc(crumb)}</div>
   <div class="cat-hero"><h1>${title}</h1><p class="muted" style="font-size:18px;max-width:56ch">${lead}</p></div></div>`;
 
-const faq = (q: string, a: string) => `<details><summary>${q}</summary><div class="dbody"><p>${a}</p></div></details>`;
+// draft = true: Claire has not confirmed the answer, so it is only visible with "Show drafts".
+const faq = (q: string, a: string, draft = false) => `<details${draft ? ' class="d confirm"' : ''}><summary>${q}</summary><div class="dbody"><p>${a}</p></div></details>`;
 
 export function renderHelp(app: HTMLElement) {
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px)">
@@ -19,18 +20,18 @@ export function renderHelp(app: HTMLElement) {
     <div class="split" style="align-items:start">
       <div><span class="eyebrow">Shipping</span>
         <h2 style="font-size:clamp(30px,3.6vw,44px);margin:10px 0 16px">Shipping and <span class="it">returns</span></h2>
-        ${faq('What does shipping cost?', 'Shipping is free on Canadian orders over $75. GST, PST and shipping are calculated at checkout. <span class="d">Rates for orders under $75 to be confirmed by Claire.</span>')}
-        ${faq('How long will my order take?', '<span class="d">Processing and delivery times to be confirmed by Claire. Every order is packed by hand.</span>')}
-        ${faq('Do you ship outside Canada?', '<span class="d">To be confirmed by Claire.</span>')}
-        ${faq('What is your return policy?', '<span class="d">Return and refund terms to be confirmed by Claire before launch.</span>')}
-        ${faq('What if something arrives damaged?', '<span class="d">Please contact us with your order number and a photo. Claire to confirm the process.</span>')}
+        ${faq('What does shipping cost?', 'Shipping is free on Canadian orders over $75. GST, PST and shipping are calculated at checkout. <span class="d confirm">Rates for orders under $75 to be confirmed by Claire.</span>')}
+        ${faq('How long will my order take?', '<span class="d">Processing and delivery times to be confirmed by Claire. Every order is packed by hand.</span>', true)}
+        ${faq('Do you ship outside Canada?', '<span class="d">To be confirmed by Claire.</span>', true)}
+        ${faq('What is your return policy?', '<span class="d">Return and refund terms to be confirmed by Claire before launch.</span>', true)}
+        ${faq('What if something arrives damaged?', '<span class="d">Please contact us with your order number and a photo. Claire to confirm the process.</span>', true)}
         ${faq('Can I cancel or change a Ritual on Repeat order?', 'Yes. Skip, change the date or swap scents any time before the next order ships.')}
       </div>
       <div class="panel" style="display:flex;flex-direction:column;gap:12px">
         <span class="eyebrow">Contact</span><h3 style="font-size:28px">Say hello</h3>
-        <p class="muted"><span class="d">Contact email and response time to be confirmed by Claire.</span></p>
+        <p class="muted d confirm">Contact email and response time to be confirmed by Claire.</p>
         <a class="btn line" href="#/coaching" style="align-self:flex-start">Coaching questions</a>
-        <p class="small muted">Coaching is not therapy or medical care. <span class="d">Claire to confirm wording.</span></p>
+        <p class="small muted">Coaching is not therapy or medical care. <span class="d confirm">Claire to confirm wording.</span></p>
       </div>
     </div></div>`;
   wireCommon(app);
@@ -43,8 +44,8 @@ export function renderStory(app: HTMLElement) {
       <img class="dimg" src="/img/story.jpg" alt="Claire at work" style="border-radius:14px;width:100%;aspect-ratio:4/5;object-fit:cover">
       <div style="display:flex;flex-direction:column;gap:16px;max-width:52ch">
         <span class="eyebrow">Daily Rituals Co.</span>
-        <p style="font-size:19px"><span class="d">Daily Rituals Co. began with a simple idea: small, repeatable moments can change how a day feels. Each scent is made to mark one of those moments, from first light to the last hour of the evening.</span></p>
-        <p><span class="d">Claire's story, how the products are made and what the coaching practice is built on go here. Placeholder text until Claire writes it.</span></p>
+        <p class="d confirm" style="font-size:19px"><span>Daily Rituals Co. began with a simple idea: small, repeatable moments can change how a day feels. Each scent is made to mark one of those moments, from first light to the last hour of the evening.</span></p>
+        <p class="d confirm"><span>Claire's story, how the products are made and what the coaching practice is built on go here. Placeholder text until Claire writes it.</span></p>
         <div class="cta"><a class="btn" href="#/shop">Shop the rituals</a><a class="btn line" href="#/coaching">Meet the coaching</a></div>
       </div>
     </div></div>`;
@@ -55,7 +56,7 @@ export function renderAccount(app: HTMLElement) {
     ${head('My account', 'My <span class="it">rituals</span>', 'Orders, saved details, Ritualist points and subscriptions will live here.')}
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
       <span class="eyebrow">Coming with launch</span>
-      <p>Sign-in is handled by a secure Wix page and is switched off in this private preview. <span class="d">Wording to confirm.</span></p>
+      <p>Sign-in is handled by a secure Wix page and is switched off in this private preview. <span class="d confirm">Wording to confirm.</span></p>
       <a class="btn line" href="#/shop" style="align-self:flex-start">Back to the shop</a></div></div>`;
 }
 

@@ -17,6 +17,9 @@ export const BOOKINGS_APP_ID = '13d21c63-b5ec-5912-8397-c3a5ddb27a97';
 export const STAFF_RESOURCE_TYPE_ID: string = import.meta.env.VITE_STAFF_RESOURCE_TYPE_ID || '1cd44cf8-756f-41c3-bd90-3e2ffcaf1155';
 export const TIME_ZONE = 'America/Vancouver';
 
+/** Ritualist points are not set up in Wix yet (no Loyalty app). Keep false until they are, so the cart never promises points. */
+export const LOYALTY_ENABLED = false;
+
 /** From the canvas announcement bar. */
 export const FREE_SHIPPING_THRESHOLD = 75;
 

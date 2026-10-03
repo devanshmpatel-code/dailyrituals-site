@@ -38,7 +38,7 @@ export async function renderCoaching(app: HTMLElement) {
   const faq = [...app.querySelectorAll('details')].find(d => /priced/i.test(d.querySelector('summary')?.textContent ?? ''));
   if (faq && program?.payment?.fixed) {
     faq.querySelector('.dbody')!.insertAdjacentHTML('beforeend',
-      `<p><span class="d">[Confirm: the live booking page lists ${esc(program.name)} at ${priceLabel(program)}. Keep this answer or show the price?]</span></p>`);
+      `<p><span class="d confirm">[Confirm: the live booking page lists ${esc(program.name)} at ${priceLabel(program)}. Keep this answer or show the price?]</span></p>`);
   }
   app.querySelectorAll<HTMLAnchorElement>('a[href="#/book"]').forEach(a => { if (discovery) a.href = `#/book/${slugOf(discovery)}`; });
 }
@@ -68,7 +68,7 @@ export async function renderBook(app: HTMLElement, slug?: string) {
     <div class="phead"><div class="crumbs"><a href="#/">Home</a> / <a href="#/coaching">Coaching</a> / Book</div></div>
     <div class="bk-grid">
       <div class="bk-intro"><span class="eyebrow" style="color:var(--euc)">Neuro coaching with Claire</span><h1 class="bk-title">Book a session</h1><div id="svcPick" class="segs"></div><div id="svcInfo"></div>
-        <p class="disclaimer">Coaching is not therapy or medical care. It does not diagnose or treat any condition and is not a substitute for care from a qualified professional. <span class="d">Claire to confirm wording.</span></p></div>
+        <p class="disclaimer">Coaching is not therapy or medical care. It does not diagnose or treat any condition and is not a substitute for care from a qualified professional. <span class="d confirm">Claire to confirm wording.</span></p></div>
       <div class="bk-panel"><h2 class="bk-h">Choose a time</h2><p class="small muted">Times shown in ${TIME_ZONE.replace('_', ' ')} time.</p><div id="slots"><div class="sk-line"></div><div class="sk-line short"></div></div><div id="bookForm"></div></div>
     </div></div>`;
   let list: any[];

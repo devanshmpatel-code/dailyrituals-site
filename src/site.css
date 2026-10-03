@@ -65,3 +65,12 @@ body.cart-open { overflow: hidden; }
 .bk-more { align-self: flex-start; }
 .notes-live { display: contents; }
 .slot-day[hidden] { display: none; }
+
+/* Bug fix: .club had no positioning context, so its absolutely-positioned .stars layer anchored to the
+   page and sat on top of buttons in other sections (the hero "Add this ritual" button was unclickable).
+   Decorative star layers must never take clicks. */
+.club { position: relative; overflow: hidden; }
+.stars { pointer-events: none; }
+
+/* [Confirm: …] review notes are for Claire only: visible with "Show drafts", hidden from customers. */
+body:not(.show-drafts) .confirm { display: none !important; }

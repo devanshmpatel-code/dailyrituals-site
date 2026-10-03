@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "node e2e/journey.mjs && node e2e/leak.mjs"
   },
   "devDependencies": {
     "typescript": "~6.0.2",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "playwright-core": "^1.50.0"
   },
   "dependencies": {
     "@wix/auto_sdk_ecom_cart-v-2": "^1.0.206",
