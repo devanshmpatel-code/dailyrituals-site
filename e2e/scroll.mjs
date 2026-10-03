@@ -10,7 +10,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.goto(base + '/'); await p.waitForSelector('.jrail'); await p.waitForTimeout(1200);
   ok(`${label}: journey rail is on the home page`, (await p.locator('.jrail').count()) === 1);
   ok(`${label}: ten stops (the opening and nine chapters)`, (await p.locator('.jstop').count()) === 10, `${await p.locator('.jstop').count()}`);
-  ok(`${label}: prayer flags sit under the opening`, (await p.locator('.flags .jflag').count()) >= 10);
+  ok(`${label}: no flags under the opening`, (await p.locator('.flags, .jflag').count()) === 0);
   ok(`${label}: chapter headings carry a mandala`, (await p.locator('.jhead .jorn').count()) >= 8, `${await p.locator('.jhead .jorn').count()}`);
   // the page is a day passing: the sun moves down the rail as you scroll
   const y0 = await p.locator('.jmark').evaluate(e => parseFloat(e.style.top));
@@ -21,7 +21,14 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.evaluate(() => window.scrollTo(0, 1800)); await p.waitForTimeout(700);
   const reveal = await p.evaluate(() => ({ total: document.querySelectorAll('[data-reveal]').length, shown: document.querySelectorAll('[data-reveal].in').length }));
   ok(`${label}: things below the fold ease in as you reach them`, reveal.total > 5 && reveal.shown > 0, JSON.stringify(reveal));
+  const wash = await p.locator('.jwash').evaluate(e => getComputedStyle(e).backgroundImage); ok(`${label}: the page takes on the colour of the hour`, /rgb/.test(wash), wash.slice(0, 60));
+  await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(500); const w0 = await p.locator('.jwash').evaluate(e => e.style.getPropertyValue('--w1'));
+  await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await p.waitForTimeout(700); const w1 = await p.locator('.jwash').evaluate(e => e.style.getPropertyValue('--w1'));
+  ok(`${label}: that colour changes from the top of the page to the bottom`, w0 !== w1 && w0 && w1, `${w0} -> ${w1}`);
+  await p.evaluate(() => window.scrollTo(0, 1800)); await p.waitForTimeout(500);
   await shot('mid');
+  await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(300); await p.evaluate(() => window.scrollTo(0, 300)); await p.waitForTimeout(500);
+  const par = await p.evaluate(() => Number(document.getElementById('day').style.getPropertyValue('--p'))); ok(`${label}: the opening's landscape drifts as you scroll away`, par > 0.15 && par <= 1, `--p ${par}`);
   // jump to a chapter from the rail
   await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(300);
   await p.locator('.jstop').nth(6).evaluate(e => e.click()); await p.waitForTimeout(1500);

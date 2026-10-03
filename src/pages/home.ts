@@ -5,6 +5,7 @@ import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } 
 import { add } from '../cart';
 import { sceneHTML, applyScene, placeOrb } from './scene';
 import { mountJourney } from './journey';
+import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
@@ -36,6 +37,7 @@ function greeting(d = new Date()) {
 export async function renderHome(app: HTMLElement) {
   useRealClock = true;
   app.innerHTML = fixImages(Main);
+  swapRenders(app);
   wireCommon(app);
   wireHeroStatic(app);
   wireRepeatCalc(app, null);

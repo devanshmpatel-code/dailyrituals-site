@@ -10,6 +10,7 @@ import { getLines, count, subtotal, setQty, onCart, checkout, add } from './cart
 import { currentRoute, onRoute, installLinkHandling } from './router';
 import { renderHome } from './pages/home';
 import { unmountJourney } from './pages/journey';
+import { decoratePage } from './pages/calm';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
 import { renderCoaching, renderBook } from './pages/coaching';
@@ -147,25 +148,30 @@ async function route() {
     app.innerHTML = `<div class="wrap" style="padding:80px 0"><div class="live-error"><b>Not connected yet.</b> Set VITE_WIX_CLIENT_ID to the live site's headless client id and rebuild.</div></div>`;
     return;
   }
-  switch (seg) {
-    case '': return renderHome(app);
-    case 'shop': return renderShop(app, params);
-    case 'product': return renderProduct(app, decodeURIComponent(arg ?? ''));
-    case 'coaching': return renderCoaching(app);
-    case 'help': return renderHelp(app);
-    case 'story': return renderStory(app);
-    case 'account': return renderAccount(app);
-    case 'explore': return renderExplore(app, params);
-    // older links: the quiz is a tab of Find your scent; build a ritual and ritual sets live in the wheel
-    case 'quiz': return renderExplore(app, new URLSearchParams('tab=quiz'));
-    case 'build': case 'sets': return renderExplore(app);
-    case 'reset': return renderReset(app);
-    case 'book': return renderBook(app, arg);
-    case 'checkout': await renderHome(app); openCart(); return;
-    default:
-      if (hasStatic(seg)) return renderStatic(app, seg);
-      return renderMissing(app, seg);
-  }
+  app.classList.remove('pagein'); void app.offsetWidth; app.classList.add('pagein');
+  const view = (async () => {
+    switch (seg) {
+      case '': return renderHome(app);
+      case 'shop': return renderShop(app, params);
+      case 'product': return renderProduct(app, decodeURIComponent(arg ?? ''));
+      case 'coaching': return renderCoaching(app);
+      case 'help': return renderHelp(app);
+      case 'story': return renderStory(app);
+      case 'account': return renderAccount(app);
+      case 'explore': return renderExplore(app, params);
+      // older links: the quiz is a tab of Find your scent; build a ritual and ritual sets live in the wheel
+      case 'quiz': return renderExplore(app, new URLSearchParams('tab=quiz'));
+      case 'build': case 'sets': return renderExplore(app);
+      case 'reset': return renderReset(app);
+      case 'book': return renderBook(app, arg);
+      case 'checkout': await renderHome(app); openCart(); return;
+      default:
+        if (hasStatic(seg)) return renderStatic(app, seg);
+        return renderMissing(app, seg);
+    }
+  })();
+  await view;
+  decoratePage(app, seg);
 }
 installLinkHandling();
 onRoute(route);

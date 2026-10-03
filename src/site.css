@@ -306,10 +306,6 @@ body::before { content: ""; position: fixed; inset: 0; z-index: 60; pointer-even
 .jhead { position: relative; overflow-x: clip; }
 .jorn { position: absolute; right: 0; top: -34px; width: min(150px, 34vw); height: min(150px, 34vw); color: var(--ink); opacity: .1; pointer-events: none; animation: lpspin 140s linear infinite; z-index: 0; }
 .jhead > *:not(.jorn) { position: relative; z-index: 1; }
-.flags { line-height: 0; margin-top: -6px; pointer-events: none; position: relative; z-index: 2; }
-.flags svg { width: 100%; height: 56px; display: block; }
-.jflag { transform-box: fill-box; transform-origin: 50% 0; animation: flagsway 4.6s ease-in-out infinite alternate; }
-@keyframes flagsway { from { transform: rotate(-3.5deg); } to { transform: rotate(3.5deg); } }
 
 .jmap { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgba(21, 17, 31, .58); backdrop-filter: blur(10px); opacity: 0; transition: opacity .35s ease; overflow-y: auto; }
 .jmap.open { opacity: 1; } .jmap.zoom { opacity: 0; } .jmap.leave { opacity: 0; }
@@ -339,4 +335,16 @@ body::before { content: ""; position: fixed; inset: 0; z-index: 60; pointer-even
 @keyframes jbring { 0%, 50% { transform: scale(.5); opacity: 0; } 52% { opacity: .45; } 100% { transform: scale(1.6); opacity: 0; } }
 .jb-word { font-family: var(--display); font-size: clamp(34px, 6vw, 60px); margin: 8px 0 0; line-height: 1; }
 .jb-sub { margin: 0; max-width: 40ch; opacity: .8; }
-@media (prefers-reduced-motion: reduce) { .jb-orb, .jb-ring, .jorn, .jflag, .jpet, [data-reveal] { animation: none !important; transition: none !important; } [data-reveal] { opacity: 1; transform: none; } .jb-ring { display: none; } }
+@media (prefers-reduced-motion: reduce) { .jb-orb, .jb-ring, .jorn, .jpet, [data-reveal] { animation: none !important; transition: none !important; } [data-reveal] { opacity: 1; transform: none; } .jb-ring { display: none; } }
+
+/* scroll: the page takes on the colour of the hour; the opening's landscape and sun drift as you leave it */
+.jwash { position: fixed; inset: 0; z-index: 59; pointer-events: none; background: linear-gradient(180deg, var(--w0, transparent), var(--w1, transparent)); opacity: .2; mix-blend-mode: soft-light; transition: opacity .6s; }
+.dayhero .land { translate: 0 calc(var(--p, 0) * -46px); }
+.dayhero .sunorb { margin-top: calc(var(--p, 0) * 150px); }
+.dayhero .day-copy { translate: 0 calc(var(--p, 0) * 36px); opacity: calc(1 - var(--p, 0) * .35); }
+
+/* calm layer on every page */
+.jfab { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); z-index: 45; }
+#app.pagein { animation: pagein .7s ease both; }
+@keyframes pagein { from { opacity: 0; transform: translateY(10px); filter: blur(5px); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) { #app.pagein { animation: none; } .dayhero .land, .dayhero .sunorb, .dayhero .day-copy { translate: none; margin-top: 0; opacity: 1; } }

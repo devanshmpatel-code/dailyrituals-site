@@ -42,3 +42,9 @@ Decision: Wix hosts the finished frontend. Per Wix's docs, a Vite single-page ap
 4. Release, then move the domain last.
 
 Open items: whether Wix static hosting supports path-route rewrites (hash routes need none), SEO (the limited integration has no built-in SEO), and the custom-domain steps for a managed project. None of these were tested.
+
+## Real photographs instead of renders
+
+- `src/photos.ts` maps each 3D render to a real photo from the Wix media library (`PHOTO_FOR`). They were chosen from Wix's automatic content tags and size, **not reviewed by eye**: they show with the draft outline when "Show drafts" is on, and the render stays in place if a photo fails to load. To change one, edit its `id`, `name`, `w` and `h` (from the Wix media manager).
+- The opening's landscape is generated (`src/pages/landscape.ts`). To use real landscape photographs instead, add `dawn.jpg`, `morning.jpg`, `midday.jpg`, `golden.jpg` and `night.jpg` to `public/img/scenes/`; they replace the generated landscape automatically.
+- Browser tests: `npm run test:e2e` (they replay a saved copy of the catalogue, so they do not need the Wix network).
