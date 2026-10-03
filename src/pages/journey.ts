@@ -8,7 +8,7 @@ import { ornament, treeSVG } from './symbols';
 
 interface Stop { id: string; label: string; short: string; el: HTMLElement }
 let cleanups: (() => void)[] = [];
-export function unmountJourney() { cleanups.forEach(f => f()); cleanups = []; document.querySelectorAll('.jrail, .jmap, .jbreathe, .jbar, .jwash').forEach(n => n.remove()); document.body.classList.remove('has-journey'); }
+export function unmountJourney() { cleanups.forEach(f => f()); cleanups = []; document.querySelectorAll('.jrail, .jmap, .jbreathe, .jbar, .jwash, .jaur, .jhere').forEach(n => n.remove()); document.body.classList.remove('has-journey'); }
 
 const lerp = (a: string, b: string, t: number) => { const x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16); const c = (sh: number) => Math.round(((x >> sh) & 255) + ((((y >> sh) & 255) - ((x >> sh) & 255)) * t)); return `rgb(${c(16)},${c(8)},${c(0)})`; };
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -72,24 +72,43 @@ export function mountJourney(app: HTMLElement) {
     <button class="jbtn" data-jbreathe aria-label="Take a breath" title="Take a breath"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 20c-4 0-8-3-9-9 4 0 7 2 9 5 2-3 5-5 9-5-1 6-5 9-9 9z"/><path d="M12 16c-2-3-2-7 0-11 2 4 2 8 0 11z"/></svg></button>`;
   const bar = document.createElement('div'); bar.className = 'jbar'; bar.setAttribute('aria-hidden', 'true'); bar.innerHTML = '<i></i>';
   const wash = document.createElement('div'); wash.className = 'jwash'; wash.setAttribute('aria-hidden', 'true');
-  document.body.append(rail, bar, wash);
+  const here = document.createElement('button'); here.type = 'button'; here.className = 'jhere'; here.setAttribute('aria-label', 'You are here. Go to the next chapter');
+  here.innerHTML = '<svg class="jh-ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" class="bg"/><circle cx="22" cy="22" r="19" class="fg"/></svg><b class="jh-n"></b><span class="jh-w"><small class="jh-k"></small><strong class="jh-t"></strong><em class="jh-x"></em></span>';
+  const aur = document.createElement('div'); aur.className = 'jaur'; aur.setAttribute('aria-hidden', 'true'); aur.innerHTML = '<i></i><i></i><i></i>';
+  document.body.append(rail, bar, wash, aur, here);
+  here.addEventListener('click', () => { const k = here.dataset.next; if (k !== undefined && k !== '') goTo(Number(k)); else window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' }); });
 
   const goTo = (i: number, instant = false) => stops[i].el.scrollIntoView({ behavior: instant || reduceMotion() ? 'auto' : 'smooth', block: 'start' });
   rail.querySelectorAll<HTMLButtonElement>('[data-stop]').forEach(b => b.addEventListener('click', () => goTo(Number(b.dataset.stop))));
 
+  const pars = [...app.querySelectorAll<HTMLElement>('.disc .ph img, .claire-in .ph img')];
+  // soft light that follows the pointer across cards
+  const glowEls = [...app.querySelectorAll<HTMLElement>('.tile, .plan, .disc, .claire-in .ph, .ways > *')];
+  const onMove = (e: PointerEvent) => { const el = (e.target as Element | null)?.closest?.<HTMLElement>('.tile, .plan, .disc, .claire-in .ph, .ways > *'); if (!el) return; const r = el.getBoundingClientRect(); el.style.setProperty('--mx', `${e.clientX - r.left}px`); el.style.setProperty('--my', `${e.clientY - r.top}px`); };
+  if (matchMedia('(hover: hover)').matches && !reduceMotion()) { glowEls.forEach(g => g.classList.add('glow')); app.addEventListener('pointermove', onMove, { passive: true }); cleanups.push(() => { app.removeEventListener('pointermove', onMove); glowEls.forEach(g => g.classList.remove('glow')); }); }
   const mark = rail.querySelector<HTMLElement>('.jmark')!, pill = rail.querySelector<HTMLElement>('.jpill')!;
   let cur = 0, ticking = false, pillTimer = 0;
   const update = () => {
     ticking = false;
     const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     const prog = Math.min(1, Math.max(0, window.scrollY / max));
-    mark.style.top = `${prog * 100}%`;
+    // the marker sits ON the stop you are in and glides to the next one as you read, so it always agrees with the label
+    const line = window.innerHeight * 0.42; let at = 0; stops.forEach((st, i) => { if (st.el.getBoundingClientRect().top < line) at = i; });
+    const aTop = stops[at].el.getBoundingClientRect().top, nTop = at < n - 1 ? stops[at + 1].el.getBoundingClientRect().top : aTop + stops[at].el.offsetHeight;
+    const seg = Math.min(1, Math.max(0, (line - aTop) / Math.max(1, nTop - aTop)));
+    mark.style.top = `${((at + (at < n - 1 ? seg : 0)) / (n - 1)) * 100}%`;
+    here.style.setProperty('--seg', String(seg)); here.classList.toggle('on', at >= 1);
+    const nxt = stops[at + 1]; here.querySelector<HTMLElement>('.jh-n')!.textContent = String(at); here.querySelector<HTMLElement>('.jh-t')!.textContent = stops[at].short || stops[at].label;
+    here.querySelector<HTMLElement>('.jh-x')!.textContent = nxt ? `Next: ${nxt.short || nxt.label} \u2192` : 'Back to the top \u2191';
+    here.querySelector<HTMLElement>('.jh-k')!.textContent = `You are here \u00b7 ${at} of ${n - 1}`; here.dataset.next = nxt ? String(at + 1) : '';
     const moment = MOMENTS[Math.min(MOMENTS.length - 1, Math.floor(prog * MOMENTS.length))];
     mark.style.setProperty('--jc', moment.orb); mark.dataset.night = String(moment.dark);
     (bar.firstElementChild as HTMLElement).style.transform = `scaleX(${prog})`;
     // the whole page takes on the colour of the hour as you scroll, and the opening's landscape drifts as you leave it
     const f = prog * (MOMENTS.length - 1), i0 = Math.floor(f), i1 = Math.min(MOMENTS.length - 1, i0 + 1), t = f - i0;
     wash.style.setProperty('--w0', lerp(MOMENTS[i0].sky[0], MOMENTS[i1].sky[0], t)); wash.style.setProperty('--w1', lerp(MOMENTS[i0].sky[1], MOMENTS[i1].sky[1], t));
+    aur.style.setProperty('--a0', lerp(MOMENTS[i0].land[1], MOMENTS[i1].land[1], t)); aur.style.setProperty('--a1', lerp(MOMENTS[i0].sky[1], MOMENTS[i1].sky[1], t)); aur.style.setProperty('--a2', lerp(MOMENTS[i0].orb, MOMENTS[i1].orb, t));
+    if (!reduceMotion()) pars.forEach(im => { const r = im.parentElement!.getBoundingClientRect(); if (r.bottom < 0 || r.top > window.innerHeight) return; im.style.setProperty('--py', String(((r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight * -26).toFixed(1))); });
     if (hero) hero.style.setProperty('--p', String(Math.min(1, window.scrollY / Math.max(1, hero.offsetHeight))));
     let idx = 0; stops.forEach((s, i) => { if (s.el.getBoundingClientRect().top < window.innerHeight * 0.42) idx = i; });
     if (idx !== cur) {
