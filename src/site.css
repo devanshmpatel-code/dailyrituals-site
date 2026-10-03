@@ -74,3 +74,22 @@ body.cart-open { overflow: hidden; }
 
 /* [Confirm: …] review notes are for Claire only: visible with "Show drafts", hidden from customers. */
 body:not(.show-drafts) .confirm { display: none !important; }
+
+/* "Golden Hour" palette. Linen and soy-cream grounds, aubergine ink, sage primary, amber accent.
+   Contrast (WCAG): ink on linen 14.0:1, amber text on linen 5.2:1, ink on amber 6.2:1, white on sage 8.7:1,
+   white on dusk plum 11.5:1, white on terracotta 5.1:1, cream on night 16.0:1. */
+:root {
+  --ground: #F7F2EA; --sand: #EFE6D8; --ink: #2A1F33; --line: #E6DDD3;
+  --plum: #4A3050; --marigold: #D9953A; --gold: #E8A957; --gold-2: #F3D29A;
+  --euc: #2F5249; --euc-2: #E1EAE5; --rose: #EBD3CB;
+  --night: #15111F; --night-2: #231B36;
+  --marigold-text: #8F5A1A; --linen: #F7F2EA; --eucalyptus: #2F5249;
+}
+
+/* cart: complete your ritual */
+.complete { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.sug { display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: center; }
+.sug img { width: 48px; height: 60px; object-fit: cover; border-radius: 6px; background: var(--sand); }
+.sug span { display: flex; flex-direction: column; min-width: 0; }
+.sug em { font-style: normal; color: var(--ink-2); font-size: 13px; }
+.sug .btn { padding: 8px 16px; min-height: 40px; }

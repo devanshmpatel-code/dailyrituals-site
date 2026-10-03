@@ -27,9 +27,9 @@ export type Mood = 'fresh' | 'sunny' | 'floral' | 'woody' | 'grounding';
 export type Format = 'roller' | 'diffuser' | 'candle' | 'deodorant';
 
 export const MOODS: Record<Mood, { label: string; swatch: string; backdrop: string }> = {
-  fresh: { label: 'Fresh and coastal', swatch: '#6E9E99', backdrop: '/img/mood-fresh.jpg' },
-  sunny: { label: 'Sunny and tropical', swatch: '#C9962E', backdrop: '/img/mood-sunny.jpg' },
-  floral: { label: 'Soft and floral', swatch: '#C27C73', backdrop: '/img/mood-floral.jpg' },
+  fresh: { label: 'Fresh and coastal', swatch: '#7FA8A0', backdrop: '/img/mood-fresh.jpg' },
+  sunny: { label: 'Sunny and tropical', swatch: '#D9953A', backdrop: '/img/mood-sunny.jpg' },
+  floral: { label: 'Soft and floral', swatch: '#A8574A', backdrop: '/img/mood-floral.jpg' },
   woody: { label: 'Warm and woody', swatch: '#9C6B45', backdrop: '/img/mood-woody.jpg' },
   grounding: { label: 'Grounding', swatch: '#5E7A58', backdrop: '/img/mood-grounding.jpg' },
 };

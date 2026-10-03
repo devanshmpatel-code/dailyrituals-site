@@ -4,9 +4,9 @@ import Header from './canvas/header.html?raw';
 import Footer from './canvas/footer.html?raw';
 import Drawer from './canvas/drawer.html?raw';
 import { WRITES_ENABLED, LOYALTY_ENABLED, FREE_SHIPPING_THRESHOLD } from './config';
-import { hasClient, money } from './wix';
+import { hasClient, money, loadCatalogue } from './wix';
 import { fixImages, esc, toast } from './ui';
-import { getLines, count, subtotal, setQty, onCart, checkout } from './cart';
+import { getLines, count, subtotal, setQty, onCart, checkout, add } from './cart';
 import { currentRoute, onRoute, installLinkHandling } from './router';
 import { renderHome } from './pages/home';
 import { renderShop } from './pages/shop';
@@ -70,6 +70,29 @@ function renderDrawer() {
   db.querySelectorAll<HTMLButtonElement>('[data-inc]').forEach(b => b.addEventListener('click', () => { const l = getLines().find(x => x.key === b.dataset.inc)!; setQty(l.key, l.qty + 1); }));
   db.querySelectorAll<HTMLButtonElement>('[data-dec]').forEach(b => b.addEventListener('click', () => { const l = getLines().find(x => x.key === b.dataset.dec)!; setQty(l.key, l.qty - 1); }));
   drawer.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', closeCart));
+  void fillSuggestions(db);
+}
+// "Complete your ritual": other formats of the scents already in the cart.
+let suggestToken = 0;
+async function fillSuggestions(db: HTMLElement) {
+  const token = ++suggestToken;
+  const lines = getLines();
+  if (!lines.length) return;
+  let items: Awaited<ReturnType<typeof loadCatalogue>>;
+  try { items = await loadCatalogue(); } catch { return; }
+  if (token !== suggestToken || overlay.hidden) return;
+  const inCart = new Set(lines.map(l => l.productId));
+  const scents = new Set(lines.map(l => items.find(i => i.id === l.productId)?.scent).filter(Boolean));
+  const picks = items.filter(i => scents.has(i.scent) && !inCart.has(i.id) && i.inStock && i.choices.length <= 1).slice(0, 2);
+  db.querySelector('.complete')?.remove();
+  if (!picks.length) return;
+  db.insertAdjacentHTML('beforeend', `<div class="complete"><span class="eyebrow">Complete your ritual</span>${picks.map(p =>
+    `<div class="sug"><img src="${p.thumb}" alt=""><span><b>${esc(p.name)}</b><em>${money(p.priceMin)}</em></span><button class="btn line" data-sug="${esc(p.id)}">Add</button></div>`).join('')}</div>`);
+  db.querySelectorAll<HTMLButtonElement>('[data-sug]').forEach(b => b.addEventListener('click', async () => {
+    const p = items.find(i => i.id === b.dataset.sug)!;
+    await add({ productId: p.id, slug: p.slug, name: p.name, price: p.priceMin, image: p.thumb, choice: p.choices[0]?.name, optionName: p.optionName });
+    toast(`${p.name} added to your cart`);
+  }));
 }
 function updateCount() { document.getElementById('cartCount')!.textContent = String(count()); }
 function openCart() {

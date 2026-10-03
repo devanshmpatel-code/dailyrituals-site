@@ -5,6 +5,19 @@ import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } 
 import { add } from '../cart';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
 
+// The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
+// move the sun or pick a moment, it shows that moment's own time instead.
+let useRealClock = true;
+const hourNow = (d = new Date()) => d.getHours() + d.getMinutes() / 60;
+function momentForHour(h: number): Moment {
+  const dist = (a: number, b: number) => { const x = Math.abs(a - b); return Math.min(x, 24 - x); };
+  return MOMENTS.reduce((a, b) => (dist(b.hour, h) < dist(a.hour, h) ? b : a));
+}
+const clockParts = (d: Date) => {
+  const [hm, ap] = d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }).replace('a.m.', 'am').replace('p.m.', 'pm').split(' ');
+  return [hm, ap] as const;
+};
+
 const svgPoint = (t: number) => ({
   x: 40 + 920 * t,
   y: 140 * (1 - t) ** 2 + 2 * -60 * (1 - t) * t + 140 * t * t,
@@ -19,6 +32,7 @@ function greeting(d = new Date()) {
 }
 
 export async function renderHome(app: HTMLElement) {
+  useRealClock = true;
   app.innerHTML = fixImages(Main);
   wireCommon(app);
   wireHeroStatic(app);
@@ -68,7 +82,7 @@ function setMoment(app: HTMLElement, m: Moment, animate = true) {
 
   const clock = app.querySelector('#dClock');
   if (clock) {
-    const [hm, ap] = m.time.split(' ');
+    const [hm, ap] = useRealClock ? clockParts(new Date()) : (m.time.split(' ') as [string, string]);
     clock.innerHTML = `<span class="mono">${hm}</span><span class="ap">${ap}</span><span class="mname">${m.name}</span>`;
   }
   const title = app.querySelector('#dTitle')!;
@@ -97,11 +111,12 @@ function setMoment(app: HTMLElement, m: Moment, animate = true) {
     });
   }
 
-  const t = tFor(m.hour);
+  const sunHour = useRealClock ? hourNow() : m.hour;
+  const t = tFor(sunHour >= 22 || sunHour < 6 ? (sunHour < 6 ? 0 : 1) : sunHour);
   const pt = svgPoint(t);
   app.querySelector('#sunG')?.setAttribute('transform', `translate(${pt.x},${pt.y})`);
   app.querySelector('#arc')?.setAttribute('aria-valuenow', m.hour.toFixed(1));
-  app.querySelector('#arc')?.setAttribute('aria-valuetext', `${m.time}, ${m.name}`);
+  app.querySelector('#arc')?.setAttribute('aria-valuetext', `${useRealClock ? clockParts(new Date()).join(' ') : m.time}, ${m.name}`);
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b => b.setAttribute('aria-current', String(b.dataset.jump === m.key)));
 }
 
@@ -112,15 +127,16 @@ function nearest(hour: number) {
 function wireHeroStatic(app: HTMLElement) {
   const greet = app.querySelector('.greet');
   if (greet) greet.innerHTML = `<span class="dot-live"></span>${greeting()}`;
-  // Golden hour is the default hero state (design system README).
-  const golden = MOMENTS.find(m => m.key === 'golden')!;
+  const golden = momentForHour(hourNow());
+  setMoment(app, golden, false);
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b =>
-    b.addEventListener('click', () => setMoment(app, MOMENTS.find(m => m.key === (b.dataset.jump as MomentKey))!)));
+    b.addEventListener('click', () => { useRealClock = false; setMoment(app, MOMENTS.find(m => m.key === (b.dataset.jump as MomentKey))!); }));
 
   const arc = app.querySelector<SVGSVGElement>('#arc');
   if (!arc) return;
   let current = golden;
   const fromPointer = (clientX: number) => {
+    useRealClock = false;
     const r = arc.getBoundingClientRect();
     const x = ((clientX - r.left) / r.width) * 1000;
     const hour = 6 + 16 * Math.min(1, Math.max(0, (x - 40) / 920));
@@ -136,6 +152,7 @@ function wireHeroStatic(app: HTMLElement) {
   arc.addEventListener('pointerup', end);
   arc.addEventListener('pointercancel', end);
   arc.addEventListener('keydown', e => {
+    useRealClock = false;
     const i = MOMENTS.findIndex(m => m.key === current.key);
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { current = MOMENTS[Math.min(MOMENTS.length - 1, i + 1)]; setMoment(app, current); e.preventDefault(); }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { current = MOMENTS[Math.max(0, i - 1)]; setMoment(app, current); e.preventDefault(); }
