@@ -2,6 +2,7 @@ import Shop from '../canvas/pages/Shop.html?raw';
 import { loadCatalogue, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon } from '../ui';
 import { wireQuickAdd } from './shared';
+import { navigate } from '../router';
 import { MOODS, type Mood, type Format } from '../config';
 
 // The three concept cards from the canvas (not products in the live store yet).
@@ -40,7 +41,7 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   const sort = app.querySelector<HTMLSelectElement>('#sort');
   if (sort) {
     sort.value = s;
-    sort.addEventListener('change', () => { location.hash = `#/shop?${new URLSearchParams({ f, m, s: sort.value })}`; });
+    sort.addEventListener('change', () => { navigate(`/shop?${new URLSearchParams({ f, m, s: sort.value })}`); });
   }
 
   const grid = app.querySelector<HTMLElement>('.grid')!;

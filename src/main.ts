@@ -7,6 +7,7 @@ import { WRITES_ENABLED, FREE_SHIPPING_THRESHOLD } from './config';
 import { hasClient, money } from './wix';
 import { fixImages, esc, toast } from './ui';
 import { getLines, count, subtotal, setQty, onCart, checkout } from './cart';
+import { currentRoute, onRoute, installLinkHandling } from './router';
 import { renderHome } from './pages/home';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
@@ -95,8 +96,7 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 async function route() {
-  const hash = location.hash.replace(/^#\/?/, '');
-  const [path, query = ''] = hash.split('?');
+  const [path, query = ''] = currentRoute().split('?');
   const [seg, arg] = path.split('/');
   const params = new URLSearchParams(query);
   document.querySelectorAll<HTMLAnchorElement>('.mainnav [data-nav]').forEach(a => {
@@ -123,5 +123,6 @@ async function route() {
       return renderMissing(app, seg);
   }
 }
-window.addEventListener('hashchange', route);
+installLinkHandling();
+onRoute(route);
 route();

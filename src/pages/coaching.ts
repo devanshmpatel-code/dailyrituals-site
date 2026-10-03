@@ -1,6 +1,7 @@
 import Coaching from '../canvas/pages/Coaching.html?raw';
 import { loadServices, imgSrc, money, wix, saveTokens } from '../wix';
 import { fixImages, wireCommon, esc, errorBox, toast } from '../ui';
+import { navigate, routeUrl } from '../router';
 import { WRITES_ENABLED, TIME_ZONE, BOOKINGS_APP_ID, STAFF_RESOURCE_TYPE_ID } from '../config';
 
 const duration = (s: any) => s.schedule?.availabilityConstraints?.sessionDurations?.[0] as number | undefined;
@@ -158,11 +159,11 @@ async function createLiveBooking(svc: any, slot: any, formSubmission: Record<str
   const total = Number(summary?.priceSummary?.total?.amount ?? 0);
   const needsCheckout = svc.bookingPolicy?.cancellationFeePolicy?.enabled || (total > 0 && selectedPaymentOption === 'ONLINE');
   if (needsCheckout) {
-    const { redirectSession }: any = await wix.redirects.createRedirectSession({ ecomCheckout: { checkoutId: cart._id }, callbacks: { postFlowUrl: `${location.origin}/#/coaching` } });
+    const { redirectSession }: any = await wix.redirects.createRedirectSession({ ecomCheckout: { checkoutId: cart._id }, callbacks: { postFlowUrl: routeUrl('/coaching') } });
     location.href = redirectSession.fullUrl;
   } else {
     await wix.placeOrder(cart._id);
     toast('Booked. Check your email for the details.');
-    location.hash = '#/coaching';
+    navigate('/coaching');
   }
 }

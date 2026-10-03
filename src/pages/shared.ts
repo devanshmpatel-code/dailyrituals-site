@@ -1,6 +1,7 @@
 import { add } from '../cart';
 import { findLive, money, type Item } from '../wix';
 import { toast } from '../ui';
+import { navigate } from '../router';
 import type { Format } from '../config';
 
 /** Canvas product slugs look like "roller-citrus-and-sun"; map them to live products. */
@@ -44,7 +45,7 @@ export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
 }
 
 export async function quickAdd(i: Item) {
-  if (i.choices.length > 1) { location.hash = `#/product/${i.slug}`; return; }
+  if (i.choices.length > 1) { navigate(`/product/${i.slug}`); return; }
   await add({ productId: i.id, slug: i.slug, name: i.name, price: i.priceMin, image: i.thumb, choice: i.choices[0]?.name, optionName: i.optionName });
   toast(`${i.name} added to your cart`);
 }

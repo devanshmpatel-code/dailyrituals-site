@@ -1,5 +1,6 @@
 import { WRITES_ENABLED, STORES_APP_ID } from './config';
 import { wix, saveTokens } from './wix';
+import { routeUrl } from './router';
 
 export interface Line {
   key: string;          // productId + choice
@@ -77,10 +78,9 @@ async function addToLiveCart(productId: string, optionName?: string, choice?: st
 export async function checkout() {
   if (!WRITES_ENABLED) return;
   const { cart } = await (wix.currentCartV2 as any).getCurrentCart();
-  const origin = window.location.origin;
   const session = await wix.redirects.createRedirectSession({
     ecomCheckout: { checkoutId: cart._id },
-    callbacks: { postFlowUrl: `${origin}/#/`, thankYouPageUrl: `${origin}/#/order-confirmed` },
+    callbacks: { postFlowUrl: routeUrl('/'), thankYouPageUrl: routeUrl('/order-confirmed') },
   });
   window.location.href = session.redirectSession!.fullUrl!;
 }
