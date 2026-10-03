@@ -1,0 +1,67 @@
+/* Additions for the coded build. Values come from the Daily Rituals design system tokens. */
+:root {
+  --linen: #F8F5F0; --ink-muted: #5D5363; --ink-subtle: #6F6676; --marigold-text: #9A6420;
+  --eucalyptus: #2F5249; --eucalyptus-soft: #E1EAE5;
+}
+
+.preview-bar {
+  background: var(--ink, #231A2B); color: #fff; font-size: 13px; line-height: 1.4;
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between;
+  padding: 8px clamp(16px, 4vw, 56px);
+}
+.preview-bar b { font-weight: 700; }
+.drafts-toggle { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; min-height: 32px; }
+.drafts-toggle input { width: 18px; height: 18px; accent-color: #E2A04A; }
+
+/* drafts: everything Claire still has to confirm */
+body.show-drafts .d { background: var(--mari-soft, #F7E4C6); box-shadow: 0 0 0 2px var(--mari-soft, #F7E4C6); border-radius: 2px; color: #231A2B; }
+
+/* live-data states */
+.card.sk .ph { aspect-ratio: 4 / 5; background: linear-gradient(100deg, #EFE9E2 30%, #F6F2EC 50%, #EFE9E2 70%); background-size: 300% 100%; animation: sk 1.4s linear infinite; border-radius: 4px; }
+.sk-line { height: 14px; margin: 10px 0; border-radius: 4px; background: #EFE9E2; }
+.sk-line.short { width: 50%; }
+@keyframes sk { to { background-position: -150% 0; } }
+@media (prefers-reduced-motion: reduce) { .card.sk .ph { animation: none; } }
+.live-error { grid-column: 1 / -1; background: #fff; border: 1px solid var(--ink-subtle); border-radius: 10px; padding: 16px 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+.live-tag { font: 500 11px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--eucalyptus); margin-top: auto; }
+.concept-tag { position: absolute; left: 12px; bottom: 12px; background: #fff; border: 1px solid var(--line, #E5DEE2); border-radius: 4px; font-size: 12px; font-weight: 600; padding: 6px 10px; }
+.card[data-concept] .ph { position: relative; }
+a.qa { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+
+/* toast */
+#toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: #231A2B; color: #fff; padding: 12px 20px; border-radius: 40px; font-size: 14px; z-index: 80; max-width: min(92vw, 520px); text-align: center; transition: opacity .2s, transform .2s; }
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* cart */
+#overlay[hidden] { display: none; }
+body.cart-open { overflow: hidden; }
+#cartBtn.bump .count { animation: bump .4s ease; }
+@keyframes bump { 50% { transform: scale(1.35); } }
+.chip[disabled] { opacity: .4; cursor: not-allowed; }
+#addBtn[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* booking (no canvas board; built from the coaching world tokens) */
+.bk { padding-bottom: clamp(64px, 8vw, 112px); }
+.bk-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
+.bk-title { font-size: clamp(40px, 5vw, 72px); color: var(--eucalyptus); }
+.bk-intro { display: flex; flex-direction: column; gap: 18px; }
+.bk-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 4px; }
+.bk-facts { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 15px; }
+.bk-desc { display: flex; flex-direction: column; gap: 8px; color: var(--ink-muted); }
+.bk-panel { background: #fff; border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--line, #E5DEE2); }
+.bk-h { font-size: 30px; }
+#svcPick { display: flex; flex-wrap: wrap; gap: 8px; }
+#svcPick a { text-decoration: none; }
+.slot-day { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line, #E5DEE2); }
+.slot-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.bk-form { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--line, #E5DEE2); padding-top: 16px; }
+.bk-form label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px; }
+.bk-form input { min-height: 48px; border: 1px solid var(--ink-subtle); border-radius: 10px; padding: 0 14px; font: inherit; background: #fff; }
+.bk-form input:focus-visible { outline: 2px solid var(--marigold-text); outline-offset: 2px; }
+@media (max-width: 860px) { .bk-grid { grid-template-columns: 1fr; } }
+
+.tabpanel[hidden] { display: none; }
+.bk-more { align-self: flex-start; }
+.notes-live { display: contents; }
+.slot-day[hidden] { display: none; }
