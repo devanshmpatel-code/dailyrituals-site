@@ -26,7 +26,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.locator('.wsc[data-mood="floral"]').first().focus(); await p.keyboard.press('Enter'); ok(`${label}: keyboard selects an inner segment`, (await p.locator('.wsc[aria-pressed="true"]').count()) === 1);
   await p.locator('.wpanel a.chip').first().click(); await p.waitForTimeout(600); ok(`${label}: a format chip opens the product`, /\/product\//.test(p.url()), p.url().split('#')[1]);
   await p.goto(base + '/explore?mood=woody'); await p.waitForSelector('.wpanel h3'); ok(`${label}: ?mood= preselects a mood (used by the quiz link)`, /Warm and woody/.test(await p.locator('.wpanel h3').innerText()));
-  await p.goto(base + '/explore'); await p.waitForSelector('#exp .panel'); ok(`${label}: full list still below`, (await p.locator('#exp .panel').count()) > 5);
+  await p.goto(base + '/explore'); await p.waitForSelector('#exp .fl-card'); ok(`${label}: full list still below`, (await p.locator('#exp .fl-card').count()) > 5);
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
   ok(`${label}: no JS errors`, errs.length === 0, errs.join('|'));
   await ctx.close();

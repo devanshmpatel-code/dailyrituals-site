@@ -55,3 +55,13 @@ export const lotusIcon = (size = 22) => `<svg viewBox="0 0 120 120" width="${siz
 
 /** A divider: a line, a lotus, a line. */
 export const lotusDivider = () => `<div class="lotusdiv" aria-hidden="true"><i></i>${lotusIcon(34)}<i></i></div>`;
+
+/** Five moon phases on an arc, waxing to full and waning again, drawn with masks so they sit cleanly on any background. */
+export function moonArc(): string {
+  const r = 26, pts = [-2, -1, 0, 1, 2].map(k => ({ k, x: 200 + k * 76, y: 150 - Math.cos(k * 0.5) * 70 }));
+  const defs = pts.map(({ k, x, y }) => k === 0 ? '' : Math.abs(k) === 1
+    ? `<mask id="mm${k + 2}"><rect x="${x - r}" y="${y - r}" width="${r * 2}" height="${r * 2}" fill="#000"/><rect x="${k < 0 ? x : x - r}" y="${y - r}" width="${r}" height="${r * 2}" fill="#fff"/></mask>`
+    : `<mask id="mm${k + 2}"><rect x="${x - r}" y="${y - r}" width="${r * 2}" height="${r * 2}" fill="#fff"/><circle cx="${x + (k < 0 ? 1 : -1) * r * 0.55}" cy="${y}" r="${r}" fill="#000"/></mask>`).join('');
+  const moons = pts.map(({ k, x, y }) => `<g class="mp" style="--d:${(k + 2) * 0.5}s"><circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#F3D29A" stroke-opacity=".28"/>${k === 0 ? `<circle class="full" cx="${x}" cy="${y}" r="${r + 8}" fill="#F3D29A"/>` : `<circle cx="${x}" cy="${y}" r="${r}" fill="#F3D29A" mask="url(#mm${k + 2})"/>`}</g>`).join('');
+  return `<svg viewBox="0 0 400 260" width="100%" style="overflow:visible"><defs><radialGradient id="mglow"><stop offset="0" stop-color="#F3D29A" stop-opacity=".45"/><stop offset="1" stop-color="#F3D29A" stop-opacity="0"/></radialGradient>${defs}</defs><circle cx="200" cy="80" r="90" fill="url(#mglow)" class="halo"/><path d="M48 ${150 - Math.cos(1) * 70} Q200 ${150 - 70 * 1.6} 352 ${150 - Math.cos(1) * 70}" fill="none" stroke="#F3D29A" stroke-opacity=".25" stroke-dasharray="2 6"/>${moons}</svg>`;
+}

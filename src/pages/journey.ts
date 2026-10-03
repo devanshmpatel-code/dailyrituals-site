@@ -96,7 +96,7 @@ export function mountJourney(app: HTMLElement) {
     const line = window.innerHeight * 0.42; let at = 0; stops.forEach((st, i) => { if (st.el.getBoundingClientRect().top < line) at = i; });
     const aTop = stops[at].el.getBoundingClientRect().top, nTop = at < n - 1 ? stops[at + 1].el.getBoundingClientRect().top : aTop + stops[at].el.offsetHeight;
     const seg = Math.min(1, Math.max(0, (line - aTop) / Math.max(1, nTop - aTop)));
-    mark.style.top = `${((at + (at < n - 1 ? seg : 0)) / (n - 1)) * 100}%`;
+    mark.style.top = `${((at + (at < n - 1 ? seg * 0.8 : 0)) / (n - 1)) * 100}%`;
     here.style.setProperty('--seg', String(seg)); here.classList.toggle('on', at >= 1);
     const nxt = stops[at + 1]; here.querySelector<HTMLElement>('.jh-n')!.textContent = String(at); here.querySelector<HTMLElement>('.jh-t')!.textContent = stops[at].short || stops[at].label;
     here.querySelector<HTMLElement>('.jh-x')!.textContent = nxt ? `Next: ${nxt.short || nxt.label} \u2192` : 'Back to the top \u2191';
@@ -112,7 +112,7 @@ export function mountJourney(app: HTMLElement) {
     if (hero) hero.style.setProperty('--p', String(Math.min(1, window.scrollY / Math.max(1, hero.offsetHeight))));
     let idx = 0; stops.forEach((s, i) => { if (s.el.getBoundingClientRect().top < window.innerHeight * 0.42) idx = i; });
     if (idx !== cur) {
-      cur = idx; pill.textContent = stops[idx].label; pill.classList.add('on');
+      cur = idx; pill.textContent = stops[idx].label;
       window.clearTimeout(pillTimer); pillTimer = window.setTimeout(() => pill.classList.remove('on'), 2400);
       rail.querySelectorAll('.jstop').forEach((s, i) => { s.classList.toggle('past', i < idx); s.classList.toggle('now', i === idx); });
       document.querySelector('.jmap')?.dispatchEvent(new CustomEvent('jstop', { detail: idx }));

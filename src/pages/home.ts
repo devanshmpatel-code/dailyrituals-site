@@ -1,5 +1,6 @@
 import Main from '../canvas/pages/Main.html?raw';
-import { MOMENTS, MOODS, NEXT_DROP_ISO, type Moment, type MomentKey } from '../config';
+import { MOMENTS, MOODS, NEXT_DROP_ISO, LOYALTY_ENABLED, type Moment, type MomentKey } from '../config';
+import { moonArc } from './symbols';
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
@@ -41,6 +42,7 @@ export async function renderHome(app: HTMLElement) {
   swapRenders(app);
   wireCommon(app);
   wireHeroStatic(app);
+  if (!LOYALTY_ENABLED) app.querySelector('.club .head')?.insertAdjacentHTML('beforeend', `<div class="cs-moon" aria-hidden="true">${moonArc()}</div>`);
   wireRepeatCalc(app, null);
   wireVote(app);
   wireCountdown(app);
@@ -119,7 +121,7 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
 }
 
 // ---------- the continuous day: look, sun, clock and tweens ----------
-let liveHour = 18, heroCurrent: Moment | null = null, raf = 0, playing = false;
+let liveHour = 18, heroCurrent: Moment | null = null, raf = 0;
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function applyLook(app: HTMLElement, hour: number) {
@@ -149,11 +151,7 @@ function frame(app: HTMLElement, h: number) {
   const m = nearest(h);
   if (!heroCurrent || m.key !== heroCurrent.key) { heroCurrent = m; setMoment(app, m, true, h); setClockLive(app, h); }
 }
-function setPlaying(app: HTMLElement, on: boolean) {
-  playing = on; const b = app.querySelector<HTMLButtonElement>('#dayPlay');
-  if (b) { b.textContent = on ? '❚❚ Pause the day' : '▶ Watch the day'; b.setAttribute('aria-pressed', String(on)); }
-}
-function stopTween(app: HTMLElement) { cancelAnimationFrame(raf); raf = 0; if (playing) setPlaying(app, false); }
+function stopTween(_app: HTMLElement) { cancelAnimationFrame(raf); raf = 0; }
 const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 /** Glide the whole look to an hour. Everything blends continuously on the way, then the content settles on the nearest moment. */
 function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => number = easeInOut, done?: () => void) {
@@ -163,12 +161,6 @@ function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => 
   if (reduceMotion() || ms <= 0) { finish(); return; }
   const step = (now: number) => { const k = Math.min(1, (now - t0) / ms); frame(app, from + (to - from) * ease(k)); if (k < 1) raf = requestAnimationFrame(step); else finish(); };
   raf = requestAnimationFrame(step);
-}
-function playDay(app: HTMLElement) {
-  if (playing) { stopTween(app); return; }
-  useRealClock = false; setPlaying(app, true);
-  frame(app, 5.2);
-  tweenTo(app, 22.4, 18000, k => 0.5 - Math.cos(Math.PI * k) / 2, () => setPlaying(app, false));
 }
 
 function nearest(hour: number) {
@@ -209,10 +201,6 @@ function wireHeroStatic(app: HTMLElement) {
   const hint = app.querySelector<HTMLElement>('#hint');
   if (hint) {
     hint.style.opacity = '1';
-    if (!reduceMotion() && !app.querySelector('#dayPlay')) {
-      hint.insertAdjacentHTML('afterend', '<button class="btn line daybtn" id="dayPlay" type="button" aria-pressed="false">▶ Watch the day</button>');
-      app.querySelector('#dayPlay')!.addEventListener('click', () => playDay(app));
-    }
   }
 }
 

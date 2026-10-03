@@ -52,7 +52,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: Escape closes drawer`, await p.locator('#overlay').isHidden());
 
   // other pages
-  for (const [r, sel, n] of [['/explore', '#exp .panel', 'explore'], ['/help', '#app details', 'help'], ['/story', '#app h1', 'story'], ['/subscribe', '#calc', 'subscribe'], ['/drops', '#voteBox', 'drops'], ['/gift', '#gAdd', 'gift'], ['/club', '#spend', 'club'], ['/wall', '#upForm', 'wall']]) {
+  for (const [r, sel, n] of [['/explore', '#exp .fl-card', 'explore'], ['/help', '#app details', 'help'], ['/story', '#app h1', 'story'], ['/subscribe', '#calc', 'subscribe'], ['/drops', '#voteBox', 'drops'], ['/gift', '#gAdd', 'gift'], ['/club', '#spend', 'club'], ['/wall', '#upForm', 'wall']]) {
     await p.goto(base + r); await p.waitForSelector(sel, { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(500);
     ok(`${label}: ${n} renders`, (await p.locator(sel).count()) > 0); await overflow(n); if (label === 'desktop' || n === 'explore') await shot('6-' + n);
   }

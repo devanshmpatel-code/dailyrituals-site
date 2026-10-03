@@ -29,16 +29,10 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
   // continuous blend + time-lapse
   const opsOf = () => p.evaluate(() => [...document.querySelectorAll('canvas.land')].map(c => Number(getComputedStyle(c).opacity)));
   ok('settled moment shows one dominant landscape', Math.max(...await opsOf()) > 0.95);
-  ok('Watch the day button exists', await p.locator('#dayPlay').count() === 1);
-  await p.locator('#dayPlay').click(); await p.waitForTimeout(6000);
-  const mid = await opsOf(); const lit = mid.filter(v => v > 0.05).length;
-  ok('time-lapse blends landscapes mid-way', lit >= 1, mid.map(v => v.toFixed(2)).join(','));
-  const t1 = await p.evaluate(() => document.querySelector('#clock, .clock, [data-clock]')?.textContent || '');
-  await p.waitForTimeout(1500);
-  const t2 = await p.evaluate(() => document.querySelector('#clock, .clock, [data-clock]')?.textContent || '');
-  ok('clock ticks during time-lapse', t1 !== t2, `${t1} -> ${t2}`);
-  await p.locator('.moments [data-jump="dawn"]').click(); await p.waitForTimeout(1600);
-  const dw = await opsOf(); ok('clicking a moment stops the time-lapse and settles', Math.max(...dw) > 0.95, dw.map(v => v.toFixed(2)).join(','));
+  await p.locator('.moments [data-jump="morning"]').click(); await p.waitForTimeout(550);
+  const mid = await opsOf(); ok('moving between moments blends two landscapes on the way', mid.filter(v => v > 0.05 && v < 0.95).length >= 1, mid.map(v => v.toFixed(2)).join(','));
+  await p.waitForTimeout(1400); const dw = await opsOf(); ok('then settles on one', Math.max(...dw) > 0.95, dw.map(v => v.toFixed(2)).join(','));
+  ok('no "Watch the day" button', await p.locator('#dayPlay').count() === 0);
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok('no sideways scroll', o <= 1, `${o}`);
   await ctx.close();
 }
@@ -46,7 +40,6 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto(base + '/'); await p.waitForSelector('#scene'); await p.waitForTimeout(400);
   ok('reduced motion: mountains and clouds do not animate', await p.evaluate(() => ['.c1', '.k1'].every(s => getComputedStyle(document.querySelector(s)).animationName === 'none')));
-  ok('reduced motion: no time-lapse button', await p.locator('#dayPlay').count() === 0);
   ok('reduced motion: birds and fireflies are not shown', await p.evaluate(() => getComputedStyle(document.querySelector('.b1')).display === 'none' && getComputedStyle(document.querySelector('.f1')).display === 'none'));
   await ctx.close();
 }

@@ -62,7 +62,8 @@ menuBtn.addEventListener('click', () => {
   menuBtn.setAttribute('aria-expanded', String(open));
   mnav.classList.toggle('open', open);
 });
-document.getElementById('clubPts')!.textContent = 'Join';
+document.getElementById('clubPts')!.textContent = LOYALTY_ENABLED ? 'Join' : 'Soon';
+if (!LOYALTY_ENABLED) document.body.classList.add('loyalty-off');
 
 // ---------- drafts toggle ----------
 const draftsToggle = document.getElementById('draftsToggle') as HTMLInputElement;

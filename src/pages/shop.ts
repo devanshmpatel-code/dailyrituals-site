@@ -59,8 +59,20 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   else list.sort((a, b) => order.indexOf(a.format) - order.indexOf(b.format) || a.scent.localeCompare(b.scent));
 
   const showConcepts = f === 'all' && m === 'all';
-  grid.innerHTML = list.map(i => cardHTML(i, i.inStock ? undefined : 'Sold out')).join('') + (showConcepts ? concepts : '');
+  const GROUP: Record<Format, [string, string]> = {
+    roller: ['Wear it', 'Fragrance rollers. Roll onto your wrists and carry the scent all day.'],
+    diffuser: ['Diffuse it', 'Mini diffusers. A quiet, steady scent for a desk, bedside or small room.'],
+    candle: ['Light it', 'Candles. For the moments you want to mark: home, evening, slowing down.'],
+    deodorant: ['Wear it daily', 'Natural deodorant in our signature scents.'],
+  };
+  const card = (i: Item) => cardHTML(i, i.inStock ? undefined : 'Sold out');
+  grid.classList.toggle('grouped', s === 'featured');
+  if (s === 'featured') {
+    const fmts = order.filter(fm => list.some(i => i.format === fm));
+    grid.innerHTML = fmts.map((fm, k) => { const g = list.filter(i => i.format === fm); return `<header class="ghead g${k % 4}"><span class="eyebrow">${GROUP[fm][0]}</span><h2>${g[0].formatLabel}s</h2><span class="gc">${g.length === 1 ? 'Choose your scent' : `${g.length} scents`}</span><p class="muted">${GROUP[fm][1]}</p></header>` + g.map(card).join(''); }).join('')
+      + (showConcepts ? `<header class="ghead soon"><span class="eyebrow">Coming soon</span><h2>Kits and boxes</h2><p class="muted">Ideas we are getting ready. Not in the store yet.</p></header>${concepts}` : '');
+  } else grid.innerHTML = list.map(card).join('') + (showConcepts ? concepts : '');
   if (!list.length) grid.insertAdjacentHTML('afterbegin', `<p class="muted" style="grid-column:1/-1">Nothing matches ${m !== 'all' ? MOODS[m].label.toLowerCase() : 'that filter'} right now.</p>`);
-  if (countEl) countEl.textContent = `${list.length} product${list.length === 1 ? '' : 's'} · Hover a product to see its scent family`;
+  if (countEl) countEl.textContent = `${list.length} product${list.length === 1 ? '' : 's'} · ${matchMedia('(hover: hover)').matches ? 'Hover' : 'Tap'} a product to see its scent family`;
   wireQuickAdd(grid, items);
 }

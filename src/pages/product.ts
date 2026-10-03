@@ -3,7 +3,7 @@ import { loadCatalogue, loadProduct, toItem, imgSrc, money, type Item } from '..
 import { cardHTML, fixImages, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
 import { canvasSlugToLive, wireQuickAdd, previewOff } from './shared';
-import { MOODS, type Format } from '../config';
+import { MOODS, LOYALTY_ENABLED, type Format } from '../config';
 
 // Copy from the canvas product boards (roller = Product, diffuser = Cart drawer board).
 const CANVAS_COPY: Partial<Record<Format, { about: string; use: string[]; best: string }>> = {
@@ -72,7 +72,8 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   // hotspots describe the roller bottle only
   if (it.format !== 'roller') { $('#hsLayer')?.remove(); $('.hs-tip')?.remove(); $('#mainWrap + p, .gallery + p')?.remove(); }
   else {
-    const tip = $('.hs-tip'); if (tip) tip.classList.add('d');
+    const tip = $('.hs-tip'); if (tip) tip.classList.add('d', 'confirm');
+    $('#mainWrap + p, .gallery + p')?.classList.add('confirm');
     app.querySelectorAll<HTMLButtonElement>('.hs').forEach(h => h.addEventListener('click', () => {
       app.querySelectorAll('.hs').forEach(x => x.setAttribute('aria-expanded', String(x === h)));
       const t = $('.hs-tip'); if (t) { t.style.top = `calc(${h.style.top} + 24px)`; t.style.left = `calc(${h.style.left} - 17px)`; t.querySelector('b')!.textContent = h.getAttribute('aria-label'); }
@@ -147,6 +148,8 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     addBtn.disabled = !inStock;
     addBtn.textContent = inStock ? `Add to cart · ${money(price * qty)}` : 'Sold out';
     const pts = $('.buy .points b'); if (pts) { pts.textContent = `${Math.floor(price * qty)} Ritual Points`; pts.classList.add('d'); }
+    // no Loyalty app yet: never promise points to customers
+    if (!LOYALTY_ENABLED) { const row = $('.buy .points span'); if (row && !row.dataset.fixed) { row.dataset.fixed = '1'; row.innerHTML = 'Made in small batches in British Columbia · Gift wrap available'; } }
   };
   $('#qd')!.addEventListener('click', () => { qty = Math.max(1, qty - 1); $('#qv')!.textContent = String(qty); refresh(); });
   $('#qi')!.addEventListener('click', () => { qty = Math.min(20, qty + 1); $('#qv')!.textContent = String(qty); refresh(); });

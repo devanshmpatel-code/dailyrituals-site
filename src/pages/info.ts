@@ -40,22 +40,35 @@ export function renderHelp(app: HTMLElement) {
 }
 
 export function renderStory(app: HTMLElement) {
-  app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px)">
-    ${head('Our story', 'Our <span class="it">story</span>', 'Clean products made with intention. Neuro coaching with Claire. Hand poured in small batches in British Columbia.')}
-    <div class="split" style="align-items:center">
-      <img class="dimg" src="/img/story.jpg" alt="Claire at work" style="border-radius:14px;width:100%;aspect-ratio:4/5;object-fit:cover">
-      <div style="display:flex;flex-direction:column;gap:16px;max-width:52ch">
-        <span class="eyebrow">Daily Rituals Co.</span>
-        <p class="d confirm" style="font-size:19px"><span>Daily Rituals Co. began with a simple idea: small, repeatable moments can change how a day feels. Each scent is made to mark one of those moments, from first light to the last hour of the evening.</span></p>
-        <p class="d confirm"><span>Claire's story, how the products are made and what the coaching practice is built on go here. Placeholder text until Claire writes it.</span></p>
-        <div class="cta"><a class="btn" href="#/shop">Shop the rituals</a><a class="btn line" href="#/coaching">Meet the coaching</a></div>
-      </div>
-    </div></div>`;
+  // Everything here is taken from what the site already says (coaching page, footer). Claire to expand it.
+  const beats: [string, string][] = [
+    ['Years of searching', 'Claire lived with chemical sensitivities for years.'],
+    ['A new way in', "With a doctor's guidance she discovered neuroplasticity and learned to rewire her brain's response."],
+    ['Learning to teach it', 'She trained as a neuro coach to share that knowledge.'],
+    ['Daily Rituals Co.', 'Clean products made with intention, hand poured in small batches in British Columbia, with coaching alongside.'],
+  ];
+  app.innerHTML = `<div class="story">
+    <section class="st-hero"><div class="wrap">
+      <div class="st-tx"><span class="small"><a href="#/">Home</a> <span class="muted">/ Our story</span></span><h1>Our <span class="it">story</span></h1>
+        <p class="lead">Clean products made with intention. Neuro coaching with Claire. Hand poured in small batches in British Columbia.</p></div>
+      <div class="st-ph"><img class="dimg" src="/img/story.jpg" alt="Candles and a fragrance roller from Daily Rituals Co."></div>
+    </div></section>
+    <section class="wrap st-path"><span class="eyebrow">How it began</span><h2>From one life changed <span class="it">to a daily practice.</span></h2>
+      <ol class="st-steps">${beats.map(([t, d], i) => `<li style="--i:${i}"><span class="st-dot" aria-hidden="true">${['\u263E', '\u2735', '\u2740', '\u2600'][i]}</span><b>${t}</b><p>${d}</p></li>`).join('')}</ol>
+      <p class="small muted d confirm">Draft from the coaching page text. Claire to add dates, detail and photos.</p></section>
+    <section class="st-quote"><div class="wrap"><blockquote>&ldquo;Others deserved access to the brain-change knowledge that transformed my life.&rdquo;<cite>Claire, neuro coach</cite></blockquote></div></section>
+    <section class="wrap st-vals"><div class="ways three">
+      <div class="st-v v1"><span class="eyebrow">Made with intention</span><h3>Clean, simple products</h3><p class="muted">Rollers, mini diffusers, candles and deodorant, each one made to mark a moment in your day.</p></div>
+      <div class="st-v v2"><span class="eyebrow">Small batch</span><h3>Hand poured in BC</h3><p class="muted">Made in small batches in British Columbia.</p></div>
+      <div class="st-v v3"><span class="eyebrow">Habits, made easier</span><h3>Coaching alongside</h3><p class="muted">The scents create a moment. Coaching with Claire helps you change what happens next.</p></div>
+    </div>
+    <div class="cta" style="justify-content:center;margin-top:36px"><a class="btn" href="#/shop">Shop the rituals</a><a class="btn line" href="#/coaching">Meet the coaching</a></div></section>
+  </div>`;
 }
 
 export function renderAccount(app: HTMLElement) {
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px);max-width:720px">
-    ${head('My account', 'My <span class="it">rituals</span>', 'Orders, saved details, Ritualist points and subscriptions will live here.')}
+    ${head('My account', 'My <span class="it">rituals</span>', 'Orders, saved details and subscriptions will live here.')}
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
       <span class="eyebrow">Coming with launch</span>
       <p>Sign-in is handled by a secure Wix page and is switched off in this private preview. <span class="d confirm">Wording to confirm.</span></p>
@@ -83,14 +96,13 @@ export async function renderExplore(app: HTMLElement, params: URLSearchParams = 
     list.forEach(i => byScent.set(i.scent, [...(byScent.get(i.scent) ?? []), i]));
     if (!byScent.size) return '';
     const rows = [...byScent].sort(([a], [b]) => a.localeCompare(b)).map(([scent, l]) =>
-      `<div class="panel" style="display:flex;flex-direction:column;gap:8px"><h3 style="font-size:24px">${esc(scent)}</h3>
-        <div class="chips">${l.sort((a, b) => a.format.localeCompare(b.format)).map(i =>
-          `<a class="chip" href="#/product/${i.slug}">${esc(FORMAT_LABEL[i.format])} · ${i.priceMin === i.priceMax ? money(i.priceMin) : `from ${money(i.priceMin)}`}</a>`).join('')}</div></div>`).join('');
-    return `<section style="margin-bottom:40px"><div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:14px">
-      ${swatch ? `<span class="swatch" style="background:${swatch};width:14px;height:14px;border-radius:50%;display:inline-block"></span>` : ''}
-      <h2 style="font-size:clamp(26px,3vw,36px)">${title}</h2>${link}</div><div class="ways">${rows}</div></section>`;
+      `<div class="fl-card"><h3>${esc(scent)}</h3>
+        <div class="fl-fmts">${l.sort((a, b) => a.format.localeCompare(b.format)).map(i =>
+          `<a href="#/product/${i.slug}"><span>${esc(FORMAT_LABEL[i.format])}</span><b>${i.priceMin === i.priceMax ? money(i.priceMin) : `from ${money(i.priceMin)}`}</b></a>`).join('')}</div></div>`).join('');
+    return `<section class="fl-group" style="--sw:${swatch ?? '#8C7A99'}"><div class="fl-head">
+      <span class="fl-dot" aria-hidden="true"></span><h2>${title}</h2>${link}</div><div class="fl-cards">${rows}</div></section>`;
   };
-  box.innerHTML = `<h2 style="font-size:clamp(28px,3.4vw,40px);margin:48px 0 20px">The full list</h2>` +
+  box.innerHTML = `<h2 class="fl-title">The full list</h2>` +
     (Object.keys(MOODS) as Mood[]).map(m => group(MOODS[m].label, MOODS[m].swatch, `<a class="small" href="#/shop?f=all&m=${m}&s=featured">Shop this mood</a>`, items.filter(i => i.mood === m))).join('') +
     group('More from the studio', null, '<a class="small" href="#/shop">Shop all</a>', items.filter(i => !i.mood));
 }

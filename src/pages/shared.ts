@@ -38,7 +38,12 @@ export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
   });
   root.querySelectorAll<HTMLButtonElement>('button[data-add]').forEach(b => {
     const live = canvasSlugToLive(items, b.dataset.add!);
-    if (!live) { b.addEventListener('click', previewOff('This item is not in the live store yet, so it')); return; }
+    if (!live) {
+      // not in the store yet: say so plainly and offer the Sunday note instead of a dead "add" button
+      b.textContent = 'Coming soon · get notified'; b.classList.add('soon');
+      b.addEventListener('click', () => { const f = document.getElementById('nemail'); if (f) { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); (f as HTMLInputElement).focus({ preventScroll: true }); } else previewOff('This item is not in the live store yet, so it')(); });
+      return;
+    }
     b.textContent = `Quick add · ${money(live.priceMin)}`;
     b.addEventListener('click', () => quickAdd(live));
   });
