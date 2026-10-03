@@ -1,0 +1,27 @@
+import { chromium } from 'playwright-core';
+import { setupMocks } from './mock.mjs';
+const base = 'http://localhost:4173/#';
+const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
+const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
+const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
+const errs = []; p.on('pageerror', e => errs.push(e.message));
+await p.goto(base + '/'); await p.waitForSelector('.jrail'); await p.waitForTimeout(1500);
+const cs = (sel, prop) => p.evaluate(([s, pr]) => { const e = document.querySelector(s); return e ? getComputedStyle(e)[pr] || getComputedStyle(e).getPropertyValue(pr) : null; }, [sel, prop]);
+for (const s of ['.night', '.club', '.repeat', '.giftsec']) ok(`home: ${s} fades into the page at its top and bottom`, /gradient/.test((await cs(s, 'maskImage')) ?? ''), '');
+ok('home: the first chapter eases down from the dark opening strip', /gradient/.test(await cs('.moment-shop', 'backgroundImage')));
+ok('home: the footer rises out of a soft fade', /gradient/.test(await p.evaluate(() => getComputedStyle(document.querySelector('footer'), '::before').backgroundImage)));
+const radii = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card .ph')].map(e => getComputedStyle(e).borderTopLeftRadius));
+ok('home: product pictures alternate arch and soft-window cutouts', new Set(radii).size >= 2 && radii.some(r => parseFloat(r) > 100), radii.join(' '));
+const plans = await p.evaluate(() => [...document.querySelectorAll('.plans .plan')].map(e => getComputedStyle(e).backgroundImage.includes('gradient')));
+ok('home: plan cards are tinted, none flat white', plans.length === 3 && plans.every(Boolean), plans.join(','));
+const discMask = await cs('.disc .ph', 'maskImage'); ok('home: the Discovery photo dissolves into its card', /gradient/.test(discMask ?? ''));
+const tiles = await p.evaluate(() => new Set([...document.querySelectorAll('.wall .tile img')].map(e => getComputedStyle(e).borderTopLeftRadius)).size);
+ok('home: Ritual Wall photos use a mix of cutouts', tiles >= 3, `${tiles} shapes`);
+await p.goto(base + '/coaching'); await p.waitForSelector('.c-hero'); await p.waitForTimeout(600);
+ok('coaching: the green hero fades into the page', /gradient/.test(await cs('.c-hero', 'maskImage')));
+ok('coaching: the hero picture has a leaf cutout', parseFloat(await cs('.c-hero .ph', 'borderTopLeftRadius')) > 100);
+await p.goto(base + '/product/cabana'); await p.waitForSelector('.mainimg'); await p.waitForTimeout(500);
+ok('product: the main photo has soft rounded corners', parseFloat(await cs('.mainimg', 'borderTopLeftRadius')) >= 24);
+for (const r of ['/', '/shop', '/coaching', '/subscribe', '/drops']) { await p.goto(base + r); await p.waitForTimeout(900); const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${r}: no sideways scroll`, o <= 1, `${o}`); }
+ok('no JS errors', errs.length === 0, errs.join('|'));
+await b.close(); process.exit(res.every(Boolean) ? 0 : 1);
