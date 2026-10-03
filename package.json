@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test:e2e": "node e2e/journey.mjs && node e2e/leak.mjs && node e2e/tools.mjs"
+    "test:e2e": "node e2e/journey.mjs && node e2e/leak.mjs && node e2e/tools.mjs && node e2e/time.mjs && node e2e/loop.mjs"
   },
   "devDependencies": {
     "typescript": "~6.0.2",

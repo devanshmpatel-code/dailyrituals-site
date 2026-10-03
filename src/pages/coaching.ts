@@ -1,4 +1,5 @@
 import Coaching from '../canvas/pages/Coaching.html?raw';
+import { wireLoop } from './loop';
 import { loadServices, imgSrc, money, wix, saveTokens } from '../wix';
 import { fixImages, wireCommon, esc, errorBox, toast } from '../ui';
 import { navigate, routeUrl } from '../router';
@@ -16,6 +17,7 @@ export async function renderCoaching(app: HTMLElement) {
   app.innerHTML = fixImages(Coaching);
   wireCommon(app);
   wireCheckin(app);
+  wireLoop(app);
 
   const ways = [...app.querySelectorAll<HTMLAnchorElement>('.ways .way')];
   let list: any[] = [];

@@ -93,3 +93,20 @@ body:not(.show-drafts) .confirm { display: none !important; }
 .sug span { display: flex; flex-direction: column; min-width: 0; }
 .sug em { font-style: normal; color: var(--ink-2); font-size: 13px; }
 .sug .btn { padding: 8px 16px; min-height: 40px; }
+
+/* Coaching: why patterns repeat */
+.loop .larc { fill: none; stroke-width: 3; stroke-dasharray: 7 9; animation: dash 1.2s linear infinite; }
+.loop .lnode { cursor: pointer; outline: none; }
+.loop .lnode circle { transition: fill .25s, r .25s; }
+.loop .lnode text { font-family: var(--body); font-weight: 600; font-size: 15px; fill: var(--ink); pointer-events: none; }
+.loop .lnode.on text { fill: #fff; }
+.loop .lnode .lnum { font: 500 12px var(--mono, "DM Mono", monospace); fill: var(--ink-2); }
+.loop .lnode.on .lnum { fill: var(--ink-2); }
+.loop .lnode:focus-visible circle:first-child { stroke-width: 5; }
+.loop .lnode:hover circle:first-child { filter: drop-shadow(0 4px 10px rgba(42, 31, 51, .18)); }
+.loop .lcenter { font-family: var(--display); font-size: 24px; fill: var(--ink); }
+.loop .lnote { font-size: 13px; fill: var(--ink-2); }
+.loopnav { display: flex; gap: 10px; flex-wrap: wrap; }
+.loopnav .btn { min-height: 44px; }
+.loopnav .btn[disabled] { opacity: .45; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .loop .larc { animation: none; } }
