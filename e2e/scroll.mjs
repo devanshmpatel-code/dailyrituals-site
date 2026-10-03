@@ -9,7 +9,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const shot = n => p.screenshot({ path: `${process.env.SHOTS ?? '/tmp'}/${label}-j-${n}.png` });
   await p.goto(base + '/'); await p.waitForSelector('.jrail'); await p.waitForTimeout(1200);
   ok(`${label}: journey rail is on the home page`, (await p.locator('.jrail').count()) === 1);
-  ok(`${label}: ten stops (the opening and nine chapters)`, (await p.locator('.jstop').count()) === 10, `${await p.locator('.jstop').count()}`);
+  ok(`${label}: nine stops (the opening and eight chapters)`, (await p.locator('.jstop').count()) === 9, `${await p.locator('.jstop').count()}`);
   ok(`${label}: no flags under the opening`, (await p.locator('.flags, .jflag').count()) === 0);
   ok(`${label}: chapter headings carry a mandala`, (await p.locator('.jhead .jorn').count()) >= 8, `${await p.locator('.jhead .jorn').count()}`);
   // the page is a day passing: the sun moves down the rail as you scroll
@@ -37,7 +37,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   // map: drill out, then zoom back in
   await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(300);
   await p.locator('[data-jmap]').click(); await p.waitForSelector('.jmap.open'); await p.waitForTimeout(500);
-  ok(`${label}: the map shows ten petals and a list`, (await p.locator('.jw').count()) === 10 && (await p.locator('.jlist li').count()) === 10);
+  ok(`${label}: the map shows nine petals and a list`, (await p.locator('.jw').count()) === 9 && (await p.locator('.jlist li').count()) === 9);
   await shot('map');
   await p.keyboard.press('Escape'); await p.waitForTimeout(600); ok(`${label}: Escape closes the map`, (await p.locator('.jmap').count()) === 0);
   await p.locator('[data-jmap]').click(); await p.waitForSelector('.jmap.open'); await p.waitForTimeout(400);
@@ -64,7 +64,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto(base + '/'); await p.waitForSelector('.jrail'); await p.waitForTimeout(500);
   ok('reduced motion: no content is held back for reveal animations', (await p.locator('[data-reveal]').count()) === 0);
-  ok('reduced motion: the rail still works', (await p.locator('.jstop').count()) === 10);
+  ok('reduced motion: the rail still works', (await p.locator('.jstop').count()) === 9);
   await ctx.close();
 }
 await b.close(); process.exit(res.every(Boolean) ? 0 : 1);

@@ -42,6 +42,7 @@ document.querySelector('footer')?.insertAdjacentHTML('beforebegin', lotusDivider
 growTree();
 
 // anything marked data-breathe opens the breathing pause
+document.addEventListener('click', e => { const sc = (e.target as Element | null)?.closest?.('[data-scrollto]') as HTMLElement | null; if (sc) { e.preventDefault(); const el = document.getElementById(sc.dataset.scrollto ?? ''); el?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }); el?.focus?.(); } });
 document.addEventListener('click', e => { const t = (e.target as Element | null)?.closest?.('[data-breathe]') as HTMLElement | null; if (t) { e.preventDefault(); openBreathe(t); } });
 
 // singing-bowl ripple on buttons

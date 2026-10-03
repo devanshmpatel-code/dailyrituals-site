@@ -41,7 +41,7 @@ export function renderHelp(app: HTMLElement) {
 
 export function renderStory(app: HTMLElement) {
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px)">
-    ${head('Our story', 'Our <span class="it">story</span>', 'Clean products made with intention. Coaching rooted in science. Hand poured in small batches in British Columbia.')}
+    ${head('Our story', 'Our <span class="it">story</span>', 'Clean products made with intention. Neuro coaching with Claire. Hand poured in small batches in British Columbia.')}
     <div class="split" style="align-items:center">
       <img class="dimg" src="/img/story.jpg" alt="Claire at work" style="border-radius:14px;width:100%;aspect-ratio:4/5;object-fit:cover">
       <div style="display:flex;flex-direction:column;gap:16px;max-width:52ch">
