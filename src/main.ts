@@ -21,7 +21,7 @@ import { renderStatic, renderMissing, hasStatic } from './pages/static';
 const root = document.getElementById('root')!;
 root.innerHTML = `
   <div class="preview-bar" role="note"><span><b>Private preview</b> · Live catalogue, photos and booking times from dailyritualsco.com. ${WRITES_ENABLED ? 'Checkout and booking are ON.' : 'Checkout, booking and sign-ups are switched off.'}</span>
-    <label class="drafts-toggle"><input type="checkbox" id="draftsToggle"> Show drafts for Claire</label></div>
+    <span class="pb-toggles"><label class="drafts-toggle"><input type="checkbox" id="gradeToggle" checked> Photo grade</label><label class="drafts-toggle"><input type="checkbox" id="draftsToggle"> Show drafts for Claire</label></span></div>
   ${fixImages(Header)}
   <main id="app" tabindex="-1"></main>
   ${Footer}
@@ -64,6 +64,13 @@ try { draftsToggle.checked = localStorage.getItem('dr_drafts') === '1'; } catch 
 const applyDrafts = () => document.body.classList.toggle('show-drafts', draftsToggle.checked);
 draftsToggle.addEventListener('change', () => { applyDrafts(); try { localStorage.setItem('dr_drafts', draftsToggle.checked ? '1' : '0'); } catch { /* ignore */ } });
 applyDrafts();
+
+// photo grade: one warm, soft tone over every photograph so pictures shot on different days sit together (can be compared with and without)
+const gradeToggle = document.getElementById('gradeToggle') as HTMLInputElement;
+try { gradeToggle.checked = localStorage.getItem('dr_grade') !== '0'; } catch { /* ignore */ }
+const applyGrade = () => document.body.classList.toggle('no-grade', !gradeToggle.checked);
+gradeToggle.addEventListener('change', () => { applyGrade(); try { localStorage.setItem('dr_grade', gradeToggle.checked ? '1' : '0'); } catch { /* ignore */ } });
+applyGrade();
 
 // ---------- cart drawer ----------
 const overlay = document.getElementById('overlay')!;

@@ -17,6 +17,11 @@ ok('home: plan cards are tinted, none flat white', plans.length === 3 && plans.e
 const discMask = await cs('.disc .ph', 'maskImage'); ok('home: the Discovery photo dissolves into its card', /gradient/.test(discMask ?? ''));
 const tiles = await p.evaluate(() => new Set([...document.querySelectorAll('.wall .tile img')].map(e => getComputedStyle(e).borderTopLeftRadius)).size);
 ok('home: Ritual Wall photos use a mix of cutouts', tiles >= 3, `${tiles} shapes`);
+const f = () => p.evaluate(() => getComputedStyle(document.querySelector('#msGrid .card .ph img.main, .stack img')).filter);
+ok('photo grade is on by default', /saturate/.test(await f()), await f());
+await p.locator('#gradeToggle').uncheck(); await p.waitForTimeout(200); ok('the Photo grade switch turns it off', (await f()) === 'none', await f());
+await p.reload(); await p.waitForSelector('#gradeToggle'); await p.waitForTimeout(500); ok('and the choice is remembered', !(await p.locator('#gradeToggle').isChecked()));
+await p.locator('#gradeToggle').check();
 await p.goto(base + '/coaching'); await p.waitForSelector('.c-hero'); await p.waitForTimeout(600);
 ok('coaching: the green hero fades into the page', /gradient/.test(await cs('.c-hero', 'maskImage')));
 ok('coaching: the hero picture has a leaf cutout', parseFloat(await cs('.c-hero .ph', 'borderTopLeftRadius')) > 100);

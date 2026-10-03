@@ -401,3 +401,12 @@ footer::before { content: ""; position: absolute; left: 0; right: 0; top: -90px;
 .mainimg { border-radius: 30px; overflow: hidden; box-shadow: var(--lift); }
 .thumbs button { border-radius: 16px; border-width: 2px; }
 .thumbs button[aria-pressed="true"] { border-color: var(--euc); }
+
+/* ============ Photo grade: a non-destructive, shared tone for every picture ============
+   Each source photo keeps its own backdrop; this softens saturation, adds a touch of warmth and a faint linen-to-plum wash so the
+   set sits together. It is a stand-in for editing the originals (see PHOTO-BRIEF.md) and can be switched off in the preview bar. */
+.pb-toggles { display: inline-flex; gap: 8px 22px; flex-wrap: wrap; align-items: center; }
+body:not(.no-grade) :is(.card .ph img, .stack img, .wall .tile img, .path2 .p-img img, .mainimg img, .thumbs img, .disc .ph img, .plan img, .drop-img img, .sp img, .c-hero .ph img, .check-in .path img) { filter: saturate(.92) contrast(1.03) sepia(.07) hue-rotate(-3deg); }
+body:not(.no-grade) :is(.card .ph, .stack, .wall .tile, .path2 .p-img, .mainimg, .disc .ph, .c-hero .ph, .plan) { --g: 1; }
+body:not(.no-grade) :is(.card .ph, .stack, .path2 .p-img, .mainimg, .disc .ph, .c-hero .ph)::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: soft-light; background: linear-gradient(180deg, rgba(247, 242, 234, .16), rgba(74, 48, 80, .10)); }
+.card .ph .qa, .card .ph .badge { z-index: 3; }
