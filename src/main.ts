@@ -128,6 +128,7 @@ async function route() {
   });
   mnav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false');
   if (!overlay.hidden) closeCart();
+  document.body.dataset.page = seg || 'home';
   document.title = PAGE_TITLES[seg] ? `${PAGE_TITLES[seg]} · Daily Rituals Co.` : 'Daily Rituals Co.';
   window.scrollTo(0, 0);
 
