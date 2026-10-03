@@ -28,5 +28,17 @@ ok('coaching: the hero picture has a leaf cutout', parseFloat(await cs('.c-hero 
 await p.goto(base + '/product/cabana'); await p.waitForSelector('.mainimg'); await p.waitForTimeout(500);
 ok('product: the main photo has soft rounded corners', parseFloat(await cs('.mainimg', 'borderTopLeftRadius')) >= 24);
 for (const r of ['/', '/shop', '/coaching', '/subscribe', '/drops']) { await p.goto(base + r); await p.waitForTimeout(900); const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${r}: no sideways scroll`, o <= 1, `${o}`); }
+ok('product: photo pins are hidden from customers until checked against real photos', await (async () => { await p.goto(base + '/product/cabana-fragrance-roller'); await p.waitForTimeout(1200); return p.evaluate(() => [...document.querySelectorAll('.hs')].every(e => getComputedStyle(e).display === 'none')); })());
+// where the breathing moment lives in the story
+await p.goto(base + '/'); await p.waitForSelector('.breathband'); await p.waitForTimeout(800);
+const order = await p.evaluate(() => { const secs = [...document.querySelectorAll('#app > section, #app > div')].map(e => e.className || e.id); return secs; });
+const bi = order.findIndex(c => /breathband/.test(c)), ms = order.findIndex(c => /moment-shop/.test(c));
+ok('home: a breathing pause sits between the first chapter and the Discovery Kit', bi === ms + 1, order.slice(0, 6).join(' | '));
+await p.locator('.breathband [data-breathe]').click(); await p.waitForSelector('.jbreathe.open'); ok('home: the pause opens the breathing screen', true); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+await p.goto(base + '/coaching'); await p.waitForSelector('[data-breathe]'); await p.locator('.c-hero [data-breathe]').click(); await p.waitForSelector('.jbreathe.open'); ok('coaching: one mindful minute is offered before the discovery call', true); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+await p.goto(base + '/order-confirmed'); await p.waitForSelector('[data-breathe]'); await p.locator('main [data-breathe]').click(); await p.waitForSelector('.jbreathe.open'); ok('order confirmed: a breath while the order is packed', true); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+await p.goto(base + '/shop'); await p.reload(); await p.waitForSelector('#skipBtn'); await p.waitForTimeout(900); await p.keyboard.press('Tab'); ok('the skip link is the first thing a keyboard user reaches', await p.evaluate(() => document.activeElement?.id === 'skipBtn'));
+await p.keyboard.press('Enter'); ok('and it moves focus to the page content', await p.evaluate(() => document.activeElement?.id === 'app'));
+ok('headings never skip a level for screen readers', await p.evaluate(() => { let prev = 0, bad = 0; document.querySelectorAll('main h1,main h2,main h3,main h4').forEach(h => { const l = Number(h.getAttribute('aria-level') || h.tagName[1]); if (prev && l > prev + 1) bad++; prev = l; }); return bad === 0; }));
 ok('no JS errors', errs.length === 0, errs.join('|'));
 await b.close(); process.exit(res.every(Boolean) ? 0 : 1);

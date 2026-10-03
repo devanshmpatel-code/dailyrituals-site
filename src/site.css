@@ -410,3 +410,21 @@ body:not(.no-grade) :is(.card .ph img, .stack img, .wall .tile img, .path2 .p-im
 body:not(.no-grade) :is(.card .ph, .stack, .wall .tile, .path2 .p-img, .mainimg, .disc .ph, .c-hero .ph, .plan) { --g: 1; }
 body:not(.no-grade) :is(.card .ph, .stack, .path2 .p-img, .mainimg, .disc .ph, .c-hero .ph)::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: soft-light; background: linear-gradient(180deg, rgba(247, 242, 234, .16), rgba(74, 48, 80, .10)); }
 .card .ph .qa, .card .ph .badge { z-index: 3; }
+
+/* ============ Polish from the site-wide review ============ */
+.skip { position: absolute; left: -9999px; top: 8px; z-index: 200; background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 600; border: 0; cursor: pointer; }
+.skip:focus { left: 12px; outline: 3px solid var(--marigold); }
+.card .meta { flex-wrap: wrap; column-gap: 10px; }
+.steps3 > div:nth-child(1) { background: linear-gradient(155deg, var(--tint-sage), #F1F5F2); }
+.steps3 > div:nth-child(2) { background: linear-gradient(155deg, var(--tint-butter), #FBF3E2); }
+.steps3 > div:nth-child(3) { background: linear-gradient(155deg, var(--tint-blush), #F9ECE6); }
+.breathband { padding-block: clamp(28px, 4vw, 56px); }
+.bb { display: flex; align-items: center; gap: clamp(16px, 3vw, 36px); flex-wrap: wrap; padding: clamp(20px, 3vw, 34px) clamp(22px, 4vw, 48px); border-radius: 56px 12px 56px 12px; background: linear-gradient(150deg, var(--tint-sage), #EEF3EF); box-shadow: var(--lift); color: var(--ink); }
+.bb svg { color: var(--euc); flex: none; } .bb > div { flex: 1 1 280px; min-width: 0; }
+.bb h2 { font-size: clamp(26px, 3.2vw, 40px); margin: 0 0 4px; } .bb p { margin: 0; }
+@media (max-width: 820px) {
+  .chip, button[data-heart], .qty button, .jbtn { min-height: 44px; min-width: 44px; }
+  .jbtn { width: 44px; height: 44px; } .bb { border-radius: 36px 10px 36px 10px; }
+}
+.hs { min-width: 44px; min-height: 44px; }
+.c-hero .linkbtn, .c-hero button[data-breathe] { display: inline-flex; align-items: center; min-height: 44px; }

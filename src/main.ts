@@ -9,7 +9,7 @@ import { fixImages, esc, toast } from './ui';
 import { getLines, count, subtotal, setQty, onCart, checkout, add } from './cart';
 import { currentRoute, onRoute, installLinkHandling } from './router';
 import { renderHome } from './pages/home';
-import { unmountJourney } from './pages/journey';
+import { unmountJourney, openBreathe } from './pages/journey';
 import { decoratePage } from './pages/calm';
 import { treeSVG, lotusDivider } from './pages/symbols';
 import { renderShop } from './pages/shop';
@@ -20,6 +20,7 @@ import { renderStatic, renderMissing, hasStatic } from './pages/static';
 
 const root = document.getElementById('root')!;
 root.innerHTML = `
+  <button class="skip" id="skipBtn">Skip to content</button>
   <div class="preview-bar" role="note"><span><b>Private preview</b> · Live catalogue, photos and booking times from dailyritualsco.com. ${WRITES_ENABLED ? 'Checkout and booking are ON.' : 'Checkout, booking and sign-ups are switched off.'}</span>
     <span class="pb-toggles"><label class="drafts-toggle"><input type="checkbox" id="gradeToggle" checked> Photo grade</label><label class="drafts-toggle"><input type="checkbox" id="draftsToggle"> Show drafts for Claire</label></span></div>
   ${fixImages(Header)}
@@ -28,6 +29,7 @@ root.innerHTML = `
   <div id="overlay" hidden><div class="scrim" data-x></div>${Drawer}</div>`;
 
 const app = document.getElementById('app')!;
+document.getElementById('skipBtn')!.addEventListener('click', () => { app.focus(); app.scrollIntoView({ block: 'start' }); });
 
 // the tree of life behind every page: canopy at the top of the page, trunk through the middle, roots at the bottom
 const treeBg = document.createElement('div'); treeBg.className = 'treebg'; treeBg.setAttribute('aria-hidden', 'true'); treeBg.innerHTML = treeSVG();
@@ -38,6 +40,9 @@ window.addEventListener('scroll', () => { if (!treeTick) { treeTick = true; requ
 window.addEventListener('resize', growTree);
 document.querySelector('footer')?.insertAdjacentHTML('beforebegin', lotusDivider());
 growTree();
+
+// anything marked data-breathe opens the breathing pause
+document.addEventListener('click', e => { const t = (e.target as Element | null)?.closest?.('[data-breathe]') as HTMLElement | null; if (t) { e.preventDefault(); openBreathe(t); } });
 
 // singing-bowl ripple on buttons
 document.addEventListener('pointerdown', e => {

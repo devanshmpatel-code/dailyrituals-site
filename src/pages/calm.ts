@@ -14,8 +14,19 @@ function nowMoment() {
   return MOMENTS.reduce((a, b) => (dist(b.hour, h) < dist(a.hour, h) ? b : a));
 }
 
+/** Keep heading levels in order for screen readers without changing how anything looks. */
+function normalizeHeadings(root: HTMLElement) {
+  let prev = 0;
+  root.querySelectorAll<HTMLElement>('h1, h2, h3, h4').forEach(h => {
+    const level = Number(h.getAttribute('aria-level') || h.tagName[1]);
+    if (prev && level > prev + 1) h.setAttribute('aria-level', String(prev + 1));
+    prev = Number(h.getAttribute('aria-level') || h.tagName[1]);
+  });
+}
+
 export function decoratePage(app: HTMLElement, seg: string) {
   swapRenders(app);
+  normalizeHeadings(app);
   document.querySelectorAll('.jfab').forEach(n => n.remove());
   io?.disconnect(); io = null;
   if (seg === '') return; // the home page has its own journey
