@@ -17,7 +17,7 @@ for (const [hhmm, key, name] of cases) {
   ok(`${hhmm}: clock shows the visitor's real time ${h12}`, clock.includes(h12), clock);
   ok(`${hhmm}: greeting agrees`, new RegExp(Number(hhmm.slice(0, 2)) < 12 ? 'Good morning' : Number(hhmm.slice(0, 2)) < 17 ? 'Good afternoon' : 'Good evening').test(greet), greet);
   if (hhmm === '17:50') {
-    await p.locator('.moments [data-jump="night"]').click(); await p.waitForTimeout(500);
+    await p.locator('.moments [data-jump="night"]').click(); await p.waitForTimeout(1800);
     const c2 = (await p.locator('#dClock').innerText()).replace(/\s+/g, ' ');
     ok('after choosing Night the clock shows the moment time', /9:30/.test(c2) && /night/i.test(c2), c2);
     await p.screenshot({ path: `${process.env.SHOTS ?? '/tmp'}/hero-night.png` });

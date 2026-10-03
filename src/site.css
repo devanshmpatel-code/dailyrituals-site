@@ -428,3 +428,8 @@ body:not(.no-grade) :is(.card .ph, .stack, .path2 .p-img, .mainimg, .disc .ph, .
 }
 .hs { min-width: 44px; min-height: 44px; }
 .c-hero .linkbtn, .c-hero button[data-breathe] { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* the continuous day */
+.land { transition: none; }
+.scene.has-photo .land { opacity: 0 !important; }
+.dayhero .daybtn { display: flex; margin: 8px auto 0; min-height: 44px; padding: 0 20px; font-size: 14px; color: inherit; border-color: currentColor; background: transparent; }

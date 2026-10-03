@@ -1,5 +1,6 @@
-import type { Moment } from '../config';
+import { MOMENTS } from '../config';
 import { drawLandscape } from './landscape';
+import type { Look } from './daycycle';
 
 // A layered landscape behind the home hero. Mountains drift slowly, clouds and mist pass through, birds fly in the
 // morning and evening, and at night there are stars (from the hero), a moon and fireflies. Colours per moment live in config.
@@ -13,18 +14,14 @@ export function sceneHTML(): string {
     <div class="sunorb" id="sunorb"></div>
     <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
     <img class="scenephoto" id="scenePhoto" alt="" hidden>
-    <canvas class="land la on" id="landA"></canvas><canvas class="land lb" id="landB"></canvas>
+    ${MOMENTS.map(m => `<canvas class="land" data-k="${m.key}"></canvas>`).join('')}
     <div class="mist k1"></div><div class="mist k2"></div>
     ${[1, 2, 3, 4, 5].map(bird).join('')}${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(fly).join('')}</div>`;
 }
 
-let current: Moment | null = null, resizeTimer = 0, onA = true;
-function paint(app: HTMLElement, m: Moment, instant: boolean) {
-  const a = app.querySelector<HTMLCanvasElement>('#landA'), b = app.querySelector<HTMLCanvasElement>('#landB');
-  if (!a || !b) return;
-  const target = instant ? (onA ? a : b) : (onA ? b : a), other = target === a ? b : a;
-  drawLandscape(target, { sky: m.sky, land: m.land, orb: m.orb, dark: m.dark });
-  target.classList.add('on'); if (!instant) { other.classList.remove('on'); onA = target === a; }
+let started = false, resizeTimer = 0, photoKey = '';
+function paintAll(app: HTMLElement) {
+  MOMENTS.forEach(m => { const c = app.querySelector<HTMLCanvasElement>(`canvas.land[data-k="${m.key}"]`); if (c) drawLandscape(c, { sky: m.sky, land: m.land, orb: m.orb, dark: m.dark }); });
 }
 
 /** If a real photograph exists at /img/scenes/<moment>.jpg it is used instead of the generated landscape. */
@@ -37,18 +34,15 @@ function tryPhoto(sc: HTMLElement, key: string) {
   img.src = `/img/scenes/${key}.jpg`;
 }
 
-export function applyScene(app: HTMLElement, m: Moment) {
+/** Show the landscape for any hour of the day: the two neighbouring moments cross-fade by how far along the hour is. */
+export function setLook(app: HTMLElement, L: Look) {
   const sc = app.querySelector<HTMLElement>('#scene');
   if (!sc) return;
-  if (!current) {
-    window.addEventListener('resize', () => { window.clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => { if (current) paint(app, current, true); }, 220); });
-  }
-  const first = !current; current = m;
-  paint(app, m, first);
-  tryPhoto(sc, m.key);
-  sc.style.setProperty('--orb', m.orb);
-  const n = parseInt(m.orb.slice(1), 16); // same colour as r,g,b so the glow can fade to a transparent version of itself
-  sc.style.setProperty('--orb-rgb', `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`);
+  if (!started) { started = true; paintAll(app); window.addEventListener('resize', () => { window.clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => paintAll(app), 220); }); }
+  sc.querySelectorAll<HTMLCanvasElement>('canvas.land').forEach(c => { c.style.opacity = c.dataset.k === L.a.key && c.dataset.k === L.b.key ? '1' : c.dataset.k === L.a.key ? String(1 - L.t) : c.dataset.k === L.b.key ? String(L.t) : '0'; });
+  sc.style.setProperty('--orb', L.orb);
+  sc.style.setProperty('--orb-rgb', L.orbRgb.join(', '));
+  if (L.nearest.key !== photoKey) { photoKey = L.nearest.key; tryPhoto(sc, photoKey); }
 }
 
 /** Put the sun (or moon) where the dial's sun is: x and y are the dial's own coordinates (0 to 1000 wide). */

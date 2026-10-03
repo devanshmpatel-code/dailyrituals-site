@@ -7,10 +7,10 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
 {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto(base + '/'); await p.waitForSelector('#scene'); await p.waitForTimeout(500);
-  ok('the landscape is drawn on canvases (not flat vector shapes)', (await p.locator('#scene canvas.land').count()) === 2);
+  ok('the landscape is drawn on canvases (not flat vector shapes)', (await p.locator('#scene canvas.land').count()) === 5);
   const fills = []; for (const k of ['dawn', 'morning', 'midday', 'golden', 'night']) {
-    await p.locator(`.moments [data-jump="${k}"]`).click(); await p.waitForTimeout(1500);
-    fills.push(await p.evaluate(() => { const c = document.querySelector('canvas.land.on'); const d = c.getContext('2d').getImageData(Math.floor(c.width * .5), Math.floor(c.height * .5), 1, 1).data; return d.slice(0, 3).join(','); }));
+    await p.locator(`.moments [data-jump="${k}"]`).click(); await p.waitForTimeout(2600);
+    fills.push(await p.evaluate(() => { const cs=[...document.querySelectorAll('canvas.land')]; const c = cs.sort((a,b)=>Number(getComputedStyle(b).opacity)-Number(getComputedStyle(a).opacity))[0]; const d = c.getContext('2d').getImageData(Math.floor(c.width * .5), Math.floor(c.height * .5), 1, 1).data; return d.slice(0, 3).join(','); }));
     const birds = await op(p, '.b1'), ff = await op(p, '.f1'), mist = await op(p, '.k1');
     if (k === 'morning') ok('morning: birds are flying', birds > 0.5, `${birds}`);
     if (k === 'golden') ok('golden hour: birds are flying', birds > 0.5, `${birds}`);
@@ -26,6 +26,19 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
   ok('the dial sun becomes a moon at night', (await p.evaluate(() => document.getElementById('sunC').getAttribute('fill'))) !== '#FFC37A');
   await p.locator('.moments [data-jump="night"]').click();
   ok('night buttons are readable (light text)', await p.evaluate(() => { const c = getComputedStyle(document.querySelector('.dayhero .btn.line')).color; return c !== getComputedStyle(document.querySelector('.dayhero')).backgroundColor && /24[0-9]|23[0-9]/.test(c); }), await p.evaluate(() => getComputedStyle(document.querySelector('.dayhero .btn.line')).color));
+  // continuous blend + time-lapse
+  const opsOf = () => p.evaluate(() => [...document.querySelectorAll('canvas.land')].map(c => Number(getComputedStyle(c).opacity)));
+  ok('settled moment shows one dominant landscape', Math.max(...await opsOf()) > 0.95);
+  ok('Watch the day button exists', await p.locator('#dayPlay').count() === 1);
+  await p.locator('#dayPlay').click(); await p.waitForTimeout(6000);
+  const mid = await opsOf(); const lit = mid.filter(v => v > 0.05).length;
+  ok('time-lapse blends landscapes mid-way', lit >= 1, mid.map(v => v.toFixed(2)).join(','));
+  const t1 = await p.evaluate(() => document.querySelector('#clock, .clock, [data-clock]')?.textContent || '');
+  await p.waitForTimeout(1500);
+  const t2 = await p.evaluate(() => document.querySelector('#clock, .clock, [data-clock]')?.textContent || '');
+  ok('clock ticks during time-lapse', t1 !== t2, `${t1} -> ${t2}`);
+  await p.locator('.moments [data-jump="dawn"]').click(); await p.waitForTimeout(1600);
+  const dw = await opsOf(); ok('clicking a moment stops the time-lapse and settles', Math.max(...dw) > 0.95, dw.map(v => v.toFixed(2)).join(','));
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok('no sideways scroll', o <= 1, `${o}`);
   await ctx.close();
 }
@@ -33,6 +46,7 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto(base + '/'); await p.waitForSelector('#scene'); await p.waitForTimeout(400);
   ok('reduced motion: mountains and clouds do not animate', await p.evaluate(() => ['.c1', '.k1'].every(s => getComputedStyle(document.querySelector(s)).animationName === 'none')));
+  ok('reduced motion: no time-lapse button', await p.locator('#dayPlay').count() === 0);
   ok('reduced motion: birds and fireflies are not shown', await p.evaluate(() => getComputedStyle(document.querySelector('.b1')).display === 'none' && getComputedStyle(document.querySelector('.f1')).display === 'none'));
   await ctx.close();
 }

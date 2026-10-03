@@ -3,7 +3,8 @@ import { MOMENTS, MOODS, NEXT_DROP_ISO, type Moment, type MomentKey } from '../c
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
-import { sceneHTML, applyScene, placeOrb } from './scene';
+import { sceneHTML, setLook, placeOrb } from './scene';
+import { look } from './daycycle';
 import { mountJourney } from './journey';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
@@ -73,19 +74,12 @@ function pairFor(m: Moment) {
   };
 }
 
-function setMoment(app: HTMLElement, m: Moment, animate = true) {
+function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: number) {
   const hero = app.querySelector<HTMLElement>('#day');
   if (!hero) return;
   hero.dataset.m = m.key;
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const sky = app.querySelector<HTMLElement>('#sky')!;
-  sky.style.transition = animate && !reduce ? 'background 600ms ease' : 'none';
-  sky.style.background = `linear-gradient(160deg, ${m.sky[0]} 0%, ${m.sky[1]} 60%, ${m.sky[2]} 100%)`;
-  applyScene(app, m);
-  app.querySelector('#sunC')?.setAttribute('fill', m.dark ? m.orb : '#FFC37A');
-  const stars = app.querySelector<HTMLElement>('#stars');
-  if (stars) stars.style.opacity = m.dark ? '1' : '0';
-  hero.style.color = m.dark ? '#EEE8F6' : 'rgb(35, 26, 43)';
+  applyLook(app, lookHour ?? (useRealClock ? hourNow() : m.hour));
+  hero.dataset.m = m.key;
 
   const clock = app.querySelector('#dClock');
   if (clock) {
@@ -118,14 +112,63 @@ function setMoment(app: HTMLElement, m: Moment, animate = true) {
     });
   }
 
-  const sunHour = useRealClock ? hourNow() : m.hour;
-  const t = tFor(sunHour >= 22 || sunHour < 6 ? (sunHour < 6 ? 0 : 1) : sunHour);
-  const pt = svgPoint(t);
-  app.querySelector('#sunG')?.setAttribute('transform', `translate(${pt.x},${pt.y})`);
-  placeOrb(app, pt.x, pt.y);
+  moveSun(app, lookHour ?? (useRealClock ? hourNow() : m.hour));
   app.querySelector('#arc')?.setAttribute('aria-valuenow', m.hour.toFixed(1));
   app.querySelector('#arc')?.setAttribute('aria-valuetext', `${useRealClock ? clockParts(new Date()).join(' ') : m.time}, ${m.name}`);
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b => b.setAttribute('aria-current', String(b.dataset.jump === m.key)));
+}
+
+// ---------- the continuous day: look, sun, clock and tweens ----------
+let liveHour = 18, heroCurrent: Moment | null = null, raf = 0, playing = false;
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function applyLook(app: HTMLElement, hour: number) {
+  const hero = app.querySelector<HTMLElement>('#day');
+  const sky = app.querySelector<HTMLElement>('#sky');
+  if (!hero || !sky) return;
+  const L = look(hour); liveHour = hour;
+  sky.style.background = `linear-gradient(160deg, ${L.sky[0]} 0%, ${L.sky[1]} 60%, ${L.sky[2]} 100%)`;
+  setLook(app, L);
+  const stars = app.querySelector<HTMLElement>('#stars'); if (stars) stars.style.opacity = String(L.night);
+  hero.style.color = L.night >= 0.5 ? '#EEE8F6' : 'rgb(35, 26, 43)';
+  app.querySelector('#sunC')?.setAttribute('fill', L.night >= 0.5 ? L.orb : '#FFC37A');
+  hero.dataset.m = L.nearest.key;
+}
+function moveSun(app: HTMLElement, hour: number) {
+  const pt = svgPoint(tFor(hour >= 22 || hour < 6 ? (hour < 6 ? 0 : 1) : hour));
+  app.querySelector('#sunG')?.setAttribute('transform', `translate(${pt.x},${pt.y})`);
+  placeOrb(app, pt.x, pt.y);
+}
+function setClockLive(app: HTMLElement, hour: number) {
+  const h = Math.floor(hour) % 24, mins = Math.floor((hour % 1) * 60), ap = h >= 12 ? 'pm' : 'am', h12 = ((h + 11) % 12) + 1;
+  const mono = app.querySelector('#dClock .mono'), apEl = app.querySelector('#dClock .ap');
+  if (mono) mono.textContent = `${h12}:${String(mins).padStart(2, '0')}`; if (apEl) apEl.textContent = ap;
+}
+function frame(app: HTMLElement, h: number) {
+  applyLook(app, h); moveSun(app, h); setClockLive(app, h);
+  const m = nearest(h);
+  if (!heroCurrent || m.key !== heroCurrent.key) { heroCurrent = m; setMoment(app, m, true, h); setClockLive(app, h); }
+}
+function setPlaying(app: HTMLElement, on: boolean) {
+  playing = on; const b = app.querySelector<HTMLButtonElement>('#dayPlay');
+  if (b) { b.textContent = on ? '❚❚ Pause the day' : '▶ Watch the day'; b.setAttribute('aria-pressed', String(on)); }
+}
+function stopTween(app: HTMLElement) { cancelAnimationFrame(raf); raf = 0; if (playing) setPlaying(app, false); }
+const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+/** Glide the whole look to an hour. Everything blends continuously on the way, then the content settles on the nearest moment. */
+function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => number = easeInOut, done?: () => void) {
+  cancelAnimationFrame(raf);
+  const from = liveHour, t0 = performance.now();
+  const finish = () => { raf = 0; const m = nearest(to); heroCurrent = m; setMoment(app, m, true, to); done?.(); };
+  if (reduceMotion() || ms <= 0) { finish(); return; }
+  const step = (now: number) => { const k = Math.min(1, (now - t0) / ms); frame(app, from + (to - from) * ease(k)); if (k < 1) raf = requestAnimationFrame(step); else finish(); };
+  raf = requestAnimationFrame(step);
+}
+function playDay(app: HTMLElement) {
+  if (playing) { stopTween(app); return; }
+  useRealClock = false; setPlaying(app, true);
+  frame(app, 5.2);
+  tweenTo(app, 22.4, 18000, k => 0.5 - Math.cos(Math.PI * k) / 2, () => setPlaying(app, false));
 }
 
 function nearest(hour: number) {
@@ -138,46 +181,45 @@ function wireHeroStatic(app: HTMLElement) {
   const greet = app.querySelector('.greet');
   if (greet) greet.innerHTML = `<span class="dot-live"></span>${greeting()}`;
   const golden = momentForHour(hourNow());
-  setMoment(app, golden, false);
+  heroCurrent = golden; liveHour = hourNow();
+  setMoment(app, golden, false, liveHour);
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b =>
-    b.addEventListener('click', () => { useRealClock = false; setMoment(app, MOMENTS.find(m => m.key === (b.dataset.jump as MomentKey))!); }));
+    b.addEventListener('click', () => { useRealClock = false; stopTween(app); tweenTo(app, MOMENTS.find(m => m.key === (b.dataset.jump as MomentKey))!.hour, 1200); }));
 
   const arc = app.querySelector<SVGSVGElement>('#arc');
   if (!arc) return;
-  let current = golden;
   const fromPointer = (clientX: number) => {
-    useRealClock = false;
+    useRealClock = false; stopTween(app);
     const r = arc.getBoundingClientRect();
     const x = ((clientX - r.left) / r.width) * 1000;
-    const hour = 6 + 16 * Math.min(1, Math.max(0, (x - 40) / 920));
-    const m = nearest(hour);
-    if (m.key !== current.key) { current = m; setMoment(app, m); }
-    const pt = svgPoint(tFor(hour));
-    app.querySelector('#sunG')?.setAttribute('transform', `translate(${pt.x},${pt.y})`);
-    placeOrb(app, pt.x, pt.y);
+    frame(app, 6 + 16 * Math.min(1, Math.max(0, (x - 40) / 920)));
   };
   let dragging = false;
   arc.addEventListener('pointerdown', e => { dragging = true; arc.setPointerCapture(e.pointerId); fromPointer(e.clientX); });
   arc.addEventListener('pointermove', e => { if (dragging) fromPointer(e.clientX); });
-  const end = () => { if (!dragging) return; dragging = false; setMoment(app, current); };
+  const end = () => { if (!dragging) return; dragging = false; tweenTo(app, nearest(liveHour).hour, 520); };
   arc.addEventListener('pointerup', end);
   arc.addEventListener('pointercancel', end);
   arc.addEventListener('keydown', e => {
-    useRealClock = false;
-    const i = MOMENTS.findIndex(m => m.key === current.key);
-    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { current = MOMENTS[Math.min(MOMENTS.length - 1, i + 1)]; setMoment(app, current); e.preventDefault(); }
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { current = MOMENTS[Math.max(0, i - 1)]; setMoment(app, current); e.preventDefault(); }
+    useRealClock = false; stopTween(app);
+    const i = MOMENTS.findIndex(m => m.key === nearest(liveHour).key);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { tweenTo(app, MOMENTS[Math.min(MOMENTS.length - 1, i + 1)].hour, 1000); e.preventDefault(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { tweenTo(app, MOMENTS[Math.max(0, i - 1)].hour, 1000); e.preventDefault(); }
   });
-  app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b =>
-    b.addEventListener('click', () => { current = MOMENTS.find(m => m.key === b.dataset.jump)!; }));
   const hint = app.querySelector<HTMLElement>('#hint');
-  if (hint) hint.style.opacity = '1';
+  if (hint) {
+    hint.style.opacity = '1';
+    if (!reduceMotion() && !app.querySelector('#dayPlay')) {
+      hint.insertAdjacentHTML('afterend', '<button class="btn line daybtn" id="dayPlay" type="button" aria-pressed="false">▶ Watch the day</button>');
+      app.querySelector('#dayPlay')!.addEventListener('click', () => playDay(app));
+    }
+  }
 }
 
 function wireHero(app: HTMLElement, items: Item[]) {
   heroItems = items;
   const key = (app.querySelector<HTMLElement>('#day')?.dataset.m as MomentKey) ?? 'golden';
-  setMoment(app, MOMENTS.find(m => m.key === key) ?? MOMENTS[3], false);
+  setMoment(app, MOMENTS.find(m => m.key === key) ?? MOMENTS[3], false, liveHour);
 }
 
 // ---------- Chapter 1: moment shop ----------
