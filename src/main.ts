@@ -12,6 +12,7 @@ import { renderHome } from './pages/home';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
 import { renderCoaching, renderBook } from './pages/coaching';
+import { renderHelp, renderStory, renderAccount, renderExplore } from './pages/info';
 import { renderStatic, renderMissing, hasStatic } from './pages/static';
 
 const root = document.getElementById('root')!;
@@ -92,7 +93,7 @@ updateCount();
 const PAGE_TITLES: Record<string, string> = {
   shop: 'Shop', coaching: 'Coaching', book: 'Book a session', subscribe: 'Ritual on Repeat',
   drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
-  'order-confirmed': 'Order confirmed',
+  'order-confirmed': 'Order confirmed', help: 'Help', story: 'Our story', account: 'My account', explore: 'Scent explorer',
 };
 
 async function route() {
@@ -116,6 +117,10 @@ async function route() {
     case 'shop': return renderShop(app, params);
     case 'product': return renderProduct(app, decodeURIComponent(arg ?? ''));
     case 'coaching': return renderCoaching(app);
+    case 'help': return renderHelp(app);
+    case 'story': return renderStory(app);
+    case 'account': return renderAccount(app);
+    case 'explore': return renderExplore(app);
     case 'book': return renderBook(app, arg);
     case 'checkout': await renderHome(app); openCart(); return;
     default:
