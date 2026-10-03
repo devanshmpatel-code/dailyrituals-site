@@ -31,3 +31,14 @@ The client id is the public OAuth id of the "Daily Rituals coded preview" headle
 ## Routing
 
 Hash routes (`#/shop`, `#/product/<slug>`, `#/coaching`, `#/book/<slug>`). Change to path routes with server rewrites and per-page SEO before launch.
+
+## Moving to Wix hosting (plan, not yet done)
+
+Decision: Wix hosts the finished frontend. Per Wix's docs, a Vite single-page app is supported as a client-only build under "Wix-managed headless, other frameworks": run `npm create @wix/new@latest init`, build with `npm run build`, then `npx wix release`. This creates a **new** Wix project with its own client id and **no data**, so the sequence is:
+
+1. Finish and review the app here (Vercel preview), reading the current live site.
+2. Create the new Wix project. Recreate the catalogue, coaching services and any new apps there (Pricing Plans, Loyalty, CMS collections).
+3. Set `VITE_WIX_CLIENT_ID` (and `VITE_STAFF_RESOURCE_TYPE_ID` if it differs) to the new project's values and test on the free Wix address with writes on.
+4. Release, then move the domain last.
+
+Open items: whether Wix static hosting supports path-route rewrites (hash routes need none), SEO (the limited integration has no built-in SEO), and the custom-domain steps for a managed project. None of these were tested.

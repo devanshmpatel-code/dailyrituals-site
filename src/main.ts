@@ -87,6 +87,13 @@ onCart(() => { if (overlay.hidden) { const c = document.getElementById('cartBtn'
 updateCount();
 
 // ---------- router ----------
+// Product pages set their own title; routes not listed here keep the site name.
+const PAGE_TITLES: Record<string, string> = {
+  shop: 'Shop', coaching: 'Coaching', book: 'Book a session', subscribe: 'Ritual on Repeat',
+  drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
+  'order-confirmed': 'Order confirmed',
+};
+
 async function route() {
   const hash = location.hash.replace(/^#\/?/, '');
   const [path, query = ''] = hash.split('?');
@@ -97,7 +104,7 @@ async function route() {
   });
   mnav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false');
   if (!overlay.hidden) closeCart();
-  document.title = 'Daily Rituals Co.';
+  document.title = PAGE_TITLES[seg] ? `${PAGE_TITLES[seg]} · Daily Rituals Co.` : 'Daily Rituals Co.';
   window.scrollTo(0, 0);
 
   if (!hasClient()) {
