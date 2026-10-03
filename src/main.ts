@@ -9,6 +9,7 @@ import { fixImages, esc, toast } from './ui';
 import { getLines, count, subtotal, setQty, onCart, checkout, add } from './cart';
 import { currentRoute, onRoute, installLinkHandling } from './router';
 import { renderHome } from './pages/home';
+import { unmountJourney } from './pages/journey';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
 import { renderCoaching, renderBook } from './pages/coaching';
@@ -25,6 +26,15 @@ root.innerHTML = `
   <div id="overlay" hidden><div class="scrim" data-x></div>${Drawer}</div>`;
 
 const app = document.getElementById('app')!;
+
+// singing-bowl ripple on buttons
+document.addEventListener('pointerdown', e => {
+  const b = (e.target as Element | null)?.closest?.('.btn, .chip') as HTMLElement | null;
+  if (!b || (b as HTMLButtonElement).disabled || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height) * 1.6, ring = document.createElement('span');
+  ring.className = 'rip'; ring.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+  b.appendChild(ring); window.setTimeout(() => ring.remove(), 700);
+});
 
 // ---------- header ----------
 const menuBtn = document.getElementById('menuBtn')!;
@@ -129,6 +139,7 @@ async function route() {
   mnav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false');
   if (!overlay.hidden) closeCart();
   document.body.dataset.page = seg || 'home';
+  unmountJourney();
   document.title = PAGE_TITLES[seg] ? `${PAGE_TITLES[seg]} · Daily Rituals Co.` : 'Daily Rituals Co.';
   window.scrollTo(0, 0);
 

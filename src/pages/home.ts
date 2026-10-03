@@ -4,6 +4,7 @@ import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
 import { sceneHTML, applyScene, placeOrb } from './scene';
+import { mountJourney } from './journey';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
@@ -42,6 +43,7 @@ export async function renderHome(app: HTMLElement) {
   wireCountdown(app);
   wireSunrise(app);
   wireClub(app);
+  mountJourney(app);
 
   const grid = app.querySelector<HTMLElement>('#msGrid');
   if (grid) grid.innerHTML = skeletonCards(4);
