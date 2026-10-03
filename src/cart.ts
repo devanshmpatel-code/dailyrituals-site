@@ -39,9 +39,22 @@ export async function add(line: Omit<Line, 'key' | 'qty'>, qty = 1) {
 }
 
 export function setQty(key: string, qty: number) {
+  const line = lines.find(l => l.key === key);
   lines = lines.map(l => (l.key === key ? { ...l, qty } : l)).filter(l => l.qty > 0);
   write(lines); emit();
-  // Live-cart quantity sync is a launch task (needs line-item ids from Cart V2).
+  if (WRITES_ENABLED && line) syncLiveQty(line, qty).catch(err => console.error('Live cart sync failed', err));
+}
+
+/** Mirror a quantity change into the live Wix cart. Line items are matched on product + variant. */
+async function syncLiveQty(line: Line, qty: number) {
+  const variantId = await resolveVariantId(line.productId, line.optionName, line.choice);
+  const { cart } = await (wix.currentCartV2 as any).getCurrentCart();
+  const live = (cart?.lineItems ?? []).find((li: any) =>
+    li.catalogReference?.catalogItemId === line.productId && (!variantId || li.catalogReference?.options?.variantId === variantId));
+  if (!live) return;
+  if (qty > 0) await (wix.currentCartV2 as any).updateLineItemsInCurrentCart({ lineItems: [{ lineItemId: live._id, quantity: { newQuantity: qty } }] });
+  else await (wix.currentCartV2 as any).removeLineItemsFromCurrentCart([live._id]);
+  saveTokens();
 }
 
 async function resolveVariantId(productId: string, optionName?: string, choice?: string) {
