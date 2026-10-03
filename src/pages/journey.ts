@@ -1,5 +1,6 @@
 import { MOMENTS } from '../config';
 import { esc } from '../ui';
+import { ornament, treeSVG } from './symbols';
 
 // The home page as a journey. Scrolling is a day passing: a rail with a sun that travels from dawn to night, a map of all
 // the chapters drawn as a mandala (drill out, then tap a petal to zoom back in), a breathing pause, soft reveals, mandala
@@ -15,8 +16,6 @@ const rad = (d: number) => (d * Math.PI) / 180;
 const P = (r: number, deg: number, c = 260) => `${(c + r * Math.cos(rad(deg))).toFixed(1)},${(c + r * Math.sin(rad(deg))).toFixed(1)}`;
 const sector = (r0: number, r1: number, a0: number, a1: number) => `M${P(r1, a0)} A${r1},${r1} 0 0 1 ${P(r1, a1)} L${P(r0, a1)} A${r0},${r0} 0 0 0 ${P(r0, a0)} Z`;
 
-export const MANDALA = `<svg class="jorn" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1">${
-  Array.from({ length: 12 }, (_, i) => `<ellipse cx="60" cy="28" rx="7" ry="22" transform="rotate(${i * 30} 60 60)"/>`).join('')}<circle cx="60" cy="60" r="12"/><circle cx="60" cy="60" r="56" stroke-dasharray="1.5 5"/></g></svg>`;
 
 /** A full-screen breathing pause that follows the time of day. Used by the journey rail and the calm button on every page. */
 export function openBreathe(opener: HTMLElement) {
@@ -25,7 +24,7 @@ export function openBreathe(opener: HTMLElement) {
   const m = MOMENTS.reduce((a, b) => (dist(b.hour, h) < dist(a.hour, h) ? b : a));
   const el = document.createElement('div'); el.className = `jbreathe${m.dark ? ' dark' : ''}`; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'A moment to breathe');
   el.style.background = `linear-gradient(160deg, ${m.sky[0]} 0%, ${m.sky[1]} 58%, ${m.sky[2]} 100%)`;
-  el.innerHTML = `<div class="jb-stage" aria-hidden="true"><i class="jb-ring r1"></i><i class="jb-ring r2"></i><i class="jb-ring r3"></i><div class="jb-orb" style="--o:${m.orb}"></div></div>
+  el.innerHTML = `<div class="jb-tree" aria-hidden="true">${treeSVG()}</div><div class="jb-stage" aria-hidden="true"><i class="jb-ring r1"></i><i class="jb-ring r2"></i><i class="jb-ring r3"></i><div class="jb-orb" style="--o:${m.orb}"></div></div>
     <p class="jb-word" id="jbWord" aria-live="polite">Take a moment</p><p class="jb-sub">Breathe in, hold, breathe out. Stay as long as you like.</p>
     <button class="btn jb-close">Done</button>`;
   document.body.append(el); requestAnimationFrame(() => el.classList.add('open'));
@@ -52,7 +51,7 @@ export function mountJourney(app: HTMLElement) {
   document.body.classList.add('has-journey');
 
   // ---- ornaments: a mandala behind chapter headings
-  app.querySelectorAll<HTMLElement>('.chapter').forEach(c => { const h = c.closest<HTMLElement>('.head') ?? c.parentElement; if (h && !h.querySelector(':scope > .jorn')) { h.classList.add('jhead'); h.insertAdjacentHTML('afterbegin', MANDALA); } });
+  app.querySelectorAll<HTMLElement>('.chapter').forEach((c, i) => { const h = c.closest<HTMLElement>('.head') ?? c.parentElement; if (h && !h.querySelector(':scope > .jorn')) { h.classList.add('jhead'); h.insertAdjacentHTML('afterbegin', ornament(i)); } });
 
   // ---- soft reveals (content is visible by default; only things below the fold are eased in)
   if (!reduceMotion() && 'IntersectionObserver' in window) {

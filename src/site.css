@@ -348,3 +348,15 @@ body::before { content: ""; position: fixed; inset: 0; z-index: 60; pointer-even
 #app.pagein { animation: pagein .7s ease both; }
 @keyframes pagein { from { opacity: 0; transform: translateY(10px); filter: blur(5px); } to { opacity: 1; transform: none; filter: none; } }
 @media (prefers-reduced-motion: reduce) { #app.pagein { animation: none; } .dayhero .land, .dayhero .sunorb, .dayhero .day-copy { translate: none; margin-top: 0; opacity: 1; } }
+
+/* ============ The tree of life ============ */
+.treebg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; color: var(--ink); opacity: .07; }
+.treebg svg { overflow: visible; position: absolute; left: 50%; top: 0; height: min(250vh, 420vw); width: auto; transform: translate(-50%, calc(var(--tp, 0) * (100vh - 100%))); will-change: transform; }
+.tb-leaves { transform-origin: 400px 1260px; animation: tbsway 11s ease-in-out infinite alternate; }
+@keyframes tbsway { from { transform: rotate(-.7deg); } to { transform: rotate(.7deg); } }
+.lotusdiv { display: flex; align-items: center; gap: 18px; justify-content: center; padding: 40px 16px 8px; color: var(--ink); opacity: .55; }
+.lotusdiv i { flex: 1; max-width: 240px; height: 1px; background: linear-gradient(90deg, transparent, currentColor); } .lotusdiv i:last-child { transform: scaleX(-1); }
+.jb-tree { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-end; overflow: hidden; opacity: .16; pointer-events: none; color: currentColor; }
+.jb-tree svg { height: 190%; width: auto; flex: none; margin-bottom: -112%; }
+@media (prefers-reduced-motion: reduce) { .tb-leaves { animation: none; } }
+footer .legal { padding-right: 76px; }

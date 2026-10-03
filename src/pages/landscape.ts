@@ -35,6 +35,28 @@ const LAYERS = [
   { base: 0.95, amp: 0.1, rough: 0.64, haze: 0 },
 ];
 
+/** A lone, wide-crowned Bodhi tree on the ridge, with roots hanging from its branches (a banyan-like fig). */
+function drawBodhi(ctx: CanvasRenderingContext2D, x: number, groundY: number, size: number, color: string, rim: string, dpr: number, rand: () => number) {
+  ctx.save();
+  ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineCap = 'round';
+  // trunk
+  ctx.beginPath(); ctx.moveTo(x - size * 0.07, groundY + size * 0.04); ctx.quadraticCurveTo(x - size * 0.045, groundY - size * 0.25, x - size * 0.03, groundY - size * 0.42);
+  ctx.lineTo(x + size * 0.03, groundY - size * 0.42); ctx.quadraticCurveTo(x + size * 0.05, groundY - size * 0.25, x + size * 0.07, groundY + size * 0.04); ctx.closePath(); ctx.fill();
+  // main boughs
+  [[-0.5, 0.58], [-0.22, 0.7], [0.2, 0.7], [0.5, 0.58]].forEach(([dx, h]) => { ctx.lineWidth = size * 0.035; ctx.beginPath(); ctx.moveTo(x, groundY - size * 0.4); ctx.quadraticCurveTo(x + dx * size * 0.35, groundY - size * 0.5, x + dx * size * 0.78, groundY - size * h); ctx.stroke(); });
+  // crown: many overlapping rounded clusters, widest at the middle
+  const blobs: [number, number, number][] = [];
+  for (let i = 0; i < 26; i++) { const t = rand() * 2 - 1, dx = t * size * 0.78, dy = -size * (0.58 + 0.2 * (1 - t * t)) + (rand() - 0.5) * size * 0.14, r = size * (0.15 + rand() * 0.1) * (1 - Math.abs(t) * 0.3); blobs.push([x + dx, groundY + dy, r]); }
+  blobs.forEach(([bx, by, br]) => { ctx.beginPath(); ctx.arc(bx, by, br, 0, 6.283); ctx.fill(); });
+  // light catching the top edge of the crown
+  ctx.strokeStyle = rim; ctx.lineWidth = 1.3 * dpr;
+  blobs.forEach(([bx, by, br]) => { ctx.beginPath(); ctx.arc(bx, by, br, 3.55, 5.0); ctx.stroke(); });
+  // aerial roots hanging from the boughs
+  ctx.strokeStyle = color; ctx.lineWidth = Math.max(1, size * 0.008);
+  for (let i = 0; i < 9; i++) { const t = (i / 8) * 2 - 1, rx = x + t * size * 0.62 + (rand() - 0.5) * size * 0.06, ry = groundY - size * (0.5 - 0.1 * Math.abs(t)), len = size * (0.28 + rand() * 0.2); ctx.beginPath(); ctx.moveTo(rx, ry); ctx.quadraticCurveTo(rx + (rand() - 0.5) * 8 * dpr, ry + len * 0.5, rx + (rand() - 0.5) * 6 * dpr, Math.min(groundY + size * 0.04, ry + len)); ctx.stroke(); }
+  ctx.restore();
+}
+
 let grain: HTMLCanvasElement | null = null;
 function grainTile(): HTMLCanvasElement {
   if (grain) return grain;
@@ -92,6 +114,8 @@ export function drawLandscape(canvas: HTMLCanvasElement, pal: ScenePalette, seed
         }
       }
     }
+    // the lone Bodhi tree stands on the second-nearest ridge
+    if (i === 3) { const tx = w * 0.2; drawBodhi(ctx, tx, yAt(tx) + 4 * dpr, h * 0.36, mix(layerColor[3], '#000000', pal.dark ? 0.3 : 0.4), rgba(pal.orb, pal.dark ? 0.3 : 0.38), dpr, rand); }
     // a band of haze settles between this ridge and the next
     if (i < LAYERS.length - 1) {
       const y0 = h * (L.base - 0.02), y1 = h * (L.base + 0.16);

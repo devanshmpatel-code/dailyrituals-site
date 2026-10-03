@@ -11,6 +11,7 @@ import { currentRoute, onRoute, installLinkHandling } from './router';
 import { renderHome } from './pages/home';
 import { unmountJourney } from './pages/journey';
 import { decoratePage } from './pages/calm';
+import { treeSVG, lotusDivider } from './pages/symbols';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
 import { renderCoaching, renderBook } from './pages/coaching';
@@ -27,6 +28,16 @@ root.innerHTML = `
   <div id="overlay" hidden><div class="scrim" data-x></div>${Drawer}</div>`;
 
 const app = document.getElementById('app')!;
+
+// the tree of life behind every page: canopy at the top of the page, trunk through the middle, roots at the bottom
+const treeBg = document.createElement('div'); treeBg.className = 'treebg'; treeBg.setAttribute('aria-hidden', 'true'); treeBg.innerHTML = treeSVG();
+document.body.prepend(treeBg);
+let treeTick = false;
+const growTree = () => { treeTick = false; const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight); treeBg.style.setProperty('--tp', String(Math.min(1, Math.max(0, window.scrollY / max)))); };
+window.addEventListener('scroll', () => { if (!treeTick) { treeTick = true; requestAnimationFrame(growTree); } }, { passive: true });
+window.addEventListener('resize', growTree);
+document.querySelector('footer')?.insertAdjacentHTML('beforebegin', lotusDivider());
+growTree();
 
 // singing-bowl ripple on buttons
 document.addEventListener('pointerdown', e => {
@@ -140,6 +151,7 @@ async function route() {
   mnav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false');
   if (!overlay.hidden) closeCart();
   document.body.dataset.page = seg || 'home';
+  requestAnimationFrame(growTree);
   unmountJourney();
   document.title = PAGE_TITLES[seg] ? `${PAGE_TITLES[seg]} · Daily Rituals Co.` : 'Daily Rituals Co.';
   window.scrollTo(0, 0);

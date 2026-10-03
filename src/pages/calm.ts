@@ -1,5 +1,6 @@
 import { MOMENTS } from '../config';
-import { MANDALA, openBreathe } from './journey';
+import { openBreathe } from './journey';
+import { ornament } from './symbols';
 import { swapRenders } from '../photos';
 
 // The calm layer shared by every page except the home journey: real photographs in place of renders, a faint mandala behind
@@ -28,7 +29,7 @@ export function decoratePage(app: HTMLElement, seg: string) {
   // a mandala behind the page heading
   const h1 = app.querySelector<HTMLElement>('h1');
   const host = app.querySelector<HTMLElement>('.phead') ?? h1?.parentElement ?? null;
-  if (host && !host.querySelector(':scope > .jorn')) { host.classList.add('jhead'); host.insertAdjacentHTML('afterbegin', MANDALA); }
+  if (host && !host.querySelector(':scope > .jorn')) { host.classList.add('jhead'); host.insertAdjacentHTML('afterbegin', ornament([...seg].reduce((n, c) => n + c.charCodeAt(0), 0))); }
 
   // things below the fold ease in
   if (!reduceMotion() && 'IntersectionObserver' in window) {
