@@ -549,10 +549,10 @@ button.soon { background: transparent !important; color: inherit !important; bor
 .plans .plan.best:not(:has(img))::before { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20200%20140%22%3E%3Ccircle%20cx%3D%2282%22%20cy%3D%2272%22%20r%3D%2240%22%20fill%3D%22%23F3D29A%22%20fill-opacity%3D%22.16%22%20stroke%3D%22%23F3D29A%22%20stroke-width%3D%221.4%22/%3E%3Ccircle%20cx%3D%22118%22%20cy%3D%2272%22%20r%3D%2240%22%20fill%3D%22%23F3D29A%22%20fill-opacity%3D%22.16%22%20stroke%3D%22%23F3D29A%22%20stroke-width%3D%221.4%22/%3E%3Crect%20x%3D%2266%22%20y%3D%2260%22%20width%3D%2218%22%20height%3D%2240%22%20rx%3D%225%22%20fill%3D%22none%22%20stroke%3D%22%23F6EEDF%22%20stroke-width%3D%221.4%22/%3E%3Crect%20x%3D%2269%22%20y%3D%2252%22%20width%3D%2212%22%20height%3D%229%22%20rx%3D%222%22%20fill%3D%22%23F6EEDF%22/%3E%3Cpath%20d%3D%22M118%20100V62m-6%2038V58m12%2042V56%22%20stroke%3D%22%23F6EEDF%22%20stroke-width%3D%221.2%22/%3E%3Crect%20x%3D%22108%22%20y%3D%2288%22%20width%3D%2220%22%20height%3D%2214%22%20rx%3D%225%22%20fill%3D%22%23F6EEDF%22%20fill-opacity%3D%22.85%22/%3E%3C/svg%3E"); }
 .plans .plan:not(:has(img)) { display: flex; flex-direction: column; }
 /* the hero photo takes the light of the hour: dimmer and cooler at night, warmer at golden hour, softer at dawn */
-.dayhero img[data-mimg] { transition: opacity .8s, filter 1.2s; }
-body .dayhero[data-m="night"] img[data-mimg] { filter: brightness(.7) saturate(.85) sepia(.14) hue-rotate(-12deg) !important; }
-body .dayhero[data-m="golden"] img[data-mimg] { filter: saturate(1.08) sepia(.1) !important; }
-body .dayhero[data-m="dawn"] img[data-mimg] { filter: brightness(.96) saturate(.95) !important; }
+.dayhero img[data-mimg] { transition: opacity .8s; }
+body:not(.no-grade) .dayhero[data-m="night"] img[data-mimg] { filter: brightness(.7) saturate(.85) sepia(.14) hue-rotate(-12deg) !important; }
+body:not(.no-grade) .dayhero[data-m="golden"] img[data-mimg] { filter: saturate(1.08) sepia(.1) !important; }
+body:not(.no-grade) .dayhero[data-m="dawn"] img[data-mimg] { filter: brightness(.96) saturate(.95) !important; }
 .dayhero :has(> img[data-mimg])::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(to top, rgba(var(--orb-rgb, 255, 182, 110), .22), transparent 45%); mix-blend-mode: soft-light; }
 
 /* two dark chapters side by side (Belong, then Moon Drops) join without a bright band between them */

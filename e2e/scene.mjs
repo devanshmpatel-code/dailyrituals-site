@@ -29,7 +29,8 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
   // continuous blend + time-lapse
   const opsOf = () => p.evaluate(() => [...document.querySelectorAll('canvas.land')].map(c => Number(getComputedStyle(c).opacity)));
   ok('settled moment shows one dominant landscape', Math.max(...await opsOf()) > 0.95);
-  await p.locator('.moments [data-jump="morning"]').click(); await p.waitForTimeout(550);
+  await p.locator('.moments [data-jump="golden"]').click(); await p.waitForTimeout(1600);
+  await p.locator('.moments [data-jump="night"]').click(); await p.waitForTimeout(600);
   const mid = await opsOf(); ok('moving between moments blends two landscapes on the way', mid.filter(v => v > 0.05 && v < 0.95).length >= 1, mid.map(v => v.toFixed(2)).join(','));
   await p.waitForTimeout(1400); const dw = await opsOf(); ok('then settles on one', Math.max(...dw) > 0.95, dw.map(v => v.toFixed(2)).join(','));
   ok('no "Watch the day" button', await p.locator('#dayPlay').count() === 0);
