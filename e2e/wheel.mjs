@@ -18,12 +18,14 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.locator('[data-start]').click(); ok(`${label}: "start with golden hour" selects woody`, /Warm and woody/.test(await p.locator('.wpanel h3').innerText()), await p.locator('.wpanel h3').innerText());
   ok(`${label}: panel says it is the moment now`, /your moment now/i.test(await p.locator('.wpanel .eyebrow').innerText()));
   await ringClick(-54, 241); ok(`${label}: clicking the Dawn part of the ring selects its mood`, /Fresh and coastal/.test(await p.locator('.wpanel h3').innerText()));
+  const cc = Number(await p.locator('#cartCount').innerText()); await p.locator('[data-addpair]').click(); await p.waitForTimeout(500); ok(`${label}: the moment panel adds a ready-made ritual (two items)`, Number(await p.locator('#cartCount').innerText()) === cc + 2, `${cc} -> ${await p.locator('#cartCount').innerText()}`);
   const chips = await p.locator('[data-pick]').count(); ok(`${label}: mood lists its scents`, chips >= 2, `${chips}`);
   await p.locator('[data-pick]').first().click(); const sc = await p.locator('.wpanel h3').innerText(); ok(`${label}: picking a scent shows it`, sc.length > 0 && (await p.locator('.wpanel a.chip').count()) >= 1, `${sc} / ${await p.locator('.wpanel a.chip').count()} formats`);
   await shot('scent');
   await p.locator('[data-back]').click(); ok(`${label}: back returns to the mood`, /Fresh and coastal/.test(await p.locator('.wpanel h3').innerText()));
   await p.locator('.wsc[data-mood="floral"]').first().focus(); await p.keyboard.press('Enter'); ok(`${label}: keyboard selects an inner segment`, (await p.locator('.wsc[aria-pressed="true"]').count()) === 1);
   await p.locator('.wpanel a.chip').first().click(); await p.waitForTimeout(600); ok(`${label}: a format chip opens the product`, /\/product\//.test(p.url()), p.url().split('#')[1]);
+  await p.goto(base + '/explore?mood=woody'); await p.waitForSelector('.wpanel h3'); ok(`${label}: ?mood= preselects a mood (used by the quiz link)`, /Warm and woody/.test(await p.locator('.wpanel h3').innerText()));
   await p.goto(base + '/explore'); await p.waitForSelector('#exp .panel'); ok(`${label}: full list still below`, (await p.locator('#exp .panel').count()) > 5);
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
   ok(`${label}: no JS errors`, errs.length === 0, errs.join('|'));

@@ -12,7 +12,7 @@ import { renderHome } from './pages/home';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
 import { renderCoaching, renderBook } from './pages/coaching';
-import { renderHelp, renderStory, renderAccount, renderExplore, renderQuiz, renderBuild, renderSets } from './pages/info';
+import { renderHelp, renderStory, renderAccount, renderExplore, renderReset } from './pages/info';
 import { renderStatic, renderMissing, hasStatic } from './pages/static';
 
 const root = document.getElementById('root')!;
@@ -116,7 +116,7 @@ updateCount();
 const PAGE_TITLES: Record<string, string> = {
   shop: 'Shop', coaching: 'Coaching', book: 'Book a session', subscribe: 'Ritual on Repeat',
   drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
-  'order-confirmed': 'Order confirmed', help: 'Help', story: 'Our story', account: 'My account', explore: 'Scent explorer', quiz: 'Scent quiz', build: 'Build a ritual', sets: 'Ritual sets',
+  'order-confirmed': 'Order confirmed', help: 'Help', story: 'Our story', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset',
 };
 
 async function route() {
@@ -144,10 +144,11 @@ async function route() {
     case 'help': return renderHelp(app);
     case 'story': return renderStory(app);
     case 'account': return renderAccount(app);
-    case 'explore': return renderExplore(app);
-    case 'quiz': return renderQuiz(app);
-    case 'build': return renderBuild(app);
-    case 'sets': return renderSets(app);
+    case 'explore': return renderExplore(app, params);
+    // older links: the quiz is a tab of Find your scent; build a ritual and ritual sets live in the wheel
+    case 'quiz': return renderExplore(app, new URLSearchParams('tab=quiz'));
+    case 'build': case 'sets': return renderExplore(app);
+    case 'reset': return renderReset(app);
     case 'book': return renderBook(app, arg);
     case 'checkout': await renderHome(app); openCart(); return;
     default:

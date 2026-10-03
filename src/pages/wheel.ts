@@ -1,6 +1,7 @@
 import { MOODS, MOMENTS, FORMAT_LABEL, type Mood, type Moment } from '../config';
-import { money, type Item } from '../wix';
-import { esc } from '../ui';
+import { money, findLive, type Item } from '../wix';
+import { esc, toast } from '../ui';
+import { add } from '../cart';
 
 // Scent wheel: the outer ring is the day (five moments, each tied to a mood), the inner ring holds the scents
 // of that mood, and the hub says what is selected. A gold sun marks the moment nearest the visitor's local time.
@@ -17,11 +18,11 @@ function nowMoment(): Moment {
   return MOMENTS.reduce((a, b) => (dist(b.hour, h) < dist(a.hour, h) ? b : a));
 }
 
-export function mountWheel(el: HTMLElement, items: Item[]) {
+export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | null = null) {
   const byMood = new Map<Mood, Map<string, Item[]>>();
   items.forEach(i => { if (!i.mood) return; const m = byMood.get(i.mood) ?? new Map(); m.set(i.scent, [...(m.get(i.scent) ?? []), i]); byMood.set(i.mood, m); });
   const now = nowMoment();
-  let selMood: Mood | null = null, selScent: string | null = null;
+  let selMood: Mood | null = initialMood && byMood.has(initialMood) ? initialMood : null, selScent: string | null = null;
   const step = 360 / MOMENTS.length;
 
   const svg = () => {
@@ -58,6 +59,8 @@ export function mountWheel(el: HTMLElement, items: Item[]) {
       ${hub}</svg>`;
   };
 
+  const pairOf = (mo: Moment) => [findLive(items, mo.pair.diffuser, 'diffuser'), findLive(items, mo.pair.roller, 'roller')].filter(Boolean) as Item[];
+  const pairBtn = (mo: Moment) => { const ps = pairOf(mo); return ps.length === 2 ? `<button class="btn" data-addpair="${mo.key}">Add the ${esc(mo.name.toLowerCase())} ritual · ${money(ps.reduce((n, i) => n + i.priceMin, 0))}</button>` : ''; };
   const panel = () => {
     if (selMood && selScent) {
       const list = (byMood.get(selMood)?.get(selScent) ?? []).slice().sort((a, b) => a.format.localeCompare(b.format));
@@ -72,7 +75,7 @@ export function mountWheel(el: HTMLElement, items: Item[]) {
       return `<span class="eyebrow">${esc(mo.name)} · ${esc(mo.time)}${mo.key === now.key ? ' · your moment now' : ''}</span><h3>${esc(MOODS[selMood].label)}</h3>
         <p class="muted"><span class="${mo.draft ? 'd' : ''}">${esc(mo.line)}</span></p>
         <div class="chips">${scents.map(s => `<button class="chip" data-pick="${esc(s)}">${esc(s)}</button>`).join('') || '<span class="muted">No scents here yet.</span>'}</div>
-        <div class="cta"><a class="btn" href="#/shop?f=all&m=${selMood}&s=featured">Shop this mood</a></div>`;
+        <div class="cta">${pairBtn(mo)}<a class="btn line" href="#/shop?f=all&m=${selMood}&s=featured">Shop this mood</a></div>`;
     }
     return `<span class="eyebrow">Scent wheel</span><h3>Find your scent by the time of day</h3>
       <p class="muted">The outer ring is your day, from dawn to night. Each moment has a mood, and each mood has its scents. Tap a moment to begin${now ? `, or start with <button class="linkbtn" data-start="${now.mood}">${esc(now.name.toLowerCase())}</button>, which is where the sun is now` : ''}.</p>`;
@@ -96,6 +99,11 @@ export function mountWheel(el: HTMLElement, items: Item[]) {
     el.querySelectorAll<HTMLButtonElement>('[data-mood-chip]').forEach(b => b.addEventListener('click', () => pickMood(b.dataset.moodChip as Mood)));
     el.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach(b => b.addEventListener('click', () => { selScent = b.dataset.pick!; draw(); }));
     el.querySelectorAll<HTMLButtonElement>('[data-start]').forEach(b => b.addEventListener('click', () => { selMood = b.dataset.start as Mood; selScent = null; draw(); }));
+    el.querySelectorAll<HTMLButtonElement>('[data-addpair]').forEach(b => b.addEventListener('click', async () => {
+      const mo = MOMENTS.find(m => m.key === b.dataset.addpair)!;
+      for (const p of pairOf(mo)) await add({ productId: p.id, slug: p.slug, name: p.name, price: p.priceMin, image: p.thumb, choice: p.choices[0]?.name, optionName: p.optionName });
+      toast(`${mo.name} ritual added to your cart`);
+    }));
     el.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', () => { selScent = null; draw(); });
   };
   draw();

@@ -13,22 +13,16 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   for (let i = 0; i < 4; i++) { ok(`${label}: quiz question ${i + 1} shown`, /Question \d of 4/.test(await p.locator('.eyebrow').nth(1).innerText().catch(() => '')) || true); await p.locator('[data-ans="2"]').click(); await p.waitForTimeout(150); }
   await p.waitForSelector('#qGrid .card:not(.sk)', { timeout: 8000 }).catch(() => {});
   const nres = await p.locator('#qGrid .card').count(); ok(`${label}: quiz shows matching scents`, nres > 0, `${nres} cards`); await shot('q-result');
-  ok(`${label}: quiz result names a mood`, /Your mood/i.test(await p.locator('h1').innerText()), await p.locator('h1').innerText());
+  ok(`${label}: quiz result names a mood`, /Your mood/i.test(await p.locator('#wheelMount h2').innerText()), await p.locator('#wheelMount h2').innerText());
   const c0 = await count(); const qa = p.locator('#qGrid button[data-qa]'); if (await qa.count()) { await qa.first().click(); await p.waitForTimeout(400); ok(`${label}: quiz quick-add works`, (await count()) === c0 + 1); }
   await p.locator('#qAgain').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: quiz can restart`, true);
-  // build
-  await p.goto(base + '/build'); await p.waitForSelector('#bScent', { timeout: 8000 });
-  await p.selectOption('#bScent', { label: 'Cabana' }); await p.waitForTimeout(200);
-  const boxes = p.locator('#bFormats input[type=checkbox]'); const nb = await boxes.count(); ok(`${label}: build lists formats for Cabana`, nb >= 2, `${nb} selectable`);
-  ok(`${label}: build add disabled until chosen`, await p.locator('#bAdd').isDisabled());
-  for (let i = 0; i < nb; i++) await boxes.nth(i).check();
-  const tot = await p.locator('#bTotal').innerText(); ok(`${label}: build total`, tot === '$40.00', tot);
-  await shot('build'); const c1 = await count(); await p.locator('#bAdd').click(); await p.waitForTimeout(500); ok(`${label}: build adds to cart`, (await count()) === c1 + nb, `${c1} -> ${await count()}`);
-  // sets
-  await p.goto(base + '/sets'); await p.waitForSelector('[data-set]', { timeout: 8000 }); const ns = await p.locator('[data-set]').count(); ok(`${label}: five sets listed`, ns === 5, `${ns}`); await shot('sets');
-  const c2 = await count(); await p.locator('[data-set="night"]').click(); await p.waitForTimeout(500); ok(`${label}: set adds two items`, (await count()) === c2 + 2);
+  // old links still land on Find your scent
+  for (const r of ['/build', '/sets', '/explore']) { await p.goto(base + r); await p.waitForSelector('.wheel svg'); ok(`${label}: ${r} opens the scent wheel`, /Find your scent/.test(await p.locator('h1').innerText())); }
+  await p.goto(base + '/explore'); await p.waitForSelector('.findtabs'); await p.locator('.findtabs a:has-text("Take the quiz")').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: the Take the quiz tab opens the quiz`, true);
+  await p.goto(base + '/reset'); await p.waitForSelector('#resetForm'); ok(`${label}: /reset is a real page with a sign-up`, /7-day/i.test(await p.locator('h1').innerText()));
+  await p.locator('#resetForm button').click(); await p.waitForTimeout(300); ok(`${label}: reset sign-up is safely off in preview`, /switched off/i.test(await p.locator('#toast').innerText()));
   // dead ends
-  for (const r of ['/discovery', '/reset', '/learn', '/stockists']) {
+  for (const r of ['/discovery', '/learn']) {
     await p.goto(base + r); await p.waitForTimeout(300); const t = await p.locator('main').innerText();
     ok(`${label}: ${r} is a friendly page`, /coming soon/i.test(t) && !/canvas|14 screens|Not designed/i.test(t));
   }
