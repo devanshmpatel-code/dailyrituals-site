@@ -75,17 +75,20 @@ export interface Moment {
   /** the "ritual" pairing: scent of the diffuser and scent of the roller */
   pair: { diffuser: string; roller: string };
   sky: [string, string, string];
+  /** mountain colours, far to near, and the sun or moon colour for the hero landscape */
+  land: [string, string, string];
+  orb: string;
   dark: boolean;
 }
 
 // Golden hour is the approved canvas state. The other four moments only exist in
 // the canvas as image titles, so their lines and pairings are drafts for Claire.
 export const MOMENTS: Moment[] = [
-  { key: 'dawn', name: 'Dawn', time: '6:30 am', hour: 6.5, title: 'Wake up bright', line: 'Bright and clean. Citrus & Sun opens the day before the inbox does.', draft: true, image: '/img/morning.jpg', imageAlt: 'Wake up bright', mood: 'fresh', pair: { diffuser: 'citrus & sun', roller: 'windy beach' }, sky: ['#2E2A4A', '#F2A97E', '#F8DCC0'], dark: false },
-  { key: 'morning', name: 'Morning', time: '9:00 am', hour: 9, title: 'Head out lighter', line: 'Salt air on your wrists for the walk, the commute or the school run.', draft: true, image: '/img/mood-fresh.jpg', imageAlt: 'Head out lighter', mood: 'sunny', pair: { diffuser: 'cabana', roller: 'sea foam' }, sky: ['#8FBCD4', '#CFE4EC', '#F3F1EA'], dark: false },
-  { key: 'midday', name: 'Midday', time: '1:00 pm', hour: 13, title: 'Reset at your desk', line: 'A grounding scent between meetings. One breath, then back to it.', draft: true, image: '/img/midday.jpg', imageAlt: 'Reset at your desk', mood: 'grounding', pair: { diffuser: 'inner sanctum', roller: 'golden meridian' }, sky: ['#6FA7C6', '#B9D8E3', '#EEF1EA'], dark: false },
-  { key: 'golden', name: 'Golden hour', time: '6:00 pm', hour: 18, title: 'Come home to yourself', line: 'Warm, dry and glowing. Desert Vesper or Cabana marks the line between work and the rest of your evening.', draft: false, image: '/img/mood-woody.jpg', imageAlt: 'Come home to yourself', mood: 'woody', pair: { diffuser: 'desert vesper', roller: 'cabana' }, sky: ['#6B4A6E', '#E08E5A', '#F4C98E'], dark: false },
-  { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, image: '/img/evening.jpg', imageAlt: 'Wind down', mood: 'floral', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2A1F3D', '#4A2D4F'], dark: true },
+  { key: 'dawn', name: 'Dawn', time: '6:30 am', hour: 6.5, title: 'Wake up bright', line: 'Bright and clean. Citrus & Sun opens the day before the inbox does.', draft: true, image: '/img/morning.jpg', imageAlt: 'Wake up bright', mood: 'fresh', pair: { diffuser: 'citrus & sun', roller: 'windy beach' }, sky: ['#6E5A8C', '#F2A58E', '#FCE5CE'], land: ['#C7A9BE', '#A07FA4', '#6F5690'], orb: '#FFD9B0', dark: false },
+  { key: 'morning', name: 'Morning', time: '9:00 am', hour: 9, title: 'Head out lighter', line: 'Salt air on your wrists for the walk, the commute or the school run.', draft: true, image: '/img/mood-fresh.jpg', imageAlt: 'Head out lighter', mood: 'sunny', pair: { diffuser: 'cabana', roller: 'sea foam' }, sky: ['#7FB2D6', '#CFE6EE', '#FBF3E0'], land: ['#B5D1D0', '#86B0AA', '#5A8A82'], orb: '#FFF1C6', dark: false },
+  { key: 'midday', name: 'Midday', time: '1:00 pm', hour: 13, title: 'Reset at your desk', line: 'A grounding scent between meetings. One breath, then back to it.', draft: true, image: '/img/midday.jpg', imageAlt: 'Reset at your desk', mood: 'grounding', pair: { diffuser: 'inner sanctum', roller: 'golden meridian' }, sky: ['#5FA3CB', '#B7DCE8', '#EEF4EA'], land: ['#A9CABD', '#78A595', '#4A7A69'], orb: '#FFFBE3', dark: false },
+  { key: 'golden', name: 'Golden hour', time: '6:00 pm', hour: 18, title: 'Come home to yourself', line: 'Warm, dry and glowing. Desert Vesper or Cabana marks the line between work and the rest of your evening.', draft: false, image: '/img/mood-woody.jpg', imageAlt: 'Come home to yourself', mood: 'woody', pair: { diffuser: 'desert vesper', roller: 'cabana' }, sky: ['#7A4F78', '#E9955B', '#F7CF94'], land: ['#C98597', '#9A6283', '#5A3A5C'], orb: '#FFB66E', dark: false },
+  { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, image: '/img/evening.jpg', imageAlt: 'Wind down', mood: 'floral', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2B2145', '#4A2D4F'], land: ['#4A3F73', '#33295A', '#1E1838'], orb: '#F5EBD3', dark: true },
 ];
 
 /** Moon Drop release date shown on the canvas ("Sunday, October 11"). Unconfirmed. */

@@ -3,6 +3,7 @@ import { MOMENTS, MOODS, NEXT_DROP_ISO, type Moment, type MomentKey } from '../c
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
+import { sceneHTML, applyScene, placeOrb } from './scene';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
@@ -76,6 +77,8 @@ function setMoment(app: HTMLElement, m: Moment, animate = true) {
   const sky = app.querySelector<HTMLElement>('#sky')!;
   sky.style.transition = animate && !reduce ? 'background 600ms ease' : 'none';
   sky.style.background = `linear-gradient(160deg, ${m.sky[0]} 0%, ${m.sky[1]} 60%, ${m.sky[2]} 100%)`;
+  applyScene(app, m);
+  app.querySelector('#sunC')?.setAttribute('fill', m.dark ? m.orb : '#FFC37A');
   const stars = app.querySelector<HTMLElement>('#stars');
   if (stars) stars.style.opacity = m.dark ? '1' : '0';
   hero.style.color = m.dark ? '#EEE8F6' : 'rgb(35, 26, 43)';
@@ -115,6 +118,7 @@ function setMoment(app: HTMLElement, m: Moment, animate = true) {
   const t = tFor(sunHour >= 22 || sunHour < 6 ? (sunHour < 6 ? 0 : 1) : sunHour);
   const pt = svgPoint(t);
   app.querySelector('#sunG')?.setAttribute('transform', `translate(${pt.x},${pt.y})`);
+  placeOrb(app, pt.x, pt.y);
   app.querySelector('#arc')?.setAttribute('aria-valuenow', m.hour.toFixed(1));
   app.querySelector('#arc')?.setAttribute('aria-valuetext', `${useRealClock ? clockParts(new Date()).join(' ') : m.time}, ${m.name}`);
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b => b.setAttribute('aria-current', String(b.dataset.jump === m.key)));
@@ -125,6 +129,8 @@ function nearest(hour: number) {
 }
 
 function wireHeroStatic(app: HTMLElement) {
+  const skyEl = app.querySelector<HTMLElement>('#sky');
+  if (skyEl && !skyEl.querySelector('#scene')) skyEl.insertAdjacentHTML('beforeend', sceneHTML());
   const greet = app.querySelector('.greet');
   if (greet) greet.innerHTML = `<span class="dot-live"></span>${greeting()}`;
   const golden = momentForHour(hourNow());
@@ -144,6 +150,7 @@ function wireHeroStatic(app: HTMLElement) {
     if (m.key !== current.key) { current = m; setMoment(app, m); }
     const pt = svgPoint(tFor(hour));
     app.querySelector('#sunG')?.setAttribute('transform', `translate(${pt.x},${pt.y})`);
+    placeOrb(app, pt.x, pt.y);
   };
   let dragging = false;
   arc.addEventListener('pointerdown', e => { dragging = true; arc.setPointerCapture(e.pointerId); fromPointer(e.clientX); });
