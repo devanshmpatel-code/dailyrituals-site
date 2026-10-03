@@ -3,6 +3,7 @@ import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { esc, errorBox, wireCommon, cardHTML, toast } from '../ui';
 import { add } from '../cart';
 import { wireQuickAdd } from './shared';
+import { mountWheel } from './wheel';
 
 // Placeholder copy for pages that were not in the final canvas. Anything Claire has not
 // confirmed is wrapped in <span class="d"> so "Show drafts for Claire" highlights it.
@@ -64,25 +65,29 @@ export function renderAccount(app: HTMLElement) {
 
 export async function renderExplore(app: HTMLElement) {
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px)">
-    ${head('Scent explorer', 'Scent <span class="it">explorer</span>', 'Every scent belongs to a mood. Pick a mood, then see which formats it comes in.')}
-    <div id="exp"><div class="sk-line"></div><div class="sk-line short"></div></div></div>`;
+    ${head('Scent explorer', 'Scent <span class="it">wheel</span>', 'Every scent belongs to a moment of the day. Turn the wheel to find yours.')}
+    <div id="wheelMount"><div class="sk-line"></div><div class="sk-line short"></div></div>
+    <div id="exp"></div></div>`;
   const box = app.querySelector<HTMLElement>('#exp')!;
   let items: Item[];
-  try { items = await loadCatalogue(); } catch (e) { box.innerHTML = errorBox(String((e as Error).message ?? e)); return; }
+  try { items = await loadCatalogue(); } catch (e) { app.querySelector('#wheelMount')!.innerHTML = errorBox(String((e as Error).message ?? e)); return; }
+  mountWheel(app.querySelector<HTMLElement>('#wheelMount')!, items);
 
-  box.innerHTML = (Object.keys(MOODS) as Mood[]).map(m => {
+  const group = (title: string, swatch: string | null, link: string, list: Item[]) => {
     const byScent = new Map<string, Item[]>();
-    items.filter(i => i.mood === m).forEach(i => byScent.set(i.scent, [...(byScent.get(i.scent) ?? []), i]));
+    list.forEach(i => byScent.set(i.scent, [...(byScent.get(i.scent) ?? []), i]));
     if (!byScent.size) return '';
-    const rows = [...byScent].sort(([a], [b]) => a.localeCompare(b)).map(([scent, list]) =>
+    const rows = [...byScent].sort(([a], [b]) => a.localeCompare(b)).map(([scent, l]) =>
       `<div class="panel" style="display:flex;flex-direction:column;gap:8px"><h3 style="font-size:24px">${esc(scent)}</h3>
-        <div class="chips">${list.sort((a, b) => a.format.localeCompare(b.format)).map(i =>
+        <div class="chips">${l.sort((a, b) => a.format.localeCompare(b.format)).map(i =>
           `<a class="chip" href="#/product/${i.slug}">${esc(FORMAT_LABEL[i.format])} · ${i.priceMin === i.priceMax ? money(i.priceMin) : `from ${money(i.priceMin)}`}</a>`).join('')}</div></div>`).join('');
     return `<section style="margin-bottom:40px"><div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:14px">
-      <span class="swatch" style="background:${MOODS[m].swatch};width:14px;height:14px;border-radius:50%;display:inline-block"></span>
-      <h2 style="font-size:clamp(26px,3vw,36px)">${MOODS[m].label}</h2><a class="small" href="#/shop?f=all&m=${m}&s=featured">Shop this mood</a></div>
-      <div class="ways">${rows}</div></section>`;
-  }).join('') || '<p class="muted">No scents to show yet.</p>';
+      ${swatch ? `<span class="swatch" style="background:${swatch};width:14px;height:14px;border-radius:50%;display:inline-block"></span>` : ''}
+      <h2 style="font-size:clamp(26px,3vw,36px)">${title}</h2>${link}</div><div class="ways">${rows}</div></section>`;
+  };
+  box.innerHTML = `<h2 style="font-size:clamp(28px,3.4vw,40px);margin:48px 0 20px">The full list</h2>` +
+    (Object.keys(MOODS) as Mood[]).map(m => group(MOODS[m].label, MOODS[m].swatch, `<a class="small" href="#/shop?f=all&m=${m}&s=featured">Shop this mood</a>`, items.filter(i => i.mood === m))).join('') +
+    group('More from the studio', null, '<a class="small" href="#/shop">Shop all</a>', items.filter(i => !i.mood));
 }
 
 // ---------- Scent quiz ----------

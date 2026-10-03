@@ -1,0 +1,32 @@
+import { chromium } from 'playwright-core';
+import { setupMocks } from './mock.mjs';
+const base = 'http://localhost:4173/#';
+const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
+const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
+for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {
+  const ctx = await b.newContext({ viewport: vp, timezoneId: 'America/Vancouver' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
+  await p.clock.setFixedTime(new Date('2026-10-03T17:50:00-07:00'));
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  const ringClick = async (deg, r) => { const bb = await p.locator('.wheel svg').boundingBox(); const k = bb.width / 600; const x = bb.x + (300 + r * Math.cos(deg * Math.PI / 180)) * k, y = bb.y + (300 + r * Math.sin(deg * Math.PI / 180)) * k; await p.mouse.click(x, y); await p.waitForTimeout(250); };
+  const shot = n => p.locator('.wheelwrap').screenshot({ path: `${process.env.SHOTS ?? '/tmp'}/${label}-wheel-${n}.png` });
+  await p.goto(base + '/explore'); await p.waitForSelector('.wheel svg'); await p.waitForTimeout(500);
+  ok(`${label}: five moments on the outer ring`, (await p.locator('.wseg:not(.wsc)').count()) === 5);
+  const inner = await p.locator('.wsc').count(); ok(`${label}: scents on the inner ring`, inner >= 10, `${inner}`);
+  ok(`${label}: a NOW sun marks the visitor's moment`, (await p.locator('.wnow').count()) === 1);
+  ok(`${label}: starts with an invitation`, /Find your scent/.test(await p.locator('.wpanel h3').innerText()));
+  await shot('start');
+  await p.locator('[data-start]').click(); ok(`${label}: "start with golden hour" selects woody`, /Warm and woody/.test(await p.locator('.wpanel h3').innerText()), await p.locator('.wpanel h3').innerText());
+  ok(`${label}: panel says it is the moment now`, /your moment now/i.test(await p.locator('.wpanel .eyebrow').innerText()));
+  await ringClick(-54, 241); ok(`${label}: clicking the Dawn part of the ring selects its mood`, /Fresh and coastal/.test(await p.locator('.wpanel h3').innerText()));
+  const chips = await p.locator('[data-pick]').count(); ok(`${label}: mood lists its scents`, chips >= 2, `${chips}`);
+  await p.locator('[data-pick]').first().click(); const sc = await p.locator('.wpanel h3').innerText(); ok(`${label}: picking a scent shows it`, sc.length > 0 && (await p.locator('.wpanel a.chip').count()) >= 1, `${sc} / ${await p.locator('.wpanel a.chip').count()} formats`);
+  await shot('scent');
+  await p.locator('[data-back]').click(); ok(`${label}: back returns to the mood`, /Fresh and coastal/.test(await p.locator('.wpanel h3').innerText()));
+  await p.locator('.wsc[data-mood="floral"]').first().focus(); await p.keyboard.press('Enter'); ok(`${label}: keyboard selects an inner segment`, (await p.locator('.wsc[aria-pressed="true"]').count()) === 1);
+  await p.locator('.wpanel a.chip').first().click(); await p.waitForTimeout(600); ok(`${label}: a format chip opens the product`, /\/product\//.test(p.url()), p.url().split('#')[1]);
+  await p.goto(base + '/explore'); await p.waitForSelector('#exp .panel'); ok(`${label}: full list still below`, (await p.locator('#exp .panel').count()) > 5);
+  const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
+  ok(`${label}: no JS errors`, errs.length === 0, errs.join('|'));
+  await ctx.close();
+}
+await b.close(); process.exit(res.every(Boolean) ? 0 : 1);
