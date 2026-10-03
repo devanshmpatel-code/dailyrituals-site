@@ -36,7 +36,8 @@ export async function renderStatic(app: HTMLElement, route: string) {
 export function renderMissing(app: HTMLElement, route: string) {
   const name = route.replace(/-/g, ' ');
   app.innerHTML = `<div class="wrap" style="padding:clamp(64px,8vw,112px) 0;display:flex;flex-direction:column;gap:16px;max-width:640px">
-    <span class="eyebrow">Not designed yet</span><h1 style="font-size:clamp(36px,5vw,56px)">${esc(name.charAt(0).toUpperCase() + name.slice(1))}</h1>
-    <p class="muted">This page is linked from the navigation, but it was not one of the 14 screens in the final canvas, so it has not been built yet.</p>
-    <a class="btn" href="#/" style="align-self:flex-start">Back to the homepage</a></div>`;
+    <span class="eyebrow">Coming soon</span><h1 style="font-size:clamp(36px,5vw,56px)">${esc(name.charAt(0).toUpperCase() + name.slice(1))}</h1>
+    <p class="muted">We are still putting this page together. In the meantime, you can explore the shop or find your scent with the quiz.</p>
+    <div class="cta"><a class="btn" href="#/shop">Shop the rituals</a><a class="btn line" href="#/quiz">Take the scent quiz</a></div>
+    <p class="small muted d confirm">Draft page: not designed yet. Claire to provide content.</p></div>`;
 }
