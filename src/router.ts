@@ -31,7 +31,10 @@ export function replaceRoute(to: string) {
 
 export function onRoute(fn: () => void) {
   window.addEventListener(PATH_ROUTING ? 'popstate' : 'hashchange', fn);
-  if (PATH_ROUTING) window.addEventListener('routechange', fn);
+  if (!PATH_ROUTING) return;
+  window.addEventListener('routechange', fn);
+  // an old "#/…" link followed while already on the site: upgrade it to a real address and show that page
+  window.addEventListener('hashchange', () => { if (location.hash.startsWith('#/')) { history.replaceState(null, '', location.hash.slice(1)); fn(); } });
 }
 
 /** "#/shop" -> "/shop" on every link inside root (path mode only). */
