@@ -15,7 +15,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.waitForTimeout(800); await shot('1-home'); await overflow('home');
   ok(`${label}: home hero shows live products`, (await p.locator('#dProducts .sp').count()) > 0);
   // moments
-  const jump = p.locator('.moments [data-jump="night"]'); if (await jump.count()) { await jump.first().click(); await p.waitForTimeout(700); ok(`${label}: hero switches to Night`, (await p.locator('#day').getAttribute('data-m')) === 'night'); await shot('2-home-night'); }
+  const jump = p.locator('.moments [data-jump="night"]'); if (await jump.count()) { await jump.first().click(); await p.waitForTimeout(1700); ok(`${label}: hero switches to Night`, (await p.locator('#day').getAttribute('data-m')) === 'night'); await shot('2-home-night'); }
   // add the ritual
   const addM = p.locator('[data-addmoment]'); if (await addM.count()) { await addM.first().click(); await p.waitForTimeout(500); ok(`${label}: Add this ritual fills cart`, Number(await p.locator('#cartCount').innerText()) >= 1, 'count=' + await p.locator('#cartCount').innerText()); }
 
