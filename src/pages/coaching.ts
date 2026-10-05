@@ -42,7 +42,7 @@ export async function renderCoaching(app: HTMLElement) {
     faq.querySelector('.dbody')!.insertAdjacentHTML('beforeend',
       `<p><span class="d confirm">[Confirm: the live booking page lists ${esc(program.name)} at ${priceLabel(program)}. Keep this answer or show the price?]</span></p>`);
   }
-  app.querySelectorAll<HTMLAnchorElement>('a[href="#/book"]').forEach(a => { if (discovery) a.href = `#/book/${slugOf(discovery)}`; });
+  app.querySelectorAll<HTMLAnchorElement>('a[href="#/book"], a[href="/book"]').forEach(a => { if (discovery) a.href = `#/book/${slugOf(discovery)}`; });
 }
 
 function wireCheckin(app: HTMLElement) {

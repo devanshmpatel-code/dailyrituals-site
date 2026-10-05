@@ -30,18 +30,13 @@ The client id is the public OAuth id of the "Daily Rituals coded preview" headle
 
 ## Routing
 
-Hash routes (`#/shop`, `#/product/<slug>`, `#/coaching`, `#/book/<slug>`). Change to path routes with server rewrites and per-page SEO before launch.
+Real addresses by default (`/shop`, `/product/<slug>`, `/coaching`, `/book/<slug>`). `vercel.json` serves `index.html` for every path and 301-redirects the old Wix page addresses. Old `#/…` links are upgraded automatically. Build with `VITE_ROUTING=hash` for a host without rewrites (the local test builds may use either).
 
-## Moving to Wix hosting (plan, not yet done)
+## Going live (decided: keep the existing Wix site as the backend)
 
-Decision: Wix hosts the finished frontend. Per Wix's docs, a Vite single-page app is supported as a client-only build under "Wix-managed headless, other frameworks": run `npm create @wix/new@latest init`, build with `npm run build`, then `npx wix release`. This creates a **new** Wix project with its own client id and **no data**, so the sequence is:
+The existing dailyritualsco.com Wix site (with its plan, products, bookings and contacts) stays the backend. This frontend is hosted on Vercel and takes over `www.dailyritualsco.com`. Checkout and login run on Wix-hosted pages on a subdomain. This is Wix's documented path for replacing an editor-built site with your own frontend. A Wix-hosted frontend would need a new, empty Wix project instead.
 
-1. Finish and review the app here (Vercel preview), reading the current live site.
-2. Create the new Wix project. Recreate the catalogue, coaching services and any new apps there (Pricing Plans, Loyalty, CMS collections).
-3. Set `VITE_WIX_CLIENT_ID` (and `VITE_STAFF_RESOURCE_TYPE_ID` if it differs) to the new project's values and test on the free Wix address with writes on.
-4. Release, then move the domain last.
-
-Open items: whether Wix static hosting supports path-route rewrites (hash routes need none), SEO (the limited integration has no built-in SEO), and the custom-domain steps for a managed project. None of these were tested.
+Step-by-step, including rollback: **[LAUNCH.md](LAUNCH.md)**. Switches: `VITE_LAUNCH=true` (production only) removes the preview bar, the `noindex` tag and the blocking `robots.txt`. `npm run build` also writes `dist/sitemap.xml` (with products when the build can reach Wix).
 
 ## Real photographs instead of renders
 

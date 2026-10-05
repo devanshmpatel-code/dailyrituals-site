@@ -3,7 +3,7 @@ import './site.css';
 import Header from './canvas/header.html?raw';
 import Footer from './canvas/footer.html?raw';
 import Drawer from './canvas/drawer.html?raw';
-import { WRITES_ENABLED, LOYALTY_ENABLED, FREE_SHIPPING_THRESHOLD } from './config';
+import { WRITES_ENABLED, LOYALTY_ENABLED, FREE_SHIPPING_THRESHOLD, LAUNCHED } from './config';
 import { hasClient, money, loadCatalogue } from './wix';
 import { fixImages, esc, toast } from './ui';
 import { getLines, count, subtotal, setQty, onCart, checkout, add } from './cart';
@@ -17,12 +17,13 @@ import { renderProduct } from './pages/product';
 import { renderCoaching, renderBook } from './pages/coaching';
 import { renderHelp, renderStory, renderAccount, renderExplore, renderReset } from './pages/info';
 import { renderStatic, renderMissing, hasStatic } from './pages/static';
+import { renderLegal } from './pages/legal';
 
 const root = document.getElementById('root')!;
 root.innerHTML = `
   <button class="skip" id="skipBtn">Skip to content</button>
-  <div class="preview-bar" role="note"><span><b>Private preview</b> · Live catalogue, photos and booking times from dailyritualsco.com. ${WRITES_ENABLED ? 'Checkout and booking are ON.' : 'Checkout, booking and sign-ups are switched off.'}</span>
-    <span class="pb-toggles"><label class="drafts-toggle"><input type="checkbox" id="gradeToggle" checked> Photo grade</label><label class="drafts-toggle"><input type="checkbox" id="draftsToggle"> Show drafts for Claire</label></span></div>
+  ${LAUNCHED ? '' : `<div class="preview-bar" role="note"><span><b>Private preview</b> · Live catalogue, photos and booking times from dailyritualsco.com. ${WRITES_ENABLED ? 'Checkout and booking are ON.' : 'Checkout, booking and sign-ups are switched off.'}</span>
+    <span class="pb-toggles"><label class="drafts-toggle"><input type="checkbox" id="gradeToggle" checked> Photo grade</label><label class="drafts-toggle"><input type="checkbox" id="draftsToggle"> Show drafts for Claire</label></span></div>`}
   ${fixImages(Header)}
   <main id="app" tabindex="-1"></main>
   ${Footer}
@@ -66,18 +67,23 @@ document.getElementById('clubPts')!.textContent = LOYALTY_ENABLED ? 'Join' : 'So
 if (!LOYALTY_ENABLED) document.body.classList.add('loyalty-off');
 
 // ---------- drafts toggle ----------
-const draftsToggle = document.getElementById('draftsToggle') as HTMLInputElement;
-try { draftsToggle.checked = localStorage.getItem('dr_drafts') === '1'; } catch { /* ignore */ }
-const applyDrafts = () => document.body.classList.toggle('show-drafts', draftsToggle.checked);
-draftsToggle.addEventListener('change', () => { applyDrafts(); try { localStorage.setItem('dr_drafts', draftsToggle.checked ? '1' : '0'); } catch { /* ignore */ } });
-applyDrafts();
+// (after launch there is no preview bar: drafts stay hidden and the photo grade stays on)
+const draftsToggle = document.getElementById('draftsToggle') as HTMLInputElement | null;
+if (draftsToggle) {
+  try { draftsToggle.checked = localStorage.getItem('dr_drafts') === '1'; } catch { /* ignore */ }
+  const applyDrafts = () => document.body.classList.toggle('show-drafts', draftsToggle.checked);
+  draftsToggle.addEventListener('change', () => { applyDrafts(); try { localStorage.setItem('dr_drafts', draftsToggle.checked ? '1' : '0'); } catch { /* ignore */ } });
+  applyDrafts();
+}
 
 // photo grade: one warm, soft tone over every photograph so pictures shot on different days sit together (can be compared with and without)
-const gradeToggle = document.getElementById('gradeToggle') as HTMLInputElement;
-try { gradeToggle.checked = localStorage.getItem('dr_grade') !== '0'; } catch { /* ignore */ }
-const applyGrade = () => document.body.classList.toggle('no-grade', !gradeToggle.checked);
-gradeToggle.addEventListener('change', () => { applyGrade(); try { localStorage.setItem('dr_grade', gradeToggle.checked ? '1' : '0'); } catch { /* ignore */ } });
-applyGrade();
+const gradeToggle = document.getElementById('gradeToggle') as HTMLInputElement | null;
+if (gradeToggle) {
+  try { gradeToggle.checked = localStorage.getItem('dr_grade') !== '0'; } catch { /* ignore */ }
+  const applyGrade = () => document.body.classList.toggle('no-grade', !gradeToggle.checked);
+  gradeToggle.addEventListener('change', () => { applyGrade(); try { localStorage.setItem('dr_grade', gradeToggle.checked ? '1' : '0'); } catch { /* ignore */ } });
+  applyGrade();
+}
 
 // ---------- cart drawer ----------
 const overlay = document.getElementById('overlay')!;
@@ -152,7 +158,7 @@ updateCount();
 const PAGE_TITLES: Record<string, string> = {
   shop: 'Shop', coaching: 'Coaching', book: 'Book a session', subscribe: 'Ritual on Repeat',
   drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
-  'order-confirmed': 'Order confirmed', help: 'Help', story: 'Our story', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset',
+  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Our story', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset',
 };
 
 async function route() {
@@ -191,6 +197,7 @@ async function route() {
       case 'reset': return renderReset(app);
       case 'book': return renderBook(app, arg);
       case 'checkout': await renderHome(app); openCart(); return;
+      case 'privacy': case 'terms': case 'accessibility': case 'refund-policy': return renderLegal(app, seg);
       default:
         if (hasStatic(seg)) return renderStatic(app, seg);
         return renderMissing(app, seg);

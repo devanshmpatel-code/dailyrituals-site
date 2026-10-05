@@ -572,3 +572,10 @@ body.show-drafts .club:has(+ .confirm + .night) { -webkit-mask-image: none !impo
   .wall .cap { font-size: 11px; padding: 28px 8px 8px; }
   .wall .tile img { aspect-ratio: auto !important; max-height: 280px; object-fit: cover; }
 }
+/* legal pages */
+.legal-page { padding-block: clamp(32px, 5vw, 72px) clamp(56px, 8vw, 112px); max-width: 760px; }
+.legal-page h1 { font-size: clamp(40px, 5vw, 64px); margin: 8px 0; } .legal-page h2 { font-size: 28px; margin: 36px 0 12px; }
+.legal-note { margin-top: 28px; padding: 22px 24px; border-radius: 22px 6px 22px 6px; background: linear-gradient(160deg, #F6E3B4, #F1DCD6); }
+.legal-draft { margin-top: 20px; padding: 18px 22px; border-radius: 14px; } .legal-draft ol { margin: 10px 0 0 20px; }
+.legal-list { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; line-height: 1.55; }
+.legal a { color: inherit; }

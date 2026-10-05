@@ -28,9 +28,9 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   }
   // every internal link in header/footer resolves to a real or friendly page
   await p.goto(base + '/'); await p.waitForTimeout(1500);
-  const hrefs = [...new Set(await p.locator('header a[href^="#/"], footer a[href^="#/"]').evaluateAll(a => a.map(x => x.getAttribute('href'))))];
+  const hrefs = [...new Set(await p.locator('header a[href^="#/"], footer a[href^="#/"], header a[href^="/"], footer a[href^="/"]').evaluateAll(a => a.map(x => x.getAttribute('href').replace(/^#/, ''))))].filter(h => !/\.[a-z]{2,4}$/.test(h));
   const bad = [];
-  for (const h of hrefs) { await p.goto(base + h.slice(1)); await p.waitForTimeout(250); const t = await p.locator('main').innerText(); if (/canvas|Not designed|14 screens/i.test(t)) bad.push(h); }
+  for (const h of hrefs) { await p.goto(base + h); await p.waitForTimeout(250); const t = await p.locator('main').innerText(); if (/canvas|Not designed|14 screens/i.test(t)) bad.push(h); }
   ok(`${label}: ${hrefs.length} nav/footer links have no developer wording`, bad.length === 0, bad.join(','));
   ok(`${label}: no JS errors`, errs.length === 0, errs.join(' | ').slice(0, 200));
   await ctx.close();

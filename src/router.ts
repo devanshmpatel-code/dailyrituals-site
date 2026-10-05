@@ -1,9 +1,9 @@
 // Routing that works in two modes, chosen at build time with VITE_ROUTING:
-//   hash (default): #/shop           needs no server rewrites
-//   path:           /shop            needs the host to serve index.html for unknown paths
-// Canvas markup and page code keep writing "#/…" links; in path mode they are rewritten on click.
+//   path (default): /shop    real addresses search engines can follow; the host serves index.html for unknown paths (vercel.json)
+//   hash:           #/shop   needs no server rewrites (used by the local test builds)
+// Canvas markup and page code keep writing "#/…" links; in path mode they are rewritten to "/…" as they appear.
 
-export const PATH_ROUTING = import.meta.env.VITE_ROUTING === 'path';
+export const PATH_ROUTING = import.meta.env.VITE_ROUTING !== 'hash';
 
 /** Current route as "seg/arg?query", without a leading slash. */
 export function currentRoute(): string {
@@ -22,20 +22,45 @@ export function navigate(to: string) {
   window.dispatchEvent(new Event('routechange'));
 }
 
+/** Like navigate, but replaces the current history entry (for correcting an address, such as an old product slug). */
+export function replaceRoute(to: string) {
+  if (!PATH_ROUTING) { location.replace(`#${to}`); return; }
+  history.replaceState(null, '', to);
+  window.dispatchEvent(new Event('routechange'));
+}
+
 export function onRoute(fn: () => void) {
   window.addEventListener(PATH_ROUTING ? 'popstate' : 'hashchange', fn);
   if (PATH_ROUTING) window.addEventListener('routechange', fn);
 }
 
-/** Path mode only: turn "#/…" links into real navigation, and upgrade old hash URLs. */
+/** "#/shop" -> "/shop" on every link inside root (path mode only). */
+function rewriteLinks(root: ParentNode) {
+  root.querySelectorAll?.<HTMLAnchorElement>('a[href^="#/"]').forEach(a => a.setAttribute('href', a.getAttribute('href')!.slice(1)));
+}
+
+/** A same-site link the app should handle itself (not a file, not a new tab, not a download). */
+function isAppLink(a: HTMLAnchorElement) {
+  const href = a.getAttribute('href') ?? '';
+  if (!href.startsWith('/') || href.startsWith('//') || a.target === '_blank' || a.hasAttribute('download')) return false;
+  return !/\.[a-z0-9]{2,5}($|\?)/i.test(href.split('#')[0]);
+}
+
+/** Path mode only: real links everywhere, in-app navigation on click, and old "#/…" addresses upgraded. */
 export function installLinkHandling() {
   if (!PATH_ROUTING) return;
   if (location.hash.startsWith('#/')) history.replaceState(null, '', location.hash.slice(1));
+  rewriteLinks(document);
+  new MutationObserver(ms => ms.forEach(m => {
+    if (m.type === 'attributes') { const a = m.target as HTMLAnchorElement; if (a.getAttribute('href')?.startsWith('#/')) rewriteLinks(a.parentElement ?? document); }
+    else m.addedNodes.forEach(n => { if (n.nodeType !== 1) return; const el = n as Element; if (el.matches('a[href^="#/"]')) rewriteLinks(el.parentElement ?? document); else rewriteLinks(el); });
+  })).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['href'] });
   document.addEventListener('click', e => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const a = (e.target as Element | null)?.closest?.('a[href^="#/"]') as HTMLAnchorElement | null;
-    if (!a || a.target === '_blank') return;
-    e.preventDefault();
-    navigate(a.getAttribute('href')!.slice(1));
+    const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+    if (!a) return;
+    const href = a.getAttribute('href')!;
+    if (href.startsWith('#/')) { e.preventDefault(); navigate(href.slice(1)); return; }
+    if (isAppLink(a)) { e.preventDefault(); navigate(href); }
   });
 }

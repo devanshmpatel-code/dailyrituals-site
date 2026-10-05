@@ -11,6 +11,12 @@ export const WIX_CLIENT_ID: string = import.meta.env.VITE_WIX_CLIENT_ID ?? '';
  */
 export const WRITES_ENABLED: boolean = import.meta.env.VITE_ENABLE_WRITES === 'true';
 
+/**
+ * Launch switch. While false the site shows the private-preview bar (photo grade and drafts toggles)
+ * and asks search engines not to index it. Set VITE_LAUNCH=true only for the production build on the real domain.
+ */
+export const LAUNCHED: boolean = import.meta.env.VITE_LAUNCH === 'true';
+
 export const STORES_APP_ID = '215238eb-22a5-4c36-9e7b-e7c08025e04e';
 export const BOOKINGS_APP_ID = '13d21c63-b5ec-5912-8397-c3a5ddb27a97';
 /** Staff resource type of the Bookings app on the site being read. Probably site-specific: override per Wix project. */

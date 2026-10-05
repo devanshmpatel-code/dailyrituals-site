@@ -1,3 +1,4 @@
+import { replaceRoute } from '../router';
 import Product from '../canvas/pages/Product.html?raw';
 import { loadCatalogue, loadProduct, toItem, imgSrc, money, type Item } from '../wix';
 import { cardHTML, fixImages, errorBox, wireCommon, toast, esc } from '../ui';
@@ -40,7 +41,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   let item = items.find(i => i.slug === slug);
   if (!item) {
     const live = canvasSlugToLive(items, slug);
-    if (live) { location.replace(`#/product/${live.slug}`); return; }
+    if (live) { replaceRoute(`/product/${live.slug}`); return; }
     return renderNotInStore(app, slug);
   }
 

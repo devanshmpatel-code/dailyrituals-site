@@ -20,8 +20,8 @@ export function canvasSlugToLive(items: Item[], canvasSlug: string): Item | unde
  * render (marked as a draft image) and link to a "not in the store yet" page.
  */
 export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
-  root.querySelectorAll<HTMLAnchorElement>('a[href^="#/product/"]').forEach(a => {
-    const slug = a.getAttribute('href')!.slice('#/product/'.length);
+  root.querySelectorAll<HTMLAnchorElement>('a[href^="#/product/"], a[href^="/product/"]').forEach(a => {
+    const slug = a.getAttribute('href')!.replace(/^#?\/product\//, '');
     if (items.some(i => i.slug === slug)) return; // already live
     const live = canvasSlugToLive(items, slug);
     if (!live) return;
