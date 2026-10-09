@@ -7,7 +7,12 @@ const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); cons
 const errs = []; p.on('pageerror', e => errs.push(e.message));
 await p.goto(base + '/'); await p.waitForSelector('.jrail'); await p.waitForTimeout(1500);
 const cs = (sel, prop) => p.evaluate(([s, pr]) => { const e = document.querySelector(s); return e ? getComputedStyle(e)[pr] || getComputedStyle(e).getPropertyValue(pr) : null; }, [sel, prop]);
-for (const s of ['.night', '.club', '.repeat', '.giftsec']) ok(`home: ${s} fades into the page at its top and bottom`, /gradient/.test((await cs(s, 'maskImage')) ?? ''), '');
+// the home page is a day: each chapter's ground blends out of the colour of the one before it, with no hard edge and no see-through fade
+const flow = await p.evaluate(() => [...document.querySelectorAll('main section.df')].map(el => ({ g: el.dataset.ground, bg: getComputedStyle(el).backgroundImage, mask: getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage || 'none', bt: getComputedStyle(el).borderTopWidth })));
+ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,sage,gold,rose,euc,plum,night,night-solid', flow.map(f => f.g).join(','));
+ok('home: every chapter after the first blends from the previous colour', flow.filter(f => f.g !== 'night-solid').every(f => /linear-gradient/.test(f.bg)), flow.map(f => f.bg.slice(0, 30)).join(' | '));
+ok('home: no see-through fades or hairlines between chapters', flow.every(f => f.mask === 'none' && f.bt === '0px'));
+ok('home: chapters are numbered 1 to 8 in journey order', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '12345678');
 ok('home: the first chapter eases down from the dark opening strip', /gradient/.test(await cs('.moment-shop', 'backgroundImage')));
 ok('home: the footer rises out of a soft fade', /gradient/.test(await p.evaluate(() => getComputedStyle(document.querySelector('footer'), '::before').backgroundImage)));
 const radii = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card .ph')].map(e => getComputedStyle(e).borderTopLeftRadius));
