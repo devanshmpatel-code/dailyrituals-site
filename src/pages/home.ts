@@ -9,6 +9,7 @@ import { look } from './daycycle';
 import { mountSky, getSky } from './sky';
 import { mountBuyBar } from './motion';
 import { mountJourney } from './journey';
+import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
 
@@ -199,7 +200,9 @@ function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => 
 let scrubCleanup: (() => void) | null = null;
 /** Re-anchor the scrolling day so the current scroll position shows this hour (after a moment button, a drag or a key). */
 let scrubRebase: ((hour: number) => void) | null = null;
-export function unmountDayScrub() { scrubCleanup?.(); scrubCleanup = null; scrubRebase = null; }
+const stopDayScrub = () => { scrubCleanup?.(); scrubCleanup = null; scrubRebase = null; };
+/** Leaving the home page: the scrolling day and the opening (its timers and pointer listeners) are taken down together. */
+export function unmountDayScrub() { stopDayScrub(); unmountOpening(); }
 function scrubFrame(app: HTMLElement, h: number, hold?: Moment) {
   const hh = ((h % 24) + 24) % 24;
   applyLook(app, hh); moveSun(app, hh); setClockLive(app, hh);
@@ -207,7 +210,7 @@ function scrubFrame(app: HTMLElement, h: number, hold?: Moment) {
   if (!heroCurrent || m.key !== heroCurrent.key) { heroCurrent = m; setMoment(app, m, true, hh); setClockLive(app, hh); }
 }
 function mountDayScrub(app: HTMLElement) {
-  unmountDayScrub();
+  stopDayScrub();
   const hero = app.querySelector<HTMLElement>('#day');
   if (!hero || reduceMotion()) return;
   const pin = document.createElement('div'); pin.className = 'daypin';
@@ -278,6 +281,7 @@ function wireHeroStatic(app: HTMLElement) {
   const golden = momentForHour(hourNow());
   heroCurrent = golden; liveHour = hourNow();
   setMoment(app, golden, false, liveHour);
+  mountOpening(app); // the sky wakes into the real hour; the words rise after it (decoration only: everything above is already live)
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b =>
     b.addEventListener('click', () => { useRealClock = false; stopTween(app); const to = MOMENTS.find(m => m.key === (b.dataset.jump as MomentKey))!.hour; scrubRebase?.(to); tweenTo(app, to, 1200); }));
 

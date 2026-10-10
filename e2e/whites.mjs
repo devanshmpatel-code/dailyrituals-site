@@ -1,6 +1,6 @@
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
-const base = 'http://localhost:4173/#';
+const base = process.env.BASE ?? 'http://localhost:4173/#';
 const routes = ['/', '/shop', '/product/cabana', '/subscribe', '/drops', '/gift', '/club', '/wall', '/coaching', '/help', '/explore', '/quiz', '/build', '/sets', '/book'];
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const p = await b.newPage({ viewport: { width: 1280, height: 900 } }); p.setDefaultTimeout(8000); await setupMocks(p);
