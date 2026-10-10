@@ -8,7 +8,7 @@ const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PAS
 const state = p => p.evaluate(() => { const e = document.querySelector('.jbreathe'); if (!e) return null; const s = e.querySelector('.mb-stage').style; return { k: Number(s.getPropertyValue('--k')), fl: Number(s.getPropertyValue('--fl')), w: document.getElementById('jbWord')?.textContent ?? '', lit: e.querySelectorAll(':scope > .mb-phases .mp.on').length, done: e.classList.contains('done') }; });
 const lits = new Set(); // every count of lit phase marks seen while polling
 const until = async (p, f, ms = 12000) => { const t0 = Date.now(); let s = null; while (Date.now() - t0 < ms) { s = await state(p); if (s) lits.add(s.lit); if (s && f(s)) return s; await p.waitForTimeout(25); } return null; };
-for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {
+for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   const moonReqs = []; p.on('request', r => { if (/\/img\/studio\/moons\//.test(r.url())) moonReqs.push(r.url()); }); lits.clear();
@@ -23,6 +23,13 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   ok(`${label}: the eyebrow names the candle`, /·\s*one moon, one minute/i.test(await p.locator('#mbEyebrow').innerText()), await p.locator('#mbEyebrow').innerText());
   const first = await p.locator('.jbreathe').getAttribute('data-moon');
   ok(`${label}: the page behind does not scroll while the pause is open`, await p.evaluate(() => getComputedStyle(document.documentElement).overflow === 'hidden'));
+  // the words sit clear of the outer orbit ring, and the flame is a proper flame (about a quarter of the moon tall)
+  const geo = await p.evaluate(() => { const st = document.querySelector('.jbreathe .mb-stage').getBoundingClientRect(), sub = document.querySelector('.jbreathe .mb-sub').getBoundingClientRect(), ring = document.querySelector('.jbreathe .mb-orbits .o3').getBoundingClientRect(), fl = document.querySelector('.jbreathe .mb-fl').getBoundingClientRect();
+    const cx = st.left + st.width / 2, cy = st.top + st.height / 2, r = ring.width / 2; const far = Math.max(...[[sub.left, sub.bottom], [sub.right, sub.bottom], [cx, sub.bottom]].map(([x, y]) => r - Math.hypot(x - cx, y - cy)));
+    return { clear: Math.round(-far), flame: Math.round(fl.height), moon: Math.round(st.width), bar: document.querySelector('.jbreathe .mb-bar').getBoundingClientRect().top - document.querySelector('.jbreathe > .mb-phases').getBoundingClientRect().bottom }; });
+  ok(`${label}: the "4 in, 6 out" line clears the outer ring`, geo.clear >= 4, `${geo.clear}px of air`);
+  ok(`${label}: the flame is about a quarter of the moon tall`, geo.flame >= geo.moon * 0.18 && geo.flame <= geo.moon * 0.34, `${geo.flame}px on a ${geo.moon}px moon`);
+  ok(`${label}: the phase marks sit above the buttons`, geo.bar >= 8, `${Math.round(geo.bar)}px`);
   // in: the shadow slides away (the moon waxes); at full the flame lights; out: it slides back
   const midIn = await until(p, s => s.w === 'Breathe in' && s.k > 0.3 && s.k < 0.95);
   const full = await until(p, s => s.fl > 0.9 && s.k > 0.97);

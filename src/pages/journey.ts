@@ -96,7 +96,7 @@ export function openBreathe(opener: HTMLElement) {
     <div class="mb-top" aria-hidden="true"><span>The Moon Breath</span></div>
     <div class="mb-text"><p class="mb-eyebrow" id="mbEyebrow"></p><p class="jb-word" id="jbWord" aria-live="polite">Take a moment</p><p class="mb-sub">4 in, 6 out. Six breaths make one moon.</p></div>
     <div class="mb-stage" aria-hidden="true">
-      <svg class="mb-orbits" viewBox="0 0 200 200" focusable="false"><circle class="o1" cx="100" cy="100" r="66"/><circle class="o2" cx="100" cy="100" r="78"/><circle class="o3" cx="100" cy="100" r="94"/><circle class="o-pt" cx="100" cy="34" r="1.2"/><circle class="o-pt" cx="166" cy="100" r=".9"/></svg>
+      <svg class="mb-orbits" viewBox="0 0 200 200" focusable="false"><circle class="o1" cx="100" cy="100" r="72"/><circle class="o2" cx="100" cy="100" r="80"/><circle class="o3" cx="100" cy="100" r="90"/><circle class="o-pt" cx="100" cy="28" r="1.2"/><circle class="o-pt" cx="172" cy="100" r=".9"/></svg>
       <div class="mb-halo"></div>
       <div class="mb-moon"><img class="mb-img" alt="" decoding="async" draggable="false"><div class="mb-shadow"></div>
         <div class="mb-flame"><i class="mb-wax"></i><i class="mb-ember"></i><i class="mb-fl"></i></div></div>
