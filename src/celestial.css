@@ -1,0 +1,177 @@
+/* ======================================================================
+   Celestial system: mystical minimalism, by daylight and by night.
+   Tokens live in site.css (:root). This file styles the motifs from src/celestial.ts and the places they live:
+   section dividers, eyebrow glyphs, product-card orbits, the night panels (footer, Moon Drops, cart header),
+   the coaching orbits, loading skeletons and the 404. One metal (gold-leaf), hairlines only, no glow or glitter.
+   Loaded after site.css so equal-specificity rules here win.
+   ====================================================================== */
+
+/* ---- the drawings ---- */
+.cel { display: block; overflow: visible; }
+.cel-lab { font: 500 7.5px var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; fill: currentColor; opacity: .8; }
+.cel-glyph { display: inline-block; flex: none; }
+
+/* ---- the night panel: gradient sky, grain, a faint star-chart grid, moonstone ink ---- */
+.night, .cel-night { background: var(--cel-grain), var(--cel-grid), var(--night-sky); color: var(--moonstone); }
+.night .eyebrow, .night .chapter, .cel-night .eyebrow { color: var(--gold-leaf); }
+.night .crumbs, .night .crumbs a { color: rgba(237, 230, 218, .72) !important; }
+.night a:focus-visible, .cel-night a:focus-visible, .cel-night button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
+
+/* ---- section dividers (home chapters) ---- */
+.cel-div { position: absolute; left: 0; right: 0; top: 0; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; gap: 18px; padding: 0 16px; pointer-events: none; z-index: 1; color: var(--euc); }
+.cel-div i { flex: 1 1 0; max-width: 200px; height: 1px; background: linear-gradient(90deg, transparent, currentColor); opacity: .32; }
+.cel-div i:last-child { transform: scaleX(-1); }
+.cel-div .cel-moonrow { width: 224px; height: 24px; flex: none; }
+.cel-div.dark { color: var(--gold-leaf); }
+.cel-div.dark i { opacity: .55; max-width: 240px; }
+.cel-div .cel-rulept { width: 3px; height: 3px; border-radius: 50%; background: var(--moonstone); flex: none; display: block; }
+@media (max-width: 820px) { .cel-div { gap: 12px; } .cel-div i { max-width: 60px; } }
+
+/* ---- eyebrows carry a small glyph (24px grid, one weight) ---- */
+.has-glyph { display: inline-flex; align-items: center; gap: 10px; letter-spacing: .16em; }
+.has-glyph .cel-glyph { width: 18px; height: 18px; color: inherit; opacity: .95; }
+.chapter.has-glyph::before { content: none; }
+.has-glyph:not(.chapter) { color: var(--euc); }
+.c-hero .has-glyph, .coachflow .has-glyph, .club .has-glyph, .night .has-glyph, .clubsoon .has-glyph, .ghead.soon .has-glyph, .plan.best .has-glyph { color: var(--gold-light); }
+.night .has-glyph { color: var(--gold-leaf); }
+
+/* ---- product cards: a 1px orbit draws itself, the mood's star lights, the label takes the mood colour, nothing scales ---- */
+.card .ph .cel-orbit { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; fill: none; stroke: var(--gold-leaf); stroke-width: 1; opacity: 0; transition: opacity .25s; }
+.card .ph .cel-orbit ellipse { stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset .55s cubic-bezier(.2, .7, .2, 1) .05s; }
+.card .ph .cel-orbit .cel-dim { fill: #15111F; stroke: none; opacity: 0; transition: opacity .3s; }
+.card .ph .cel-orbit .cel-pt { fill: var(--mood-s, var(--gold-light)); stroke: none; opacity: 0; transition: opacity .3s .45s; }
+.card .ph .cel-orbit .cel-halo { fill: var(--mood-s, var(--gold-light)); stroke: none; opacity: 0; transition: opacity .4s .5s; }
+@media (hover: hover) {
+  .card:hover .ph .cel-orbit, .card:focus-within .ph .cel-orbit { opacity: 1; }
+  .card:hover .ph .cel-orbit ellipse, .card:focus-within .ph .cel-orbit ellipse { stroke-dashoffset: 0; }
+  .card:hover .ph .cel-orbit .cel-dim, .card:focus-within .ph .cel-orbit .cel-dim { opacity: .1; }
+  .card:hover .ph .cel-orbit .cel-pt, .card:focus-within .ph .cel-orbit .cel-pt { opacity: 1; }
+  .card:hover .ph .cel-orbit .cel-halo, .card:focus-within .ph .cel-orbit .cel-halo { opacity: .3; }
+}
+.card:hover .ph img.main { transform: none !important; }
+.card:hover .ph { transform: none !important; }
+.card .sub { font: 500 11px/1.5 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--euc); transition: color .3s; }
+.card:hover .sub, .card:focus-within .sub { color: var(--mood-c, var(--euc)); }
+.card .sub .swatch { width: 8px; height: 8px; }
+
+/* ---- loading: sand blocks with an orbit that pulses between 40% and 60% ---- */
+.card.sk .ph { background: var(--sand); animation: none; position: relative; }
+.cel-skorb { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--euc); opacity: .3; animation: celPulse 2.6s ease-in-out infinite; }
+@keyframes celPulse { 0%, 100% { opacity: .24; } 50% { opacity: .4; } }
+
+/* ---- the footer as a night panel ---- */
+/* the chart is clipped by its own layer, so the footer itself stays free for the ::before fade into the page above */
+footer.cel-night { position: relative; isolation: isolate; }
+footer::before { top: -96px !important; height: 96px !important; }
+footer.cel-night > .wrap { position: relative; z-index: 1; }
+.foot-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.foot-chart { position: absolute; right: -150px; top: -110px; width: 560px; height: 560px; color: var(--moonstone); opacity: .13; }
+.foot-chart .cel { width: 100%; height: 100%; }
+.foot-const { display: block; width: 236px; max-width: 100%; margin-top: 14px; color: var(--moonstone); opacity: .9; }
+.foot-const .cel { width: 100%; height: auto; }
+footer.cel-night .foot h4 { color: var(--gold-leaf); font-family: var(--mono, "DM Mono", monospace); font-weight: 500; letter-spacing: .18em; }
+footer.cel-night .foot p { color: rgba(237, 230, 218, .78); }
+footer.cel-night .foot a { color: rgba(237, 230, 218, .82); }
+footer.cel-night .foot a:hover { color: var(--moonstone); }
+footer.cel-night .logo, footer.cel-night .foot a.foot-mark { color: var(--moonstone); }
+footer.cel-night .foot-mark svg { color: var(--gold-leaf); }
+footer.cel-night .foot-note { color: var(--gold-leaf); }
+footer.cel-night .legal { border-top: 1px solid rgba(201, 163, 90, .38); color: rgba(237, 230, 218, .66); }
+footer.cel-night .legal a { color: rgba(237, 230, 218, .82); border-bottom-color: rgba(201, 163, 90, .45); }
+footer.cel-night .legal a:hover { color: var(--moonstone); border-color: var(--gold-light); }
+footer.cel-night .legal > span:first-child { display: inline-flex; align-items: center; gap: 10px; }
+.foot-moon { display: inline-flex; color: var(--gold-light); }
+.foot-moon .cel { width: 16px; height: 16px; }
+footer.cel-night .foot a:focus-visible { outline-color: var(--gold-light); }
+@media (max-width: 820px) { .foot-chart { right: -140px; top: -90px; width: 380px; height: 380px; opacity: .1; } .foot-const { width: 200px; } }
+
+/* ---- the cart drawer: a celestial header, light cards below ---- */
+.drawer .dh { background: var(--cel-grid), var(--night-sky); color: var(--moonstone); border-bottom: 1px solid rgba(201, 163, 90, .45); }
+.drawer .dh h3 { color: var(--moonstone); gap: 12px; align-items: center; }
+.drawer .dh h3 .dh-moon { display: inline-flex; color: var(--gold-light); }
+.drawer .dh h3 .dh-moon .cel { width: 18px; height: 18px; }
+.drawer .dh h3 .dh-n { color: var(--gold-leaf); }
+.drawer .dh .ib[data-x] { color: var(--moonstone); border-color: rgba(237, 230, 218, .35); }
+.drawer .dh .ib[data-x]:hover { background: var(--moonstone); color: var(--nocturne); }
+.drawer .dh .ib[data-x]:focus-visible { outline-color: var(--gold-light); }
+.ship { display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: center; background: linear-gradient(155deg, var(--tint-sage), #EEF3EF); border-radius: 18px; padding: 12px 16px; }
+.ship .meter { display: none; }
+.ship-arc { width: 44px; height: 44px; color: var(--euc); }
+.ship-arc .t { opacity: .22; }
+.ship-arc .p { stroke-dasharray: 100; stroke-dashoffset: calc(100 - var(--p, 0)); transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset .6s cubic-bezier(.2, .7, .2, 1); }
+.ship-arc .s { fill: var(--gold-leaf); stroke: none; opacity: 0; transition: opacity .4s .3s; }
+.ship-arc.full .p { stroke: var(--gold-leaf); }
+.ship-arc.full .s { opacity: 1; }
+.ship-arc.full .t { opacity: .35; stroke: var(--gold-leaf); }
+
+/* ---- Moon Drops: a night page ---- */
+body[data-page="drops"] main { background: linear-gradient(180deg, var(--ground) 0, var(--deep-sky) 110px); }
+body[data-page="drops"] .night { color: var(--moonstone); }
+body[data-page="drops"] .night .stars { opacity: .5; }
+.night .pill { background: rgba(237, 230, 218, .1) !important; color: var(--moonstone) !important; }
+.night .tier { border: 1px solid rgba(201, 163, 90, .34); background: rgba(237, 230, 218, .035); }
+.night .tier .mono { color: var(--gold-leaf); opacity: 1 !important; }
+.night .countdown div { background: rgba(237, 230, 218, .05); border-color: rgba(201, 163, 90, .3); }
+.night .countdown b { color: var(--moonstone); }
+.night .vote { border-color: rgba(201, 163, 90, .3); background: rgba(237, 230, 218, .035); }
+.night .vopt { border-color: rgba(237, 230, 218, .18); }
+.night .vopt[aria-pressed="true"] { border-color: var(--gold-leaf); }
+.night .vopt .fill { background: linear-gradient(90deg, rgba(201, 163, 90, .32), rgba(233, 212, 161, .1)); }
+.night .batch { background: rgba(21, 17, 31, .72); border: 1px solid rgba(201, 163, 90, .3); }
+.night .batchbar div { background: linear-gradient(90deg, var(--gold-leaf), var(--gold-light)); }
+.night .btn.white { background: var(--moonstone); border-color: var(--moonstone); color: var(--nocturne); }
+.night .btn.ghost-w { border-color: rgba(237, 230, 218, .5); color: var(--moonstone); }
+.night .btn.ghost-w:hover { background: var(--moonstone); color: var(--nocturne); }
+.night button.soon { border-color: rgba(201, 163, 90, .6) !important; color: var(--moonstone) !important; }
+.moon .cel-moon-large { filter: none; color: var(--gold-leaf); }
+.moon svg { width: 84px; height: 84px; }
+.cel-drop-row { display: flex; align-items: center; gap: 16px; color: var(--gold-leaf); margin-top: 4px; }
+.cel-drop-row .cel-moonrow { width: 224px; height: 24px; }
+.cel-drop-row i { flex: 1 1 0; max-width: 120px; height: 1px; background: linear-gradient(90deg, currentColor, transparent); opacity: .55; }
+.drop-grid .cel-wm, .c-hero .cel-wm, .cel-wm-404 { position: absolute; pointer-events: none; color: var(--moonstone); opacity: .12; }
+.drop-grid .cel-wm { right: -40px; top: -40px; width: min(360px, 40vw); }
+.drop-grid .cel-wm .cel { width: 100%; height: auto; }
+body[data-page="drops"] .lotusdiv { background: #15111F; color: var(--gold-leaf); opacity: 1; }
+body[data-page="drops"] .lotusdiv i { background: rgba(201, 163, 90, .4); }
+body[data-page="drops"] footer::before { background: linear-gradient(to bottom, #15111F, var(--deep-sky)); }
+
+/* ---- coaching: orbits around Claire, a flower-of-life watermark behind the opening ---- */
+.c-hero { position: relative; overflow: hidden; }
+.c-hero > .wrap { position: relative; z-index: 1; }
+.c-hero .cel-wm { right: -120px; top: -80px; width: 520px; height: 520px; z-index: 0; opacity: .09; }
+.c-hero .cel-wm .cel { width: 100%; height: 100%; }
+.cel-portrait { position: relative; padding: 13%; }
+.cel-portrait > .ph { position: relative; z-index: 1; }
+.cel-portrait .cel-orbits { position: absolute; inset: 0; pointer-events: none; color: var(--euc); opacity: .7; z-index: 0; }
+.cel-portrait .cel-orbits .cel { width: 100%; height: 100%; }
+.cel-spin { transform-origin: 60px 60px; animation: celSpin 120s linear infinite; }
+.cel-spin-slow { transform-origin: 60px 60px; animation: celSpin 180s linear infinite; }
+@keyframes celSpin { to { transform: rotate(360deg); } }
+@media (max-width: 820px) { .split > .cel-portrait { order: -1; max-width: 420px; margin-inline: auto; } .c-hero .cel-wm { width: 320px; height: 320px; right: -110px; top: -60px; } }
+
+/* ---- the constellation and the astrolabe: slow life ---- */
+.cel-const .cel-link { stroke-dasharray: 100; stroke-dashoffset: 0; }
+.cel-const.draw .cel-link { stroke-dashoffset: 100; animation: celDraw .7s ease-out forwards; animation-delay: calc(var(--i, 0) * .16s); }
+@keyframes celDraw { to { stroke-dashoffset: 0; } }
+.cel-const .cel-halo { opacity: .3; }
+.cel-const .cel-pt { animation: celTwinkle 4s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -.9s); }
+@keyframes celTwinkle { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+.cel-const .cel-links { color: var(--gold-leaf); }
+.cel-night .cel-const .cel-links, .night .cel-const .cel-links, footer .cel-const .cel-links { color: var(--gold-leaf); }
+
+/* ---- the 404 ---- */
+.missing { position: relative; }
+.cel-wm-404 { right: -60px; top: 0; width: min(360px, 60vw); color: var(--euc); opacity: .1; }
+.cel-wm-404 .cel { width: 100%; height: auto; }
+.missing .mark { background: transparent; color: var(--euc); width: 72px; height: 72px; }
+.missing .mark .cel { width: 72px; height: 72px; }
+
+/* ---- the Ritualists (opening soon) keeps its dusk, with gold hairlines ---- */
+.clubsoon .nform input:focus-visible { outline-color: var(--gold-light); }
+
+/* ---- reduced motion: everything still, lines fully drawn ---- */
+@media (prefers-reduced-motion: reduce) {
+  .cel-skorb, .cel-spin, .cel-spin-slow, .cel-const .cel-pt, .cel-const.draw .cel-link { animation: none !important; }
+  .cel-const.draw .cel-link { stroke-dashoffset: 0; }
+  .card .ph .cel-orbit, .card .ph .cel-orbit *, .ship-arc .p, .ship-arc .s, .card .sub { transition: none !important; }
+}

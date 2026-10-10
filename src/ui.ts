@@ -1,5 +1,9 @@
 import { MOODS } from './config';
 import { money, type Item } from './wix';
+import { cardOrbit, skeletonOrbit } from './celestial';
+
+/** The mood colours lifted for a 2px star on a dark ground (see celestial tokens in site.css). */
+const STAR: Record<string, string> = { fresh: '#A3C8C0', sunny: '#ECB76A', floral: '#CF8A7D', woody: '#C09571', grounding: '#8EAA86' };
 
 export const esc = (s: string) =>
   s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -23,9 +27,12 @@ export function cardHTML(i: Item, badge?: string): string {
   const qa = single && i.inStock
     ? `<button class="qa" data-qa="${i.id}">Quick add · ${money(i.priceMin)}</button>`
     : `<a class="qa" href="${productHref(i)}">${i.inStock ? 'Choose an option' : 'Sold out'}</a>`;
-  return `<div class="card" data-format="${i.format}" data-mood="${i.mood ?? ''}">
+  // --mood-c colours the label on hover; --mood-s is the star that lights at the top of the orbit ring
+  const tone = mood ? ` style="--mood-c:${mood.swatch};--mood-s:${STAR[i.mood!] ?? mood.swatch}"` : '';
+  return `<div class="card" data-format="${i.format}" data-mood="${i.mood ?? ''}"${tone}>
     <div class="ph">${badge ? `<span class="badge">${esc(badge)}</span>` : ''}
       <a href="${productHref(i)}" aria-label="${esc(i.name)}"><img class="main" src="${i.image}" alt="${esc(i.name)}" loading="lazy">${alt}</a>
+      ${cardOrbit()}
       ${qa}
     </div>
     <a href="${productHref(i)}" style="text-decoration:none;display:flex;flex-direction:column;gap:4px">
@@ -36,7 +43,7 @@ export function cardHTML(i: Item, badge?: string): string {
 }
 
 export function skeletonCards(n: number) {
-  return Array.from({ length: n }, () => `<div class="card sk"><div class="ph"></div><div class="sk-line"></div><div class="sk-line short"></div></div>`).join('');
+  return Array.from({ length: n }, () => `<div class="card sk"><div class="ph">${skeletonOrbit()}</div><div class="sk-line"></div><div class="sk-line short"></div></div>`).join('');
 }
 
 export function errorBox(msg: string) {
