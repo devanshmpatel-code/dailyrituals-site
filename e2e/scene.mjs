@@ -5,7 +5,7 @@ const b = await chromium.launch({ executablePath: process.env.CHROME || undefine
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySelector(s)).opacity), sel);
 // wait until the moment's fades have finished (birds, fireflies, mist stop changing), so a busy machine reads the settled scene, not a frame mid-fade
-const settled = async (p, max = 10000) => { let last = '', t0 = Date.now(); while (Date.now() - t0 < max) { const v = await p.evaluate(() => ['.b1', '.f1', '.k1'].map(s => getComputedStyle(document.querySelector(s)).opacity).join()); if (v === last) return; last = v; await p.waitForTimeout(300); } };
+const settled = async (p, max = 10000) => { let last = '', t0 = Date.now(); while (Date.now() - t0 < max) { const v = await p.evaluate(() => ['.b1', '.f1', '.k1'].map(s => getComputedStyle(document.querySelector(s)).opacity).join()); if (v === last) return; last = v; await p.waitForTimeout(300); await p.evaluate(() => new Promise(r => { let n = 0; const f = () => (++n < 4 ? requestAnimationFrame(f) : r()); requestAnimationFrame(f); })); } };
 {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto(base + '/'); await p.waitForSelector('#scene'); await p.waitForTimeout(500);
