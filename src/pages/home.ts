@@ -9,6 +9,7 @@ import { look } from './daycycle';
 import { mountSky, getSky } from './sky';
 import { mountBuyBar } from './motion';
 import { mountJourney } from './journey';
+import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
 
@@ -131,10 +132,12 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
   const cta = app.querySelector<HTMLElement>('#dCta');
   if (cta) {
     const total = (diffuser?.priceMin ?? 0) + (roller?.priceMin ?? 0);
-    const mood = MOODS[(roller?.mood ?? m.mood)];
+    // the shop link follows the ritual's lead scent, the same mood the ritual label opens (night leads with Campfire Stories: woody)
+    const leadMood = (diffuser ?? roller)?.mood ?? m.mood;
+    const mood = MOODS[leadMood];
     const label = m.draft ? 'scents' : `${m.name.toLowerCase()} scents`;
     cta.innerHTML = `<button class="btn" data-addmoment="${m.key}" ${total ? '' : 'disabled'}>Add this ritual${total ? ` · ${money(total)}` : ''}</button>` +
-      `<a class="btn line" href="#/shop?m=${roller?.mood ?? m.mood}">Shop ${m.draft ? esc(mood.label.toLowerCase()) : label}</a>`;
+      `<a class="btn line" href="#/shop?m=${leadMood}">Shop ${m.draft ? esc(mood.label.toLowerCase()) : label}</a>`;
     cta.querySelector<HTMLButtonElement>('[data-addmoment]')?.addEventListener('click', async () => {
       for (const p of [diffuser, roller]) if (p) await add({ productId: p.id, slug: p.slug, name: p.name, price: p.priceMin, image: p.thumb, choice: p.choices[0]?.name, optionName: p.optionName });
       toast(`${m.name} ritual added to your cart`);
@@ -201,7 +204,9 @@ function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => 
 let scrubCleanup: (() => void) | null = null;
 /** Re-anchor the scrolling day so the current scroll position shows this hour (after a moment button, a drag or a key). */
 let scrubRebase: ((hour: number) => void) | null = null;
-export function unmountDayScrub() { scrubCleanup?.(); scrubCleanup = null; scrubRebase = null; }
+const stopDayScrub = () => { scrubCleanup?.(); scrubCleanup = null; scrubRebase = null; };
+/** Leaving the home page: the scrolling day and the opening (its timers and pointer listeners) are taken down together. */
+export function unmountDayScrub() { stopDayScrub(); unmountOpening(); }
 function scrubFrame(app: HTMLElement, h: number, hold?: Moment) {
   const hh = ((h % 24) + 24) % 24;
   applyLook(app, hh); moveSun(app, hh); setClockLive(app, hh);
@@ -209,7 +214,7 @@ function scrubFrame(app: HTMLElement, h: number, hold?: Moment) {
   if (!heroCurrent || m.key !== heroCurrent.key) { heroCurrent = m; setMoment(app, m, true, hh); setClockLive(app, hh); }
 }
 function mountDayScrub(app: HTMLElement) {
-  unmountDayScrub();
+  stopDayScrub();
   const hero = app.querySelector<HTMLElement>('#day');
   if (!hero || reduceMotion()) return;
   const pin = document.createElement('div'); pin.className = 'daypin';
@@ -280,6 +285,7 @@ function wireHeroStatic(app: HTMLElement) {
   const golden = momentForHour(hourNow());
   heroCurrent = golden; liveHour = hourNow();
   setMoment(app, golden, false, liveHour);
+  mountOpening(app); // the sky wakes into the real hour; the words rise after it (decoration only: everything above is already live)
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b =>
     b.addEventListener('click', () => { useRealClock = false; stopTween(app); const to = MOMENTS.find(m => m.key === (b.dataset.jump as MomentKey))!.hour; scrubRebase?.(to); tweenTo(app, to, 1200); }));
 

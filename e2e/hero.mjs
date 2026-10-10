@@ -21,6 +21,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', 
     const chipTotal = money(await rit.locator('em').innerText()), ctaTotal = money(await p.locator('#dCta [data-addmoment]').innerText());
     ok(`${label} ${k}: the ritual price matches the Add button`, chipTotal > 0 && chipTotal === ctaTotal, `${chipTotal} vs ${ctaTotal}`);
     ok(`${label} ${k}: the ritual links to the mood of its lead scent`, (await rit.getAttribute('href')).endsWith(`mood=${MOOD[k]}`), await rit.getAttribute('href'));
+    const shopHref = await p.locator('#dCta a.btn.line').getAttribute('href');
+    ok(`${label} ${k}: the Shop button follows the same mood as the ritual`, shopHref.includes(`m=${MOOD[k]}`), shopHref);
     const coach = p.locator('#dProducts .sp-coach');
     ok(`${label} ${k}: the practice offers a free way into coaching`, (await coach.getAttribute('href')) === expect[k] && /Free/.test(await coach.innerText()), await coach.getAttribute('href'));
   }
