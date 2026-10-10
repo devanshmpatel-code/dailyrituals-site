@@ -12,7 +12,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   const moonReqs = []; p.on('request', r => { if (/\/img\/studio\/moons\//.test(r.url())) moonReqs.push(r.url()); }); lits.clear();
-  await p.goto(base + '/?breath=fast'); await p.waitForSelector('.breathorb'); await p.waitForTimeout(700);
+  // opened from the coaching page: the home page now shows candle moons of its own, which would be counted as fetches here
+  await p.goto(base + '/coaching?breath=fast'); await p.waitForSelector('.breathorb'); await p.waitForTimeout(700);
   await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open');
   const dlg = await p.evaluate(() => { const e = document.querySelector('.jbreathe'); return [e.getAttribute('role'), e.getAttribute('aria-modal'), (e.getAttribute('aria-label') || '').length > 5]; });
   ok(`${label}: the orb opens a modal dialog with an accessible name`, dlg[0] === 'dialog' && dlg[1] === 'true' && dlg[2], dlg.join(','));
