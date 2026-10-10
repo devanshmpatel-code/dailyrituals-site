@@ -41,7 +41,7 @@
 .wcon-btn { cursor: pointer; outline: none; }
 .whit { fill: transparent; pointer-events: all; }
 .wfoc { fill: none; stroke: var(--moon); stroke-width: 1.5; stroke-dasharray: 3 5; opacity: 0; transition: opacity .2s; }
-.wcon-btn:focus-visible .wfoc { opacity: .9; }
+.wcon-btn:focus-visible .wfoc, .wfoc.on { opacity: .9; }
 .wlines { fill: none; stroke: var(--gold); stroke-opacity: .55; stroke-width: 1; stroke-linejoin: round; pointer-events: none; transition: stroke-opacity .5s, stroke .5s;
   stroke-dasharray: 1; stroke-dashoffset: 1; animation: wdraw .9s cubic-bezier(.2, .7, .2, 1) .25s forwards; }
 .wcon:nth-child(odd) .wlines { animation-delay: .45s; } .wcon:nth-child(3n) .wlines { animation-delay: .7s; }
@@ -54,7 +54,7 @@
 .wcore { fill: var(--moon); transform-box: fill-box; transform-origin: center; transition: transform .6s cubic-bezier(.2, .8, .2, 1), fill .4s; }
 .wsel { fill: none; stroke: var(--goldl); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0; transform-box: fill-box; transform-origin: center; transition: opacity .3s; }
 .wsfoc { fill: none; stroke: var(--moon); stroke-width: 1.5; opacity: 0; transition: opacity .2s; }
-.wstar:focus-visible .wsfoc { opacity: 1; }
+.wstar:focus-visible .wsfoc, .wsfoc.on { opacity: 1; }
 .wplate .wname { font: 600 16px var(--body, "Manrope", sans-serif); fill: var(--moon); opacity: 0; pointer-events: none; transition: opacity .4s;
   paint-order: stroke; stroke: var(--noct); stroke-opacity: .85; stroke-width: 1.6px; stroke-linejoin: round; }
 

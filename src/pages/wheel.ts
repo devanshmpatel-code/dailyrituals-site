@@ -151,12 +151,12 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
   };
   const align = (animate: boolean) => {
     cancelAnimationFrame(raf); const from = { ...cur }, to = target();
-    if (!animate || reduceMotion() || (from.rot === to.rot && from.s === to.s && from.dy === to.dy)) { setPose(to); plate.classList.remove('moving'); return; }
+    if (!animate || reduceMotion() || (from.rot === to.rot && from.s === to.s && from.dy === to.dy)) { setPose({ ...to, rot: ((to.rot % 360) + 360) % 360 }); plate.classList.remove('moving'); return; }
     plate.classList.add('moving'); const t0 = performance.now(), dur = 950;
     const step = (now: number) => {
       const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
       setPose({ rot: from.rot + (to.rot - from.rot) * e, s: from.s + (to.s - from.s) * e, dy: from.dy + (to.dy - from.dy) * e });
-      if (k < 1) raf = requestAnimationFrame(step); else plate.classList.remove('moving');
+      if (k < 1) raf = requestAnimationFrame(step); else { setPose({ ...to, rot: ((to.rot % 360) + 360) % 360 }); plate.classList.remove('moving'); }
     };
     raf = requestAnimationFrame(step);
   };
@@ -273,13 +273,19 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
   const wireSky = () => {
     btnEls.forEach(g => { const act = (sky: boolean) => pickMood(g.dataset.mood as Mood, sky); g.addEventListener('click', () => act(true)); g.addEventListener('keydown', keys(() => btnEls, g, () => act(false))); });
     starEls.forEach(g => { const act = (sky: boolean) => pickScent(g.dataset.mood as Mood, g.dataset.scent!, sky); g.addEventListener('click', e => { e.stopPropagation(); act(true); }); g.addEventListener('keydown', keys(() => starEls.filter(s => s.classList.contains('open')), g, () => act(false))); });
-    // tap the open sky: the nearest constellation answers
+    // tap the open sky: the nearest constellation answers; near the chosen one it steps back, then lets the sky go
     svg.addEventListener('click', e => {
       if ((e.target as Element).closest('.wcon-btn, .wstar')) return;
       const best = conEls.map(g => { const r = g.querySelector<SVGCircleElement>('.whit')!.getBoundingClientRect(); return { m: g.dataset.mood as Mood, d: Math.hypot(r.left + r.width / 2 - e.clientX, r.top + r.height / 2 - e.clientY) / (r.width / 2) }; }).sort((a, b) => a.d - b.d)[0];
       if (!best || best.d > 1.9) return;
-      if (best.m !== selMood) pickMood(best.m, true); else if (selScent) { selScent = null; apply(); }
+      if (best.m !== selMood) pickMood(best.m, true); else if (selScent) { selScent = null; apply(); } else pickMood(best.m);
     });
+    // Chromium is slow to restyle a group's children when :focus-visible changes on the group, so keyboard focus is
+    // mirrored as a class on the focus ring itself
+    let kb = false;
+    svg.addEventListener('keydown', () => { kb = true; }, true); svg.addEventListener('pointerdown', () => { kb = false; }, true);
+    svg.addEventListener('focusin', e => { const t = e.target as Element; t.querySelector('.wfoc, .wsfoc')?.classList.toggle('on', kb || t.matches(':focus-visible')); });
+    svg.addEventListener('focusout', e => (e.target as Element).querySelector('.wfoc, .wsfoc')?.classList.remove('on'));
   };
   wireSky();
   // the twinkle and the slow outer ring only run while the plate is on screen and the tab is visible
