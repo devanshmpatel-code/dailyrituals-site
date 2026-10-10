@@ -27,7 +27,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: that colour changes from the top of the page to the bottom`, w0 !== w1 && w0 && w1, `${w0} -> ${w1}`);
   await p.evaluate(() => window.scrollTo(0, 1800)); await p.waitForTimeout(500);
   await shot('mid');
-  await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(300); await p.evaluate(() => window.scrollTo(0, 300)); await p.waitForTimeout(500);
+  await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(300); await p.evaluate(() => window.scrollTo(0, (Number(document.querySelector('.daypin')?.dataset.len) || 0) + 300)); await p.waitForTimeout(500);
   const par = await p.evaluate(() => Number(document.getElementById('day').style.getPropertyValue('--p'))); ok(`${label}: the opening's landscape drifts as you scroll away`, par > 0.15 && par <= 1, `--p ${par}`);
   // jump to a chapter from the rail
   await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(300);

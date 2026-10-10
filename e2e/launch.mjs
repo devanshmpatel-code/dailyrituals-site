@@ -10,7 +10,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.goto(origin + '/'); await p.waitForTimeout(1500);
   const hashLinks = await p.locator('a[href^="#/"]').count();
   ok(`${label}: links are real addresses (no "#/" links left)`, hashLinks === 0, `${hashLinks}`);
-  if (label === 'desktop') { await p.locator('.mainnav a[data-nav="shop"]').click(); await p.waitForSelector('.grid .card'); ok('desktop: clicking Shop goes to /shop without a reload', new URL(p.url()).pathname === '/shop'); await p.goBack(); await p.waitForTimeout(800); ok('desktop: Back returns home', new URL(p.url()).pathname === '/' && (await p.locator('#day').count()) === 1); }
+  if (label === 'desktop') { await p.locator('.mainnav a[data-nav="shop"]').click(); await p.waitForURL('**/shop'); await p.waitForSelector('.grid .card'); ok('desktop: clicking Shop goes to /shop without a reload', new URL(p.url()).pathname === '/shop'); await p.goBack(); await p.waitForURL(u => new URL(u).pathname === '/'); await p.waitForTimeout(800); ok('desktop: Back returns home', new URL(p.url()).pathname === '/' && (await p.locator('#day').count()) === 1); }
   await p.goto(origin + '/product/roller-citrus-and-sun'); await p.waitForTimeout(1500);
   ok(`${label}: a product address opens directly`, /Citrus/i.test(await p.locator('h1').first().innerText()));
   await p.goto(origin + '/#/coaching'); await p.waitForTimeout(1200);

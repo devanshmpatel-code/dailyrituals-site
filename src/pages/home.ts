@@ -160,7 +160,7 @@ const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k 
 function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => number = easeInOut, done?: () => void) {
   cancelAnimationFrame(raf);
   const from = liveHour, t0 = performance.now();
-  const finish = () => { raf = 0; const m = nearest(to); heroCurrent = m; setMoment(app, m, true, to); done?.(); };
+  const finish = () => { raf = 0; const m = nearest(to); heroCurrent = m; setMoment(app, m, true, to); scrubRebase?.(to); done?.(); };
   if (reduceMotion() || ms <= 0) { finish(); return; }
   const step = (now: number) => { const k = Math.min(1, (now - t0) / ms); frame(app, from + (to - from) * ease(k)); if (k < 1) raf = requestAnimationFrame(step); else finish(); };
   raf = requestAnimationFrame(step);
@@ -170,7 +170,9 @@ function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => 
 // The opening stays pinned while scrolling plays a full day, starting from the visitor's own time and coming back round to it.
 // Only when the opening fits on screen (desktop and tablet landscape); phones and reduced motion keep a normal page.
 let scrubCleanup: (() => void) | null = null;
-export function unmountDayScrub() { scrubCleanup?.(); scrubCleanup = null; }
+/** Re-anchor the scrolling day so the current scroll position shows this hour (after a moment button, a drag or a key). */
+let scrubRebase: ((hour: number) => void) | null = null;
+export function unmountDayScrub() { scrubCleanup?.(); scrubCleanup = null; scrubRebase = null; }
 function scrubFrame(app: HTMLElement, h: number) {
   const hh = ((h % 24) + 24) % 24;
   applyLook(app, hh); moveSun(app, hh); setClockLive(app, hh);
@@ -186,7 +188,8 @@ function mountDayScrub(app: HTMLElement) {
   const cue = document.createElement('div'); cue.className = 'daycue'; cue.setAttribute('aria-hidden', 'true');
   cue.innerHTML = '<span>Scroll to live the day</span><i></i>';
   hero.appendChild(cue);
-  let enabled = false, start = 0, len = 0, active = false, startHour = liveHour, ticking = false;
+  let enabled = false, start = 0, len = 0, active = false, startHour = liveHour, ticking = false, lastY = -1;
+  const progress = () => (enabled ? Math.min(1, Math.max(0, (window.scrollY - start) / len)) : 0);
   const measure = () => {
     const hdr = document.querySelector('header.top')?.getBoundingClientRect().height ?? 0;
     pin.style.height = ''; pin.classList.remove('on');
@@ -199,8 +202,9 @@ function mountDayScrub(app: HTMLElement) {
   };
   const update = () => {
     ticking = false;
-    if (!enabled) return;
-    const p = Math.min(1, Math.max(0, (window.scrollY - start) / len));
+    if (!enabled || window.scrollY === lastY) return;
+    lastY = window.scrollY;
+    const p = progress();
     hero.style.setProperty('--dp', p.toFixed(3));
     cue.style.opacity = String(Math.max(0, 1 - p * 10));
     if (p <= 0.002) { if (active) { active = false; scrubFrame(app, startHour); } return; }
@@ -214,6 +218,7 @@ function mountDayScrub(app: HTMLElement) {
   ro.observe(hero);
   window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onResize);
   measure();
+  scrubRebase = (hour: number) => { if (!enabled) return; const p = progress(); startHour = hour - p * 24; active = p > 0.002; lastY = window.scrollY; };
   scrubCleanup = () => { ro.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); };
 }
 
@@ -244,7 +249,7 @@ function wireHeroStatic(app: HTMLElement) {
   heroCurrent = golden; liveHour = hourNow();
   setMoment(app, golden, false, liveHour);
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b =>
-    b.addEventListener('click', () => { useRealClock = false; stopTween(app); tweenTo(app, MOMENTS.find(m => m.key === (b.dataset.jump as MomentKey))!.hour, 1200); }));
+    b.addEventListener('click', () => { useRealClock = false; stopTween(app); const to = MOMENTS.find(m => m.key === (b.dataset.jump as MomentKey))!.hour; scrubRebase?.(to); tweenTo(app, to, 1200); }));
 
   const arc = app.querySelector<SVGSVGElement>('#arc');
   if (!arc) return;
