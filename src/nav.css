@@ -169,7 +169,7 @@ html.mm-lock { overflow: hidden; }
   .lnav-add-l { display: none; } .lnav-add-s { display: inline; }
   .lnav-more .chev { transition: transform var(--dur-base) var(--ease-standard); }
   .lnav-more[aria-expanded="true"] .chev { transform: rotate(180deg); }
-  .lnav-links { position: absolute; left: 0; right: 0; top: 100%; margin: 0; padding: 0 16px; flex-direction: column; align-items: stretch; gap: 0; background: rgba(247, 242, 234, .97); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(42, 31, 51, .08); box-shadow: 0 24px 40px -30px rgba(21, 17, 31, .35); max-height: 0; overflow: hidden; visibility: hidden; transition: max-height var(--dur-reveal) var(--ease-standard), visibility 0s linear var(--dur-reveal); }
+  .lnav-links { position: absolute; left: 0; right: 0; top: 100%; margin: 0; padding: 0 16px; flex-direction: column; align-items: stretch; gap: 0; background: var(--ground, #F7F2EA); border-bottom: 1px solid rgba(42, 31, 51, .08); box-shadow: 0 24px 40px -30px rgba(21, 17, 31, .35); max-height: 0; overflow: hidden; visibility: hidden; transition: max-height var(--dur-reveal) var(--ease-standard), visibility 0s linear var(--dur-reveal); }
   .lnav.tray-open .lnav-links { max-height: 320px; visibility: visible; transition-delay: 0s; }
   .lnav-links li { opacity: 0; transform: translateY(-4px); transition: opacity var(--dur-reveal) var(--ease-standard), transform var(--dur-reveal) var(--ease-standard); border-bottom: 1px solid rgba(42, 31, 51, .06); }
   .lnav-links li:last-child { border-bottom: 0; }

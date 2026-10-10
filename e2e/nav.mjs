@@ -1,4 +1,4 @@
-// The navigation: desktop flyouts (hover intent, click, keyboard, Esc, focusout, crossfade, scrim), the five-mood
+// Runs the menu on /shop (the home page's opening animation is heavy in headless Chromium and skews timing). The navigation: desktop flyouts (hover intent, click, keyboard, Esc, focusout, crossfade, scrim), the five-mood
 // constellation, the phone night-sky menu (dialog, focus trap, inert, scroll lock, accordions, pills), every menu
 // link landing on a real page, and the product page's sticky local nav (scroll-spy, add pill, phone tray).
 import { chromium } from 'playwright-core';
@@ -13,9 +13,11 @@ let menuHrefs = [];
 { // ---------- desktop 1440 x 900 ----------
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp'); await p.waitForTimeout(800);
+  await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(800);
   const isOpen = id => p.evaluate(id => document.querySelector(`.gn-item[data-id="${id}"] .gn-disclose`)?.getAttribute('aria-expanded') === 'true' && document.getElementById(`gn-panel-${id}`).classList.contains('open'), id);
   const anyOpen = () => p.locator('.gn-panel.open').count();
+  // Playwright's hover() leaves Chromium's frame clock idle until the next real pointer move, so nudge by 1px as a person would
+  const hover = async sel => { const [x, y] = await p.locator(sel).evaluate(e => { const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }); await p.mouse.move(x, y); await p.mouse.move(x + 1, y); };
 
   // structure (APG disclosure navigation)
   ok('desktop: five top-level items, three with disclosure buttons', (await p.locator('.mainnav .gn-link').count()) === 5 && (await p.locator('.mainnav .gn-disclose').count()) === 3);
@@ -24,10 +26,13 @@ let menuHrefs = [];
   ok('desktop: the panels are hidden from everyone while closed', await p.evaluate(() => [...document.querySelectorAll('.gn-panel')].every(el => getComputedStyle(el).visibility === 'hidden')));
 
   // hover intent
-  await p.hover('.gn-item[data-id="shop"] .gn-link'); await p.waitForTimeout(90);
-  ok('desktop: hovering Shop does not open the flyout at once (hover intent)', !(await isOpen('shop')));
-  await p.waitForTimeout(500);
-  ok('desktop: the Shop flyout opens after the intent delay', await isOpen('shop'));
+  // timed inside the page: from the pointer entering the item to aria-expanded flipping
+  await p.evaluate(() => { window.__t = {}; const it = document.querySelector('.gn-item[data-id="shop"]'); it.addEventListener('pointerenter', () => { window.__t.enter ??= performance.now(); }); new MutationObserver(() => { if (it.querySelector('.gn-disclose').getAttribute('aria-expanded') === 'true') window.__t.open ??= performance.now(); }).observe(it.querySelector('.gn-disclose'), { attributes: true }); });
+  await hover('.gn-item[data-id="shop"] .gn-link');
+  await p.waitForFunction(() => document.getElementById('gn-panel-shop').classList.contains('open'), null, { timeout: 3000 }).catch(() => {});
+  const gap = await p.evaluate(() => Math.round((window.__t.open ?? 0) - (window.__t.enter ?? 0)));
+  ok('desktop: the Shop flyout opens on hover intent, about 300ms after the pointer arrives (not at once)', (await isOpen('shop')) && gap >= 250 && gap <= 700, `${gap}ms`);
+  await p.mouse.move(...await p.locator('.gn-item[data-id="shop"] .gn-link').evaluate(e => { const r = e.getBoundingClientRect(); return [r.x + r.width / 2 - 1, r.y + r.height / 2]; })); await p.waitForTimeout(500);
   ok('desktop: a page scrim sits over the page while a flyout is open', await p.evaluate(() => document.body.classList.contains('gn-open') && document.elementFromPoint(720, 820)?.classList.contains('gn-scrim')));
   ok('desktop: the other top-level items dim while one is open', parseFloat(await p.locator('.gn-item[data-id="coaching"]').evaluate(e => getComputedStyle(e).opacity)) < 1);
   ok('desktop: the Shop flyout lists the formats, the five moods and the extra pages', await p.evaluate(() => { const t = document.getElementById('gn-panel-shop').innerText; return ['Shop all', 'Fragrance rollers', 'Mini diffusers', 'Candles', 'Natural deodorant', 'Fresh and coastal', 'Sunny and tropical', 'Soft and floral', 'Warm and woody', 'Grounding', 'Ritual on Repeat', 'Moon Drops', 'Send a Sunrise'].every(s => t.includes(s)); }));
@@ -40,18 +45,18 @@ let menuHrefs = [];
   ok('desktop: each star links to its mood on the compass and is named after the mood', await stars.evaluateAll(as => as.every(a => /^\/explore\?mood=(fresh|sunny|floral|woody|grounding)$/.test(a.getAttribute('href')) && /coastal|tropical|floral|woody|Grounding/.test(a.textContent))));
   await p.waitForTimeout(1600);
   ok('desktop: the hairlines between the stars have drawn themselves', await p.evaluate(() => [...document.querySelectorAll('#gn-panel-shop .cst-lines line')].every(l => parseFloat(getComputedStyle(l).strokeDashoffset) < 0.01)));
-  await p.hover('#gn-panel-shop .cst-star[href*="woody"]'); await p.waitForTimeout(400);
+  await hover('#gn-panel-shop .cst-star[href*="woody"]'); await p.waitForTimeout(1100);
   ok('desktop: hovering a star shows its mood name and lights it', await p.evaluate(() => { const a = document.querySelector('#gn-panel-shop .cst-star[href*="woody"]'); return getComputedStyle(a.querySelector('.cst-name')).opacity === '1' && a.querySelector('.cst-name').textContent === 'Warm and woody' && getComputedStyle(a.querySelector('.star')).transform !== 'none'; }));
   ok('desktop: stars are 44px targets', await stars.first().evaluate(e => { const r = e.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; }));
   ok('desktop: no sideways scroll with the flyout open', (await overflow(p)) <= 1);
 
   // switching crossfades without closing; leaving closes after a grace period
-  await p.hover('.gn-item[data-id="explore"] .gn-link'); await p.waitForTimeout(30);
+  await hover('.gn-item[data-id="explore"] .gn-link'); await p.waitForTimeout(30);
   const stillOpen = (await anyOpen()) >= 1;
   await p.waitForTimeout(250);
   ok('desktop: moving to Find your scent switches panels without closing first', stillOpen && (await isOpen('explore')) && !(await isOpen('shop')));
   ok('desktop: the Find your scent flyout offers the compass, the quiz and a mood to start from', await p.evaluate(() => { const t = document.getElementById('gn-panel-explore').innerText; return ['browse the compass', 'take the quiz', 'start from a mood', 'free 20-min call'].every(s => t.toLowerCase().includes(s)); }));
-  await p.hover('.gn-item[data-id="coaching"] .gn-link'); await p.waitForTimeout(300);
+  await hover('.gn-item[data-id="coaching"] .gn-link'); await p.waitForTimeout(300);
   ok('desktop: the Coaching flyout leads with the free reset and the free call', await p.evaluate(() => { const t = document.getElementById('gn-panel-coaching').innerText; return t.includes('Free 7-day reset') && t.includes('Free 20-min call with Claire') && t.includes('Neuro coaching'); }));
   await p.mouse.move(720, 820); await p.waitForTimeout(40);
   const graceOpen = await isOpen('coaching');
@@ -87,11 +92,13 @@ let menuHrefs = [];
   ok('keyboard: Enter on a flyout link opens that page and the menu closes', /reset/i.test(await p.locator('h1').innerText()) && (await anyOpen()) === 0);
 
   // current page marker
+  await p.goto(origin + '/coaching'); await p.waitForSelector('.c-hero');
+  ok('desktop: the Coaching link is marked as the current page on /coaching', (await p.locator('.mainnav .gn-link[data-nav="coaching"]').getAttribute('aria-current')) === 'page');
   await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card');
   ok('desktop: the Shop link is marked as the current page on /shop', (await p.locator('.mainnav .gn-link[data-nav="shop"]').getAttribute('aria-current')) === 'page');
 
   // every link in the menus is a real page
-  await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp');
+  await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card');
   menuHrefs = [...new Set(await p.locator('.gn-panel a, .mainnav .gn-link, #mobileMenu a').evaluateAll(as => as.map(a => a.getAttribute('href').replace(/^#/, ''))))];
   const bad = [];
   for (const h of menuHrefs) {
@@ -104,7 +111,7 @@ let menuHrefs = [];
   ok('desktop: the menus reach the finder, the quiz, the reset, the call and every mood', ['/explore', '/explore?tab=quiz', '/reset', '/book', '/coaching', '/shop', ...MOODS.map(m => `/explore?mood=${m}`), ...MOODS.map(m => `/shop?f=all&m=${m}&s=featured`)].every(h => menuHrefs.includes(h)));
 
   // the star takes you to its mood on the compass
-  await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp'); await p.waitForTimeout(400);
+  await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(400);
   await p.click('.gn-item[data-id="shop"] .gn-disclose'); await p.waitForTimeout(700);
   await p.click('#gn-panel-shop .cst-star[href*="woody"]'); await p.waitForURL('**/explore?mood=woody'); await p.waitForSelector('.wpanel'); await p.waitForTimeout(500);
   ok('desktop: a star opens the compass on its mood', /Warm and woody/.test(await p.locator('.wpanel').innerText()));
@@ -117,7 +124,7 @@ let menuHrefs = [];
   ok('product: at rest the bar is transparent and not stuck', await p.evaluate(() => { const n = document.querySelector('.lnav'); return !n.classList.contains('is-stuck') && getComputedStyle(n).backgroundColor === 'rgba(0, 0, 0, 0)'; }));
   ok('product: the pill mirrors the real add button', (await p.locator('.lnav-add').getAttribute('aria-label')) === (await p.locator('#addBtn').innerText()).trim());
   ok('product: the first section is current at the top', (await p.locator('.lnav-links a').first().getAttribute('aria-current')) === 'true');
-  await p.evaluate(() => window.scrollTo(0, 700)); await p.waitForTimeout(500);
+  await p.evaluate(() => window.scrollTo(0, 700)); await p.waitForFunction(() => document.querySelector('.lnav')?.classList.contains('is-stuck'), null, { timeout: 3000 }).catch(() => {}); await p.mouse.move(400, 500); await p.waitForTimeout(500);
   ok('product: once stuck the bar frosts', await p.evaluate(() => { const n = document.querySelector('.lnav'); const r = n.getBoundingClientRect(); return n.classList.contains('is-stuck') && r.top <= 1 && getComputedStyle(n).backgroundColor !== 'rgba(0, 0, 0, 0)'; }));
   const urlBefore = p.url();
   await p.click('.lnav-links a[data-sec="p-practice"]'); await p.waitForTimeout(1200);
@@ -143,7 +150,7 @@ let menuHrefs = [];
 
 { // ---------- a narrower desktop: the bar still fits on one line ----------
   const ctx = await b.newContext({ viewport: { width: 1024, height: 768 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
-  await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp'); await p.waitForTimeout(500);
+  await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(500);
   ok('1024: the top-level items stay on one line and the page does not scroll sideways', (await overflow(p)) <= 1 && await p.evaluate(() => document.querySelector('.mainnav').getBoundingClientRect().height <= 80 && document.querySelector('.menu-btn').offsetParent === null));
   await p.click('.gn-item[data-id="shop"] .gn-disclose'); await p.waitForTimeout(600);
   ok('1024: the Shop flyout fits without sideways scroll', (await overflow(p)) <= 1 && (await p.locator('#gn-panel-shop .cst-star').count()) === 5);
@@ -152,7 +159,7 @@ let menuHrefs = [];
 
 { // ---------- reduced motion ----------
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
-  await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp'); await p.waitForTimeout(400);
+  await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(400);
   await p.click('.gn-item[data-id="shop"] .gn-disclose'); await p.waitForTimeout(250);
   ok('reduced motion: the flyout opens with no movement (opacity only)', await p.evaluate(() => { const li = document.querySelector('#gn-panel-shop .gn-pi'); const st = document.querySelector('#gn-panel-shop .cst-star'); return document.getElementById('gn-panel-shop').classList.contains('open') && getComputedStyle(li).transform === 'none' && getComputedStyle(st).transform === 'none' && getComputedStyle(li).opacity === '1'; }));
   ok('reduced motion: the constellation lines are simply shown', await p.evaluate(() => [...document.querySelectorAll('#gn-panel-shop .cst-lines line')].every(l => parseFloat(getComputedStyle(l).strokeDashoffset) < 0.01)));
@@ -162,7 +169,7 @@ let menuHrefs = [];
 { // ---------- phone 390 x 844 ----------
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp'); await p.waitForTimeout(800);
+  await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(800);
   const box = async sel => p.locator(sel).evaluate(e => { const r = e.getBoundingClientRect(); return [r.width, r.height]; });
   ok('phone: the hamburger is at least 44px and announces the menu dialog', (await box('#menuBtn')).every(v => v >= 44) && (await p.getAttribute('#menuBtn', 'aria-controls')) === 'mobileMenu' && (await p.getAttribute('#menuBtn', 'aria-expanded')) === 'false');
   ok('phone: the desktop flyouts are not in the way', (await p.locator('.mainnav').isHidden()) && (await p.locator('#mobileMenu').isHidden()));
@@ -197,10 +204,10 @@ let menuHrefs = [];
   await p.keyboard.press('Tab');
   ok('phone: Tab from the last pill wraps to the first control', await p.evaluate(() => document.activeElement?.matches('.mm-logo')));
   // Esc
-  await p.keyboard.press('Escape'); await p.waitForTimeout(500);
+  await p.keyboard.press('Escape'); await p.waitForFunction(() => document.getElementById('mobileMenu').hidden, null, { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(100);
   ok('phone: Esc closes the menu and returns focus to the hamburger', (await mm.isHidden()) && await p.evaluate(() => document.activeElement?.id === 'menuBtn' && document.getElementById('root').inert === false && getComputedStyle(document.documentElement).overflow !== 'hidden') && (await p.getAttribute('#menuBtn', 'aria-expanded')) === 'false');
   // close button, and a link closes the menu by navigating
-  await p.click('#menuBtn'); await p.waitForTimeout(500); await p.click('.mm-close'); await p.waitForTimeout(500);
+  await p.click('#menuBtn'); await p.waitForTimeout(500); await p.click('.mm-close'); await p.waitForFunction(() => document.getElementById('mobileMenu').hidden, null, { timeout: 3000 }).catch(() => {});
   ok('phone: the close button closes the menu', await mm.isHidden());
   await p.click('#menuBtn'); await p.waitForTimeout(500);
   await p.locator('.mm-rows a[href$="/drops"]').click(); await p.waitForURL('**/drops'); await p.waitForTimeout(600);
@@ -227,7 +234,7 @@ let menuHrefs = [];
 
 { // phone, reduced motion: the menu simply appears
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
-  await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp'); await p.waitForTimeout(400);
+  await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(400);
   await p.click('#menuBtn'); await p.waitForTimeout(250);
   ok('phone reduced motion: rows are shown without movement and the stars do not twinkle', await p.evaluate(() => { const r = document.querySelector('.mm-rows > .mm-row'); return getComputedStyle(r).opacity === '1' && getComputedStyle(r).transform === 'none' && getComputedStyle(document.querySelector('.mm-stars circle')).animationName === 'none'; }));
   await ctx.close();
