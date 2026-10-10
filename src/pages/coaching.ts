@@ -76,7 +76,13 @@ export async function renderBook(app: HTMLElement, slug?: string) {
   let list: any[];
   try { list = await loadServices(); } catch (e) { app.querySelector('#slots')!.innerHTML = errorBox(String((e as Error).message ?? e)); return; }
   const svc = list.find(s => slugOf(s) === slug) ?? list.find(s => /discovery/i.test(s.name)) ?? list[0];
-  if (!svc) { app.querySelector('#slots')!.innerHTML = '<p>No services are open for booking.</p>'; return; }
+  if (!svc) {
+    // nothing bookable yet: a warm empty state with the two free ways in. The wording below is a draft for Claire.
+    app.querySelector('#slots')!.innerHTML = `<div class="bk-empty"><h3>No open times right now</h3><p>New times are added as Claire's calendar opens up. Please check back soon.</p>
+      <div class="cta"><a class="btn euc" href="#/reset">Start the free 7-day reset</a><a class="btn line" href="#/coaching">Back to coaching</a></div></div>`;
+    app.querySelector('#svcInfo')!.innerHTML = `<div class="bk-aside"><span class="eyebrow">While you wait</span><h2>Try one practice <span class="it">today</span></h2><p>The free 7-day reset is ten minutes a day with Claire, self-paced, and a gentle way to see whether coaching is for you.</p></div>`;
+    return;
+  }
 
   app.querySelector('#svcPick')!.innerHTML = list.map(s =>
     `<a class="chip" href="#/book/${slugOf(s)}" aria-pressed="${s._id === svc._id}">${esc(s.name)}</a>`).join('');

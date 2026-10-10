@@ -38,7 +38,8 @@ export async function renderStatic(app: HTMLElement, route: string) {
 
 export function renderMissing(app: HTMLElement, route: string) {
   const name = route.replace(/-/g, ' ');
-  app.innerHTML = `<div class="wrap" style="padding:clamp(64px,8vw,112px) 0;display:flex;flex-direction:column;gap:16px;max-width:640px">
+  app.innerHTML = `<div class="wrap missing" style="padding:clamp(64px,8vw,112px) 0;display:flex;flex-direction:column;gap:16px;max-width:640px">
+    <span class="mark" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 22a13 13 0 0126 0"></path><circle cx="16" cy="13" r="4.2" fill="currentColor" stroke="none"></circle><path d="M1 26h30"></path></svg></span>
     <span class="eyebrow">Coming soon</span><h1 style="font-size:clamp(36px,5vw,56px)">${esc(name.charAt(0).toUpperCase() + name.slice(1))}</h1>
     <p class="muted">We are still putting this page together. In the meantime, you can explore the shop or find your scent with the quiz.</p>
     <div class="cta"><a class="btn" href="#/shop">Shop the rituals</a><a class="btn line" href="#/explore?tab=quiz">Find your scent</a></div>

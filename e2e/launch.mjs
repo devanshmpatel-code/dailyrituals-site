@@ -1,7 +1,7 @@
 // Path routing (the default build) and launch pages. Run against a normal (not VITE_ROUTING=hash) build.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
-const origin = 'http://localhost:4173';
+const origin = (process.env.BASE ?? 'http://localhost:4173/#').replace(/\/?#?$/, '');
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {

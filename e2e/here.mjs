@@ -5,7 +5,7 @@ const settle = async p => { await p.waitForTimeout(400); let last = -1, same = 0
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false], ['mobile', { width: 390, height: 780 }, false], ['reduced motion', { width: 1280, height: 900 }, true]]) {
   const ctx = await b.newContext({ viewport: vp, reducedMotion: rm ? 'reduce' : 'no-preference' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
-  await p.goto('http://localhost:4173/#/'); await p.waitForSelector('.jhere', { state: 'attached' }); await p.waitForTimeout(600);
+  await p.goto((process.env.BASE ?? 'http://localhost:4173/#') + '/'); await p.waitForSelector('.jhere', { state: 'attached' }); await p.waitForTimeout(600);
   ok(`${label}: no "you are here" card on the opening`, !(await p.locator('.jhere.on').count()));
   const goCh = async k => { await p.evaluate(k => { const c = [...document.querySelectorAll('main .chapter')].find(x => new RegExp('Chapter ' + k + ' ').test(x.textContent)); window.scrollTo(0, window.scrollY + c.closest('section').getBoundingClientRect().top - 60); }, k); await settle(p); };
   for (const k of [2, 5, 8]) {
@@ -22,7 +22,7 @@ for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false],
   ok(`${label}: no sideways scroll`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 1);
   if (rm) ok('reduced motion: colour blobs do not drift', await p.evaluate(() => getComputedStyle(document.querySelector('.jaur i')).animationName === 'none'));
   else ok(`${label}: colour blobs drift`, await p.evaluate(() => getComputedStyle(document.querySelector('.jaur i')).animationName !== 'none'));
-  await p.goto('http://localhost:4173/#/shop'); await p.waitForTimeout(800);
+  await p.goto((process.env.BASE ?? 'http://localhost:4173/#') + '/shop'); await p.waitForTimeout(800);
   ok(`${label}: card and blobs are removed on other pages`, (await p.locator('.jhere, .jaur').count()) === 0);
   await ctx.close();
 }
