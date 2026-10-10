@@ -5,43 +5,60 @@ import { add } from '../cart';
 import { moonPhase } from './sky';
 import '../wheel.css';
 
-// The scent atlas. A nocturne star-chart plate: each mood is a constellation, each scent of that mood is a star,
-// joined by gold hairlines that draw themselves. Choosing a constellation turns the whole sky so it comes to rest
-// under the index at the top of the chart ("into alignment") and leans in a little; its stars grow into named,
-// tappable points. Choosing a star shows that scent's formats and prices in the panel beside the plate. Tonight's
-// real moon phase is drawn in the corner (computed, no meaning attached). The plate is drawn once and transformed
-// in place, so every change animates; the twinkle and the slow outer ring only run while the plate is on screen.
+// The scent atlas. A nocturne star-chart plate: each mood is a constellation with a lit sphere at its heart (the mood,
+// in its own colour, shaded like the compass blooms were) and a crown of smaller glowing balls above it, one per scent,
+// in the mood's star colour, joined by gold hairlines that draw themselves. Every ball drifts slowly on its own path
+// and the lines follow. Choosing a constellation turns the whole sky so it comes to rest under the index at the top of
+// the chart ("into alignment") and leans in a little; its sphere grows and takes its name, its scent balls grow into
+// named, tappable points. Choosing a ball shows that scent's formats and prices in the panel beside the plate.
+// Tonight's real moon phase is drawn in the corner (computed, no meaning attached). The plate is drawn once and
+// transformed in place, so every change animates; one frame loop (about 30 frames a second) drives the drift and the
+// turn, and it only runs while the plate is on screen, the tab is visible and motion is welcome.
 //
 // Design mapping (draft for Claire): the five constellations sit evenly around the pole, cool to warm to earth:
 // fresh at the top, then sunny, floral, woody and grounding clockwise. Their shapes are a layout choice, not a claim
-// about any scent. Mood colour is used only on the star points and their halos, never as a fill.
-const CX = 300, CY = 300, R = 262, RC = 128, RF = 128;
+// about any scent. The mood swatch is the sphere; the lighter star variant is the scent balls and their halos.
+const CX = 300, CY = 300, R = 262, RC = 128;
 const ANGLE: Record<Mood, number> = { fresh: -90, sunny: -18, floral: 54, woody: 126, grounding: 198 };
 /** star variants of the mood swatches: the same hues, lifted so a point still reads on nocturne */
 const STAR: Record<Mood, string> = { fresh: '#A3C8C0', sunny: '#ECB76A', floral: '#CF8A7D', woody: '#C09571', grounding: '#8EAA86' };
+/** ink on the two pale swatches, white on the three deep ones (all meet AA on their swatch, as the compass did) */
+const INK_ON: Record<Mood, boolean> = { fresh: true, sunny: true, floral: false, woody: false, grounding: false };
 /** One word per mood for the atlas labels; each word is already in the mood's label. */
 const SHORT: Record<Mood, string> = { fresh: 'Fresh', sunny: 'Sunny', floral: 'Floral', woody: 'Woody', grounding: 'Grounding' };
 /** draft for Claire: how the "Guide me" path names each format */
 const VERB: Record<Format, string> = { diffuser: 'Diffuse it', roller: 'Wear it', candle: 'Light it', deodorant: 'Wear it' };
 const PHASES = ['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'];
 
-type Pt = [number, number, 'a' | 'b']; // offset from the constellation's centre, and which side the star's name sits
-/** asterisms for 1 to 5 stars, drawn upright (as they appear when the constellation is at the top of the chart) */
+type Pt = [number, number]; // offset of a scent ball from its mood sphere, drawn upright (outward from the pole is up)
+/** the crown of 1 to 5 scent balls above the sphere, as it appears when the constellation is at the top of the chart;
+ * on a phone the balls are bigger, so the crown opens a little wider */
 const SHAPES: Pt[][] = [
-  [[0, 0, 'b']],
-  [[-46, 14, 'b'], [46, -14, 'a']],
-  [[-70, 12, 'b'], [-2, -26, 'a'], [70, 16, 'b']],
-  [[-78, 8, 'b'], [-20, -30, 'a'], [34, 22, 'b'], [84, -16, 'a']],
-  [[-88, 10, 'b'], [-44, -28, 'a'], [0, 14, 'b'], [44, -30, 'a'], [88, 8, 'b']],
+  [[0, -70]],
+  [[-56, -50], [56, -50]],
+  [[-84, -22], [0, -70], [84, -22]],
+  [[-90, -10], [-34, -64], [34, -64], [90, -10]],
+  [[-94, 0], [-56, -52], [0, -72], [56, -52], [94, 0]],
+];
+const SHAPES_P: Pt[][] = [
+  [[0, -74]],
+  [[-62, -48], [62, -48]],
+  [[-80, -30], [0, -76], [80, -30]],
+  [[-96, -4], [-38, -64], [38, -64], [96, -4]],
+  [[-98, 6], [-60, -50], [0, -76], [60, -50], [98, 6]],
 ];
 const rad = (d: number) => (d * Math.PI) / 180;
 const f1 = (n: number) => n.toFixed(1);
-const shape = (n: number): Pt[] => SHAPES[n - 1] ?? Array.from({ length: n }, (_, i) => { const d = rad(-90 + (360 * i) / n); return [60 * Math.cos(d), 60 * Math.sin(d), Math.sin(d) < 0 ? 'a' : 'b'] as Pt; });
+const shape = (n: number, portrait: boolean): Pt[] => (portrait ? SHAPES_P : SHAPES)[n - 1] ?? Array.from({ length: n }, (_, i) => { const d = rad(-90 + (360 * i) / n); return [84 * Math.cos(d), 84 * Math.sin(d)] as Pt; });
 const centre = (m: Mood) => [CX + RC * Math.cos(rad(ANGLE[m])), CY + RC * Math.sin(rad(ANGLE[m]))] as const;
-/** the asterism is turned to face the pole, so it stands upright once the sky brings it to the top */
-const starAt = (m: Mood, k: number, n: number) => { const [cx, cy] = centre(m), [ox, oy] = shape(n)[k], t = rad(ANGLE[m] + 90); return [cx + ox * Math.cos(t) - oy * Math.sin(t), cy + ox * Math.sin(t) + oy * Math.cos(t)] as const; };
-/** a small deterministic random stream, so the background sky is the same on every visit */
+/** the crown is turned to face away from the pole, so it stands upright once the sky brings it to the top */
+const starAt = (m: Mood, k: number, n: number, portrait: boolean) => { const [cx, cy] = centre(m), [ox, oy] = shape(n, portrait)[k], t = rad(ANGLE[m] + 90); return [cx + ox * Math.cos(t) - oy * Math.sin(t), cy + ox * Math.sin(t) + oy * Math.cos(t)] as const; };
+/** a scent's name above its ball: one line on the chart, two on a phone (split at the last space) where the type is larger */
+const nameLines = (s: string, two: boolean) => { const k = s.lastIndexOf(' '); return two && k > 0 ? [s.slice(0, k), s.slice(k + 1)] : [s]; };
+/** a small deterministic random stream, so the background sky and the drift are the same on every visit */
 const prng = (seed: number) => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+const hex = (s: string) => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16));
+const mix = (a: string, b: string, t: number) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isNarrow = () => window.matchMedia('(max-width: 820px)').matches;
 
@@ -52,6 +69,17 @@ function moonSVG(p: number, r: number) {
   return `<circle class="wmoon-o" r="${r}"/><path class="wmoon-l" d="${d}"/>`;
 }
 export const phaseName = (p: number) => PHASES[Math.round(p * 8) % 8];
+
+/** a ball's own slow path: two layered sines on each axis, each with its own period (7 to 15 s) and phase */
+type Drift = { a: number[]; w: number[]; p: number[] };
+type Ball = { el: SVGGElement; bx: number; by: number; x: number; y: number; d: Drift };
+type Con = { el: SVGGElement; path: SVGPathElement | null; sphere: Ball; stars: Ball[]; clock: number; hold: number };
+const driftOf = (rnd: () => number, amp: number): Drift => ({
+  a: [amp * (.6 + rnd() * .4), amp * (.3 + rnd() * .25), amp * (.6 + rnd() * .4), amp * (.3 + rnd() * .25)],
+  w: Array.from({ length: 4 }, () => (2 * Math.PI) / (7 + rnd() * 8)),
+  p: Array.from({ length: 4 }, () => rnd() * 2 * Math.PI),
+});
+const driftAt = (d: Drift, t: number) => [d.a[0] * Math.sin(d.w[0] * t + d.p[0]) + d.a[1] * Math.sin(d.w[1] * t + d.p[1]), d.a[2] * Math.sin(d.w[2] * t + d.p[2]) + d.a[3] * Math.sin(d.w[3] * t + d.p[3])] as const;
 
 let teardown: (() => void) | null = null;
 
@@ -70,6 +98,8 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
   let portrait = isNarrow();
   const build = () => {
     const top = portrait ? -44 : 0, h = portrait ? 688 : 600, bandT = portrait ? -14 : 36, bandB = portrait ? 626 : 582;
+    // the plate is drawn at 600 units and shown at about 360px on a phone, so the balls are set larger in units there
+    const ORB = portrait ? 34 : 27, SR = portrait ? 13 : 9;
     const rnd = prng(7);
     // the fixed plate: frame, star-chart grid, degree marks, the ecliptic as an ornament, the pole
     const ticks = Array.from({ length: 36 }, (_, i) => { const a = rad(i * 10), l = i % 3 ? 6 : 12; return `<line x1="${f1(CX + R * Math.cos(a))}" y1="${f1(CY + R * Math.sin(a))}" x2="${f1(CX + (R - l) * Math.cos(a))}" y2="${f1(CY + (R - l) * Math.sin(a))}"/>`; }).join('');
@@ -86,19 +116,32 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
       const r = .5 + rnd() * 1.1, o = (inside ? .3 : .18) + rnd() * (inside ? .6 : .4), spk = inside && r > 1.45 && rnd() < .5;
       (inside ? field : still).push(`<circle class="wtw" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" style="--o:${o.toFixed(2)};--d:-${(rnd() * 6).toFixed(1)}s;--t:${(3 + rnd() * 3).toFixed(1)}s"/>${spk ? `<path class="wspk" d="M${f1(x - 5)} ${f1(y)}H${f1(x + 5)}M${f1(x)} ${f1(y - 5)}V${f1(y + 5)}"/>` : ''}`);
     }
+    // the spheres are shaded like the compass blooms: a highlight top-left, the swatch, a shadowed edge towards
+    // nocturne; the scent balls the same in the star colour; each with a soft halo in its colour
+    const defs = moods.map(m => {
+      const sw = MOODS[m].swatch, st = STAR[m];
+      return `<radialGradient id="wo-${m}" cx=".34" cy=".28" r=".8"><stop offset="0" stop-color="${mix(sw, '#FFFFFF', .36)}"/><stop offset=".3" stop-color="${sw}"/><stop offset="1" stop-color="${mix(sw, '#1C2140', .45)}"/></radialGradient>
+        <radialGradient id="ws-${m}" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="${mix(st, '#FFFFFF', .7)}"/><stop offset=".35" stop-color="${mix(st, '#FFFFFF', .2)}"/><stop offset="1" stop-color="${mix(st, '#1C2140', .35)}"/></radialGradient>
+        <radialGradient id="wg-${m}"><stop offset="0" stop-color="${st}" stop-opacity=".55"/><stop offset=".45" stop-color="${st}" stop-opacity=".18"/><stop offset="1" stop-color="${st}" stop-opacity="0"/></radialGradient>`;
+    }).join('');
     const cons = moods.map(m => {
-      const scents = scentsOf(m), n = scents.length, [cx, cy] = centre(m), pts = scents.map((_, k) => starAt(m, k, n));
-      const path = n > 1 ? `<path class="wlines" pathLength="1" d="M${pts.map(([x, y]) => `${f1(x)} ${f1(y)}`).join('L')}${n > 5 ? 'Z' : ''}"/>` : '';
-      // the region label sits outward of its constellation; at the sides it tucks in a little to clear the rim
-      const lo = 84 - 14 * Math.abs(Math.cos(rad(ANGLE[m]))), lx = cx + lo * Math.cos(rad(ANGLE[m])), ly = cy + lo * Math.sin(rad(ANGLE[m]));
-      // a star's name sits above or below it; names of the outer stars lean outwards so neighbours never touch
-      const stars = scents.map((s, k) => { const [x, y] = pts[k], [ox, , side] = shape(n)[k], dx = Math.max(-16, Math.min(16, ox * .18)); return `<g class="wstar" data-scent="${esc(s)}" data-mood="${m}" role="button" tabindex="-1" aria-hidden="true" aria-pressed="false" aria-label="${esc(s)}, ${esc(MOODS[m].label)}" transform="translate(${f1(x)} ${f1(y)})">
-          <circle class="wshit" r="28"/><circle class="whalo" r="8"/><circle class="wcore" r="3"/><circle class="wsel" r="13"/><circle class="wsfoc" r="18"/>
-          <g class="wup" data-x="0" data-y="0"><text class="wname" x="${f1(dx)}" y="${side === 'a' ? -20 : 32}" text-anchor="middle">${esc(s)}</text></g></g>`; }).join('');
-      return `<g class="wcon" data-mood="${m}" role="group" aria-label="${esc(MOODS[m].label)} constellation" style="--sw:${STAR[m]}">
-        <g class="wcon-btn" data-mood="${m}" role="button" tabindex="0" aria-pressed="false" aria-label="${esc(MOODS[m].label)}, ${n} scent${n === 1 ? '' : 's'}">
-          <circle class="whit" cx="${f1(cx)}" cy="${f1(cy)}" r="74"/><circle class="wfoc" cx="${f1(cx)}" cy="${f1(cy)}" r="80"/>${path}
-          <g class="wup" data-x="${f1(lx)}" data-y="${f1(ly)}"><text class="wreg" text-anchor="middle" dominant-baseline="middle">${SHORT[m].toUpperCase()}</text></g></g>${stars}</g>`;
+      const scents = scentsOf(m), n = scents.length, [cx, cy] = centre(m), pts = scents.map((_, k) => starAt(m, k, n, portrait));
+      const path = n ? `<path class="wlines" pathLength="1" d="${lineD([cx, cy], pts, n)}"/>` : '';
+      // a ball's name sits above it; names of the outer balls lean outwards so neighbours never touch
+      const stars = scents.map((s, k) => {
+        const [x, y] = pts[k], [ox] = shape(n, portrait)[k], dx = Math.max(-20, Math.min(20, ox * (portrait ? .06 : .2)));
+        const lines = nameLines(s, portrait && ox !== 0), lh = portrait ? 21 : 19, y0 = -SR * (portrait ? 1.8 : 2) - 14 - (lines.length - 1) * lh;
+        const name = lines.map((l, i) => `<tspan x="${f1(dx)}" y="${f1(y0 + i * lh)}">${esc(l)}</tspan>`).join('');
+        return `<g class="wstar" data-scent="${esc(s)}" data-mood="${m}" role="button" tabindex="-1" aria-hidden="true" aria-pressed="false" aria-label="${esc(s)}, ${esc(MOODS[m].label)}" transform="translate(${f1(x)} ${f1(y)})">
+          <circle class="wshit" r="${portrait ? 40 : 32}"/><g class="wsorb"><circle class="whalo" r="${SR * 2.6}" fill="url(#wg-${m})"/><circle class="wcore" r="${SR}" fill="url(#ws-${m})"/><circle class="wspec" cx="${f1(-SR * .3)}" cy="${f1(-SR * .34)}" r="${f1(SR * .4)}" fill="url(#wspec)"/></g>
+          <circle class="wsel" r="${SR * 2.6}"/><circle class="wsfoc" r="${SR * 3.1}"/>
+          <g class="wup" data-x="0" data-y="0"><text class="wname" text-anchor="middle">${name}</text></g></g>`; }).join('');
+      return `<g class="wcon" data-mood="${m}" role="group" aria-label="${esc(MOODS[m].label)} constellation" style="--sw:${STAR[m]};--mw:${MOODS[m].swatch}">
+        <g class="wcon-btn" data-mood="${m}" role="button" tabindex="0" aria-pressed="false" aria-label="${esc(MOODS[m].label)}, ${n} scent${n === 1 ? '' : 's'}">${path}
+          <g class="wmood" transform="translate(${f1(cx)} ${f1(cy)})"><circle class="whit" r="74"/>
+            <g class="worb"><circle class="wmhalo" r="${ORB * 2.1}" fill="url(#wg-${m})"/><circle class="wmorb" r="${ORB}" fill="url(#wo-${m})"/><circle class="wspec" cx="${f1(-ORB * .3)}" cy="${f1(-ORB * .34)}" r="${f1(ORB * .42)}" fill="url(#wspec)"/></g>
+            <circle class="wfoc" r="${ORB + 9}"/>
+            <g class="wup" data-x="0" data-y="0"><text class="wmname ${INK_ON[m] ? 'ink' : 'wht'}" text-anchor="middle" dominant-baseline="central">${esc(SHORT[m])}</text><text class="wreg" data-below="${ORB + (portrait ? 22 : 19)}" data-above="${-(ORB + (portrait ? 17 : 14))}" text-anchor="middle" dominant-baseline="middle">${SHORT[m].toUpperCase()}</text></g></g></g>${stars}</g>`;
     }).join('');
     const all = items.filter(i => i.mood), nScents = new Set(all.map(i => i.scent)).size;
     // draft for Claire: the plate's corner captions. The moon phase is tonight's, computed; no meaning is attached to it.
@@ -106,8 +149,7 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
       <svg class="wsvg" viewBox="0 ${top} 600 ${h}" role="group" aria-label="Scent atlas: five constellations, one for each mood; each star is a scent">
         <defs><clipPath id="wclip"><circle cx="${CX}" cy="${CY}" r="${R - 1}"/></clipPath>
           <radialGradient id="wdome" cx=".5" cy=".3" r=".75"><stop offset="0" stop-color="#2A3358" stop-opacity=".9"/><stop offset="1" stop-color="#2A3358" stop-opacity="0"/></radialGradient>
-          <filter id="wglow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
-          <filter id="wsoft" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.2"/></filter></defs>
+          <radialGradient id="wspec"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".75"/><stop offset=".5" stop-color="#FFFFFF" stop-opacity=".2"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>${defs}</defs>
         <g class="wfixed" aria-hidden="true">
           <rect class="wframe" x="10" y="${top + 10}" width="580" height="${h - 20}" rx="4"/>${still.join('')}
           <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#wdome)"/>
@@ -125,40 +167,81 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
         <path class="windex" d="M300 40 L294.5 30 H305.5 Z" aria-hidden="true"/>
       </svg></div><div class="wpanel" aria-live="polite"></div></div>`;
   };
+  /** the gold hairlines: sphere to the first ball, along the crown, and back to the sphere */
+  const lineD = (s: readonly [number, number], pts: (readonly [number, number])[], n: number) => `M${f1(s[0])} ${f1(s[1])}L${pts.map(([x, y]) => `${f1(x)} ${f1(y)}`).join('L')}${n > 1 ? 'Z' : ''}`;
   build();
-  let svg!: SVGSVGElement, plate!: HTMLElement, panelEl!: HTMLElement, sky!: SVGGElement, conEls: SVGGElement[] = [], btnEls: SVGGElement[] = [], starEls: SVGGElement[] = [], ups: SVGGElement[] = [];
+  let svg!: SVGSVGElement, plate!: HTMLElement, panelEl!: HTMLElement, sky!: SVGGElement, conEls: SVGGElement[] = [], btnEls: SVGGElement[] = [], starEls: SVGGElement[] = [], ups: SVGGElement[] = [], cons: Con[] = [];
   const grab = () => {
     svg = el.querySelector<SVGSVGElement>('svg')!; plate = el.querySelector<HTMLElement>('.wplate')!; panelEl = el.querySelector<HTMLElement>('.wpanel')!; sky = svg.querySelector<SVGGElement>('.wsky')!;
     conEls = [...svg.querySelectorAll<SVGGElement>('.wcon')]; btnEls = [...svg.querySelectorAll<SVGGElement>('.wcon-btn')]; starEls = [...svg.querySelectorAll<SVGGElement>('.wstar')]; ups = [...svg.querySelectorAll<SVGGElement>('.wup')];
+    // every ball's resting place and its own path; the spheres wander less than their stars
+    const rnd = prng(11);
+    cons = conEls.map(g => {
+      const m = g.dataset.mood as Mood, [cx, cy] = centre(m), n = scentsOf(m).length;
+      const ball = (b: SVGGElement, x: number, y: number, amp: number): Ball => ({ el: b, bx: x, by: y, x, y, d: driftOf(rnd, amp) });
+      return { el: g, path: g.querySelector<SVGPathElement>('.wlines'), sphere: ball(g.querySelector<SVGGElement>('.wmood')!, cx, cy, 5),
+        stars: [...g.querySelectorAll<SVGGElement>('.wstar')].map((b, k) => { const [x, y] = starAt(m, k, n, portrait); return ball(b, x, y, portrait ? 6 : 7.5); }), clock: rnd() * 20, hold: 0 };
+    });
   };
   grab();
 
-  // ---- turning the sky ----
+  // ---- the frame loop: the slow drift of the balls, and the turn of the sky when a mood is chosen ----
   type Pose = { rot: number; s: number; dy: number };
-  let cur: Pose = { rot: 0, s: 1, dy: 0 }, raf = 0;
+  let cur: Pose = { rot: 0, s: 1, dy: 0 }, raf = 0, lastDrift = 0, drifting = false;
+  let tween: { from: Pose; to: Pose; t0: number } | null = null;
   const setPose = (p: Pose) => {
     cur = p;
     sky.setAttribute('transform', `translate(${CX} ${f1(CY + p.dy)}) scale(${p.s.toFixed(3)}) rotate(${p.rot.toFixed(2)}) translate(${-CX} ${-CY})`);
     const back = `rotate(${(-p.rot).toFixed(2)})`;
     ups.forEach(u => u.setAttribute('transform', `translate(${u.dataset.x} ${u.dataset.y}) ${back}`));
+    // a sphere's caption sits on its freer side, below it or above it, judged by how close its crown of balls comes
+    // to the caption on each side once the sky has turned (with room for the drift)
+    conEls.forEach(g => {
+      const m = g.dataset.mood as Mood, t = g.querySelector<SVGTextElement>('.wreg')!, n = scentsOf(m).length, a = rad(ANGLE[m] + 90 + p.rot);
+      const sr = portrait ? 13 : 9, half = (SHORT[m].length * (portrait ? 15 : 12) * .82) / 2 + sr + 12;
+      const balls = shape(n, portrait).map(([ox, oy]) => [ox * Math.cos(a) - oy * Math.sin(a), ox * Math.sin(a) + oy * Math.cos(a)]);
+      const room = (yc: number, dir: 1 | -1) => Math.min(Infinity, ...balls.filter(([x, y]) => Math.abs(x) < half && y * dir > 0).map(([, y]) => Math.abs(y - yc) - sr - 8 - 12));
+      t.style.transform = `translateY(${room(Number(t.dataset.below), 1) >= room(Number(t.dataset.above), -1) ? t.dataset.below : t.dataset.above}px)`;
+    });
   };
+  const place = (c: Con) => {
+    [c.sphere, ...c.stars].forEach(b => b.el.setAttribute('transform', `translate(${b.x.toFixed(2)} ${b.y.toFixed(2)})`));
+    c.path?.setAttribute('d', lineD([c.sphere.x, c.sphere.y], c.stars.map(b => [b.x, b.y] as const), c.stars.length));
+  };
+  // the drift steps about 30 times a second. A constellation under the pointer, holding focus or hinted at from the
+  // panel eases to a stop so its balls are easy to hit, and eases back into motion afterwards.
+  const drift = (dt: number) => {
+    cons.forEach(c => {
+      const want = c.el.matches(':hover, :focus-within') || c.el.querySelector('.hint') ? 1 : 0;
+      c.hold += (want - c.hold) * .14; if (c.hold > .995) c.hold = 1; else if (c.hold < .005) c.hold = 0;
+      if (c.hold === 1) return;
+      c.clock += dt * (1 - c.hold);
+      [c.sphere, ...c.stars].forEach(b => { const [dx, dy] = driftAt(b.d, c.clock); b.x = b.bx + dx; b.y = b.by + dy; });
+      place(c);
+    });
+  };
+  const frame = (now: number) => {
+    raf = 0; let again = false;
+    if (tween) {
+      const k = Math.min(1, (now - tween.t0) / 950), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2, { from, to } = tween;
+      if (k < 1) { setPose({ rot: from.rot + (to.rot - from.rot) * e, s: from.s + (to.s - from.s) * e, dy: from.dy + (to.dy - from.dy) * e }); again = true; }
+      else { setPose({ ...to, rot: ((to.rot % 360) + 360) % 360 }); plate.classList.remove('moving'); tween = null; }
+    }
+    if (drifting) { if (now - lastDrift >= 31) { drift(Math.min(.1, (now - lastDrift) / 1000)); lastDrift = now; } again = true; }
+    if (again) raf = requestAnimationFrame(frame);
+  };
+  const run = () => { if (!raf) { lastDrift = performance.now(); raf = requestAnimationFrame(frame); } };
   // the shortest way round to the wanted angle
   const near = (to: number, from: number) => { let d = ((to - from) % 360 + 540) % 360 - 180; return from + d; };
   const target = (): Pose => {
     if (!selMood) return { rot: near(0, cur.rot), s: 1, dy: 0 };
-    // on a phone the sky also leans in a little, so the names of the chosen stars read at thumb distance
-    const s = portrait ? 1.18 : 1; return { rot: near(-90 - ANGLE[selMood], cur.rot), s, dy: s * RC - RF };
+    // on a phone the sky settles a touch lower, so the names of the chosen balls keep clear of the index
+    return { rot: near(-90 - ANGLE[selMood], cur.rot), s: 1, dy: portrait ? 12 : 0 };
   };
   const align = (animate: boolean) => {
-    cancelAnimationFrame(raf); const from = { ...cur }, to = target();
+    const from = { ...cur }, to = target(); tween = null;
     if (!animate || reduceMotion() || (from.rot === to.rot && from.s === to.s && from.dy === to.dy)) { setPose({ ...to, rot: ((to.rot % 360) + 360) % 360 }); plate.classList.remove('moving'); return; }
-    plate.classList.add('moving'); const t0 = performance.now(), dur = 950;
-    const step = (now: number) => {
-      const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-      setPose({ rot: from.rot + (to.rot - from.rot) * e, s: from.s + (to.s - from.s) * e, dy: from.dy + (to.dy - from.dy) * e });
-      if (k < 1) raf = requestAnimationFrame(step); else { setPose({ ...to, rot: ((to.rot % 360) + 360) % 360 }); plate.classList.remove('moving'); }
-    };
-    raf = requestAnimationFrame(step);
+    plate.classList.add('moving'); tween = { from, to, t0: performance.now() }; run();
   };
 
   const apply = (animate = true) => {
@@ -288,9 +371,10 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
     svg.addEventListener('focusout', e => (e.target as Element).querySelector('.wfoc, .wsfoc')?.classList.remove('on'));
   };
   wireSky();
-  // the twinkle and the slow outer ring only run while the plate is on screen and the tab is visible
+  // the drift, the twinkle and the slow outer ring only run while the plate is on screen and the tab is visible;
+  // with reduced motion the balls rest at their charted places and the lines are complete
   let onScreen = true, io: IntersectionObserver | null = null;
-  const live = () => plate.classList.toggle('live', onScreen && !document.hidden);
+  const live = () => { const on = onScreen && !document.hidden; plate.classList.toggle('live', on); drifting = on && !reduceMotion(); if (drifting) run(); };
   const watch = () => {
     io?.disconnect();
     if ('IntersectionObserver' in window) { io = new IntersectionObserver(es => { onScreen = es.some(x => x.isIntersecting); live(); }, { threshold: .02 }); io.observe(plate); } else live();
@@ -298,9 +382,10 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
   document.addEventListener('visibilitychange', live);
   // crossing the phone breakpoint redraws the plate in the other proportion, keeping the choice
   const mq = window.matchMedia('(max-width: 820px)');
-  const onMq = () => { if (mq.matches === portrait) return; portrait = mq.matches; cancelAnimationFrame(raf); build(); grab(); wireSky(); watch(); cur = { rot: 0, s: 1, dy: 0 }; apply(false); live(); };
+  const stop = () => { cancelAnimationFrame(raf); raf = 0; tween = null; drifting = false; };
+  const onMq = () => { if (mq.matches === portrait) return; portrait = mq.matches; stop(); build(); grab(); wireSky(); watch(); cur = { rot: 0, s: 1, dy: 0 }; apply(false); live(); };
   mq.addEventListener('change', onMq);
-  const td = () => { cancelAnimationFrame(raf); io?.disconnect(); document.removeEventListener('visibilitychange', live); mq.removeEventListener('change', onMq); window.removeEventListener('hashchange', td); if (teardown === td) teardown = null; };
+  const td = () => { stop(); io?.disconnect(); document.removeEventListener('visibilitychange', live); mq.removeEventListener('change', onMq); window.removeEventListener('hashchange', td); if (teardown === td) teardown = null; };
   teardown = td; window.addEventListener('hashchange', td);
   watch(); apply(false); live();
 }

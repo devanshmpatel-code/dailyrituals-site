@@ -1,6 +1,8 @@
-// Find your scent: the scent atlas (src/pages/wheel.ts). Five constellations on a nocturne plate, one star per scent.
-// Choosing a constellation turns the sky (about a second); the plate carries .moving while it turns, so the tests wait
-// for it to settle instead of sleeping. Stars twinkle all the time, so taps on the sky are forced, as a visitor's tap is.
+// Find your scent: the scent atlas (src/pages/wheel.ts). Five constellations on a nocturne plate: a lit sphere for each
+// mood with a smaller glowing ball for each of its scents, all drifting slowly. Choosing a constellation turns the sky
+// (about a second); the plate carries .moving while it turns, so the tests wait for it to settle instead of sleeping.
+// The balls drift all the time, so taps on the sky are forced, as a visitor's tap is, and the drift checks wait on
+// positions rather than on fixed delays.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
 const base = process.env.BASE ?? 'http://localhost:4173/#';
@@ -21,11 +23,28 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   // where the chosen constellation's stars sit: under the index at the top of the chart
   const topOn = (pg, sel) => pg.evaluate(s => { const g = document.querySelector(s), r = g.querySelector('.wcore').getBoundingClientRect(), c = document.querySelector('.wsvg').getBoundingClientRect(); return (r.y + r.height / 2 - c.y) / c.height; }, sel);
   const atTop = sel => topOn(p, sel);
+  // where every ball is right now (its drift transform), and whether a ball stays on the plate
+  const spots = pg => pg.evaluate(() => [...document.querySelectorAll('.wmood, .wstar')].map(g => g.getAttribute('transform')));
+  const moved = (pg, was, min = .5) => pg.evaluate(([w, m]) => { const now = [...document.querySelectorAll('.wmood, .wstar')].map(g => g.getAttribute('transform')); const num = t => t.match(/-?[\d.]+/g).map(Number); return now.some((t, i) => Math.hypot(num(t)[0] - num(w[i])[0], num(t)[1] - num(w[i])[1]) > m); }, [was, min]);
+  const inside = pg => pg.evaluate(() => { const c = document.querySelector('.wplate').getBoundingClientRect(); return [...document.querySelectorAll('.wmorb, .wcore')].every(e => { const r = e.getBoundingClientRect(); return r.left >= c.left && r.right <= c.right && r.top >= c.top && r.bottom <= c.bottom; }); });
+  // a ball has come to rest: its transform reads the same across two polls at least 400 ms apart
+  const still = (pg, sel) => pg.waitForFunction(s => { const t = document.querySelector(s).getAttribute('transform'), now = performance.now(), w = window.__still; if (w && w.t === t && now - w.at > 400) return true; if (!w || w.t !== t) window.__still = { t, at: now }; return false; }, sel, { timeout: 6000 }).then(() => true, () => false);
 
   await open();
   ok(`${label}: five constellations on the plate`, (await p.locator('.wcon').count()) === 5);
   ok(`${label}: the plate is labelled like a star atlas`, (await svgText('.wreg')) === 'FRESH SUNNY FLORAL WOODY GROUNDING', await svgText('.wreg'));
-  ok(`${label}: one star per scent, in the mood's star colour`, (await p.locator('.wstar').count()) === 13 && (await p.locator('.wcon[data-mood="fresh"] .wstar').count()) === 3 && await p.evaluate(() => getComputedStyle(document.querySelector('.wcon[data-mood="fresh"] .whalo')).fill === 'rgb(163, 200, 192)'));
+  ok(`${label}: one ball per scent, in the mood's star colour`, (await p.locator('.wstar').count()) === 13 && (await p.locator('.wcon[data-mood="fresh"] .wstar').count()) === 3 && await p.evaluate(() => getComputedStyle(document.querySelector('.wcon[data-mood="fresh"]')).getPropertyValue('--sw').trim() === '#A3C8C0' && /url\(.*#ws-fresh/.test(getComputedStyle(document.querySelector('.wcon[data-mood="fresh"] .wcore')).fill)));
+  const mb = await bbox('.wcon[data-mood="fresh"] .wmorb'), cb = await bbox('.wcon[data-mood="fresh"] .wcore');
+  ok(`${label}: each mood is a lit sphere you can see, each scent a smaller ball`, (await p.locator('.wmorb').count()) === 5 && mb.width >= (label === 'desktop' ? 44 : 40) && mb.width <= 64 && cb.width >= 14 && cb.width <= 24, `${Math.round(mb.width)}px sphere, ${Math.round(cb.width)}px ball`);
+  ok(`${label}: the spheres are shaded like the compass blooms with a glint and a halo`, await p.evaluate(() => /url\(.*#wo-fresh/.test(getComputedStyle(document.querySelector('.wcon[data-mood="fresh"] .wmorb')).fill) && document.querySelectorAll('.wmood .wspec').length === 5 && document.querySelectorAll('.wmood .wmhalo').length === 5));
+  ok(`${label}: gold hairlines join the balls to their sphere`, await p.evaluate(() => [...document.querySelectorAll('.wcon')].every(g => { const d = g.querySelector('.wlines')?.getAttribute('d') ?? ''; return (d.match(/L/g) || []).length === g.querySelectorAll('.wstar').length; })));
+  const was = await spots(p);
+  ok(`${label}: the balls drift slowly`, await p.waitForFunction(w => { const now = [...document.querySelectorAll('.wmood, .wstar')].map(g => g.getAttribute('transform')); const num = t => t.match(/-?[\d.]+/g).map(Number); return now.some((t, i) => Math.hypot(num(t)[0] - num(w[i])[0], num(t)[1] - num(w[i])[1]) > .5); }, was, { timeout: 6000 }).then(() => true, () => false));
+  ok(`${label}: and the lines follow them`, await p.evaluate(() => [...document.querySelectorAll('.wcon')].every(g => { const d = g.querySelector('.wlines').getAttribute('d').match(/-?[\d.]+/g).map(Number), s = g.querySelector('.wmood').getAttribute('transform').match(/-?[\d.]+/g).map(Number); return Math.abs(d[0] - s[0]) < .06 && Math.abs(d[1] - s[1]) < .06; })));
+  ok(`${label}: the balls never leave the plate`, await inside(p));
+  // the drift steps on about every other frame of a 60 Hz page; on a slow machine it keeps up with whatever frames there are
+  const rate = await p.evaluate(() => new Promise(r => { const el = document.querySelector('.wstar'); let n = 0, f = 0, last = el.getAttribute('transform'); const t0 = performance.now(); const tick = () => { f++; const t = el.getAttribute('transform'); if (t !== last) { n++; last = t; } if (performance.now() - t0 < 1000) requestAnimationFrame(tick); else r({ n, f }); }; requestAnimationFrame(tick); }));
+  ok(`${label}: one frame loop drives the drift at about 30 steps a second`, rate.n <= 36 && (rate.n >= 24 || rate.n >= rate.f * .45), `${rate.n} steps over ${rate.f} frames`);
   ok(`${label}: tonight's moon is drawn with its phase named`, (await p.locator('.wmoon-l').count()) === 1 && /moon|crescent|quarter|gibbous/i.test(await svgText('.wcap.dim')), await svgText('.wcap.dim'));
   ok(`${label}: the plate is nocturne with moonstone type`, await p.evaluate(() => { const bg = getComputedStyle(document.querySelector('.wplate')).backgroundImage; return /42, 51, 88|2a3358/i.test(bg) && getComputedStyle(document.querySelector('.wreg')).fill === 'rgb(201, 163, 90)' && getComputedStyle(document.querySelector('.wname')).fill === 'rgb(237, 230, 218)'; }));
   ok(`${label}: starts by inviting you to read the sky`, /sky/.test(await h3()), await h3());
@@ -37,22 +56,34 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   await p.waitForFunction(() => [...document.querySelectorAll('.wlines')].every(l => Number(getComputedStyle(l).strokeDashoffset.replace('px', '')) < .01), null, { timeout: 4000 }).then(() => ok(`${label}: the constellation lines draw themselves in`, true), () => ok(`${label}: the constellation lines draw themselves in`, false));
   await shot('start');
 
-  // hover: the constellation under the pointer brightens, the others step back
+  // hover: the constellation under the pointer brightens and comes to rest, the others step back and keep drifting
   if (label === 'desktop') {
     await p.locator('.wcon-btn[data-mood="woody"] .whit').hover({ force: true });
     ok(`${label}: hovering a constellation dims the others`, await p.waitForFunction(() => Number(getComputedStyle(document.querySelector('.wcon[data-mood="fresh"]')).opacity) < .5 && Number(getComputedStyle(document.querySelector('.wcon[data-mood="woody"]')).opacity) === 1, null, { timeout: 3000 }).then(() => true, () => false));
+    ok(`${label}: the hovered constellation eases to a stop so its balls are easy to hit`, await still(p, '.wcon[data-mood="woody"] .wmood'));
+    const others = await spots(p); ok(`${label}: while the rest keep drifting`, await p.waitForFunction(w => { const g = document.querySelector('.wcon[data-mood="fresh"] .wmood'); return g.getAttribute('transform') !== w[[...document.querySelectorAll('.wmood, .wstar')].indexOf(g)]; }, others, { timeout: 6000 }).then(() => true, () => false));
     await shot('hover'); await p.mouse.move(5, 5);
+    const held = await p.evaluate(() => document.querySelector('.wcon[data-mood="woody"] .wmood').getAttribute('transform'));
+    ok(`${label}: and it drifts on once the pointer leaves`, await p.waitForFunction(h => document.querySelector('.wcon[data-mood="woody"] .wmood').getAttribute('transform') !== h, held, { timeout: 6000 }).then(() => true, () => false));
   }
+  // keyboard focus holds a constellation still too
+  await p.locator('.wcon-btn[data-mood="sunny"]').focus();
+  ok(`${label}: a focused constellation holds still`, await still(p, '.wcon[data-mood="sunny"] .wmood'));
+  await p.locator('.wpanel h3').focus().catch(() => {}); await p.evaluate(() => document.activeElement?.blur());
 
   // pointer: tap a constellation
   await tap('.wcon-btn[data-mood="woody"] .whit');
   ok(`${label}: tapping a constellation opens its mood`, /Warm and woody/.test(await h3()), await h3());
   ok(`${label}: the sky turns so the chosen constellation sits under the index`, await p.evaluate(() => document.querySelector('.wcon-btn[data-mood="woody"]').getAttribute('aria-pressed') === 'true') && (await atTop('.wcon[data-mood="woody"] .wstar:nth-of-type(2)')) < .36, String(await atTop('.wcon[data-mood="woody"] .wstar:nth-of-type(2)')));
   ok(`${label}: the index lights and the others wait, dimmed, still a tap away`, await p.evaluate(() => Number(getComputedStyle(document.querySelector('.windex')).opacity) === 1 && Number(getComputedStyle(document.querySelector('.wcon[data-mood="fresh"]')).opacity) < .5 && document.querySelector('.wcon-btn[data-mood="fresh"]').tabIndex === 0));
+  const sb2 = await bbox('.wcon.on .wmorb'); ok(`${label}: the chosen sphere grows and takes its name`, await p.waitForFunction(() => getComputedStyle(document.querySelector('.wcon.on .wmname')).opacity === '1', null, { timeout: 3000 }).then(() => true, () => false) && sb2.width > mb.width * 1.3 && (await p.evaluate(() => document.querySelector('.wcon.on .wmname').textContent)) === 'Woody' && await p.evaluate(() => getComputedStyle(document.querySelector('.wcon.on .wmname')).fill === 'rgb(255, 255, 255)'), `${Math.round(sb2.width)}px`);
+  const ob = await bbox('.wcon.on .wstar .wcore'); ok(`${label}: its balls grow`, ob.width > cb.width * 1.6, `${Math.round(ob.width)}px`);
+  ok(`${label}: the other spheres dim but stay in view`, await p.evaluate(() => { const o = Number(getComputedStyle(document.querySelector('.wcon[data-mood="fresh"]')).opacity); return o > .3 && o < .5; }));
   const nOpen = await p.locator('.wstar.open').count(); ok(`${label}: its stars open and are named`, nOpen === 3 && (await p.locator('.wstar.open[data-mood="woody"]').count()) === 3 && await p.evaluate(() => [...document.querySelectorAll('.wstar.open')].every(g => g.tabIndex === 0 && g.getAttribute('aria-hidden') === 'false' && g.getAttribute('role') === 'button')), `${nOpen}`);
   await p.waitForFunction(() => [...document.querySelectorAll('.wcon.on .wname')].every(t => getComputedStyle(t).opacity === '1'), null, { timeout: 3000 }).then(() => ok(`${label}: the star names fade in`, true), () => ok(`${label}: the star names fade in`, false));
   ok(`${label}: star names stay upright after the turn and read moonstone`, await p.evaluate(() => [...document.querySelectorAll('.wcon.on .wname')].every(t => { const m = t.getScreenCTM(); const r = t.getBoundingClientRect(); return r.width > r.height && Math.abs(m.b) < .02 && getComputedStyle(t).fill === 'rgb(237, 230, 218)'; })));
-  const sb = await bbox('.wstar.open .wshit'); ok(`${label}: a star is a comfortable touch target`, sb.width >= 40 && sb.height >= 40, `${Math.round(sb.width)}x${Math.round(sb.height)}`);
+  const sb = await bbox('.wstar.open .wshit'); ok(`${label}: a star is a comfortable touch target`, sb.width >= 44 && sb.height >= 44, `${Math.round(sb.width)}x${Math.round(sb.height)}`);
+  ok(`${label}: the sky still turns while the balls drift`, await inside(p) && await moved(p, was));
   ok(`${label}: the panel lists the scents and the ready-made ritual`, (await p.locator('[data-pick]').count()) === 3 && (await p.locator('[data-addpair]').count()) === 1 && /Desert Vesper diffuser \+ Cabana roller/.test(await p.locator('.writ').innerText()));
   await shot('mood');
   const cc = Number(await p.locator('#cartCount').innerText()); await p.locator('[data-addpair]').click(); await p.waitForFunction(n => Number(document.querySelector('#cartCount').textContent) === n + 2, cc, { timeout: 3000 }).catch(() => {});
@@ -135,6 +166,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   const rctx = await b.newContext({ viewport: vp, reducedMotion: 'reduce' }); const rp = await rctx.newPage(); rp.setDefaultTimeout(8000); await setupMocks(rp);
   await rp.goto(base + '/explore?mood=grounding'); await rp.waitForSelector('.wstar.open');
   ok(`${label}: reduced motion keeps the sky still`, await rp.evaluate(() => [...document.querySelectorAll('.wtw, .wouter, .wlines')].every(e => getComputedStyle(e).animationName === 'none') && !document.querySelector('.wplate').classList.contains('moving')));
+  const rwas = await spots(rp); await rp.waitForTimeout(700);
+  ok(`${label}: reduced motion keeps the balls still, in a complete layout`, !(await moved(rp, rwas, 0)) && await inside(rp) && (await rp.locator('.wmorb').count()) === 5 && await rp.evaluate(() => getComputedStyle(document.querySelector('.wcon.on .wmname')).opacity === '1'));
   ok(`${label}: reduced motion still shows the lines, the open stars and the panel`, await rp.evaluate(() => [...document.querySelectorAll('.wlines')].every(l => Number(getComputedStyle(l).strokeDashoffset.replace('px', '')) === 0)) && (await rp.locator('.wstar.open').count()) === 3 && /Grounding/.test(await rp.locator('.wpanel h3').innerText()) && (await topOn(rp, '.wcon[data-mood="grounding"] .wstar')) < .4);
   await rp.locator('.wcon-btn[data-mood="sunny"] .whit').click({ force: true }); await rp.waitForTimeout(100);
   ok(`${label}: reduced motion turns the sky at once`, (await rp.locator('.wcon.on[data-mood="sunny"]').count()) === 1 && !(await rp.evaluate(() => document.querySelector('.wplate').classList.contains('moving'))));
@@ -146,6 +179,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   await p.goto(base + '/explore?mood=floral'); await p.waitForSelector('.wstar.open');
   await p.evaluate(() => { Object.defineProperty(document, 'hidden', { value: true, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
   ok('hidden tab: the twinkle and the ring pause', !(await p.evaluate(() => document.querySelector('.wplate').classList.contains('live'))));
+  const hwas = await p.evaluate(() => [...document.querySelectorAll('.wmood, .wstar')].map(g => g.getAttribute('transform'))); await p.waitForTimeout(500);
+  ok('hidden tab: the drift pauses too', await p.evaluate(w => [...document.querySelectorAll('.wmood, .wstar')].every((g, i) => g.getAttribute('transform') === w[i]), hwas));
   await p.evaluate(() => { Object.defineProperty(document, 'hidden', { value: false, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
   ok('visible again: the sky comes back to life', await p.evaluate(() => document.querySelector('.wplate').classList.contains('live')));
   await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(300);
