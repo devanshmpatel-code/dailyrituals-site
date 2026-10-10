@@ -960,3 +960,35 @@ body[data-page="club"] .clubsoon { padding-bottom: clamp(56px, 7vw, 96px); }
   .btn, .card .ph, .plan, .tile, .fl-card, .chip, .thumbs button, .fmt-pick button, footer .foot a, .ship .meter div { transition: none !important; transform: none !important; }
   .btn:hover, .card:hover .ph, .plan:hover, .tile:hover, .fl-card:hover { transform: none !important; }
 }
+
+/* ======================================================================
+   Celestial system: tokens (the motifs and their placement are styled in src/celestial.css, built in src/celestial.ts).
+   Night blue is an accent world (footer, Moon Drops, cart header), never the whole site; the day stays sand and eucalyptus.
+   Contrast: moonstone on nocturne 13.2:1, gold-leaf on nocturne 7.6:1, gold-light on eucalyptus 8.1:1, eucalyptus on sand 7.0:1.
+   ====================================================================== */
+:root {
+  --nocturne: #1C2140; --deep-sky: #2A3358; --moonstone: #EDE6DA; --gold-leaf: #C9A35A; --gold-light: #E9D4A1; --mist: rgba(237, 230, 218, .16);
+  --star-fresh: #A3C8C0; --star-sunny: #ECB76A; --star-floral: #CF8A7D; --star-woody: #C09571; --star-grounding: #8EAA86;
+  --night-sky: linear-gradient(180deg, #2A3358 0%, #1C2140 55%, #15111F 100%);
+  /* 2-3% monochrome grain for every night panel (photography never gets it) */
+  --cel-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='.07'/%3E%3C/svg%3E");
+  /* a faint star-chart grid: 0.75px dotted lines on a 72px cell, moonstone at a few percent */
+  --cel-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Cg stroke='%23EDE6DA' stroke-opacity='.11' stroke-width='.75' stroke-dasharray='1 4'%3E%3Cpath d='M.5 0v72M0 .5h72'/%3E%3C/g%3E%3Ccircle cx='.5' cy='.5' r='1' fill='%23EDE6DA' fill-opacity='.22'/%3E%3C/svg%3E");
+}
+/* the end of the home day flows into the nocturne footer instead of jumping back up to plum */
+.df[data-ground="night"] { background: linear-gradient(180deg, #2B1B33 0, #191A33 220px, #171A33 100%) !important; }
+.df[data-ground="night-solid"] { background: #171A33 !important; }
+body[data-page="home"] .lotusdiv { background: #171A33; color: var(--gold-leaf); }
+body[data-page="home"] .lotusdiv i { background: rgba(201, 163, 90, .4); }
+body[data-page="home"] footer::before { background: linear-gradient(to bottom, #171A33, var(--deep-sky)); }
+body[data-page="club"] footer::before { background: linear-gradient(to bottom, #231A2B, var(--deep-sky)); }
+footer::before { background: linear-gradient(to bottom, transparent, var(--deep-sky)); }
+/* the Sunday note on night: a deep-sky card with moonstone text and gold-leaf labels */
+.newsflow .news { background: var(--deep-sky) !important; color: var(--moonstone); border: 1px solid rgba(201, 163, 90, .3); }
+.newsflow .news h2, .newsflow .news p { color: var(--moonstone); }
+.newsflow .news .eyebrow, .newsflow .news label, .newsflow .news .small { color: var(--gold-leaf); }
+.newsflow .news input[type="email"] { background: var(--nocturne); color: var(--moonstone); border: 1px solid rgba(237, 230, 218, .28); }
+.newsflow .news input[type="email"]::placeholder { color: rgba(237, 230, 218, .6); }
+.newsflow .news .btn { background: var(--gold-light); color: var(--nocturne); }
+.newsflow .news .btn:focus-visible, .newsflow .news input:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
+.df[data-ground="night"] .say { color: var(--moonstone); }

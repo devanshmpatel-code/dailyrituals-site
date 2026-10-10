@@ -78,11 +78,11 @@ export function renderAccount(app: HTMLElement) {
 
 export async function renderExplore(app: HTMLElement, params: URLSearchParams = new URLSearchParams()) {
   const tab = params.get('tab') === 'quiz' ? 'quiz' : 'wheel';
-  // draft for Claire: the lead and the tab name describe the scent compass (wheel.ts)
+  // draft for Claire: the lead and the tab name describe the scent atlas (wheel.ts)
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px)">
-    ${head('Find your scent', 'Find your <span class="it">scent</span>', 'Two ways in: follow the scent compass by how you want to feel, or answer four quick questions.')}
+    ${head('Find your scent', 'Find your <span class="it">scent</span>', 'Two ways in: read the scent atlas, where every mood is a constellation and every star a scent, or answer four quick questions.')}
     <div class="toggle findtabs" role="tablist" aria-label="How to find your scent">
-      <a role="tab" href="#/explore" aria-selected="${tab === 'wheel'}">Browse the compass</a>
+      <a role="tab" href="#/explore" aria-selected="${tab === 'wheel'}">Read the atlas</a>
       <a role="tab" href="#/explore?tab=quiz" aria-selected="${tab === 'quiz'}">Take the quiz</a></div>
     <div id="wheelMount"><div class="sk-line"></div><div class="sk-line short"></div></div>
     <div id="exp"></div></div>`;
@@ -138,7 +138,7 @@ function mountQuiz(el: HTMLElement, items: Item[]) {
     el.innerHTML = `<h2 style="font-size:clamp(30px,4vw,48px);margin-bottom:6px">Your mood: <span class="it">${MOODS[top].label}</span></h2>
       <p class="muted" style="margin-bottom:20px">These scents suit it best. Every scent comes in more than one format.</p>
       <div class="grid" id="qGrid">${list.length ? list.map(i => cardHTML(i)).join('') : '<p class="muted">No scents in this mood yet. Browse the whole shop instead.</p>'}</div>
-      <div class="cta" style="margin-top:24px"><a class="btn" href="#/explore?mood=${top}">See it on the compass</a><a class="btn line" href="#/shop?f=all&m=${top}&s=featured">Shop this mood</a><button class="btn line" id="qAgain">Retake the quiz</button></div>`;
+      <div class="cta" style="margin-top:24px"><a class="btn" href="#/explore?mood=${top}">See it in the atlas</a><a class="btn line" href="#/shop?f=all&m=${top}&s=featured">Shop this mood</a><button class="btn line" id="qAgain">Retake the quiz</button></div>`;
     wireQuickAdd(el.querySelector<HTMLElement>('#qGrid')!, items);
     el.querySelector('#qAgain')!.addEventListener('click', () => { answers.length = 0; draw(); });
   };

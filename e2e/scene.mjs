@@ -4,12 +4,15 @@ const base = process.env.BASE ?? 'http://localhost:4173/#';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySelector(s)).opacity), sel);
+// wait until the moment's fades have finished (birds, fireflies, mist stop changing), so a busy machine reads the settled scene, not a frame mid-fade
+const settled = async (p, max = 10000) => { let last = '', t0 = Date.now(); while (Date.now() - t0 < max) { const v = await p.evaluate(() => ['.b1', '.f1', '.k1'].map(s => getComputedStyle(document.querySelector(s)).opacity).join()); if (v === last) return; last = v; await p.waitForTimeout(300); await p.evaluate(() => new Promise(r => { let n = 0; const f = () => (++n < 4 ? requestAnimationFrame(f) : r()); requestAnimationFrame(f); })); } };
 {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto(base + '/'); await p.waitForSelector('#scene'); await p.waitForTimeout(500);
   ok('the landscape is drawn on canvases (not flat vector shapes)', (await p.locator('#scene canvas.land').count()) === 5);
   const fills = []; for (const k of ['dawn', 'morning', 'midday', 'golden', 'night']) {
-    await p.locator(`.moments [data-jump="${k}"]`).click(); await p.waitForTimeout(2600);
+    // the scene switches to the new moment when the sun's glide ends (slower on a busy machine), then its fades run
+    await p.locator(`.moments [data-jump="${k}"]`).click(); await p.waitForFunction(m => document.querySelector('.dayhero')?.dataset.m === m, k, { timeout: 20000 }); await p.waitForTimeout(2600); await settled(p);
     fills.push(await p.evaluate(() => { const cs=[...document.querySelectorAll('canvas.land')]; const c = cs.sort((a,b)=>Number(getComputedStyle(b).opacity)-Number(getComputedStyle(a).opacity))[0]; const d = c.getContext('2d').getImageData(Math.floor(c.width * .5), Math.floor(c.height * .5), 1, 1).data; return d.slice(0, 3).join(','); }));
     const birds = await op(p, '.b1'), ff = await op(p, '.f1'), mist = await op(p, '.k1');
     if (k === 'morning') ok('morning: birds are flying', birds > 0.5, `${birds}`);
@@ -29,9 +32,11 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
   // continuous blend + time-lapse
   const opsOf = () => p.evaluate(() => [...document.querySelectorAll('canvas.land')].map(c => Number(getComputedStyle(c).opacity)));
   ok('settled moment shows one dominant landscape', Math.max(...await opsOf()) > 0.95);
-  await p.locator('.moments [data-jump="golden"]').click(); await p.waitForTimeout(1600);
-  await p.locator('.moments [data-jump="night"]').click(); await p.waitForTimeout(600);
-  const mid = await opsOf(); ok('moving between moments blends two landscapes on the way', mid.filter(v => v > 0.05 && v < 0.95).length >= 1, mid.map(v => v.toFixed(2)).join(','));
+  await p.locator('.moments [data-jump="golden"]').click(); await p.waitForFunction(() => document.querySelector('.dayhero')?.dataset.m === 'golden', null, { timeout: 20000 }); await p.waitForTimeout(1600);
+  await p.locator('.moments [data-jump="night"]').click();
+  // sample the glide until a blended frame shows (a busy machine draws few frames, so one fixed-time sample can miss it)
+  let mid = []; for (let i = 0; i < 30; i++) { await p.waitForTimeout(100); mid = await opsOf(); if (mid.filter(v => v > 0.05 && v < 0.95).length >= 1) break; }
+  ok('moving between moments blends two landscapes on the way', mid.filter(v => v > 0.05 && v < 0.95).length >= 1, mid.map(v => v.toFixed(2)).join(','));
   await p.waitForTimeout(1400); const dw = await opsOf(); ok('then settles on one', Math.max(...dw) > 0.95, dw.map(v => v.toFixed(2)).join(','));
   ok('no "Watch the day" button', await p.locator('#dayPlay').count() === 0);
   // the realistic sky (only where the browser has WebGL)

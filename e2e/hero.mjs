@@ -4,7 +4,9 @@ import { setupMocks } from './mock.mjs';
 const origin = (process.env.BASE ?? 'http://localhost:4173/#').replace(/\/#\/?$/, '');
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
-const pick = (p, k) => p.evaluate(k => { document.querySelector(`.moments [data-jump="${k}"]`).click(); }, k).then(() => p.waitForTimeout(1600));
+// choose a moment and wait until the hero has switched to it (the sun glides there first; slower on a busy machine)
+const pick = (p, k) => p.evaluate(k => { document.querySelector(`.moments [data-jump="${k}"]`).click(); }, k)
+  .then(() => p.waitForFunction(k => document.querySelector('.dayhero')?.dataset.m === k, k, { timeout: 20000 })).then(() => p.waitForTimeout(400));
 const money = s => Number((s.match(/\$(\d+\.\d{2})/) || [])[1]);
 for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);

@@ -1,5 +1,6 @@
 import './canvas/canvas.css';
 import './site.css';
+import './celestial.css';
 import Header from './canvas/header.html?raw';
 import Footer from './canvas/footer.html?raw';
 import Drawer from './canvas/drawer.html?raw';
@@ -15,6 +16,7 @@ import { cleanupMotion, mountSay, mountShapes, markMorphTarget } from './pages/m
 import { unmountDayScrub } from './pages/home';
 import { getSky } from './pages/sky';
 import { treeSVG, lotusDivider } from './pages/symbols';
+import { celestialChrome, celestialPage, shipArc } from './celestial';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
 import { renderCoaching, renderBook } from './pages/coaching';
@@ -45,6 +47,8 @@ window.addEventListener('scroll', () => { if (!treeTick) { treeTick = true; requ
 window.addEventListener('resize', growTree);
 document.querySelector('footer')?.insertAdjacentHTML('beforebegin', lotusDivider());
 growTree();
+// the celestial layer on the chrome: the footer's star chart, constellation and tonight's moon, and the cart header
+celestialChrome(root);
 
 // anything marked data-breathe opens the breathing pause
 document.addEventListener('click', e => { const sc = (e.target as Element | null)?.closest?.('[data-scrollto]') as HTMLElement | null; if (sc) { e.preventDefault(); const el = document.getElementById(sc.dataset.scrollto ?? ''); el?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }); el?.focus?.(); } });
@@ -95,7 +99,7 @@ function renderDrawer() {
   const away = Math.max(0, FREE_SHIPPING_THRESHOLD - sub);
   const db = drawer.querySelector<HTMLElement>('.db')!;
   db.innerHTML = `
-    <div class="ship"><span>${away > 0 ? `You are <b>${money(away)}</b> away from <span class="d">free shipping</span>.` : 'Your order ships <span class="d">free</span> in Canada.'}</span><div class="meter"><div style="width:${Math.min(100, (sub / FREE_SHIPPING_THRESHOLD) * 100)}%"></div></div></div>
+    <div class="ship">${shipArc((sub / FREE_SHIPPING_THRESHOLD) * 100)}<span>${away > 0 ? `You are <b>${money(away)}</b> away from <span class="d">free shipping</span>.` : 'Your order ships <span class="d">free</span> in Canada.'}</span><div class="meter"><div style="width:${Math.min(100, (sub / FREE_SHIPPING_THRESHOLD) * 100)}%"></div></div></div>
     ${lines.length && LOYALTY_ENABLED ? `<div class="points"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A5410" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span>This order earns <b>${Math.floor(sub)} Ritual Points</b> <span class="d">(1 point per $1)</span></span></div>` : ''}
     ${lines.map(l => `<div class="li"><img src="${l.image}" alt=""><div style="display:flex;flex-direction:column;gap:6px"><a href="#/product/${l.slug}" style="font-weight:600;line-height:1.25;text-decoration:none">${esc(l.name)}</a>${l.choice ? `<span class="small muted">${esc(l.choice)}</span>` : ''}<div class="qty" style="transform:scale(.85);transform-origin:left;align-self:flex-start"><button data-dec="${esc(l.key)}" aria-label="Decrease ${esc(l.name)}">−</button><span>${l.qty}</span><button data-inc="${esc(l.key)}" aria-label="Increase ${esc(l.name)}">+</button></div></div><b style="font-weight:500">${money(l.price * l.qty)}</b></div>`).join('')
       || '<p class="muted" style="padding:24px 0"><span class="empty-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8h14l-1.2 12H6.2z"></path><path d="M9 8V6a3 3 0 016 0v2"></path></svg></span><span>Your cart is empty.</span><a href="#/shop" data-x>Browse the shop</a></p>'}`;
@@ -207,6 +211,7 @@ async function route() {
   await view;
   if (seg === 'product') markMorphTarget(app);
   decoratePage(app, seg);
+  celestialPage(app, seg);
   mountSay(app); mountShapes(app);
 }
 installLinkHandling();
