@@ -21,7 +21,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: chapters use different symbols (not only the mandala)`, kinds >= 4, `${kinds} kinds`);
   ok(`${label}: a lotus divider sits above the footer`, (await p.locator('.lotusdiv').count()) === 1);
   await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open');
-  ok(`${label}: the breathing screen has the tree growing behind the orb`, (await p.locator('.jbreathe .jb-tree svg').count()) === 1);
+  // the breathing screen is now the Moon Breath: a night sky with one of Claire's candles as the moon (the tree stays on the pages behind)
+  ok(`${label}: the breathing screen has a candle moon under a starry sky`, (await p.locator('.jbreathe .mb-moon img').count()) === 1 && (await p.locator('.jbreathe .mb-sky svg circle').count()) > 20);
   await p.keyboard.press('Escape'); await p.waitForTimeout(700);
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
   ok(`${label}: no JS errors`, errs.length === 0, errs.join('|'));

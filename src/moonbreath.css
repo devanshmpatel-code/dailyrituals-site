@@ -1,0 +1,123 @@
+/* ======================================================================
+   The Moon Breath: the one-minute breathing pause (src/pages/journey.ts, openBreathe).
+   A night sky, one of Claire's real candles seen from above as a moon, a shadow disc that slides away as you breathe in
+   (the moon waxes, the wooden wick lights at full) and slides back as you breathe out (it wanes, the flame rests to an ember).
+   Six breaths make one lunar cycle. Everything moves on three custom properties set by one rAF loop:
+     --k   0 new moon .. 1 full moon      --fl  flame strength 0..1      --em  ember 0..1      --rot  slow turn of the wax
+   Only transforms and opacity change per frame. Tokens come from site.css (--nocturne, --moonstone, --gold-leaf, --gold-light).
+   Loaded after site.css: ".jbreathe.mb" wins over the old ".jbreathe" rules there.
+   ====================================================================== */
+.jbreathe.mb { gap: 0; padding: 0; color: var(--moonstone); overflow: hidden; isolation: isolate; cursor: default; --size: min(60vw, 420px);
+  background: radial-gradient(120% 90% at 50% 110%, #2A3358 0%, #1C2140 45%, #110F1F 100%); }
+.jbreathe.mb .mb-sky, .jbreathe.mb .mb-glow { position: absolute; inset: 0; pointer-events: none; }
+.jbreathe.mb .mb-sky { background: var(--cel-grain); }
+/* three star layers, each its own composited layer with one slow opacity animation */
+.jbreathe.mb .mb-sky .tw { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--moonstone); will-change: opacity; animation: mbTwinkle 6s ease-in-out infinite; }
+.jbreathe.mb .mb-sky .tw2 { animation-duration: 8.5s; animation-delay: -3s; }
+.jbreathe.mb .mb-sky .tw3 { animation-duration: 11s; animation-delay: -6s; }
+@keyframes mbTwinkle { 0%, 100% { opacity: .4; } 50% { opacity: .95; } }
+/* candlelight across the sky: warm, and only as strong as the flame (opacity set by the loop) */
+.jbreathe.mb .mb-glow { background: radial-gradient(44% 44% at 50% 50%, rgba(255, 184, 110, .5) 0%, rgba(255, 160, 90, .2) 40%, rgba(255, 150, 80, 0) 100%); opacity: 0; will-change: opacity; }
+
+/* ---- the stage: hairline orbits, the moon, the shadow disc, the flame ---- */
+.jbreathe.mb .mb-stage { position: relative; width: var(--size); aspect-ratio: 1; flex: none; margin: clamp(10px, 2.5vh, 26px) 0; transition: opacity .8s ease, transform .8s ease; --k: 0; --fl: 0; --em: 0; --rot: 0deg; }
+.jbreathe.mb .mb-orbits { position: absolute; inset: -34%; width: 168%; height: 168%; color: var(--gold-leaf); pointer-events: none; overflow: visible; }
+.jbreathe.mb .mb-orbits circle { fill: none; stroke: currentColor; stroke-width: .6; }
+.jbreathe.mb .mb-orbits .o1 { opacity: .34; }
+.jbreathe.mb .mb-orbits .o2 { opacity: .2; stroke-dasharray: 1 4; transform-origin: 50% 50%; animation: mbOrbit 160s linear infinite; }
+.jbreathe.mb .mb-orbits .o3 { opacity: .12; }
+.jbreathe.mb .mb-orbits .o-pt { fill: var(--gold-light); stroke: none; opacity: .8; }
+@keyframes mbOrbit { to { transform: rotate(360deg); } }
+/* moonlight: a soft halo that grows with the lit part of the moon */
+.jbreathe.mb .mb-halo { position: absolute; inset: 1%; border-radius: 50%; box-shadow: 0 0 48px 14px rgba(237, 230, 218, .22), 0 0 120px 40px rgba(237, 230, 218, .1); opacity: calc(var(--k) * var(--k)); pointer-events: none; will-change: opacity; }
+.jbreathe.mb .mb-moon { position: absolute; inset: 0; border-radius: 50%; clip-path: circle(49.6% at 50% 50%); background: #0E0F1E; }
+.jbreathe.mb .mb-moon img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .9s ease; transform: rotate(var(--rot)); will-change: transform; }
+.jbreathe.mb .mb-moon img.ok { opacity: 1; }
+/* earthshine: the dark part of the moon still shows a little of the wax */
+.jbreathe.mb .mb-shadow { position: absolute; inset: -3%; border-radius: 50%; will-change: transform;
+  background: radial-gradient(circle at 50% 50%, rgba(16, 17, 36, .94) 0%, rgba(16, 17, 36, .94) 90%, rgba(16, 17, 36, .7) 95%, rgba(16, 17, 36, .25) 98%, rgba(16, 17, 36, 0) 100%);
+  transform: translateX(calc(var(--k) * -110% * var(--dir, 1))); }
+/* the wooden wick lights at full: a small flame, warm light on the wax, and afterwards an ember */
+.jbreathe.mb .mb-flame { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.jbreathe.mb .mb-wax { position: absolute; left: calc(var(--size) * -.36); top: calc(var(--size) * -.36); width: calc(var(--size) * .72); height: calc(var(--size) * .72); border-radius: 50%; opacity: calc(var(--fl) * .85);
+  background: radial-gradient(circle, rgba(255, 196, 120, .55) 0%, rgba(255, 180, 100, .22) 40%, rgba(255, 170, 90, 0) 70%); }
+.jbreathe.mb .mb-fl { position: absolute; left: -8px; top: -31px; width: 16px; height: 30px; border-radius: 50% 50% 50% 50% / 64% 64% 36% 36%; opacity: var(--fl); transform-origin: 50% 100%;
+  background: radial-gradient(ellipse at 50% 74%, #FFFBEA 0%, #FFE6A0 26%, #FFB457 58%, rgba(255, 150, 70, .35) 82%, rgba(255, 140, 60, 0) 100%);
+  box-shadow: 0 0 18px 5px rgba(255, 176, 90, .5), 0 0 48px 14px rgba(255, 150, 70, .22); animation: mbFlicker 1.1s ease-in-out infinite alternate; }
+.jbreathe.mb .mb-fl::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 5px; height: 8px; margin-left: -2.5px; border-radius: 50%; background: rgba(110, 140, 230, .45); }
+.jbreathe.mb .mb-ember { position: absolute; left: -9px; top: -3px; width: 18px; height: 6px; border-radius: 50%; background: radial-gradient(ellipse, #FF9A4A 0%, rgba(255, 120, 50, .6) 45%, rgba(255, 110, 40, 0) 100%); opacity: var(--em); box-shadow: 0 0 10px 3px rgba(255, 140, 60, .35); }
+@keyframes mbFlicker { 0% { transform: scaleY(1) scaleX(1) rotate(-1.5deg); } 35% { transform: scaleY(1.07) scaleX(.95) rotate(1deg); } 70% { transform: scaleY(.96) scaleX(1.04) rotate(-.5deg); } 100% { transform: scaleY(1.04) scaleX(.98) rotate(2deg); } }
+
+/* ---- the words, above the moon ---- */
+.jbreathe.mb .mb-text { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 20px; min-height: 108px; justify-content: flex-end; }
+.jbreathe.mb .mb-eyebrow { margin: 0; font: 500 11px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .2em; text-transform: uppercase; color: var(--gold-leaf); }
+.jbreathe.mb .jb-word { font-family: var(--display); font-weight: 400; font-size: clamp(36px, 6vw, 62px); line-height: 1; margin: 0; color: var(--moonstone); letter-spacing: -.01em; animation: mbWord 1.1s ease both; }
+.jbreathe.mb .mb-sub { margin: 0; font-size: 13px; letter-spacing: .02em; color: rgba(237, 230, 218, .64); }
+@keyframes mbWord { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---- eight moon-phase marks: one lunar cycle in six breaths ---- */
+.jbreathe.mb .mb-phases { position: relative; z-index: 2; display: flex; gap: 14px; align-items: center; color: var(--gold-leaf); margin-top: clamp(6px, 2vh, 22px); }
+.jbreathe.mb .mb-phases svg { width: 16px; height: 16px; overflow: visible; }
+.jbreathe.mb .mb-phases .mp { opacity: .32; transition: opacity .7s ease; }
+.jbreathe.mb .mb-phases .mp circle { fill: none; stroke: currentColor; stroke-width: 1; }
+.jbreathe.mb .mb-phases .mp path { fill: var(--gold-light); }
+.jbreathe.mb .mb-phases .mp.on { opacity: 1; }
+.jbreathe.mb .mb-phases .mp.now circle { stroke: var(--gold-light); }
+
+/* the page behind does not scroll while the pause is open; the progress line is for screen readers only */
+html.mb-lock { overflow: hidden; }
+.jbreathe.mb .mb-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; margin: -1px; }
+
+/* ---- controls ---- */
+.jbreathe.mb .mb-bar { position: absolute; left: 0; right: 0; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 3; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 clamp(16px, 4vw, 40px); }
+.jbreathe.mb .mb-another, .jbreathe.mb .jb-close, .jbreathe.mb .mb-again { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; font: 500 13px/1 var(--body); letter-spacing: .04em; color: var(--moonstone); border: 1px solid rgba(237, 230, 218, .32); transition: background .25s, border-color .25s, color .25s; -webkit-tap-highlight-color: transparent; }
+.jbreathe.mb .mb-another svg { width: 14px; height: 14px; color: var(--gold-light); }
+.jbreathe.mb .mb-another:hover, .jbreathe.mb .jb-close:hover, .jbreathe.mb .mb-again:hover { background: rgba(237, 230, 218, .1); border-color: rgba(237, 230, 218, .6); }
+.jbreathe.mb .mb-another:focus-visible, .jbreathe.mb .jb-close:focus-visible, .jbreathe.mb .mb-again:focus-visible, .jbreathe.mb a:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
+.jbreathe.mb .mb-top { position: absolute; top: max(14px, env(safe-area-inset-top)); left: 0; right: 0; z-index: 3; display: flex; justify-content: center; }
+.jbreathe.mb .mb-top span { font: 500 10.5px/1 var(--mono, "DM Mono", monospace); letter-spacing: .22em; text-transform: uppercase; color: rgba(201, 163, 90, .8); }
+
+/* ---- the ending: one moon, one minute ---- */
+.jbreathe.mb.done .mb-stage { opacity: .28; transform: scale(.86); }
+.jbreathe.mb.done > .mb-text, .jbreathe.mb.done > .mb-phases { opacity: 0; transition: opacity .5s ease; }
+.jbreathe.mb .mb-end { position: absolute; left: 50%; top: 50%; z-index: 4; width: min(92vw, 460px); max-height: calc(100vh - 150px); overflow: auto; transform: translate(-50%, -50%);
+  padding: clamp(22px, 4vw, 34px) clamp(20px, 4vw, 36px); border-radius: 22px; text-align: center;
+  background: linear-gradient(170deg, rgba(42, 51, 88, .94), rgba(28, 33, 64, .96)); border: 1px solid rgba(201, 163, 90, .42);
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(237, 230, 218, .04); animation: mbCard .9s cubic-bezier(.2, .7, .2, 1) both; }
+.jbreathe.mb .mb-end[hidden] { display: none; }
+@keyframes mbCard { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+.jbreathe.mb .mb-end .mb-eyebrow { margin-bottom: 10px; }
+.jbreathe.mb .mb-end h2 { font-family: var(--display); font-weight: 400; font-size: clamp(30px, 5vw, 40px); line-height: 1.05; margin: 0 0 12px; color: var(--moonstone); }
+.jbreathe.mb .mb-q { font-family: var(--display); font-style: italic; font-size: clamp(17px, 2.2vw, 20px); line-height: 1.4; margin: 0 0 6px; color: var(--moonstone); text-wrap: balance; }
+.jbreathe.mb .mb-who { margin: 0 0 14px; font: 500 11px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .16em; text-transform: uppercase; color: var(--gold-leaf); }
+.jbreathe.mb .mb-note { margin: 0 0 18px; font-size: 13.5px; line-height: 1.5; color: rgba(237, 230, 218, .72); }
+.jbreathe.mb .mb-note .d { color: inherit; }
+.jbreathe.mb .mb-links { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.jbreathe.mb .mb-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 28px; border-radius: 999px; background: var(--gold-light); color: var(--nocturne); font: 600 14px/1 var(--body); letter-spacing: .03em; text-decoration: none; transition: background .2s; }
+.jbreathe.mb .mb-primary:hover { background: #F4E4BC; }
+.jbreathe.mb .mb-link { color: var(--moonstone); font-size: 14px; text-decoration: none; border-bottom: 1px solid rgba(201, 163, 90, .5); padding-bottom: 1px; }
+.jbreathe.mb .mb-link:hover { border-color: var(--gold-light); }
+.jbreathe.mb .mb-link.quiet { font-size: 13px; color: rgba(237, 230, 218, .7); }
+.jbreathe.mb .mb-again { margin-top: 6px; }
+.jbreathe.mb .mb-end .mb-phases { justify-content: center; margin: 0 0 14px; }
+.jbreathe.mb .mb-end .mb-phases .mp { opacity: 1; }
+
+/* ---- phones: the moon a touch smaller so the words, the marks and the bar all fit above the fold ---- */
+@media (max-height: 700px), (max-width: 480px) {
+  .jbreathe.mb { --size: min(64vw, 300px); }
+  .jbreathe.mb .mb-text { min-height: 92px; }
+  .jbreathe.mb .mb-bar { padding: 0 16px; }
+  .jbreathe.mb .mb-end { max-height: calc(100vh - 120px); }
+}
+@media (max-height: 560px) { .jbreathe.mb { --size: 36vh; } .jbreathe.mb .mb-top { display: none; } }
+
+/* ---- reduced motion: a still full moon with a steady flame, no sliding, no flicker, no twinkle; the words still change ---- */
+@media (prefers-reduced-motion: reduce) {
+  .jbreathe.mb { transition: none; }
+  .jbreathe.mb .mb-stage { --k: 1; --fl: 1; --em: 0; }
+  .jbreathe.mb .mb-glow { opacity: .5 !important; }
+  .jbreathe.mb .mb-shadow { display: none; }
+  .jbreathe.mb .mb-moon img { transform: none; transition: none; }
+  .jbreathe.mb .mb-sky .tw, .jbreathe.mb .mb-orbits .o2, .jbreathe.mb .mb-fl, .jbreathe.mb .jb-word, .jbreathe.mb .mb-end { animation: none !important; }
+  .jbreathe.mb .mb-stage, .jbreathe.mb .mb-text, .jbreathe.mb .mb-phases, .jbreathe.mb .mb-phases .mp { transition: none; }
+}
