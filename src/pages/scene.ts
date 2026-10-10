@@ -10,14 +10,21 @@ import { getSky } from './sky';
 const bird = (n: number) => `<span class="bird b${n}"><svg viewBox="0 0 28 12" width="28" height="12"><path d="M2,8 Q8,0 14,7 Q20,0 26,8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>`;
 const fly = (n: number) => `<i class="ff f${n}"></i>`;
 
+// Layers, back to front. The Milky Way, horizon glow and cloud textures are the CSS sky (hidden when the WebGL sky draws them itself);
+// the mountains stand on a lake in both; the veil on top is lifted by the opening (see opening.ts / opening.css).
 export function sceneHTML(): string {
   return `<div class="scene" id="scene" aria-hidden="true">
+    <div class="milky"></div>
+    <div class="horizon"></div>
     <div class="sunorb" id="sunorb"></div>
+    <div class="ctex-wrap"><div class="ctex a"></div><div class="ctex b"></div></div>
     <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
     <img class="scenephoto" id="scenePhoto" alt="" hidden>
     ${MOMENTS.map(m => `<canvas class="land" data-k="${m.key}"></canvas>`).join('')}
     <div class="mist k1"></div><div class="mist k2"></div>
-    ${[1, 2, 3, 4, 5].map(bird).join('')}${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(fly).join('')}</div>`;
+    ${[1, 2, 3, 4, 5].map(bird).join('')}${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(fly).join('')}
+    <i class="meteor m1"></i><i class="meteor m2"></i>
+    <div class="wakeveil"></div></div>`;
 }
 
 let started = false, resizeTimer = 0, photoKey = '';
