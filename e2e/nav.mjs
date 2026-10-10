@@ -42,7 +42,7 @@ let menuHrefs = [];
   // the constellation
   const stars = p.locator('#gn-panel-shop .cst-star');
   ok('desktop: the Shop flyout holds a constellation of the five moods', (await stars.count()) === 5);
-  ok('desktop: each star links to its mood on the compass and is named after the mood', await stars.evaluateAll(as => as.every(a => /^\/explore\?mood=(fresh|sunny|floral|woody|grounding)$/.test(a.getAttribute('href')) && /coastal|tropical|floral|woody|Grounding/.test(a.textContent))));
+  ok('desktop: each star links to its mood on the atlas and is named after the mood', await stars.evaluateAll(as => as.every(a => /^\/explore\?mood=(fresh|sunny|floral|woody|grounding)$/.test(a.getAttribute('href')) && /coastal|tropical|floral|woody|Grounding/.test(a.textContent))));
   await p.waitForTimeout(1600);
   ok('desktop: the hairlines between the stars have drawn themselves', await p.evaluate(() => [...document.querySelectorAll('#gn-panel-shop .cst-lines line')].every(l => parseFloat(getComputedStyle(l).strokeDashoffset) < 0.01)));
   await hover('#gn-panel-shop .cst-star[href*="woody"]'); await p.waitForTimeout(1100);
@@ -55,7 +55,7 @@ let menuHrefs = [];
   const stillOpen = (await anyOpen()) >= 1;
   await p.waitForTimeout(250);
   ok('desktop: moving to Find your scent switches panels without closing first', stillOpen && (await isOpen('explore')) && !(await isOpen('shop')));
-  ok('desktop: the Find your scent flyout offers the compass, the quiz and a mood to start from', await p.evaluate(() => { const t = document.getElementById('gn-panel-explore').innerText; return ['browse the compass', 'take the quiz', 'start from a mood', 'free 20-min call'].every(s => t.toLowerCase().includes(s)); }));
+  ok('desktop: the Find your scent flyout offers the atlas, the quiz and a mood to start from', await p.evaluate(() => { const t = document.getElementById('gn-panel-explore').innerText; return ['read the atlas', 'take the quiz', 'start from a mood', 'free 20-min call'].every(s => t.toLowerCase().includes(s)); }));
   await hover('.gn-item[data-id="coaching"] .gn-link'); await p.waitForTimeout(300);
   ok('desktop: the Coaching flyout leads with the free reset and the free call', await p.evaluate(() => { const t = document.getElementById('gn-panel-coaching').innerText; return t.includes('Free 7-day reset') && t.includes('Free 20-min call with Claire') && t.includes('Neuro coaching'); }));
   await p.mouse.move(720, 820); await p.waitForTimeout(40);
@@ -105,16 +105,16 @@ let menuHrefs = [];
     await p.goto(origin + h); await p.waitForTimeout(h.includes('explore') ? 900 : 500);
     const t = await p.locator('main').innerText();
     if (t.trim().length < 40 || (await p.locator('main .missing').count()) || /still putting this page together|canvas|Not designed|14 screens/i.test(t)) bad.push(h);
-    if (/explore\?mood=/.test(h) && !(await p.locator('.wpanel').count())) bad.push(h + ' (no compass panel)');
+    if (/explore\?mood=/.test(h) && !(await p.locator('.wpanel').count())) bad.push(h + ' (no atlas panel)');
   }
   ok(`desktop: all ${menuHrefs.length} menu links open real pages (no coming-soon or draft pages)`, bad.length === 0, bad.join(', '));
   ok('desktop: the menus reach the finder, the quiz, the reset, the call and every mood', ['/explore', '/explore?tab=quiz', '/reset', '/book', '/coaching', '/shop', ...MOODS.map(m => `/explore?mood=${m}`), ...MOODS.map(m => `/shop?f=all&m=${m}&s=featured`)].every(h => menuHrefs.includes(h)));
 
-  // the star takes you to its mood on the compass
+  // the star takes you to its mood on the atlas
   await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(400);
   await p.click('.gn-item[data-id="shop"] .gn-disclose'); await p.waitForTimeout(700);
   await p.click('#gn-panel-shop .cst-star[href*="woody"]'); await p.waitForURL('**/explore?mood=woody'); await p.waitForSelector('.wpanel'); await p.waitForTimeout(500);
-  ok('desktop: a star opens the compass on its mood', /Warm and woody/.test(await p.locator('.wpanel').innerText()));
+  ok('desktop: a star opens the atlas on its mood', /Warm and woody/.test(await p.locator('.wpanel').innerText()));
 
   // ---------- product local nav ----------
   await p.goto(origin + '/product/roller-citrus-and-sun'); await p.waitForSelector('.lnav'); await p.waitForTimeout(800);

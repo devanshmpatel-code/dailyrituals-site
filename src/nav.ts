@@ -40,7 +40,7 @@ const MENU: Entry[] = [
   },
   {
     id: 'explore', label: 'Find your scent', href: '#/explore', columns: [
-      { kind: 'elevated', links: [{ label: 'Browse the compass', href: '#/explore' }, { label: 'Take the quiz', href: '#/explore?tab=quiz' }] },
+      { kind: 'elevated', links: [{ label: 'Read the atlas', href: '#/explore' }, { label: 'Take the quiz', href: '#/explore?tab=quiz' }] },
       { title: 'Start from a mood', kind: 'moods', links: moodLinks(m => `#/explore?mood=${m}`) },
       { title: 'Still unsure?', links: [{ label: 'Free 20-min call with Claire', href: '#/book' }, { label: 'Help and contact', href: '#/help' }] },
     ],
@@ -73,12 +73,12 @@ export const starGlyph = (color: string, size = 12, cls = 'star') =>
   `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="${color}" d="M12 1.5C12.7 8.3 15.7 11.3 22.5 12C15.7 12.7 12.7 15.7 12 22.5C11.3 15.7 8.3 12.7 1.5 12C8.3 11.3 11.3 8.3 12 1.5Z"/></svg>`;
 const chevron = '<svg class="chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-/** The five moods as a constellation: stars joined by hairlines that draw themselves; each star links to its mood on the compass. */
+/** The five moods as a constellation: stars joined by hairlines that draw themselves; each star links to its mood on the atlas. */
 export function constellationHTML(extraClass = '', g = 0): string {
   const lines = CST_LINES.map(([a, b], i) => `<line x1="${CST[a][0]}" y1="${CST[a][1]}" x2="${CST[b][0]}" y2="${CST[b][1]}" pathLength="1" style="--i:${i}"/>`).join('');
   const stars = MOOD_KEYS.map((m, i) => `<a class="cst-star" href="#/explore?mood=${m}" style="--x:${(CST[m][0] / 240 * 100).toFixed(1)}%;--y:${(CST[m][1] / 170 * 100).toFixed(1)}%;--c:${STAR[m]};--i:${i}">${starGlyph('currentColor', 16)}<span class="cst-name">${esc(MOODS[m].label)}</span></a>`).join('');
   // draft for Claire: the caption under the constellation
-  return `<div class="cst ${extraClass}" style="--g:${g}"><div class="cst-sky"><svg class="cst-lines" viewBox="0 0 240 170" aria-hidden="true" focusable="false">${lines}</svg>${stars}</div><span class="cst-cap">Five moods. Follow a star to see its scents on the compass.</span></div>`;
+  return `<div class="cst ${extraClass}" style="--g:${g}"><div class="cst-sky"><svg class="cst-lines" viewBox="0 0 240 170" aria-hidden="true" focusable="false">${lines}</svg>${stars}</div><span class="cst-cap">Five moods. Follow a star to see its scents on the atlas.</span></div>`;
 }
 
 // ---------------------------------------------------------------- desktop flyouts

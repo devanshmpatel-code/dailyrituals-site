@@ -10,11 +10,9 @@
   --stagger-group: 80ms;
   --hover-open-delay: 300ms;
   --hover-close-delay: 150ms;
-  /* celestial palette (research-celestial §3a) */
-  --nocturne: #1C2140; --deep-sky: #2A3358; --moonstone: #EDE6DA; --gold-leaf: #C9A35A; --gold-light: #E9D4A1; --mist: rgba(237, 230, 218, .16);
-  --night-sky: linear-gradient(180deg, #2A3358 0%, #1C2140 55%, #15111F 100%);
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --frost: rgba(247, 242, 234, .9);
+  /* the celestial palette (--nocturne, --moonstone, --gold-leaf, --mist, --night-sky, --cel-grain) is defined once in site.css */
+  /* near-opaque so the hero's headline never reads through the panel; the blur softens what little shows */
+  --frost: rgba(247, 242, 234, .97);
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 160ms; --dur-reveal: 160ms; --stagger-item: 0ms; --stagger-group: 0ms; }
@@ -41,7 +39,7 @@
   opacity: 0; visibility: hidden; text-align: left; font-weight: 400;
   transition: height var(--dur-base) var(--ease-standard), opacity var(--dur-base) var(--ease-standard), visibility 0s linear var(--dur-base);
 }
-@supports not (backdrop-filter: blur(1px)) { .gn-panel { background: rgba(247, 242, 234, .96); } }
+@supports not (backdrop-filter: blur(1px)) { .gn-panel { background: rgba(247, 242, 234, .98); } }
 .gn-panel.open { opacity: 1; visibility: visible; transition-delay: 0s, 0s, 0s; }
 .gn-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); gap: 32px 48px; padding-block: 40px 48px; align-items: start; }
 #gn-panel-shop .gn-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .9fr) 300px; }
@@ -71,7 +69,7 @@ body.gn-open :is(.jrail, .jhere, .breathorb, .jfab) { opacity: 0 !important; poi
 /* ============ the constellation of five moods ============ */
 .cst { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
 .cst-sky { position: relative; aspect-ratio: 240 / 170; border-radius: 18px; background: var(--night-sky); overflow: visible; isolation: isolate; box-shadow: inset 0 0 0 1px rgba(201, 163, 90, .22), 0 20px 40px -28px rgba(21, 17, 31, .6); }
-.cst-sky::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--grain); opacity: .07; mix-blend-mode: overlay; pointer-events: none; }
+.cst-sky::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--cel-grain); opacity: .07; mix-blend-mode: overlay; pointer-events: none; }
 .cst-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .cst-lines line { stroke: var(--gold-leaf); stroke-width: 1; stroke-opacity: .7; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 600ms cubic-bezier(.2, .6, .2, 1); transition-delay: 0s; }
 .gn-panel.open .cst-lines line, .mm.open .cst-lines line, .cst.on .cst-lines line { stroke-dashoffset: 0; transition-delay: calc(260ms + var(--i, 0) * 110ms); }
@@ -94,7 +92,7 @@ html.mm-lock { overflow: hidden; }
 .mm[hidden] { display: none; }
 .mm.open { opacity: 1; }
 .mm-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.mm-sky::after { content: ""; position: absolute; inset: 0; background: var(--grain); opacity: .06; mix-blend-mode: overlay; }
+.mm-sky::after { content: ""; position: absolute; inset: 0; background: var(--cel-grain); opacity: .06; mix-blend-mode: overlay; }
 .mm-stars { width: 100%; height: 100%; }
 .mm-stars circle { opacity: var(--o, .5); animation: twinkle var(--tw, 4s) ease-in-out var(--td, 0s) infinite alternate; }
 @keyframes twinkle { from { opacity: calc(var(--o, .5) * .7); } to { opacity: var(--o, .5); } }
@@ -142,7 +140,7 @@ html.mm-lock { overflow: hidden; }
 .lnav-sentinel { height: 1px; margin-top: -1px; }
 .lnav { position: sticky; top: 0; z-index: 25; background: transparent; border-bottom: 1px solid transparent; transition: background var(--dur-base) var(--ease-bar), border-color var(--dur-base) var(--ease-bar), box-shadow var(--dur-base) var(--ease-bar); }
 .lnav.is-stuck { background: var(--frost); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom-color: rgba(42, 31, 51, .08); box-shadow: 0 18px 40px -32px rgba(21, 17, 31, .35); }
-@supports not (backdrop-filter: blur(1px)) { .lnav.is-stuck { background: rgba(247, 242, 234, .96); } }
+@supports not (backdrop-filter: blur(1px)) { .lnav.is-stuck { background: rgba(247, 242, 234, .98); } }
 .lnav-in { display: flex; align-items: center; gap: 20px; min-height: 56px; }
 .lnav-name { display: flex; align-items: center; gap: 10px; min-width: 0; text-decoration: none; color: var(--ink); flex: 0 1 auto; }
 .lnav-name b { font: 500 21px/1.1 var(--display); letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
