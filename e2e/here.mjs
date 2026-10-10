@@ -1,6 +1,7 @@
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
+const base = process.env.BASE ?? 'http://localhost:4173/#';
 const settle = async p => { await p.waitForTimeout(400); let last = -1, same = 0; for (let i = 0; i < 40 && same < 2; i++) { const y = await p.evaluate(() => window.scrollY); same = y === last ? same + 1 : 0; last = y; await p.waitForTimeout(200); } };
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false], ['mobile', { width: 390, height: 780 }, false], ['reduced motion', { width: 1280, height: 900 }, true]]) {
