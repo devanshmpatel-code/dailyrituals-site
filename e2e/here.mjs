@@ -7,16 +7,14 @@ for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false],
   const ctx = await b.newContext({ viewport: vp, reducedMotion: rm ? 'reduce' : 'no-preference' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto('http://localhost:4173/#/'); await p.waitForSelector('.jhere', { state: 'attached' }); await p.waitForTimeout(600);
   ok(`${label}: no "you are here" card on the opening`, !(await p.locator('.jhere.on').count()));
-  const n = await p.locator('.jstop').count();
-  for (const k of [2, 5, n - 1]) {
-    await p.locator(`[data-stop="${k}"]`).evaluate(e => e.click()); await settle(p);
-    const num = Number(await p.locator('.jh-n').innerText()); const now = await p.evaluate(() => [...document.querySelectorAll('.jstop')].findIndex(s => s.classList.contains('now')));
-    ok(`${label}: card number ${num} matches the rail stop ${now} (stop ${k})`, num === now && num === k, `${num}/${now}`);
-    ok(`${label}: card is visible on stop ${k}`, await p.locator('.jhere.on').count() === 1);
-    const top = await p.evaluate(() => { const m = document.querySelector('.jmark').getBoundingClientRect(), s = document.querySelectorAll('.jstop')[Number(document.querySelector('.jh-n').textContent)].getBoundingClientRect(); return Math.round(m.top - s.top); });
-    if (label === 'desktop') ok(`${label}: the sun marker sits within a stop's reach of the stop (${top}px)`, Math.abs(top) < 90, `${top}`);
+  const goCh = async k => { await p.evaluate(k => { const c = [...document.querySelectorAll('main .chapter')].find(x => new RegExp('Chapter ' + k + ' ').test(x.textContent)); window.scrollTo(0, window.scrollY + c.closest('section').getBoundingClientRect().top - 60); }, k); await settle(p); };
+  for (const k of [2, 5, 8]) {
+    await goCh(k);
+    const num = Number(await p.locator('.jh-n').innerText());
+    ok(`${label}: the card shows chapter ${k}`, num === k, `${num}`);
+    ok(`${label}: card is visible at chapter ${k}`, await p.locator('.jhere.on').count() === 1);
   }
-  await p.locator('[data-stop="2"]').evaluate(e => e.click()); await settle(p);
+  await goCh(2);
   const txt = await p.locator('.jhere').innerText();
   await p.locator('.jhere').click(); await settle(p);
   ok(`${label}: tapping the card goes to the next chapter`, Number(await p.locator('.jh-n').innerText()) === 3, txt.replace(/\s+/g, ' '));

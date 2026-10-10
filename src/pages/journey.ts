@@ -75,7 +75,8 @@ export function mountJourney(app: HTMLElement) {
   const here = document.createElement('button'); here.type = 'button'; here.className = 'jhere'; here.setAttribute('aria-label', 'You are here. Go to the next chapter');
   here.innerHTML = '<svg class="jh-ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" class="bg"/><circle cx="22" cy="22" r="19" class="fg"/></svg><b class="jh-n"></b><span class="jh-w"><small class="jh-k"></small><strong class="jh-t"></strong><em class="jh-x"></em></span>';
   const aur = document.createElement('div'); aur.className = 'jaur'; aur.setAttribute('aria-hidden', 'true'); aur.innerHTML = '<i></i><i></i><i></i>';
-  document.body.append(rail, bar, wash, aur, here);
+  // the side rail (map button and stops) is no longer shown: the "you are here" card does that job
+  document.body.append(bar, wash, aur, here);
   here.addEventListener('click', () => { const k = here.dataset.next; if (k !== undefined && k !== '') goTo(Number(k)); else window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' }); });
 
   const goTo = (i: number, instant = false) => stops[i].el.scrollIntoView({ behavior: instant || reduceMotion() ? 'auto' : 'smooth', block: 'start' });

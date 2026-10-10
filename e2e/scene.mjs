@@ -37,6 +37,7 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
   // the realistic sky (only where the browser has WebGL)
   const gl = await p.evaluate(() => !!document.createElement('canvas').getContext('webgl'));
   if (gl) {
+    await p.goto('http://localhost:4173/?sky=gl'); await p.waitForSelector('#scene'); await p.waitForTimeout(1000);
     ok('realistic sky is drawn behind the mountains', (await p.locator('#scene canvas.glsky').count()) === 1 && await p.evaluate(() => document.getElementById('scene').classList.contains('gl')));
     ok('the mountains stand on a lake', await p.evaluate(() => getComputedStyle(document.querySelector('#scene canvas.land')).bottom !== '0px'));
     await p.evaluate(() => { document.querySelector('.moments [data-jump="night"]').click(); }); await p.waitForTimeout(1700);

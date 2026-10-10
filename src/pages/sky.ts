@@ -158,6 +158,12 @@ export function mountSky(scene: HTMLElement, lakeFraction: number): Sky | null {
   canvas.className = 'glsky'; canvas.setAttribute('aria-hidden', 'true');
   const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' }) as WebGLRenderingContext | null;
   if (!gl) return null;
+  // without a graphics chip the browser would draw this on the CPU, which is slow and drains batteries: keep the simpler sky
+  // (?sky=gl forces it on, for testing)
+  const force = new URLSearchParams(location.search).get('sky') === 'gl';
+  const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+  if (!force && /swiftshader|llvmpipe|software|basic render/i.test(renderer)) { gl.getExtension('WEBGL_lose_context')?.loseContext(); return null; }
   const sh = (type: number, src: string) => { const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
   const vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
   if (!vs || !fs) return null;

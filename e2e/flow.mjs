@@ -5,7 +5,7 @@ const b = await chromium.launch({ executablePath: process.env.CHROME || undefine
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-await p.goto(base + '/'); await p.waitForSelector('.jrail'); await p.waitForTimeout(1500);
+await p.goto(base + '/'); await p.waitForSelector('.jhere', { state: 'attached' }); await p.waitForTimeout(1500);
 const cs = (sel, prop) => p.evaluate(([s, pr]) => { const e = document.querySelector(s); return e ? getComputedStyle(e)[pr] || getComputedStyle(e).getPropertyValue(pr) : null; }, [sel, prop]);
 // the home page is a day: each chapter's ground blends out of the colour of the one before it, with no hard edge and no see-through fade
 const flow = await p.evaluate(() => [...document.querySelectorAll('main section.df')].map(el => ({ g: el.dataset.ground, bg: getComputedStyle(el).backgroundImage, mask: getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage || 'none', bt: getComputedStyle(el).borderTopWidth })));

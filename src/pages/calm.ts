@@ -1,5 +1,5 @@
 import { MOMENTS } from '../config';
-import { openBreathe } from './journey';
+import { mountBreathButton } from './breathbtn';
 import { ornament } from './symbols';
 import { swapRenders } from '../photos';
 
@@ -27,8 +27,8 @@ function normalizeHeadings(root: HTMLElement) {
 export function decoratePage(app: HTMLElement, seg: string) {
   swapRenders(app);
   normalizeHeadings(app);
-  document.querySelectorAll('.jfab').forEach(n => n.remove());
   io?.disconnect(); io = null;
+  mountBreathButton(); // one mindful breath, on every page
   if (seg === '') return; // the home page has its own journey
 
   // a soft wash in the colour of the current hour
@@ -51,10 +51,4 @@ export function decoratePage(app: HTMLElement, seg: string) {
     targets.forEach(t => io!.observe(t));
   }
 
-  // one mindful breath, on every page
-  const b = document.createElement('button');
-  b.className = 'jbtn jfab'; b.setAttribute('aria-label', 'Take a breath'); b.title = 'Take a breath';
-  b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 20c-4 0-8-3-9-9 4 0 7 2 9 5 2-3 5-5 9-5-1 6-5 9-9 9z"/><path d="M12 16c-2-3-2-7 0-11 2 4 2 8 0 11z"/></svg>';
-  b.addEventListener('click', () => openBreathe(b));
-  document.body.appendChild(b);
 }

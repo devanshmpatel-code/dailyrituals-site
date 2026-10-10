@@ -16,11 +16,11 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(500); const top = await ty();
   await p.evaluate(() => scrollTo(0, document.documentElement.scrollHeight)); await p.waitForTimeout(700); const bottom = await ty();
   ok(`${label}: scrolling takes you from the canopy down to the roots`, bottom < top - 200, `${Math.round(top)} -> ${Math.round(bottom)}`);
-  await p.goto(base + '/'); await p.waitForSelector('.jrail'); await p.waitForTimeout(900);
+  await p.goto(base + '/'); await p.waitForSelector('.breathorb'); await p.waitForTimeout(900);
   const kinds = await p.evaluate(() => new Set([...document.querySelectorAll('.jhead > .jorn')].map(s => s.innerHTML.includes('ellipse') && !s.innerHTML.includes('translate') ? 'mandala' : s.innerHTML.includes('rotate(') && s.innerHTML.includes('translate(') ? 'leaf' : s.innerHTML.includes('r="9"') ? 'moons' : s.innerHTML.includes('r="22"') ? 'emblem' : 'lotus')).size);
   ok(`${label}: chapters use different symbols (not only the mandala)`, kinds >= 4, `${kinds} kinds`);
   ok(`${label}: a lotus divider sits above the footer`, (await p.locator('.lotusdiv').count()) === 1);
-  await p.locator('[data-jbreathe]').click(); await p.waitForSelector('.jbreathe.open');
+  await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open');
   ok(`${label}: the breathing screen has the tree growing behind the orb`, (await p.locator('.jbreathe .jb-tree svg').count()) === 1);
   await p.keyboard.press('Escape'); await p.waitForTimeout(700);
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
