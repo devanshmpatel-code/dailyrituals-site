@@ -1,0 +1,94 @@
+/* Scent compass (src/pages/wheel.ts). Kept apart from site.css on purpose. */
+.wcompass { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 64px); align-items: center; }
+.wfield { position: relative; max-width: 600px; width: 100%; margin-inline: auto; aspect-ratio: 1; }
+.wsvg { width: 100%; height: auto; display: block; overflow: visible; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+/* the field: a faint disc, a dashed compass ring, hairline axes and their four words */
+.wring { fill: none; stroke: rgba(42, 31, 51, .22); stroke-dasharray: 2 8; stroke-width: 1.5; }
+.wax-l { stroke: rgba(42, 31, 51, .1); stroke-width: 1; }
+.wax { font: 500 12px var(--mono, "DM Mono", monospace); letter-spacing: .18em; fill: var(--ink-2, #5D5363); transition: opacity .5s; }
+.wfield.picked .wax { opacity: .45; }
+
+/* glows: a soft wash of each mood's colour behind everything */
+.wglow { transition: transform .9s cubic-bezier(.2, .8, .2, 1), opacity .6s; }
+.wglow.on { opacity: .9; }
+.wlight { opacity: 0; transition: opacity .35s; pointer-events: none; }
+.wlight.on { opacity: 1; }
+
+/* blooms: lit spheres, one per mood */
+.wbloom { cursor: pointer; outline: none; transition: transform .9s cubic-bezier(.2, .8, .2, 1); }
+.worb { transition: transform .9s cubic-bezier(.2, .8, .2, 1); transform-box: fill-box; transform-origin: center; }
+.worb > circle:first-child { filter: drop-shadow(0 10px 18px rgba(42, 31, 51, .18)); transition: filter .3s; }
+.wlift { transform-box: fill-box; transform-origin: center; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+.wbloom:hover .wlift { transform: scale(1.05); }
+.wbloom.on:hover .wlift { transform: none; }
+.wbloom:hover .worb > circle:first-child { filter: drop-shadow(0 14px 24px rgba(42, 31, 51, .24)) brightness(1.04); }
+.wbring { fill: none; stroke: var(--ink, #2A1F33); stroke-width: 3; opacity: 0; vector-effect: non-scaling-stroke; transition: opacity .2s; }
+.wbloom:focus-visible .wbring { opacity: 1; }
+.wseeds { transition: opacity .4s; opacity: .45; }
+.wfield.picked .wseeds { opacity: 0; }
+.wbt { pointer-events: none; font: 600 16px var(--body, "Manrope", sans-serif); transition: opacity .3s; }
+.wbt.ink { fill: var(--ink, #2A1F33); } .wbt.wht { fill: #fff; }
+.wbt-w { font-size: 16px; }
+.wbt-l { font: 400 21px var(--display, "Bodoni Moda", serif); }
+.wbt-s { font: 400 24px var(--display, "Bodoni Moda", serif); }
+.wbt-n { font: 500 12px var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; }
+.wbl { display: none; font: 600 20px var(--body, "Manrope", sans-serif); fill: var(--ink, #2A1F33); pointer-events: none; transition: opacity .3s; }
+.wfield.picked .wbl { opacity: 0; }
+.wbloom.rim .wbt { opacity: 0; }
+.wbloom.rim { opacity: .82; }
+.wbloom.rim:hover, .wbloom.rim:focus-visible { opacity: 1; }
+
+/* scent orbs that open around the chosen mood */
+.wpetal { cursor: pointer; outline: none; transition: transform .7s cubic-bezier(.2, .8, .2, 1), opacity .45s; }
+.wpetal.out { opacity: 0; visibility: hidden; transition: transform .45s cubic-bezier(.4, 0, .6, 1), opacity .3s, visibility 0s .45s; pointer-events: none; }
+.wstem { stroke: var(--sw); stroke-opacity: .5; stroke-width: 1.2; stroke-dasharray: 3 5; transition: opacity .5s .55s; }
+.wstem.out { opacity: 0; transition: opacity .2s; }
+.wstem.sel { stroke-dasharray: none; stroke-opacity: .8; }
+.wglows, .wlight { pointer-events: none; }
+.wsorb { stroke: var(--sw); stroke-opacity: .55; stroke-width: 1.5; filter: drop-shadow(0 6px 12px rgba(42, 31, 51, .14)); transition: transform .35s cubic-bezier(.2, .8, .2, 1), filter .3s; transform-box: fill-box; transform-origin: center; }
+.wpetal:hover .wsorb { transform: scale(1.08); }
+.wpetal.sel .wsorb { fill: var(--sw); stroke: var(--sw); stroke-opacity: 1; filter: drop-shadow(0 8px 16px rgba(42, 31, 51, .22)); }
+.wsring { fill: none; stroke: var(--ink, #2A1F33); stroke-width: 3; opacity: 0; transition: opacity .2s; }
+.wpetal.sel .wsring { opacity: 1; stroke: var(--sw); stroke-width: 1.5; stroke-dasharray: 3 5; }
+.wpetal:focus-visible .wsring { opacity: 1; stroke: var(--ink, #2A1F33); stroke-width: 3; stroke-dasharray: none; }
+.wpl { font: 600 15px var(--body, "Manrope", sans-serif); fill: var(--ink, #2A1F33); pointer-events: none; }
+.wpetal.sel .wpl { font-weight: 700; }
+
+/* ambient drift, only while the field is on screen */
+@keyframes wdrift { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(4px, -5px); } 66% { transform: translate(-3px, 4px); } }
+.wfield.live .wdrift { animation: wdrift 12s ease-in-out infinite; }
+
+/* the panel beside the field */
+.wpanel { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.wpanel h3 { font-size: clamp(30px, 3.6vw, 46px); margin: 0; }
+.wpanel p { margin: 0; max-width: 46ch; }
+.wpanel .eyebrow { display: inline-flex; align-items: center; gap: 8px; }
+.wmoods { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--line, #E6DDD3); }
+.chip[data-pick], .wfmt { min-height: 44px; }
+.wfmt img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-left: -4px; }
+.chip[data-pick]:hover, .wfmt:hover { border-color: var(--ink, #2A1F33); }
+.writ { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 14px; align-items: center; padding: 14px 16px; border-radius: 28px 8px 28px 8px;
+  background: linear-gradient(155deg, var(--tint-sand, #EFE6D8), #F7EEE3); box-shadow: var(--lift, 0 10px 30px -18px rgba(42, 31, 51, .3)); }
+.writ-th { display: flex; }
+.writ-th img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #F7EEE3; }
+.writ-th img + img { margin-left: -14px; }
+.writ-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.writ-tx b { font: 500 18px var(--display, "Bodoni Moda", serif); line-height: 1.15; }
+.writ .btn { grid-column: 1 / -1; justify-self: start; }
+
+@media (max-width: 820px) {
+  .wcompass { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  /* the field is drawn at 600 units and shown at about 360px, so the words are set larger in units */
+  .wax { font-size: 15px; }
+  /* on phones the resting blooms are named beneath, in ink on linen, instead of inside the small orb */
+  .wbl { display: block; } .wbt-w { display: none; }
+  .wbt-l { font-size: 25px; } .wbt-s { font-size: 27px; } .wbt-n { font-size: 14px; }
+  .wpl { font-size: 20px; }
+  .wsorb { transform: scale(1.12); } .wpetal:hover .wsorb { transform: scale(1.18); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wsvg *, .wsvg { transition: none !important; animation: none !important; }
+  .wlight { display: none; }
+}

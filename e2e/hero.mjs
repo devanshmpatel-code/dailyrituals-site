@@ -1,7 +1,7 @@
 // The hero offers both things the business sells: the scent ritual (two products as one) and the practice (coaching).
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
-const origin = 'http://localhost:4173';
+const origin = (process.env.BASE ?? 'http://localhost:4173/#').replace(/\/#\/?$/, '');
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const pick = (p, k) => p.evaluate(k => { document.querySelector(`.moments [data-jump="${k}"]`).click(); }, k).then(() => p.waitForTimeout(1600));
