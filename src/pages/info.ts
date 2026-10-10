@@ -57,7 +57,7 @@ export function renderStory(app: HTMLElement) {
     <section class="wrap st-path"><span class="eyebrow">How it began</span><h2>From one life changed <span class="it">to a daily practice.</span></h2>
       <ol class="st-steps">${beats.map(([t, d], i) => `<li style="--i:${i}"><span class="st-dot" aria-hidden="true">${['\u263E', '\u2735', '\u2740', '\u2600'][i]}</span><b>${t}</b><p>${d}</p></li>`).join('')}</ol>
       <p class="small muted d confirm">Draft from the coaching page text. Claire to add dates, detail and photos.</p></section>
-    <section class="st-quote"><div class="wrap"><blockquote>&ldquo;Others deserved access to the brain-change knowledge that transformed my life.&rdquo;<cite>Claire, neuro coach</cite></blockquote></div></section>
+    <section class="st-quote"><div class="wrap"><img class="st-claire" src="/img/studio/web/claire-round.webp" alt="Claire, founder of Daily Rituals Co." width="360" height="360" loading="lazy" decoding="async"><span class="small d confirm st-approve">Draft: Claire to approve this photo (her Instagram selfie, cropped).</span><blockquote>&ldquo;Others deserved access to the brain-change knowledge that transformed my life.&rdquo;<cite>Claire, neuro coach</cite></blockquote></div></section>
     <section class="wrap st-vals"><div class="ways three">
       <div class="st-v v1"><span class="eyebrow">Made with intention</span><h3>Clean, simple products</h3><p class="muted">Rollers, mini diffusers, candles and deodorant, each one made to mark a moment in your day.</p></div>
       <div class="st-v v2"><span class="eyebrow">Small batch</span><h3>Hand poured in BC</h3><p class="muted">Made in small batches in British Columbia.</p></div>
