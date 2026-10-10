@@ -80,6 +80,16 @@ function pairFor(m: Moment) {
   };
 }
 
+// Coaching offers shown with each moment. Only the two free ways in from the coaching page ("Free · Self-paced 7-Day Ritual Reset,
+// about 10 minutes" and "Free · 20 min Discovery call"); the wording per moment is a draft for Claire.
+const PRACTICE: Record<MomentKey, { title: string; sub: string; href: string }> = {
+  dawn: { title: 'Free 7-day reset', sub: 'Self-paced, about 10 minutes a day', href: '#/reset' },
+  morning: { title: 'Free 20-min call with Claire', sub: 'Talk about what you want to change', href: '#/book' },
+  midday: { title: 'Free 7-day reset', sub: 'Turn a scent into a calm cue', href: '#/reset' },
+  golden: { title: 'Free 20-min call with Claire', sub: 'See if coaching is a fit for you', href: '#/book' },
+  night: { title: 'Free 7-day reset', sub: 'Short daily practices, about 10 minutes', href: '#/reset' },
+};
+
 function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: number) {
   const hero = app.querySelector<HTMLElement>('#day');
   if (!hero) return;
@@ -102,8 +112,19 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
   const { diffuser, roller } = pairFor(m);
   const prods = app.querySelector<HTMLElement>('#dProducts');
   if (prods) {
-    prods.innerHTML = [diffuser, roller].filter(Boolean).map(p =>
-      `<a class="sp" href="#/product/${p!.slug}"><img src="${p!.thumb}" alt=""><span><b>${esc(p!.scent)}</b><em>${p!.formatLabel} · ${money(p!.priceMin)}</em></span></a>`).join('');
+    // two ways into the moment: the scent ritual (both products as one) and the practice that goes with it (coaching)
+    const pair = [diffuser, roller].filter(Boolean) as Item[];
+    const total = pair.reduce((n, p) => n + p.priceMin, 0);
+    const names = pair.length === 2 && pair[0].scent === pair[1].scent ? `${pair[0].scent}, two ways` : pair.map(p => p.scent).join(' + ');
+    const kinds = pair.map(p => (p.format === 'diffuser' ? 'diffuser' : p.format === 'roller' ? 'roller' : p.formatLabel.toLowerCase())).join(' + ');
+    const ritual = pair.length ? `<a class="sp sp-ritual" href="#/explore?mood=${m.mood}" aria-label="The ${esc(m.name.toLowerCase())} ritual: ${esc(names)}, ${money(total)} together">
+        <span class="sp-thumbs" aria-hidden="true">${pair.map(p => `<img src="${p.thumb}" alt="">`).join('')}</span>
+        <span><small>The ritual</small><b>${esc(names)}</b><em>${esc(kinds.charAt(0).toUpperCase() + kinds.slice(1))} · ${money(total)} together</em></span></a>` : '';
+    const c = PRACTICE[m.key];
+    const practice = `<a class="sp sp-coach" href="${c.href}" aria-label="${esc(c.title)}: ${esc(c.sub)}">
+        <span class="sp-ico" aria-hidden="true"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M16 25c-3.2-3.4-3.2-9.6 0-15 3.2 5.4 3.2 11.6 0 15z"/><path d="M16 25c-5-1-8.6-5-8.6-11 4.6 1.2 7.4 4.6 8.6 11z"/><path d="M16 25c5-1 8.6-5 8.6-11-4.6 1.2-7.4 4.6-8.6 11z"/></svg></span>
+        <span><small>The practice</small><b>${esc(c.title)}</b><em>${esc(c.sub)}</em></span><span class="sp-go" aria-hidden="true">&rarr;</span></a>`;
+    prods.innerHTML = ritual + practice;
   }
   const cta = app.querySelector<HTMLElement>('#dCta');
   if (cta) {
@@ -179,10 +200,10 @@ let scrubCleanup: (() => void) | null = null;
 /** Re-anchor the scrolling day so the current scroll position shows this hour (after a moment button, a drag or a key). */
 let scrubRebase: ((hour: number) => void) | null = null;
 export function unmountDayScrub() { scrubCleanup?.(); scrubCleanup = null; scrubRebase = null; }
-function scrubFrame(app: HTMLElement, h: number) {
+function scrubFrame(app: HTMLElement, h: number, hold?: Moment) {
   const hh = ((h % 24) + 24) % 24;
   applyLook(app, hh); moveSun(app, hh); setClockLive(app, hh);
-  const m = look(hh).nearest;
+  const m = hold ?? look(hh).nearest;
   if (!heroCurrent || m.key !== heroCurrent.key) { heroCurrent = m; setMoment(app, m, true, hh); setClockLive(app, hh); }
 }
 function mountDayScrub(app: HTMLElement) {
@@ -194,7 +215,7 @@ function mountDayScrub(app: HTMLElement) {
   const cue = document.createElement('div'); cue.className = 'daycue'; cue.setAttribute('aria-hidden', 'true');
   cue.innerHTML = '<span>Scroll to live the day</span><i></i>';
   hero.appendChild(cue);
-  let enabled = false, start = 0, len = 0, active = false, startHour = liveHour, ticking = false, lastY = -1;
+  let enabled = false, start = 0, len = 0, active = false, startHour = liveHour, ticking = false, lastY = -1, startMoment: Moment | null = heroCurrent;
   const progress = () => (enabled ? Math.min(1, Math.max(0, (window.scrollY - start) / len)) : 0);
   const measure = () => {
     const hdr = document.querySelector('header.top')?.getBoundingClientRect().height ?? 0;
@@ -213,10 +234,11 @@ function mountDayScrub(app: HTMLElement) {
     const p = progress();
     hero.style.setProperty('--dp', p.toFixed(3));
     cue.style.opacity = String(Math.max(0, 1 - p * 10));
-    if (p <= 0.002) { if (active) { active = false; scrubFrame(app, startHour); } return; }
-    if (!active) { active = true; startHour = liveHour; stopTween(app); }
+    if (p <= 0.002) { if (active) { active = false; scrubFrame(app, startHour, startMoment ?? undefined); } return; }
+    if (!active) { active = true; startHour = liveHour; startMoment = heroCurrent; stopTween(app); }
     useRealClock = false;
-    scrubFrame(app, startHour + p * 24);
+    // a full day comes back round to exactly where the visitor started
+    scrubFrame(app, startHour + p * 24, p >= 0.985 ? startMoment ?? undefined : undefined);
   };
   const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
   const onResize = () => { measure(); onScroll(); };
@@ -224,7 +246,7 @@ function mountDayScrub(app: HTMLElement) {
   ro.observe(hero);
   window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onResize);
   measure();
-  scrubRebase = (hour: number) => { if (!enabled) return; const p = progress(); startHour = hour - p * 24; active = p > 0.002; lastY = window.scrollY; };
+  scrubRebase = (hour: number) => { if (!enabled) return; const p = progress(); startHour = hour - p * 24; startMoment = nearest(hour); active = p > 0.002; lastY = window.scrollY; };
   scrubCleanup = () => { ro.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); };
 }
 
@@ -234,9 +256,9 @@ function mountHomeBuyBar(app: HTMLElement) {
     watch: () => app.querySelector<HTMLElement>('#dCta [data-addmoment]'),
     read: () => {
       const btn = app.querySelector<HTMLButtonElement>('#dCta [data-addmoment]');
-      const names = [...app.querySelectorAll('#dProducts .sp b')].map(b => b.textContent).filter(Boolean);
+      const names = [app.querySelector('#dProducts .sp-ritual b')?.textContent].filter(Boolean);
       const m = heroCurrent ?? MOMENTS[3];
-      return { title: `Your ${m.name.toLowerCase()} ritual`, sub: names.join(' + ') || m.title, img: app.querySelector<HTMLImageElement>('#dProducts .sp img')?.src, label: btn?.textContent?.trim() || 'Add this ritual', disabled: !btn || btn.disabled };
+      return { title: `Your ${m.name.toLowerCase()} ritual`, sub: names[0] || m.title, img: app.querySelector<HTMLImageElement>('#dProducts .sp-ritual img')?.src, label: btn?.textContent?.trim() || 'Add this ritual', disabled: !btn || btn.disabled };
     },
     act: () => app.querySelector<HTMLButtonElement>('#dCta [data-addmoment]')?.click(),
   });

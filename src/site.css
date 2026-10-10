@@ -733,3 +733,21 @@ body.has-buybar .breathorb { bottom: calc(max(18px, env(safe-area-inset-bottom))
   .bo-orb .r { display: none; } .bo-say .out { opacity: 0; }
 }
 @media (max-width: 560px) { .bo-say { display: none; } }
+
+/* ---------- hero: the ritual and the practice ---------- */
+.stack-products { gap: 12px; }
+.sp { transition: translate .3s cubic-bezier(.2, .7, .2, 1), box-shadow .3s; box-shadow: 0 12px 30px rgba(35, 26, 43, .18); }
+.sp:hover { translate: 4px 0; box-shadow: 0 16px 38px rgba(35, 26, 43, .26); }
+.sp small { display: block; font: 600 10px var(--mono, var(--body)); letter-spacing: .14em; text-transform: uppercase; opacity: .7; margin-bottom: 1px; }
+.sp b { font-size: 15px; }
+.sp-ritual { grid-template-columns: auto auto; }
+.sp-thumbs { display: flex; padding-left: 2px; }
+.sp-thumbs img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #FFFFFF; background: var(--sand); }
+.sp-thumbs img + img { margin-left: -16px; }
+.sp.sp-coach { grid-template-columns: 48px auto 18px; background: #2F5249; color: #FFFFFF; margin-left: 28px; }
+.sp-coach em { color: #E1EAE5; }
+.sp-coach small { color: #E1EAE5; opacity: .9; }
+.sp-ico { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .14); color: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
+.sp-go { font-size: 18px; transition: translate .3s; } .sp-coach:hover .sp-go { translate: 3px 0; }
+.sp:focus-visible { outline: 3px solid var(--marigold); outline-offset: 3px; }
+@media (max-width: 560px) { .sp-thumbs img { width: 40px; height: 40px; } .sp-ico { width: 40px; height: 40px; } .sp.sp-coach { grid-template-columns: 40px auto 14px; margin-left: 18px; } .sp b { font-size: 14px; } }
