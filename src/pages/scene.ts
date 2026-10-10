@@ -1,6 +1,7 @@
 import { MOMENTS } from '../config';
 import { drawLandscape } from './landscape';
 import type { Look } from './daycycle';
+import { getSky } from './sky';
 
 // A layered landscape behind the home hero. Mountains drift slowly, clouds and mist pass through, birds fly in the
 // morning and evening, and at night there are stars (from the hero), a moon and fireflies. Colours per moment live in config.
@@ -49,6 +50,8 @@ export function setLook(app: HTMLElement, L: Look) {
 export function placeOrb(app: HTMLElement, x: number, y: number) {
   const orb = app.querySelector<HTMLElement>("#sunorb");
   if (!orb) return;
+  const top = 70 - ((140 - y) / 100) * 45;
   orb.style.left = `${(x / 10).toFixed(1)}%`;
-  orb.style.top = `${(70 - ((140 - y) / 100) * 45).toFixed(1)}%`;
+  orb.style.top = `${top.toFixed(1)}%`;
+  getSky()?.set({ sunX: x / 1000, sunY: 1 - top / 100 });
 }

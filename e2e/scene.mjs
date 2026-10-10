@@ -34,6 +34,16 @@ const op = (p, sel) => p.evaluate(s => Number(getComputedStyle(document.querySel
   const mid = await opsOf(); ok('moving between moments blends two landscapes on the way', mid.filter(v => v > 0.05 && v < 0.95).length >= 1, mid.map(v => v.toFixed(2)).join(','));
   await p.waitForTimeout(1400); const dw = await opsOf(); ok('then settles on one', Math.max(...dw) > 0.95, dw.map(v => v.toFixed(2)).join(','));
   ok('no "Watch the day" button', await p.locator('#dayPlay').count() === 0);
+  // the realistic sky (only where the browser has WebGL)
+  const gl = await p.evaluate(() => !!document.createElement('canvas').getContext('webgl'));
+  if (gl) {
+    ok('realistic sky is drawn behind the mountains', (await p.locator('#scene canvas.glsky').count()) === 1 && await p.evaluate(() => document.getElementById('scene').classList.contains('gl')));
+    ok('the mountains stand on a lake', await p.evaluate(() => getComputedStyle(document.querySelector('#scene canvas.land')).bottom !== '0px'));
+    await p.evaluate(() => { document.querySelector('.moments [data-jump="night"]').click(); }); await p.waitForTimeout(1700);
+    ok('night: the words turn light on the dark sky', await p.evaluate(() => document.getElementById('day').classList.contains('sky-dark')));
+    await p.evaluate(() => { document.querySelector('.moments [data-jump="midday"]').click(); }); await p.waitForTimeout(1700);
+    ok('midday: the words are dark on the bright sky', await p.evaluate(() => !document.getElementById('day').classList.contains('sky-dark')));
+  } else console.log('NOTE no WebGL in this browser: realistic sky checks skipped');
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok('no sideways scroll', o <= 1, `${o}`);
   await ctx.close();
 }

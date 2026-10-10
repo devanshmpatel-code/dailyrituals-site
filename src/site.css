@@ -676,3 +676,27 @@ body.has-buybar .jhere { translate: 0 -76px; }
   .buybar { transition: none; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* ---------- the realistic sky (WebGL) ---------- */
+.glsky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* the drawn sun, clouds and dot stars give way to the rendered ones */
+.scene.gl .sunorb, .scene.gl .cloud { visibility: hidden; }
+.sky:has(> .scene.gl) > .stars { visibility: hidden; }
+/* a lake along the bottom: the mountains stand on its shore and are mirrored in it */
+.scene.gl:not(.has-photo) .land { bottom: var(--lake, 12%); -webkit-box-reflect: below 0px linear-gradient(to bottom, transparent 35%, rgba(0, 0, 0, .38)); }
+.scene.gl:not(.has-photo)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--lake, 12%); pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, .22) 0, rgba(255, 255, 255, 0) 3px), linear-gradient(to bottom, rgba(10, 20, 30, .08), rgba(10, 20, 30, .32)); }
+.scene.gl.has-photo .glsky { display: none; }
+/* words on a dark sky (twilight and night) */
+.dayhero.sky-dark .btn.line { color: #F3ECF5; border-color: rgba(243, 236, 245, .55); background: transparent; }
+.dayhero.sky-dark .btn:not(.line) { background: #F3ECF5; color: #2A1F33; }
+.dayhero.sky-dark .moments button { border-color: rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .1); color: #F3ECF5; }
+.dayhero.sky-dark .moments button[aria-current="true"] { background: rgba(255, 255, 255, .88); color: #2A1F33; }
+.dayhero.sky-dark h1, .dayhero.sky-dark .greet, .dayhero.sky-dark p { text-shadow: 0 1px 18px rgba(10, 8, 20, .35); }
+/* a soft shade behind the words so they read on any sky: dark behind light words, light behind dark words */
+.scene.gl::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: background .8s;
+  background: radial-gradient(ellipse 62% 70% at 18% 46%, rgba(250, 246, 240, .34), rgba(250, 246, 240, 0) 70%); }
+.dayhero.sky-dark .scene.gl::before { background: radial-gradient(ellipse 62% 70% at 18% 46%, rgba(14, 10, 26, .42), rgba(14, 10, 26, 0) 70%); }
+.scene.gl .land { z-index: 2; }
+.dayhero.sky-dark .btn.line { background: rgba(20, 14, 30, .38); backdrop-filter: blur(6px); }
+.dayhero:not(.sky-dark) .btn.line { background: rgba(255, 252, 247, .4); backdrop-filter: blur(6px); }

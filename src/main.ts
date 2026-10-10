@@ -13,6 +13,7 @@ import { unmountJourney, openBreathe } from './pages/journey';
 import { decoratePage } from './pages/calm';
 import { cleanupMotion, mountSay, mountShapes, markMorphTarget } from './pages/motion';
 import { unmountDayScrub } from './pages/home';
+import { getSky } from './pages/sky';
 import { treeSVG, lotusDivider } from './pages/symbols';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
@@ -174,7 +175,7 @@ async function route() {
   if (!overlay.hidden) closeCart();
   document.body.dataset.page = seg || 'home';
   requestAnimationFrame(growTree);
-  unmountJourney(); cleanupMotion(); unmountDayScrub();
+  unmountJourney(); cleanupMotion(); unmountDayScrub(); getSky()?.destroy();
   document.title = PAGE_TITLES[seg] ? `${PAGE_TITLES[seg]} · Daily Rituals Co.` : 'Daily Rituals Co.';
   window.scrollTo(0, 0);
 

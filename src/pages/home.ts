@@ -6,6 +6,7 @@ import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } 
 import { add } from '../cart';
 import { sceneHTML, setLook, placeOrb } from './scene';
 import { look } from './daycycle';
+import { mountSky, getSky } from './sky';
 import { mountBuyBar } from './motion';
 import { mountJourney } from './journey';
 import { swapRenders } from '../photos';
@@ -135,7 +136,12 @@ function applyLook(app: HTMLElement, hour: number) {
   sky.style.background = `linear-gradient(160deg, ${L.sky[0]} 0%, ${L.sky[1]} 60%, ${L.sky[2]} 100%)`;
   setLook(app, L);
   const stars = app.querySelector<HTMLElement>('#stars'); if (stars) stars.style.opacity = String(L.night);
-  hero.style.color = L.night >= 0.5 ? '#EEE8F6' : 'rgb(35, 26, 43)';
+  const glsky = getSky();
+  glsky?.set({ hour, night: L.night, pal: L.sky, orb: L.orbRgb as [number, number, number] });
+  // with the realistic sky, the words follow how dark the sky behind them really is (twilight is dark before sunrise)
+  const lightText = glsky ? glsky.light() : L.night >= 0.5;
+  hero.style.color = lightText ? '#EEE8F6' : 'rgb(35, 26, 43)';
+  hero.classList.toggle('sky-dark', lightText);
   app.querySelector('#sunC')?.setAttribute('fill', L.night >= 0.5 ? L.orb : '#FFC37A');
   hero.dataset.m = L.nearest.key;
 }
@@ -243,6 +249,8 @@ function nearest(hour: number) {
 function wireHeroStatic(app: HTMLElement) {
   const skyEl = app.querySelector<HTMLElement>('#sky');
   if (skyEl && !skyEl.querySelector('#scene')) skyEl.insertAdjacentHTML('beforeend', sceneHTML());
+  const sceneEl = app.querySelector<HTMLElement>('#scene');
+  if (sceneEl) mountSky(sceneEl, window.innerWidth < 820 ? 0.09 : 0.12);
   const greet = app.querySelector('.greet');
   if (greet) greet.innerHTML = `<span class="dot-live"></span>${greeting()}`;
   const golden = momentForHour(hourNow());
