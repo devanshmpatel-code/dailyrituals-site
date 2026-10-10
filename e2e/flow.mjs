@@ -34,6 +34,17 @@ await p.goto(base + '/product/cabana'); await p.waitForSelector('.mainimg'); awa
 ok('product: the main photo has soft rounded corners', parseFloat(await cs('.mainimg', 'borderTopLeftRadius')) >= 24);
 for (const r of ['/', '/shop', '/coaching', '/subscribe', '/drops']) { await p.goto(base + r); await p.waitForTimeout(900); const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${r}: no sideways scroll`, o <= 1, `${o}`); }
 ok('product: photo pins are hidden from customers until checked against real photos', await (async () => { await p.goto(base + '/product/cabana-fragrance-roller'); await p.waitForTimeout(1200); return p.evaluate(() => [...document.querySelectorAll('.hs')].every(e => getComputedStyle(e).display === 'none')); })());
+// the breathing pause on the home page is the glowing orb only (no separate section repeating it)
+await p.goto(base + '/'); await p.waitForSelector('.breathorb'); await p.waitForTimeout(800);
+ok('home: no separate breathing section repeats the orb', (await p.locator('.breathband, #app [data-breathe]').count()) === 0);
+await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); ok('home: the glowing orb opens the breathing screen', true); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+await p.goto(base + '/coaching'); await p.waitForSelector('.c-hero'); await p.waitForTimeout(600);
+ok('coaching: the green hero fades into the page', /gradient/.test(await cs('.c-hero', 'maskImage')));
+ok('coaching: the hero picture has a leaf cutout', parseFloat(await cs('.c-hero .ph', 'borderTopLeftRadius')) > 100);
+await p.goto(base + '/product/cabana'); await p.waitForSelector('.mainimg'); await p.waitForTimeout(500);
+ok('product: the main photo has soft rounded corners', parseFloat(await cs('.mainimg', 'borderTopLeftRadius')) >= 24);
+for (const r of ['/', '/shop', '/coaching', '/subscribe', '/drops']) { await p.goto(base + r); await p.waitForTimeout(900); const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${r}: no sideways scroll`, o <= 1, `${o}`); }
+ok('product: photo pins are hidden from customers until checked against real photos', await (async () => { await p.goto(base + '/product/cabana-fragrance-roller'); await p.waitForTimeout(1200); return p.evaluate(() => [...document.querySelectorAll('.hs')].every(e => getComputedStyle(e).display === 'none')); })());
 // where the breathing moment lives in the story
 await p.goto(base + '/'); await p.waitForSelector('.breathband'); await p.waitForTimeout(800);
 const order = await p.evaluate(() => { const secs = [...document.querySelectorAll('#app > section, #app > div')].map(e => e.className || e.id); return secs; });

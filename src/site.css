@@ -418,7 +418,6 @@ body:not(.no-grade) :is(.card .ph, .stack, .path2 .p-img, .mainimg, .disc .ph, .
 .steps3 > div:nth-child(1) { background: linear-gradient(155deg, var(--tint-sage), #F1F5F2); }
 .steps3 > div:nth-child(2) { background: linear-gradient(155deg, var(--tint-butter), #FBF3E2); }
 .steps3 > div:nth-child(3) { background: linear-gradient(155deg, var(--tint-blush), #F9ECE6); }
-.breathband { padding-block: clamp(28px, 4vw, 56px); }
 .bb { display: flex; align-items: center; gap: clamp(16px, 3vw, 36px); flex-wrap: wrap; padding: clamp(20px, 3vw, 34px) clamp(22px, 4vw, 48px); border-radius: 56px 12px 56px 12px; background: linear-gradient(150deg, var(--tint-sage), #EEF3EF); box-shadow: var(--lift); color: var(--ink); }
 .bb svg { color: var(--euc); flex: none; } .bb > div { flex: 1 1 280px; min-width: 0; }
 .bb h2 { font-size: clamp(26px, 3.2vw, 40px); margin: 0 0 4px; } .bb p { margin: 0; }

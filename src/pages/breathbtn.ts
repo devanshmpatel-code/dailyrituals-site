@@ -1,6 +1,6 @@
 // The breathing orb: one floating button on every page that opens the one-minute breathing pause.
 // It breathes on its own: four seconds in, four seconds out, with soft ripples, and its colours follow the time of day.
-// A small label alternates "Breathe in" / "Breathe out" in time with it (shown on wider screens, or on hover and focus).
+// A small label alternates "Breathe in" / "Breathe out" in time with it, on hover and focus only.
 // With reduced motion it stays still.
 import { openBreathe } from './journey';
 import { MOMENTS } from '../config';
@@ -24,7 +24,5 @@ export function mountBreathButton() {
     <span class="bo-say" aria-hidden="true"><span class="in">Breathe in</span><span class="out">Breathe out</span></span>`;
   b.addEventListener('click', () => openBreathe(b));
   document.body.appendChild(b);
-  // the label shows for the first two breaths, as a gentle invitation, then only on hover or focus
-  b.classList.add('intro');
-  window.setTimeout(() => b.classList.remove('intro'), 16000);
+  // the label only shows on hover or focus: the breathing orb speaks for itself and never covers the page
 }
