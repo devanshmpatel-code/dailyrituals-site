@@ -34,7 +34,8 @@
 /* ============ desktop: flyout panels ============ */
 .gn-panel {
   position: absolute; left: 0; right: 0; top: 100%; z-index: 2; height: var(--h, 0px); overflow: hidden;
-  background: var(--frost); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  /* solid, not frosted: the hero's large pale headline would otherwise ghost through behind the links */
+  background: #F7F2EA;
   border-bottom: 1px solid rgba(42, 31, 51, .08); box-shadow: 0 32px 60px -40px rgba(21, 17, 31, .35);
   opacity: 0; visibility: hidden; text-align: left; font-weight: 400;
   transition: height var(--dur-base) var(--ease-standard), opacity var(--dur-base) var(--ease-standard), visibility 0s linear var(--dur-base);
