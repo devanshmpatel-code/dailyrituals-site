@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build && node scripts/seo.mjs",
     "preview": "vite preview",
-    "test:e2e": "node e2e/journey.mjs && node e2e/leak.mjs && node e2e/tools.mjs && node e2e/time.mjs && node e2e/loop.mjs && node e2e/wheel.mjs && node e2e/scene.mjs && node e2e/scroll.mjs && node e2e/calm.mjs && node e2e/symbols.mjs && node e2e/flow.mjs && node e2e/here.mjs && node e2e/polish.mjs && node e2e/launch.mjs"
+    "test:e2e": "node e2e/journey.mjs && node e2e/leak.mjs && node e2e/tools.mjs && node e2e/time.mjs && node e2e/loop.mjs && node e2e/wheel.mjs && node e2e/scene.mjs && node e2e/scroll.mjs && node e2e/calm.mjs && node e2e/symbols.mjs && node e2e/flow.mjs && node e2e/here.mjs && node e2e/polish.mjs && node e2e/launch.mjs && node e2e/motion.mjs"
   },
   "devDependencies": {
     "typescript": "~6.0.2",

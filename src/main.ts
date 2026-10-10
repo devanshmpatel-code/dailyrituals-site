@@ -11,6 +11,8 @@ import { currentRoute, onRoute, installLinkHandling } from './router';
 import { renderHome } from './pages/home';
 import { unmountJourney, openBreathe } from './pages/journey';
 import { decoratePage } from './pages/calm';
+import { cleanupMotion, mountSay, mountShapes, markMorphTarget } from './pages/motion';
+import { unmountDayScrub } from './pages/home';
 import { treeSVG, lotusDivider } from './pages/symbols';
 import { renderShop } from './pages/shop';
 import { renderProduct } from './pages/product';
@@ -172,7 +174,7 @@ async function route() {
   if (!overlay.hidden) closeCart();
   document.body.dataset.page = seg || 'home';
   requestAnimationFrame(growTree);
-  unmountJourney();
+  unmountJourney(); cleanupMotion(); unmountDayScrub();
   document.title = PAGE_TITLES[seg] ? `${PAGE_TITLES[seg]} · Daily Rituals Co.` : 'Daily Rituals Co.';
   window.scrollTo(0, 0);
 
@@ -204,7 +206,9 @@ async function route() {
     }
   })();
   await view;
+  if (seg === 'product') markMorphTarget(app);
   decoratePage(app, seg);
+  mountSay(app); mountShapes(app);
 }
 installLinkHandling();
 onRoute(route);

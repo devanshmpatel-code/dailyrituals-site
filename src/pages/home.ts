@@ -6,6 +6,7 @@ import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } 
 import { add } from '../cart';
 import { sceneHTML, setLook, placeOrb } from './scene';
 import { look } from './daycycle';
+import { mountBuyBar } from './motion';
 import { mountJourney } from './journey';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
@@ -48,7 +49,9 @@ export async function renderHome(app: HTMLElement) {
   wireCountdown(app);
   wireSunrise(app);
   wireClub(app);
+  mountDayScrub(app);
   mountJourney(app);
+  mountHomeBuyBar(app);
 
   const grid = app.querySelector<HTMLElement>('#msGrid');
   if (grid) grid.innerHTML = skeletonCards(4);
@@ -161,6 +164,71 @@ function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => 
   if (reduceMotion() || ms <= 0) { finish(); return; }
   const step = (now: number) => { const k = Math.min(1, (now - t0) / ms); frame(app, from + (to - from) * ease(k)); if (k < 1) raf = requestAnimationFrame(step); else finish(); };
   raf = requestAnimationFrame(step);
+}
+
+// ---------- scroll through the day ----------
+// The opening stays pinned while scrolling plays a full day, starting from the visitor's own time and coming back round to it.
+// Only when the opening fits on screen (desktop and tablet landscape); phones and reduced motion keep a normal page.
+let scrubCleanup: (() => void) | null = null;
+export function unmountDayScrub() { scrubCleanup?.(); scrubCleanup = null; }
+function scrubFrame(app: HTMLElement, h: number) {
+  const hh = ((h % 24) + 24) % 24;
+  applyLook(app, hh); moveSun(app, hh); setClockLive(app, hh);
+  const m = look(hh).nearest;
+  if (!heroCurrent || m.key !== heroCurrent.key) { heroCurrent = m; setMoment(app, m, true, hh); setClockLive(app, hh); }
+}
+function mountDayScrub(app: HTMLElement) {
+  unmountDayScrub();
+  const hero = app.querySelector<HTMLElement>('#day');
+  if (!hero || reduceMotion()) return;
+  const pin = document.createElement('div'); pin.className = 'daypin';
+  hero.before(pin); pin.appendChild(hero);
+  const cue = document.createElement('div'); cue.className = 'daycue'; cue.setAttribute('aria-hidden', 'true');
+  cue.innerHTML = '<span>Scroll to live the day</span><i></i>';
+  hero.appendChild(cue);
+  let enabled = false, start = 0, len = 0, active = false, startHour = liveHour, ticking = false;
+  const measure = () => {
+    const hdr = document.querySelector('header.top')?.getBoundingClientRect().height ?? 0;
+    pin.style.height = ''; pin.classList.remove('on');
+    const h = hero.offsetHeight;
+    enabled = window.innerWidth > 820 && h <= window.innerHeight - hdr + 2;
+    len = enabled ? Math.round(window.innerHeight * 1.5) : 0;
+    pin.classList.toggle('on', enabled); pin.style.setProperty('--hdr', `${hdr}px`);
+    pin.style.height = enabled ? `${h + len}px` : ''; pin.dataset.len = String(len);
+    start = pin.getBoundingClientRect().top + window.scrollY - hdr;
+  };
+  const update = () => {
+    ticking = false;
+    if (!enabled) return;
+    const p = Math.min(1, Math.max(0, (window.scrollY - start) / len));
+    hero.style.setProperty('--dp', p.toFixed(3));
+    cue.style.opacity = String(Math.max(0, 1 - p * 10));
+    if (p <= 0.002) { if (active) { active = false; scrubFrame(app, startHour); } return; }
+    if (!active) { active = true; startHour = liveHour; stopTween(app); }
+    useRealClock = false;
+    scrubFrame(app, startHour + p * 24);
+  };
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  const onResize = () => { measure(); onScroll(); };
+  const ro = new ResizeObserver(() => { if (!active) measure(); });
+  ro.observe(hero);
+  window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onResize);
+  measure();
+  scrubCleanup = () => { ro.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); };
+}
+
+// the buy bar for the hero ritual: rises once the hero's own button has scrolled away
+function mountHomeBuyBar(app: HTMLElement) {
+  mountBuyBar({
+    watch: () => app.querySelector<HTMLElement>('#dCta [data-addmoment]'),
+    read: () => {
+      const btn = app.querySelector<HTMLButtonElement>('#dCta [data-addmoment]');
+      const names = [...app.querySelectorAll('#dProducts .sp b')].map(b => b.textContent).filter(Boolean);
+      const m = heroCurrent ?? MOMENTS[3];
+      return { title: `Your ${m.name.toLowerCase()} ritual`, sub: names.join(' + ') || m.title, img: app.querySelector<HTMLImageElement>('#dProducts .sp img')?.src, label: btn?.textContent?.trim() || 'Add this ritual', disabled: !btn || btn.disabled };
+    },
+    act: () => app.querySelector<HTMLButtonElement>('#dCta [data-addmoment]')?.click(),
+  });
 }
 
 function nearest(hour: number) {

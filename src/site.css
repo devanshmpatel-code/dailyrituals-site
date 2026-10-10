@@ -628,3 +628,51 @@ body[data-page="home"] .lotusdiv { opacity: 1; color: #C9B8E6; }
 .newsflow .news input[type="email"]::placeholder { color: #C9B8E6; }
 .newsflow .news .btn { background: #F3D29A; color: #231A2B; }
 .newsflow .news .btn:focus-visible, .newsflow .news input:focus-visible { outline: 2px solid #F3D29A; outline-offset: 3px; }
+
+/* ---------- motion: scroll through the day ---------- */
+.daypin { position: relative; }
+.daypin.on > .dayhero { position: sticky; top: var(--hdr, 0px); }
+.daycue { position: absolute; left: 50%; bottom: 18px; translate: -50% 0; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 600 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: inherit; pointer-events: none; transition: opacity .2s; }
+.daypin:not(.on) .daycue { display: none; }
+.daycue i { width: 1px; height: 28px; background: linear-gradient(currentColor, transparent); animation: cueDrop 1.8s ease-in-out infinite; transform-origin: top; }
+@keyframes cueDrop { 0% { scale: 1 0; } 50% { scale: 1 1; } 100% { scale: 1 1; opacity: 0; } }
+/* a hairline that fills as the day plays */
+.daypin.on > .dayhero::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: calc(var(--dp, 0) * 100%); background: linear-gradient(90deg, #F2A58E, #E2A04A, #7A4F78); z-index: 6; pointer-events: none; }
+
+/* ---------- motion: statements that light up as you read ---------- */
+.say { margin: 0 auto clamp(40px, 6vw, 88px); max-width: 22ch; text-align: center; font: 500 clamp(34px, 4.6vw, 64px)/1.12 var(--display); letter-spacing: -0.01em; }
+.say .w { opacity: .18; transition: opacity .35s ease; }
+.say .w.on { opacity: 1; }
+.df[data-ground="night"] .say { color: #EEE8F6; padding-top: clamp(40px, 6vw, 80px); margin-bottom: 0; }
+.coachflow .say { color: #FFFFFF; }
+.repeat .say { padding-top: clamp(16px, 3vw, 40px); }
+
+/* ---------- motion: pictures that open out of a shape ---------- */
+.shape-in { clip-path: inset(16% 20% 16% 20% round 240px); transition: clip-path 1.25s cubic-bezier(.2, .7, .2, 1) var(--sd, 0ms); }
+.shape-in.open { clip-path: inset(0 0 0 0 round 0px); }
+.shape-in img { scale: 1.14; transition: scale 1.6s cubic-bezier(.2, .7, .2, 1) var(--sd, 0ms); }
+.shape-in.open img { scale: 1; }
+
+/* ---------- motion: the buy bar ---------- */
+.buybar { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 47; width: min(620px, calc(100% - 32px)); box-sizing: border-box; display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 10px; border-radius: 999px; background: rgba(255, 255, 255, .94); backdrop-filter: blur(12px); box-shadow: 0 14px 40px rgba(35, 26, 43, .2); color: var(--ink); translate: -50% 140%; opacity: 0; transition: translate .5s cubic-bezier(.2, .7, .2, 1), opacity .3s; }
+.buybar.on { translate: -50% 0; opacity: 1; }
+.buybar .bb-img { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--sand) center / cover; }
+.buybar .bb-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.buybar b { font: 500 18px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.buybar em { font-style: normal; font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.buybar .btn { flex: none; min-height: 48px; }
+/* the "you are here" card and the phone buttons step up out of its way */
+body.has-buybar .jhere { translate: 0 -76px; }
+@media (max-width: 1100px) { body.has-buybar .jrail { bottom: calc(max(86px, env(safe-area-inset-bottom)) + 72px); } body.has-buybar .jfab { bottom: 96px; } }
+@media (max-width: 560px) { .buybar .bb-img { display: none; } .buybar b { font-size: 16px; } .buybar em { font-size: 12px; } .buybar .btn { padding-inline: 16px; font-size: 14px; } }
+
+/* ---------- motion: page-to-page morph ---------- */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .35s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+::view-transition-group(product-hero) { animation-duration: .55s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .say .w { opacity: 1; transition: none; }
+  .shape-in, .shape-in img { clip-path: none; scale: 1; transition: none; }
+  .buybar { transition: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

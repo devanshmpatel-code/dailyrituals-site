@@ -109,7 +109,7 @@ export function mountJourney(app: HTMLElement) {
     wash.style.setProperty('--w0', lerp(MOMENTS[i0].sky[0], MOMENTS[i1].sky[0], t)); wash.style.setProperty('--w1', lerp(MOMENTS[i0].sky[1], MOMENTS[i1].sky[1], t));
     aur.style.setProperty('--a0', lerp(MOMENTS[i0].land[1], MOMENTS[i1].land[1], t)); aur.style.setProperty('--a1', lerp(MOMENTS[i0].sky[1], MOMENTS[i1].sky[1], t)); aur.style.setProperty('--a2', lerp(MOMENTS[i0].orb, MOMENTS[i1].orb, t));
     if (!reduceMotion()) pars.forEach(im => { const r = im.parentElement!.getBoundingClientRect(); if (r.bottom < 0 || r.top > window.innerHeight) return; im.style.setProperty('--py', String(((r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight * -26).toFixed(1))); });
-    if (hero) hero.style.setProperty('--p', String(Math.min(1, window.scrollY / Math.max(1, hero.offsetHeight))));
+    if (hero) { const extra = Number(hero.parentElement?.dataset.len || 0); hero.style.setProperty('--p', String(Math.min(1, Math.max(0, window.scrollY - extra) / Math.max(1, hero.offsetHeight)))); }
     let idx = 0; stops.forEach((s, i) => { if (s.el.getBoundingClientRect().top < window.innerHeight * 0.42) idx = i; });
     if (idx !== cur) {
       cur = idx; pill.textContent = stops[idx].label;

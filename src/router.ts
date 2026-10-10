@@ -1,3 +1,4 @@
+import { markMorphSource } from './pages/motion';
 // Routing that works in two modes, chosen at build time with VITE_ROUTING:
 //   path (default): /shop    real addresses search engines can follow; the host serves index.html for unknown paths (vercel.json)
 //   hash:           #/shop   needs no server rewrites (used by the local test builds)
@@ -16,8 +17,19 @@ export function routeUrl(to: string): string {
   return PATH_ROUTING ? `${location.origin}${to}` : `${location.origin}/#${to}`;
 }
 
+let routeFn: (() => void | Promise<void>) | null = null;
+type VT = { finished: Promise<void> };
+const startVT = (document as unknown as { startViewTransition?: (cb: () => Promise<void>) => VT }).startViewTransition?.bind(document);
+
 export function navigate(to: string) {
   if (!PATH_ROUTING) { location.hash = `#${to}`; return; }
+  // a soft cross-fade between pages, and the clicked product picture glides into place (where the browser supports it)
+  if (startVT && routeFn && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const fn = routeFn;
+    const t = startVT(async () => { history.pushState(null, '', to); await fn(); });
+    t.finished.finally(() => document.querySelectorAll<HTMLElement>('[style*="view-transition-name"]').forEach(el => { el.style.viewTransitionName = ''; }));
+    return;
+  }
   history.pushState(null, '', to);
   window.dispatchEvent(new Event('routechange'));
 }
@@ -29,7 +41,8 @@ export function replaceRoute(to: string) {
   window.dispatchEvent(new Event('routechange'));
 }
 
-export function onRoute(fn: () => void) {
+export function onRoute(fn: () => void | Promise<void>) {
+  routeFn = fn;
   window.addEventListener(PATH_ROUTING ? 'popstate' : 'hashchange', fn);
   if (!PATH_ROUTING) return;
   window.addEventListener('routechange', fn);
@@ -63,7 +76,7 @@ export function installLinkHandling() {
     const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
     if (!a) return;
     const href = a.getAttribute('href')!;
-    if (href.startsWith('#/')) { e.preventDefault(); navigate(href.slice(1)); return; }
-    if (isAppLink(a)) { e.preventDefault(); navigate(href); }
+    if (href.startsWith('#/')) { e.preventDefault(); markMorphSource(a); navigate(href.slice(1)); return; }
+    if (isAppLink(a)) { e.preventDefault(); markMorphSource(a); navigate(href); }
   });
 }

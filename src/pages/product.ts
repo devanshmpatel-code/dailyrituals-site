@@ -1,4 +1,5 @@
 import { replaceRoute } from '../router';
+import { mountBuyBar } from './motion';
 import Product from '../canvas/pages/Product.html?raw';
 import { loadCatalogue, loadProduct, toItem, imgSrc, money, type Item } from '../wix';
 import { cardHTML, fixImages, errorBox, wireCommon, toast, esc } from '../ui';
@@ -161,6 +162,11 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     toast(`${it.name}${choice && it.choices.length > 1 ? ` (${choice})` : ''} added to your cart`);
   });
   refresh();
+  mountBuyBar({
+    watch: () => addBtn,
+    read: () => ({ title: it.scent, sub: `${it.formatLabel}${choice && it.choices.length > 1 ? ` · ${choice}` : ''}`, img: it.thumb, label: addBtn.textContent ?? 'Add to cart', disabled: addBtn.disabled }),
+    act: () => addBtn.click(),
+  });
 
   // tabs
   const sections: any[] = p?.infoSections ?? [];
