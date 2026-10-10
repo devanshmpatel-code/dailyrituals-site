@@ -12,14 +12,15 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', 
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await p.waitForTimeout(600);
   ok(`${label}: the hero shows exactly two offers, a ritual and a practice`, (await p.locator('#dProducts .sp').count()) === 2 && (await p.locator('#dProducts .sp-ritual').count()) === 1 && (await p.locator('#dProducts .sp-coach').count()) === 1);
   const expect = { dawn: '/reset', morning: '/book', midday: '/reset', golden: '/book', night: '/reset' };
-  const MOOD = { dawn: 'fresh', morning: 'sunny', midday: 'grounding', golden: 'woody', night: 'floral' };
+  // the mood of each ritual's lead scent (night leads with Campfire Stories, which is woody)
+  const MOOD = { dawn: 'fresh', morning: 'sunny', midday: 'grounding', golden: 'woody', night: 'woody' };
   for (const k of Object.keys(expect)) {
     await pick(p, k);
     const rit = p.locator('#dProducts .sp-ritual');
     ok(`${label} ${k}: the ritual shows both products`, (await rit.locator('.sp-thumbs img').count()) === 2 && / \+ |two ways/.test(await rit.locator('b').innerText()), await rit.locator('b').innerText());
     const chipTotal = money(await rit.locator('em').innerText()), ctaTotal = money(await p.locator('#dCta [data-addmoment]').innerText());
     ok(`${label} ${k}: the ritual price matches the Add button`, chipTotal > 0 && chipTotal === ctaTotal, `${chipTotal} vs ${ctaTotal}`);
-    ok(`${label} ${k}: the ritual links to its own mood`, (await rit.getAttribute('href')).endsWith(`mood=${MOOD[k]}`), await rit.getAttribute('href'));
+    ok(`${label} ${k}: the ritual links to the mood of its lead scent`, (await rit.getAttribute('href')).endsWith(`mood=${MOOD[k]}`), await rit.getAttribute('href'));
     const coach = p.locator('#dProducts .sp-coach');
     ok(`${label} ${k}: the practice offers a free way into coaching`, (await coach.getAttribute('href')) === expect[k] && /Free/.test(await coach.innerText()), await coach.getAttribute('href'));
   }

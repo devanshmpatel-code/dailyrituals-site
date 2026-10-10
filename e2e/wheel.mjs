@@ -36,6 +36,20 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await shot('mood');
   const cc = Number(await p.locator('#cartCount').innerText()); await p.locator('[data-addpair]').click(); await p.waitForTimeout(600);
   ok(`${label}: the ritual button adds both items to the cart`, Number(await p.locator('#cartCount').innerText()) === cc + 2, `${cc} -> ${await p.locator('#cartCount').innerText()}`);
+  // every mood's ready-made pair is made of that mood's own scents (Night's ritual is woody + grounding, so floral builds its own)
+  for (const m of ['fresh', 'sunny', 'floral', 'woody', 'grounding']) {
+    await p.locator(`.wmoods [data-mood-chip="${m}"]`).click(); await p.waitForTimeout(250);
+    const tx = (await p.locator('.writ').count()) ? await p.locator('.writ b').innerText() : '';
+    const moods = await p.evaluate(t => t.split(' + ').map(x => x.replace(/ (diffuser|roller)$/i, '')), tx);
+    const of = { fresh: ['Citrus & Sun', 'Windy Beach', 'Sea Foam'], sunny: ['Cabana', 'Tropical Passion'], floral: ['Peony Bloom', 'Golden Apricot'], woody: ['Cedar Santal', 'Campfire Stories', 'Desert Vesper'], grounding: ['Inner Sanctum', 'Golden Meridian', 'Verdant'] }[m];
+    ok(`${label}: the ${m} ritual leads with a ${m} scent`, moods.length === 2 && of.some(s => s.toLowerCase() === moods[0].toLowerCase()), tx);
+  }
+  const cf = Number(await p.locator('#cartCount').innerText()); await p.locator('[data-addpair]').click(); await p.waitForTimeout(600);
+  ok(`${label}: a mood's own pair also adds both items`, Number(await p.locator('#cartCount').innerText()) === cf + 2);
+  await p.locator('.wmoods [data-mood-chip="floral"]').click(); await p.waitForTimeout(250);
+  ok(`${label}: floral offers a floral pair, not the night ritual`, /Peony Bloom diffuser \+ Golden Apricot roller/.test(await p.locator('.writ').innerText()) && !/Campfire/.test(await p.locator('.writ').innerText()), await p.locator('.writ').innerText());
+  // back to woody for the steps below; scent orbs glide 0.9s into place, so wait for them to settle before tapping one
+  await p.locator('.wmoods [data-mood-chip="woody"]').click(); await p.waitForTimeout(1200);
 
   // pointer: tap a scent orb, then a format chip
   await tap('.wpetal:not(.out)[data-scent="Desert Vesper"]'); await p.waitForTimeout(500);

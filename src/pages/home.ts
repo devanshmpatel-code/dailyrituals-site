@@ -117,7 +117,9 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
     const total = pair.reduce((n, p) => n + p.priceMin, 0);
     const names = pair.length === 2 && pair[0].scent === pair[1].scent ? `${pair[0].scent}, two ways` : pair.map(p => p.scent).join(' + ');
     const kinds = pair.map(p => (p.format === 'diffuser' ? 'diffuser' : p.format === 'roller' ? 'roller' : p.formatLabel.toLowerCase())).join(' + ');
-    const ritual = pair.length ? `<a class="sp sp-ritual" href="#/explore?mood=${m.mood}" aria-label="The ${esc(m.name.toLowerCase())} ritual: ${esc(names)}, ${money(total)} together">
+    // link to the mood of the lead scent shown, so the compass opens on a family that contains it
+    // (the moment's own mood can differ: Night is floral, but its ritual leads with Campfire Stories, which is woody)
+    const ritual = pair.length ? `<a class="sp sp-ritual" href="#/explore?mood=${pair[0].mood ?? m.mood}" aria-label="The ${esc(m.name.toLowerCase())} ritual: ${esc(names)}, ${money(total)} together">
         <span class="sp-thumbs" aria-hidden="true">${pair.map(p => `<img src="${p.thumb}" alt="">`).join('')}</span>
         <span><small>The ritual</small><b>${esc(names)}</b><em>${esc(kinds.charAt(0).toUpperCase() + kinds.slice(1))} · ${money(total)} together</em></span></a>` : '';
     const c = PRACTICE[m.key];

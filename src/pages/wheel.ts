@@ -125,12 +125,23 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
   const momentOf = (m: Mood) => MOMENTS.find(mo => mo.mood === m)!;
   const pairOf = (mo: Moment) => [findLive(items, mo.pair.diffuser, 'diffuser'), findLive(items, mo.pair.roller, 'roller')].filter(Boolean) as Item[];
   const price = (i: Item) => (i.priceMin === i.priceMax ? money(i.priceMin) : `from ${money(i.priceMin)}`);
+  // the ready-made pair for a mood: the home page's ritual for that moment when its diffuser is of this mood,
+  // otherwise a diffuser and a roller of this mood's own scents (some moment pairings cross moods, e.g. Night is
+  // floral but its ritual is Campfire Stories + Inner Sanctum, which would read wrong under "Soft and floral")
+  const ritualFor = (m: Mood): { name: string; items: Item[] } | null => {
+    const mo = momentOf(m), ps = mo ? pairOf(mo) : [];
+    if (ps.length === 2 && ps[0].mood === m) return { name: `The ${mo.name.toLowerCase()} ritual`, items: ps };
+    const own = items.filter(i => i.mood === m).sort((a, b) => a.scent.localeCompare(b.scent));
+    const d = own.find(i => i.format === 'diffuser');
+    const r = own.find(i => i.format === 'roller' && i.scent !== d?.scent) ?? own.find(i => i.format === 'roller');
+    // draft for Claire: the name of a pair that is not one of the home page rituals
+    return d && r ? { name: `A ${SHORT[m].toLowerCase()} pair`, items: [d, r] } : null;
+  };
   const ritual = (m: Mood) => {
-    const mo = momentOf(m), ps = pairOf(mo); if (ps.length !== 2) return '';
-    // the pairing and its name come from config (the same ritual the home page sells)
-    return `<div class="writ"><div class="writ-th" aria-hidden="true">${ps.map(p => `<img src="${p.thumb}" alt="" loading="lazy">`).join('')}</div>
-      <div class="writ-tx"><span class="eyebrow">The ${esc(mo.name.toLowerCase())} ritual</span><b>${ps.map(p => `${esc(p.scent)} ${esc(FORMAT_LABEL[p.format].replace(/^(Mini|Fragrance) /, '').toLowerCase())}`).join(' + ')}</b></div>
-      <button class="btn" data-addpair="${mo.key}">Add both · ${money(ps.reduce((n, i) => n + i.priceMin, 0))}</button></div>`;
+    const rt = ritualFor(m); if (!rt) return '';
+    return `<div class="writ"><div class="writ-th" aria-hidden="true">${rt.items.map(p => `<img src="${p.thumb}" alt="" loading="lazy">`).join('')}</div>
+      <div class="writ-tx"><span class="eyebrow">${esc(rt.name)}</span><b>${rt.items.map(p => `${esc(p.scent)} ${esc(FORMAT_LABEL[p.format].replace(/^(Mini|Fragrance) /, '').toLowerCase())}`).join(' + ')}</b></div>
+      <button class="btn" data-addpair="${m}">Add both · ${money(rt.items.reduce((n, i) => n + i.priceMin, 0))}</button></div>`;
   };
   const panel = () => {
     if (selMood && selScent) {
@@ -162,9 +173,9 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
     panelEl.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach(b => b.addEventListener('click', () => pickScent(selMood!, b.dataset.pick!)));
     panelEl.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', () => { selScent = null; apply(); });
     panelEl.querySelectorAll<HTMLButtonElement>('[data-addpair]').forEach(b => b.addEventListener('click', async () => {
-      const mo = MOMENTS.find(m => m.key === b.dataset.addpair)!;
-      for (const p of pairOf(mo)) await add({ productId: p.id, slug: p.slug, name: p.name, price: p.priceMin, image: p.thumb, choice: p.choices[0]?.name, optionName: p.optionName });
-      toast(`${mo.name} ritual added to your cart`);
+      const rt = ritualFor(b.dataset.addpair as Mood); if (!rt) return;
+      for (const p of rt.items) await add({ productId: p.id, slug: p.slug, name: p.name, price: p.priceMin, image: p.thumb, choice: p.choices[0]?.name, optionName: p.optionName });
+      toast(`${rt.name} added to your cart`);
     }));
     // the mood switches live in the panel too, so the whole flow works without the field
     panelEl.insertAdjacentHTML('beforeend', `<div class="chips wmoods" role="group" aria-label="Moods">${moods.map(m => `<button class="chip" data-mood-chip="${m}" aria-pressed="${selMood === m}"><span class="swatch" style="background:${MOODS[m].swatch}"></span>${esc(SHORT[m])}</button>`).join('')}</div>`);
