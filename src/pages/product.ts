@@ -1,5 +1,5 @@
 import { replaceRoute } from '../router';
-import { mountBuyBar } from './motion';
+import { mountLocalNav } from '../nav';
 import Product from '../canvas/pages/Product.html?raw';
 import { loadCatalogue, loadProduct, toItem, imgSrc, money, type Item } from '../wix';
 import { cardHTML, fixImages, errorBox, wireCommon, toast, esc } from '../ui';
@@ -162,10 +162,19 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     toast(`${it.name}${choice && it.choices.length > 1 ? ` (${choice})` : ''} added to your cart`);
   });
   refresh();
-  mountBuyBar({
-    watch: () => addBtn,
-    read: () => ({ title: it.scent, sub: `${it.formatLabel}${choice && it.choices.length > 1 ? ` · ${choice}` : ''}`, img: it.thumb, label: addBtn.textContent ?? 'Add to cart', disabled: addBtn.disabled }),
-    act: () => addBtn.click(),
+  // sticky local nav under the header: name + mood mark, the page's sections, and an add pill that drives #addBtn.
+  // Section labels are nav words, not product copy: draft for Claire.
+  const sectionOf = (el: Element | null | undefined, id: string, label: string) => { if (!el) return null; el.id = id; return { id, label }; };
+  const pageSections = app.querySelectorAll<HTMLElement>(':scope > .wrap > section');
+  mountLocalNav(app, {
+    name: it.scent, sub: it.formatLabel, mood: it.mood,
+    sections: [
+      sectionOf($('.pdp'), 'p-scent', 'Scent'),
+      sectionOf($('.tabsbar')?.parentElement, 'p-details', 'Details'),
+      sectionOf([...pageSections].find(s => s.querySelector('a[href$="/reset"]')), 'p-practice', 'Practice'),
+      sectionOf([...pageSections].find(s => s.querySelector('.grid')), 'p-more', 'More like this'),
+    ].filter((s): s is { id: string; label: string } => !!s),
+    addBtn,
   });
 
   // tabs

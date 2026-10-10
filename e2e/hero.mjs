@@ -33,11 +33,10 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', 
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await pick(p, 'golden');
   await p.locator('#dProducts .sp-ritual').click(); await p.waitForURL('**/explore**');
   ok(`${label}: the ritual opens the scent wheel on its mood`, /Warm and woody/.test(await p.locator('.wpanel').innerText()));
-  // the buy bar names the same ritual
+  // the hero's own Add button is the only ritual CTA: no one-product bar rises later on the page
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await p.waitForTimeout(500);
-  const name = await p.locator('#dProducts .sp-ritual b').innerText();
   await p.evaluate(() => window.scrollTo(0, (Number(document.querySelector('.daypin')?.dataset.len) || 0) + 1500)); await p.waitForTimeout(700);
-  ok(`${label}: the buy bar names the same ritual`, (await p.locator('.buybar em').innerText()) === name, name);
+  ok(`${label}: no one-product buy bar rises on the home page`, (await p.locator('.buybar').count()) === 0 && (await p.locator('#dCta [data-addmoment]').count()) === 1);
   ok(`${label}: offers fit on screen, no sideways scroll`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 1);
   ok(`${label}: offers are reachable by keyboard`, await p.evaluate(() => [...document.querySelectorAll('#dProducts .sp')].every(a => a.tabIndex === 0 && a.getAttribute('aria-label'))));
   ok(`${label}: no JS errors`, errs.length === 0, errs.join(' | ').slice(0, 200));

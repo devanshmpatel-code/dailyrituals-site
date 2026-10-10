@@ -7,7 +7,6 @@ import { add } from '../cart';
 import { sceneHTML, setLook, placeOrb } from './scene';
 import { look } from './daycycle';
 import { mountSky, getSky } from './sky';
-import { mountBuyBar } from './motion';
 import { mountJourney } from './journey';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
@@ -52,7 +51,6 @@ export async function renderHome(app: HTMLElement) {
   wireClub(app);
   mountDayScrub(app);
   mountJourney(app);
-  mountHomeBuyBar(app);
 
   const grid = app.querySelector<HTMLElement>('#msGrid');
   if (grid) grid.innerHTML = skeletonCards(4);
@@ -250,20 +248,6 @@ function mountDayScrub(app: HTMLElement) {
   measure();
   scrubRebase = (hour: number) => { if (!enabled) return; const p = progress(); startHour = hour - p * 24; startMoment = nearest(hour); active = p > 0.002; lastY = window.scrollY; };
   scrubCleanup = () => { ro.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); };
-}
-
-// the buy bar for the hero ritual: rises once the hero's own button has scrolled away
-function mountHomeBuyBar(app: HTMLElement) {
-  mountBuyBar({
-    watch: () => app.querySelector<HTMLElement>('#dCta [data-addmoment]'),
-    read: () => {
-      const btn = app.querySelector<HTMLButtonElement>('#dCta [data-addmoment]');
-      const names = [app.querySelector('#dProducts .sp-ritual b')?.textContent].filter(Boolean);
-      const m = heroCurrent ?? MOMENTS[3];
-      return { title: `Your ${m.name.toLowerCase()} ritual`, sub: names[0] || m.title, img: app.querySelector<HTMLImageElement>('#dProducts .sp-ritual img')?.src, label: btn?.textContent?.trim() || 'Add this ritual', disabled: !btn || btn.disabled };
-    },
-    act: () => app.querySelector<HTMLButtonElement>('#dCta [data-addmoment]')?.click(),
-  });
 }
 
 function nearest(hour: number) {

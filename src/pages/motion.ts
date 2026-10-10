@@ -1,7 +1,7 @@
 // Motion that responds to scroll, in the spirit of product pages that "play" as you read:
 //  - statements that light up word by word (.say)
 //  - pictures that open out of a leaf or arch shape as they arrive
-//  - a buy bar that rises once the main buy button has scrolled away
+// (The product page's sticky local nav lives in src/nav.ts.)
 // Scrolling is never hijacked: everything follows the visitor's own scroll. With reduced motion, content is simply shown.
 
 const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -9,8 +9,6 @@ let cleanups: (() => void)[] = [];
 
 export function cleanupMotion() {
   cleanups.forEach(f => f()); cleanups = [];
-  document.querySelectorAll('.buybar').forEach(n => n.remove());
-  document.body.classList.remove('has-buybar');
 }
 
 /** Run fn on scroll and resize, at most once a frame. */
@@ -54,40 +52,6 @@ export function mountShapes(app: HTMLElement) {
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('open'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -12% 0px', threshold: 0.05 });
   els.forEach(el => io.observe(el));
   cleanups.push(() => { io.disconnect(); els.forEach(el => el.classList.remove('shape-in', 'open')); });
-}
-
-// ---------- the buy bar ----------
-export interface BuyBarSource {
-  /** The page's own buy button: the bar appears once it has scrolled up out of view. */
-  watch: () => HTMLElement | null;
-  read: () => { title: string; sub: string; img?: string; label: string; disabled?: boolean };
-  act: () => void;
-}
-export function mountBuyBar(src: BuyBarSource) {
-  document.querySelectorAll('.buybar').forEach(n => n.remove());
-  const bar = document.createElement('div');
-  bar.className = 'buybar'; bar.setAttribute('role', 'region'); bar.setAttribute('aria-label', 'Quick buy');
-  bar.innerHTML = '<span class="bb-img" aria-hidden="true"></span><span class="bb-tx"><b></b><em></em></span><button class="btn" type="button"></button>';
-  document.body.appendChild(bar);
-  const img = bar.querySelector<HTMLElement>('.bb-img')!, title = bar.querySelector('b')!, sub = bar.querySelector('em')!, btn = bar.querySelector('button')!;
-  btn.addEventListener('click', () => src.act());
-  let last = '';
-  const paint = () => {
-    const d = src.read(); const key = JSON.stringify(d);
-    if (key === last) return; last = key;
-    title.textContent = d.title; sub.textContent = d.sub; btn.textContent = d.label; btn.disabled = !!d.disabled;
-    img.style.backgroundImage = d.img ? `url("${d.img}")` : ''; img.hidden = !d.img;
-  };
-  const footer = document.querySelector('footer');
-  onScrollFrame(() => {
-    const t = src.watch();
-    const past = !!t && t.getBoundingClientRect().bottom < 0;
-    const atEnd = !!footer && footer.getBoundingClientRect().top < window.innerHeight;
-    const show = past && !atEnd && !document.body.classList.contains('cart-open');
-    if (show) paint();
-    bar.classList.toggle('on', show); document.body.classList.toggle('has-buybar', show);
-    bar.toggleAttribute('inert', !show);
-  });
 }
 
 // ---------- page-to-page morph ----------

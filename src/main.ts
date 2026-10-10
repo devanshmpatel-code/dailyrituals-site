@@ -21,6 +21,7 @@ import { renderCoaching, renderBook } from './pages/coaching';
 import { renderHelp, renderStory, renderAccount, renderExplore, renderReset } from './pages/info';
 import { renderStatic, renderMissing, hasStatic } from './pages/static';
 import { renderLegal } from './pages/legal';
+import { mountNav, navRouteChange } from './nav';
 
 const root = document.getElementById('root')!;
 root.innerHTML = `
@@ -59,13 +60,7 @@ document.addEventListener('pointerdown', e => {
 });
 
 // ---------- header ----------
-const menuBtn = document.getElementById('menuBtn')!;
-const mnav = document.getElementById('mnav')!;
-menuBtn.addEventListener('click', () => {
-  const open = menuBtn.getAttribute('aria-expanded') !== 'true';
-  menuBtn.setAttribute('aria-expanded', String(open));
-  mnav.classList.toggle('open', open);
-});
+mountNav(); // desktop flyouts, the phone menu and the hamburger (src/nav.ts)
 document.getElementById('clubPts')!.textContent = LOYALTY_ENABLED ? 'Join' : 'Soon';
 if (!LOYALTY_ENABLED) document.body.classList.add('loyalty-off');
 
@@ -174,7 +169,7 @@ async function route() {
   document.querySelectorAll<HTMLAnchorElement>('.mainnav [data-nav]').forEach(a => {
     if (a.dataset.nav === (seg || 'home')) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
-  mnav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false');
+  navRouteChange();
   if (!overlay.hidden) closeCart();
   document.body.dataset.page = seg || 'home';
   requestAnimationFrame(growTree);
