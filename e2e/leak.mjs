@@ -1,6 +1,6 @@
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
-const base = 'http://localhost:4173/#';
+const base = process.env.BASE ?? 'http://localhost:4173/#';
 const routes = ['/', '/shop', '/product/cabana', '/product/natural-deodorant', '/product/cabana-fragrance-roller', '/product/amber-rose-need-pics', '/coaching', '/help', '/story', '/account', '/explore', '/subscribe', '/drops'];
 const bad = /38 left|\(sample\)|votes so far|\[Confirm|to be confirmed|Claire to confirm|Wording to confirm/i;
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });

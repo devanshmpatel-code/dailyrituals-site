@@ -1,6 +1,6 @@
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
-const base = 'http://localhost:4173/#';
+const base = process.env.BASE ?? 'http://localhost:4173/#';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 // local time -> expected moment key and name

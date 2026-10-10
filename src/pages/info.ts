@@ -9,8 +9,9 @@ import { mountWheel } from './wheel';
 // Only facts already in the canvas are stated plainly: hand poured in small batches in
 // British Columbia, free shipping over $75 in Canada, tax and shipping at checkout, hand packed.
 
-const head = (crumb: string, title: string, lead: string) => `
-  <div class="phead"><div class="crumbs"><a href="#/">Home</a> / ${esc(crumb)}</div>
+// solo = true on narrow pages (account, reset): the title and lead stack in one column instead of squeezing side by side.
+const head = (crumb: string, title: string, lead: string, solo = false) => `
+  <div class="phead${solo ? ' solo' : ''}"><div class="crumbs"><a href="#/">Home</a> / ${esc(crumb)}</div>
   <div class="cat-hero"><h1>${title}</h1><p class="muted" style="font-size:18px;max-width:56ch">${lead}</p></div></div>`;
 
 // draft = true: Claire has not confirmed the answer, so it is only visible with "Show drafts".
@@ -29,7 +30,7 @@ export function renderHelp(app: HTMLElement) {
         ${faq('What if something arrives damaged?', '<span class="d">Please contact us with your order number and a photo. Claire to confirm the process.</span>', true)}
         ${faq('Can I cancel or change a Ritual on Repeat order?', 'Yes. Skip, change the date or swap scents any time before the next order ships.')}
       </div>
-      <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <div class="panel help-contact" style="display:flex;flex-direction:column;gap:12px">
         <span class="eyebrow">Contact</span><h3 style="font-size:28px">Say hello</h3>
         <p class="muted d confirm">Contact email and response time to be confirmed by Claire.</p>
         <a class="btn line" href="#/coaching" style="align-self:flex-start">Coaching questions</a>
@@ -68,8 +69,8 @@ export function renderStory(app: HTMLElement) {
 
 export function renderAccount(app: HTMLElement) {
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px);max-width:720px">
-    ${head('My account', 'My <span class="it">rituals</span>', 'Orders, saved details and subscriptions will live here.')}
-    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+    ${head('My account', 'My <span class="it">rituals</span>', 'Orders, saved details and subscriptions will live here.', true)}
+    <div class="panel acct-panel" style="display:flex;flex-direction:column;gap:12px">
       <span class="eyebrow">Coming with launch</span>
       <p>Sign-in is handled by a secure Wix page and is switched off in this private preview. <span class="d confirm">Wording to confirm.</span></p>
       <a class="btn line" href="#/shop" style="align-self:flex-start">Back to the shop</a></div></div>`;
@@ -147,7 +148,7 @@ function mountQuiz(el: HTMLElement, items: Item[]) {
 // ---------- Free 7-day reset ----------
 export function renderReset(app: HTMLElement) {
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px);max-width:820px">
-    ${head('Free 7-day reset', 'The free 7-day <span class="it">reset</span>', 'Ten minutes a day with Claire. A light, self-paced way to try the practices before anything else.')}
+    ${head('Free 7-day reset', 'The free 7-day <span class="it">reset</span>', 'Ten minutes a day with Claire. A light, self-paced way to try the practices before anything else.', true)}
     <div class="panel" style="display:flex;flex-direction:column;gap:14px">
       <span class="eyebrow">Free · Self-paced</span>
       <p>Join with your email and the first day arrives in your inbox. <span class="d confirm">Claire to confirm what is in each day and how it is delivered.</span></p>

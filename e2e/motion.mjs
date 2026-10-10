@@ -1,7 +1,7 @@
 // Scroll-driven motion: the pinned day, statements that light up, shapes that open, the buy bar, page morph fallbacks.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
-const origin = 'http://localhost:4173';
+const origin = (process.env.BASE ?? 'http://localhost:4173/#').replace(/\/?#?$/, '');
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const scrollTo = (p, y) => p.evaluate(y => window.scrollTo(0, y), y);

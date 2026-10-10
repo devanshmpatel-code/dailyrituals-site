@@ -1,7 +1,7 @@
 // Site-wide QA crawl. Prints findings; exits 1 if there are any "must fix" findings.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
-const base = 'http://localhost:4173/#';
+const base = process.env.BASE ?? 'http://localhost:4173/#';
 const routes = ['/', '/shop', '/product/cabana', '/product/natural-deodorant', '/product/cabana-fragrance-roller', '/explore', '/explore?tab=quiz', '/coaching', '/book', '/subscribe', '/drops', '/gift', '/club', '/wall', '/help', '/story', '/account', '/reset', '/order-confirmed', '/discovery', '/nope'];
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const finds = []; const add = (sev, page, msg) => finds.push({ sev, page, msg });
