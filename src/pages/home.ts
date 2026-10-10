@@ -11,6 +11,7 @@ import { mountJourney } from './journey';
 import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
+import { moonsSectionHTML, collageHTML, wireStudio } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -41,7 +42,11 @@ function greeting(d = new Date()) {
 export async function renderHome(app: HTMLElement) {
   useRealClock = true;
   app.innerHTML = fixImages(Main);
+  // the studio photographs: the moons panel sits between the opening and Chapter 1; the collage closes Chapter 2 after "Meet Claire"
+  app.querySelector('.proof-strip')?.insertAdjacentHTML('afterend', moonsSectionHTML());
+  app.querySelector('.claire')?.insertAdjacentHTML('afterend', collageHTML());
   swapRenders(app);
+  wireStudio(app);
   wireCommon(app);
   wireHeroStatic(app);
   if (!LOYALTY_ENABLED) app.querySelector('.club .head')?.insertAdjacentHTML('beforeend', `<div class="cs-moon" aria-hidden="true">${moonArc()}</div>`);

@@ -66,10 +66,16 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
     deodorant: ['Wear it daily', 'Natural deodorant in our signature scents.'],
   };
   const card = (i: Item) => cardHTML(i, i.inStock ? undefined : 'Sold out');
+  // Format imagery: the candle and deodorant group heads carry a real studio photograph (the candles are black tins, not the
+  // amber-glass 3D render). The unnamed black-crescent moon stands for "a candle"; no real photos of rollers or diffusers exist yet.
+  const FORMAT_PHOTO: Partial<Record<Format, string>> = {
+    candle: '<img class="ghead-ph" src="/img/studio/moons/black-crescent.webp" alt="A candle from the studio seen from above: white wax in a black tin with a crescent of small black stones" width="520" height="520" loading="lazy" decoding="async">',
+    deodorant: '<img class="ghead-ph" src="/img/studio/web/westcoast-round.webp" alt="Natural deodorant jars from the studio" width="480" height="480" loading="lazy" decoding="async">',
+  };
   grid.classList.toggle('grouped', s === 'featured');
   if (s === 'featured') {
     const fmts = order.filter(fm => list.some(i => i.format === fm));
-    grid.innerHTML = fmts.map((fm, k) => { const g = list.filter(i => i.format === fm); return `<header class="ghead g${k % 4}"><span class="eyebrow">${GROUP[fm][0]}</span><h2>${g[0].formatLabel}s</h2><span class="gc">${g.length === 1 ? 'Choose your scent' : `${g.length} scents`}</span><p class="muted">${GROUP[fm][1]}</p></header>` + g.map(card).join(''); }).join('')
+    grid.innerHTML = fmts.map((fm, k) => { const g = list.filter(i => i.format === fm); return `<header class="ghead g${k % 4}">${FORMAT_PHOTO[fm] ?? ''}<span class="eyebrow">${GROUP[fm][0]}</span><h2>${g[0].formatLabel}s</h2><span class="gc">${g.length === 1 ? 'Choose your scent' : `${g.length} scents`}</span><p class="muted">${GROUP[fm][1]}</p></header>` + g.map(card).join(''); }).join('')
       + (showConcepts ? `<header class="ghead soon"><span class="eyebrow">Coming soon</span><h2>Kits and boxes</h2><p class="muted">Ideas we are getting ready. Not in the store yet.</p></header>${concepts}` : '');
   } else grid.innerHTML = list.map(card).join('') + (showConcepts ? concepts : '');
   if (!list.length) grid.insertAdjacentHTML('afterbegin', `<p class="muted" style="grid-column:1/-1">Nothing matches ${m !== 'all' ? MOODS[m].label.toLowerCase() : 'that filter'} right now.</p>`);

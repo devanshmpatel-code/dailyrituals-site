@@ -1,6 +1,7 @@
 import './canvas/canvas.css';
 import './site.css';
 import './celestial.css';
+import './studio.css';
 import Header from './canvas/header.html?raw';
 import Footer from './canvas/footer.html?raw';
 import Drawer from './canvas/drawer.html?raw';

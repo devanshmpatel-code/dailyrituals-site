@@ -10,6 +10,7 @@ import { moonArc } from './symbols';
 import { loadCatalogue } from '../wix';
 import { bindCanvasProductLinks, previewOff } from './shared';
 import { wireVote, wireCountdown, wireSunrise, wireClub, wireRepeatCalc } from './home';
+import { pastMoonsHTML, wirePastMoons } from '../moons';
 
 const PAGES: Record<string, string> = {
   drops: MoonDrops, subscribe: RitualOnRepeat, wall: RitualWall, club: Ritualists, gift: SendASunrise, 'order-confirmed': OrderConfirmed,
@@ -20,6 +21,11 @@ export function hasStatic(route: string) { return route in PAGES; }
 export async function renderStatic(app: HTMLElement, route: string) {
   app.innerHTML = fixImages(LOYALTY_ENABLED ? PAGES[route] : noPoints(PAGES[route]));
   if (route === 'club' && !LOYALTY_ENABLED) clubSoon(app);
+  if (route === 'drops') {
+    // the past moons: every named candle from the studio photographs, as an archive at the foot of the night page (never buyable)
+    app.querySelector('.night > .wrap')?.insertAdjacentHTML('beforeend', pastMoonsHTML());
+    wirePastMoons(app);
+  }
   wireCommon(app);
   wireVote(app); wireCountdown(app); wireSunrise(app); wireClub(app); wireRepeatCalc(app, null);
   app.querySelectorAll('#upForm').forEach(f => f.addEventListener('submit', e => { e.preventDefault(); previewOff('Photo uploads')(); }));
