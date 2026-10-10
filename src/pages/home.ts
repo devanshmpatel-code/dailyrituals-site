@@ -132,10 +132,12 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
   const cta = app.querySelector<HTMLElement>('#dCta');
   if (cta) {
     const total = (diffuser?.priceMin ?? 0) + (roller?.priceMin ?? 0);
-    const mood = MOODS[(roller?.mood ?? m.mood)];
+    // the shop link follows the ritual's lead scent, the same mood the ritual label opens (night leads with Campfire Stories: woody)
+    const leadMood = (diffuser ?? roller)?.mood ?? m.mood;
+    const mood = MOODS[leadMood];
     const label = m.draft ? 'scents' : `${m.name.toLowerCase()} scents`;
     cta.innerHTML = `<button class="btn" data-addmoment="${m.key}" ${total ? '' : 'disabled'}>Add this ritual${total ? ` · ${money(total)}` : ''}</button>` +
-      `<a class="btn line" href="#/shop?m=${roller?.mood ?? m.mood}">Shop ${m.draft ? esc(mood.label.toLowerCase()) : label}</a>`;
+      `<a class="btn line" href="#/shop?m=${leadMood}">Shop ${m.draft ? esc(mood.label.toLowerCase()) : label}</a>`;
     cta.querySelector<HTMLButtonElement>('[data-addmoment]')?.addEventListener('click', async () => {
       for (const p of [diffuser, roller]) if (p) await add({ productId: p.id, slug: p.slug, name: p.name, price: p.priceMin, image: p.thumb, choice: p.choices[0]?.name, optionName: p.optionName });
       toast(`${m.name} ritual added to your cart`);
