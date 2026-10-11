@@ -1,0 +1,154 @@
+/* ======================================================================
+   Light & Scent: the one-minute breathing pause (src/pages/lightscent.ts, openBreathe).
+   A night sky, two gold-framed arches low on the screen (a real candle photograph on the left, the diffuser of the hour on
+   the right), the words above in Bodoni Moda, a slim gold ring below. Everything that moves per frame is drawn on one canvas
+   (the scent, the flame, the embers) or hangs off four custom properties set by the same loop:
+     --hold  0..1 the match, while you hold      --lit  0..1 the flame has caught
+     --inh   0..1 the in-breath (the diffuser arch brightens)      --warm  0..1 the out-breath (the whole scene warms)
+   Tokens come from site.css (--nocturne, --moonstone, --gold-leaf, --gold-light, --cel-grain, --display, --body).
+   Loaded after site.css: ".jbreathe.ls" wins over the old ".jbreathe" rules there.
+   ====================================================================== */
+.jbreathe.ls { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-columns: 100%; gap: 0; padding: 0; overflow: hidden; isolation: isolate; cursor: default;
+  color: var(--moonstone); user-select: none; -webkit-user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  --hold: 0; --lit: 0; --inh: 0; --warm: 0; --swap: 320ms; --ribbon: #E9B27A; --arch-w: clamp(124px, min(38vw, 33vh), 290px); --stage-pad: clamp(14px, 3vh, 30px);
+  background: radial-gradient(130% 70% at 50% 112%, #2E2C5A 0%, #1C2140 42%, #110F1F 100%); }
+html.ls-lock { overflow: hidden; }
+/* the page beneath is covered and does not paint while the pause is open (its own animations would otherwise keep the GPU busy) */
+html.ls-lock body > :not(.jbreathe):not(#toast):not(script) { visibility: hidden; }
+.jbreathe.ls .ls-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; margin: -1px; }
+
+/* ---- the sky: grain, three twinkling star layers, the six breath stars and their constellation ---- */
+.jbreathe.ls .ls-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--cel-grain); }
+.jbreathe.ls .ls-sky .tw { position: absolute; inset: 0; width: 100%; height: 100%; fill: color-mix(in srgb, var(--moonstone), #FFD9A0 calc(var(--warm) * 70%)); will-change: opacity; animation: lsTwinkle 6s ease-in-out infinite; }
+.jbreathe.ls .ls-sky .tw2 { animation-duration: 8.5s; animation-delay: -3s; }
+.jbreathe.ls .ls-sky .tw3 { animation-duration: 11s; animation-delay: -6s; }
+@keyframes lsTwinkle { 0%, 100% { opacity: .38; } 50% { opacity: .92; } }
+.jbreathe.ls .ls-const { position: absolute; left: 5%; width: 90%; top: 20%; height: 36%; overflow: visible; }
+.jbreathe.ls .ls-star { opacity: 0; transition: opacity 1.6s ease; }
+.jbreathe.ls .ls-star.on { opacity: 1; }
+.jbreathe.ls .ls-star .h { fill: #FFE6C4; opacity: .16; transform-box: fill-box; transform-origin: center; }
+.jbreathe.ls .ls-star.on .h { animation: lsBloom 2s ease-out both; }
+.jbreathe.ls .ls-star .c { fill: #FBF1DE; }
+@keyframes lsBloom { 0% { transform: scale(3); opacity: .5; } 100% { transform: scale(1); opacity: .16; } }
+.jbreathe.ls .ls-lines { fill: none; stroke: var(--gold-leaf); stroke-width: .22; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: .85; transition: stroke-dashoffset 3.2s ease-in-out .5s; }
+.jbreathe.ls .ls-const.drawn .ls-lines { stroke-dashoffset: 0; }
+
+/* ---- candlelight across the scene: a warm screen over the sky and the pictures, as strong as the out-breath ---- */
+.jbreathe.ls .ls-warm { position: absolute; inset: 0; z-index: 3; pointer-events: none; will-change: opacity;
+  opacity: calc(var(--lit) * (.22 + .78 * var(--warm)));
+  background: radial-gradient(58% 52% at var(--fx, 35%) var(--fy, 68%), rgba(255, 168, 92, .3) 0%, rgba(255, 140, 70, .1) 42%, rgba(255, 130, 60, 0) 72%); }
+.jbreathe.ls .ls-fx { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+
+/* ---- the top strip ---- */
+.jbreathe.ls .ls-top { position: relative; z-index: 4; display: flex; align-items: center; justify-content: center; gap: 14px; padding: max(18px, env(safe-area-inset-top)) 20px 0;
+  font: 500 10.5px/1 var(--mono, "DM Mono", monospace); letter-spacing: .22em; text-transform: uppercase; color: rgba(201, 163, 90, .85); }
+.jbreathe.ls .ls-top i { width: 26px; height: 1px; background: currentColor; opacity: .55; }
+
+/* ---- the words ---- */
+.jbreathe.ls .ls-say { position: relative; z-index: 4; align-self: start; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: clamp(14px, 3vh, 36px) 20px 0; text-align: center;
+  color: color-mix(in srgb, var(--moonstone), #FFE2B8 calc(var(--warm) * 55%)); transition: opacity .5s ease; }
+.jbreathe.ls .ls-eyebrow { margin: 0; font: 500 11px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .22em; text-transform: uppercase; color: var(--gold-leaf); min-height: 15px; }
+.jbreathe.ls .ls-words { margin: 0; display: flex; flex-direction: column; align-items: center; font-family: var(--display); font-weight: 400; font-size: clamp(38px, 5vw, 56px); line-height: 1.02; letter-spacing: -.01em;
+  text-shadow: 0 2px 34px rgba(10, 8, 20, .7), 0 0 12px rgba(10, 8, 20, .5); transition: opacity var(--swap) ease, transform var(--swap) ease; min-height: 2.04em; }
+.jbreathe.ls .ls-words em { font-style: italic; }
+.jbreathe.ls.swap .ls-words { opacity: 0; transform: translateY(6px); }
+.jbreathe.ls .ls-hint { margin: 0; font: 400 13.5px/1.5 var(--body); letter-spacing: .01em; color: rgba(237, 230, 218, .62); max-width: 34ch; min-height: 20px; }
+
+/* ---- the stage: two arches on a gold hairline shelf ---- */
+.jbreathe.ls .ls-stage { position: relative; z-index: 2; display: flex; justify-content: center; align-items: flex-end; gap: clamp(22px, 4vw, 44px); padding: 0 16px var(--stage-pad);
+  transform-origin: 50% 0; transition: transform 1.3s cubic-bezier(.2, .7, .2, 1); }
+.jbreathe.ls .ls-arch { position: relative; margin: 0; width: var(--arch-w); aspect-ratio: 150 / 220; border-radius: 999px 999px 16px 16px; overflow: hidden; background: #0E0D1C; isolation: isolate;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold-leaf), #FFE4B0 calc(var(--warm) * 60%)), 0 34px 60px -30px rgba(0, 0, 0, .85); }
+.jbreathe.ls .ls-arch.candle { box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold-leaf), #FFE4B0 calc(var(--warm) * 60%)), 0 34px 60px -30px rgba(0, 0, 0, .85),
+  0 0 calc(28px + 44px * var(--warm)) rgba(255, 172, 92, calc(var(--lit) * (.16 + .34 * var(--warm)))); }
+.jbreathe.ls .ls-arch img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .9s ease; }
+.jbreathe.ls .ls-arch img.ok { opacity: 1; }
+/* the candle photograph: dark and desaturated until it is lit; its own flame hidden by a dark blot that goes with the shade */
+.jbreathe.ls .ls-arch.candle img { filter: saturate(calc(.45 + .55 * var(--lit))) contrast(1.04); }
+.jbreathe.ls .ls-arch .ls-shade { position: absolute; inset: 0; pointer-events: none; will-change: opacity; }
+.jbreathe.ls .ls-arch.candle .ls-shade { opacity: calc(1 - .92 * var(--lit));
+  background: radial-gradient(ellipse 11% var(--fh, 14%) at var(--wx, 50%) calc(var(--wy, 40%) - var(--fh, 14%) / 2), rgba(8, 7, 18, .98) 40%, rgba(8, 7, 18, 0) 100%), rgba(9, 8, 20, .84); }
+.jbreathe.ls .ls-arch .ls-lit { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; will-change: opacity; }
+.jbreathe.ls .ls-arch.candle .ls-lit { opacity: calc(var(--lit) * (.55 + .45 * var(--warm)));
+  background: radial-gradient(62% 48% at var(--wx, 50%) var(--wy, 40%), rgba(255, 192, 112, .92) 0%, rgba(255, 162, 84, .4) 38%, rgba(255, 150, 80, 0) 74%); }
+/* the diffuser render: graded to dusk, and it brightens a little in the mood's colour as you breathe in */
+.jbreathe.ls .ls-arch.diffuser img { filter: sepia(.22) saturate(.95) contrast(1.05); }
+/* dusk on the render: a warm multiply (the beige stays beige, only darker) and a cool vignette at the edges */
+.jbreathe.ls .ls-arch.diffuser .ls-shade { mix-blend-mode: multiply; opacity: calc(1 - .3 * var(--inh));
+  background: linear-gradient(180deg, #4E4258 0%, #A08A78 48%, #C3AA8E 72%, #7E6658 100%); }
+.jbreathe.ls .ls-arch.diffuser::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(85% 70% at 50% 60%, rgba(14, 12, 34, 0) 40%, rgba(14, 12, 34, .5) 100%); }
+.jbreathe.ls .ls-arch.diffuser .ls-lit { opacity: calc(.06 + .5 * var(--inh)); background: radial-gradient(60% 46% at var(--wx, 50%) var(--wy, 30%), var(--ribbon) 0%, transparent 72%); }
+.jbreathe.ls .ls-shelf { position: absolute; left: 6%; right: 6%; bottom: calc(var(--stage-pad) - 1px); height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(201, 163, 90, .5) 22%, rgba(201, 163, 90, .5) 78%, transparent); }
+.jbreathe.ls .ls-shelf::after { content: ""; position: absolute; left: 20%; right: 20%; top: 1px; height: 46px; background: radial-gradient(60% 100% at 50% 0%, rgba(255, 180, 110, calc(.12 + .18 * var(--warm))), transparent); opacity: var(--lit); }
+
+/* ---- the foot: the rhythm, the pill that fills as you hold (then the ring), Close ---- */
+.jbreathe.ls .ls-foot { position: relative; z-index: 4; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 6px clamp(16px, 4vw, 40px) max(18px, env(safe-area-inset-bottom)); min-height: 78px; }
+.jbreathe.ls .ls-rhythm { justify-self: start; font: 500 11px/1 var(--mono, "DM Mono", monospace); letter-spacing: .2em; text-transform: uppercase; color: rgba(237, 230, 218, .5); transition: opacity .5s; }
+.jbreathe.ls .ls-light, .jbreathe.ls .ls-ring { grid-column: 2; grid-row: 1; }
+.jbreathe.ls .ls-light { all: unset; grid-column: 2; grid-row: 1; box-sizing: border-box; cursor: pointer; min-height: 48px; padding: 0 28px; border-radius: 999px; color: var(--nocturne); font: 600 14px/1 var(--body); letter-spacing: .03em;
+  background: linear-gradient(90deg, var(--gold-light) calc(var(--hold) * 100%), var(--moonstone) 0); box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .7), 0 0 0 calc(var(--hold) * 8px) rgba(233, 212, 161, .22);
+  transition: opacity .5s ease, transform .5s ease; }
+.jbreathe.ls .ls-light:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
+.jbreathe.ls.is-lit .ls-light { opacity: 0; transform: scale(.8); pointer-events: none; }
+.jbreathe.ls .ls-ring { position: relative; width: 58px; height: 58px; opacity: 0; transition: opacity .8s ease .35s; pointer-events: none; }
+.jbreathe.ls.is-lit .ls-ring { opacity: 1; }
+.jbreathe.ls .ls-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.jbreathe.ls .ls-ring .bg { fill: none; stroke: rgba(237, 230, 218, .18); stroke-width: 1.5; }
+.jbreathe.ls .ls-ring .fg { fill: none; stroke: var(--gold-light); stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.jbreathe.ls .ls-ring b { position: absolute; inset: 0; display: grid; place-items: center; font: 400 19px var(--display); color: var(--moonstone); }
+.jbreathe.ls .jb-close { all: unset; grid-column: 3; justify-self: end; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 999px; font: 500 13px/1 var(--body); letter-spacing: .04em; color: var(--moonstone); border: 1px solid rgba(237, 230, 218, .3); transition: background .25s, border-color .25s; }
+.jbreathe.ls .jb-close:hover { background: rgba(237, 230, 218, .1); border-color: rgba(237, 230, 218, .6); }
+.jbreathe.ls .jb-close:focus-visible, .jbreathe.ls .ls-again:focus-visible, .jbreathe.ls .ls-add:focus-visible, .jbreathe.ls a:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
+
+/* ---- the ending: both arches lift to the top, the pair is offered beneath; the constellation keeps the sky at the side ---- */
+.jbreathe.ls.done .ls-stage { transform: translateY(var(--up, -40vh)) scale(.68); }
+.jbreathe.ls .ls-const { transition: top 1.3s cubic-bezier(.2, .7, .2, 1), left 1.3s cubic-bezier(.2, .7, .2, 1), width 1.3s cubic-bezier(.2, .7, .2, 1), height 1.3s cubic-bezier(.2, .7, .2, 1), opacity .8s; }
+.jbreathe.ls.done .ls-const { top: 34%; height: 24%; left: 2%; width: 30%; opacity: .7; }
+@media (max-width: 900px) { .jbreathe.ls.done .ls-const { top: 4%; height: 26%; left: 58%; width: 44%; opacity: .55; } }
+.jbreathe.ls.done .ls-say, .jbreathe.ls.done .ls-ring, .jbreathe.ls.done .ls-rhythm, .jbreathe.ls.done .ls-shelf { opacity: 0; }
+.jbreathe.ls .ls-end { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; padding: var(--card-top, 44vh) 16px 96px; overflow: auto; overscroll-behavior: contain; }
+.jbreathe.ls .ls-end[hidden] { display: none; }
+.jbreathe.ls .ls-card { width: min(92vw, 430px); box-sizing: border-box; padding: 22px 22px 18px; border-radius: 22px; text-align: center; color: #2A1F33; background: #F7F2EA;
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .8), 0 0 0 1px rgba(201, 163, 90, .35); animation: lsCard 1s cubic-bezier(.2, .7, .2, 1) .5s both; }
+@keyframes lsCard { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+.jbreathe.ls .ls-pair { display: flex; justify-content: center; margin-bottom: 12px; }
+.jbreathe.ls .ls-th { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; background: #E6DCCB; box-shadow: 0 0 0 1px rgba(201, 163, 90, .7), 0 0 0 4px #F7F2EA; }
+.jbreathe.ls .ls-th + .ls-th { margin-left: -14px; }
+.jbreathe.ls .ls-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.jbreathe.ls .ls-card .ls-eyebrow { color: #8F5A1A; }
+.jbreathe.ls .ls-card .d { color: inherit; }
+.jbreathe.ls .ls-card h2 { font: 400 clamp(30px, 5vw, 38px)/1.05 var(--display); margin: 6px 0 6px; }
+.jbreathe.ls .ls-line { margin: 0 0 4px; font: italic 400 17px/1.4 var(--display); }
+.jbreathe.ls .ls-names { margin: 0 0 16px; font-size: 13px; line-height: 1.5; color: #5D5363; }
+.jbreathe.ls .ls-links { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.jbreathe.ls .ls-primary { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 26px; border-radius: 999px; background: #2A1F33; color: #F7F2EA; font: 600 14px/1 var(--body); letter-spacing: .02em; transition: background .2s; }
+.jbreathe.ls .ls-primary:hover { background: #4A3050; }
+.jbreathe.ls .ls-primary:disabled { background: #2F5249; cursor: default; }
+.jbreathe.ls .ls-link { color: #2F5249; font: 600 14px/1.3 var(--body); text-decoration: none; border-bottom: 1px solid rgba(47, 82, 73, .4); padding-bottom: 1px; }
+.jbreathe.ls .ls-link:hover { border-color: #2F5249; }
+.jbreathe.ls .ls-link.quiet { font-weight: 500; font-size: 13px; color: #5D5363; border-color: rgba(93, 83, 99, .35); }
+.jbreathe.ls .ls-again { all: unset; cursor: pointer; margin-top: 4px; min-height: 40px; padding: 0 16px; border-radius: 999px; font: 500 13px/1 var(--body); color: #5D5363; border: 1px solid rgba(42, 31, 51, .2); }
+.jbreathe.ls .ls-again:hover { border-color: #2A1F33; color: #2A1F33; }
+
+/* ---- phones and short screens ---- */
+@media (max-width: 480px) {
+  .jbreathe.ls { --arch-w: clamp(118px, min(38vw, 24vh), 170px); }
+  .jbreathe.ls .ls-words { font-size: clamp(36px, 10.5vw, 46px); }
+  .jbreathe.ls .ls-foot { padding-left: 16px; padding-right: 16px; }
+  .jbreathe.ls .ls-rhythm { letter-spacing: .14em; font-size: 10px; }
+  .jbreathe.ls .ls-top { gap: 10px; font-size: 10px; letter-spacing: .18em; }
+}
+@media (max-height: 640px) {
+  .jbreathe.ls { --arch-w: clamp(96px, min(34vw, 22vh), 160px); }
+  .jbreathe.ls .ls-words { font-size: clamp(30px, 6vw, 40px); }
+  .jbreathe.ls .ls-say { padding-top: 10px; gap: 8px; }
+  .jbreathe.ls .ls-hint { display: none; }
+}
+
+/* ---- reduced motion: a steady flame, no twinkle, no particles (the loop draws none), the words still change ---- */
+@media (prefers-reduced-motion: reduce) {
+  .jbreathe.ls { transition: none; }
+  .jbreathe.ls .ls-sky .tw, .jbreathe.ls .ls-star.on .h, .jbreathe.ls .ls-card { animation: none !important; }
+  .jbreathe.ls .ls-stage, .jbreathe.ls .ls-words, .jbreathe.ls .ls-ring, .jbreathe.ls .ls-light, .jbreathe.ls .ls-star, .jbreathe.ls .ls-lines, .jbreathe.ls .ls-say, .jbreathe.ls .ls-arch img { transition: none !important; }
+}

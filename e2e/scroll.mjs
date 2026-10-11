@@ -29,8 +29,9 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   // breathe
   ok(`${label}: the orb breathes (it is animated)`, await p.locator('.breathorb .bo-core').evaluate(e => getComputedStyle(e).animationName !== 'none'));
   await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); const seen = new Set();
-  for (let i = 0; i < 14; i++) { seen.add(await p.locator('#jbWord').innerText()); await p.waitForTimeout(700); }
-  // the Moon Breath is 4 in, 6 out (no hold): see e2e/moonbreath.mjs for the rest of it
+  // Light & Scent starts unlit: a tap on the pill lights the candle (about 1.2s), then the words cycle 4 in, 6 out (see e2e/lightscent.mjs for the rest)
+  await p.locator('.ls-light').click();
+  for (let i = 0; i < 16; i++) { seen.add(await p.locator('#jbWord').innerText()); await p.waitForTimeout(700); }
   ok(`${label}: the breathing guide cycles in and out`, ['Breathe in', 'Breathe out'].every(w => seen.has(w)), [...seen].join(' / '));
   await shot('breathe'); await p.locator('.jb-close').click(); await p.waitForTimeout(700); ok(`${label}: Done closes the breathing screen`, (await p.locator('.jbreathe').count()) === 0);
   // ripple on a button
