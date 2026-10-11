@@ -11,7 +11,7 @@ import { mountJourney } from './journey';
 import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
-import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, repeatPhotoHTML, giftPhotoHTML } from '../moons';
+import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, repeatPhotoHTML, giftPhotoHTML } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -117,7 +117,7 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
   const line = app.querySelector('#dLine')!;
   line.innerHTML = m.draft ? `<span class="d">${esc(m.line)}</span>` : esc(m.line);
 
-  app.querySelectorAll<HTMLImageElement>('#dStack img').forEach(img => img.classList.toggle('on', img.dataset.mimg === m.key));
+  showHero(app, m.key);
 
   const { diffuser, roller } = pairFor(m);
   const prods = app.querySelector<HTMLElement>('#dProducts');

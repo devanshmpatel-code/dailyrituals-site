@@ -8,8 +8,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(base + '/'); await p.waitForSelector('.breathorb'); await p.waitForTimeout(800);
   ok(`${label}: home has one breathing orb and no side rail`, (await p.locator('.breathorb').count()) === 1 && (await p.locator('.jrail').count()) === 0);
-  const hero = await p.locator('#dStack img[data-mimg]').evaluateAll(a => a.map(i => i.src));
-  ok(`${label}: the opening uses Claire's real photographs, not renders`, hero.length === 5 && hero.every(u => /\/img\/studio\/web\/hero-/.test(u)), `${hero.filter(u => /studio\/web\/hero-/.test(u)).length} of ${hero.length}`);
+  const hero = await p.locator('#dStack img[data-mimg]').evaluateAll(a => a.map(i => i.getAttribute('src') || i.dataset.src || ''));
+  ok(`${label}: the opening uses Claire's real photographs, not renders`, hero.length >= 10 && hero.every(u => /\/img\/studio\/web\/hero-/.test(u)), `${hero.filter(u => /studio\/web\/hero-/.test(u)).length} of ${hero.length}`);
   for (const r of ['/shop', '/coaching', '/help', '/explore', '/subscribe']) {
     await p.goto(base + r); await p.waitForTimeout(900);
     ok(`${label}: ${r} has the breath button`, (await p.locator('.breathorb').count()) === 1 && (await p.locator('.jrail').count()) === 0);
@@ -27,8 +27,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.route(/static\.wixstatic\.com/, r => r.abort());
   await p.goto(base + '/'); await p.waitForSelector('#dStack img'); await p.waitForTimeout(1500);
-  const srcs = await p.locator('#dStack img[data-mimg]').evaluateAll(a => a.map(i => i.getAttribute('src')));
-  ok('when photos fail to load the renders are restored', srcs.every(u => u.startsWith('/img/')), srcs.join(' '));
+  const srcs = await p.locator('#dStack img[data-mimg]').evaluateAll(a => a.map(i => i.getAttribute('src') || i.dataset.src || ''));
+  ok('with Wix photos blocked the hero still shows local pictures', srcs.length > 0 && srcs.every(u => u.startsWith('/img/')), srcs.join(' '));
   await ctx.close();
 }
 { const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);

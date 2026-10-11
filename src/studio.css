@@ -11,16 +11,16 @@
 
 /* ---- home: the hero arch. Real photographs, graded to sit in the hour's light (the canvas renders had their own grades) ---- */
 .stack img[data-mimg] { object-fit: cover; }
-body:not(.no-grade) .dayhero img[data-mimg] { filter: saturate(.94) contrast(1.02) sepia(.06); }
-body:not(.no-grade) .dayhero[data-m="dawn"] img[data-mimg] { filter: brightness(1.03) saturate(.92) sepia(.08) !important; }
-body:not(.no-grade) .dayhero[data-m="midday"] img[data-mimg] { filter: brightness(1.02) saturate(.96) contrast(1.02) !important; }
-body:not(.no-grade) .dayhero[data-m="golden"] img[data-mimg] { filter: brightness(1.02) saturate(1.06) sepia(.1) !important; }
-body:not(.no-grade) .dayhero[data-m="night"] img[data-mimg] { filter: brightness(.96) saturate(.9) sepia(.12) hue-rotate(-6deg) !important; }
+/* the photographs are retouched at source (scratchpad retouch/grade.py), so the hour only adds a whisper of its light */
+body:not(.no-grade) .dayhero img[data-mimg] { filter: none !important; }
+body:not(.no-grade) .dayhero[data-m="golden"] img[data-mimg] { filter: sepia(.06) saturate(1.04) !important; }
+body:not(.no-grade) .dayhero[data-m="night"] img[data-mimg] { filter: brightness(.97) sepia(.05) !important; }
+.stack img[data-mimg] { transition: opacity 1.4s ease, transform 7s ease-out; }
 
 /* ---- the extra photographs: a soft frame, the caption in small caps on a dark gradient ---- */
 .studio-ph { position: relative; margin: 0; overflow: hidden; border-radius: 18px; background: var(--sand); box-shadow: var(--lift); }
 .studio-ph img { display: block; width: 100%; height: 100%; object-fit: cover; }
-body:not(.no-grade) .studio-ph img { filter: saturate(.92) contrast(1.03) sepia(.07) hue-rotate(-3deg); }
+
 .studio-ph::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 52%; background: linear-gradient(to top, rgba(21, 17, 31, .66), rgba(21, 17, 31, 0)); pointer-events: none; }
 .studio-ph figcaption { position: absolute; left: 16px; right: 16px; bottom: 13px; z-index: 1; font: 500 10.5px/1.45 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--moonstone); }
 /* Ritual on Repeat: a wide picture under the chapter's words, with the leaf corner the chapter uses */
@@ -109,9 +109,6 @@ body:not(.no-grade) .studio-ph img { filter: saturate(.92) contrast(1.03) sepia(
 .sx-ph { display: block; aspect-ratio: var(--r); border-radius: 16px; overflow: hidden; background: var(--sand); box-shadow: var(--lift); }
 .sx-ph img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s cubic-bezier(.2, .7, .2, 1); }
 .sx:hover .sx-ph img { transform: scale(1.04); }
-body:not(.no-grade) .sx-ph img, body:not(.no-grade) .sh-item img, body:not(.no-grade) .ab-tins img, body:not(.no-grade) .claire-cut img { filter: saturate(.94) contrast(1.03) sepia(.05); }
-body:not(.no-grade) .sh-item img { filter: saturate(.94) contrast(1.03) sepia(.05) drop-shadow(0 14px 14px rgba(30, 16, 20, .38)); }
-body:not(.no-grade) .claire-cut img { filter: saturate(.96) sepia(.04); }
 .sx figcaption { font: 500 10px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #6B5F6E); }
 .st-cta { display: flex; gap: 18px; align-items: center; justify-content: center; }
 /* a gentle rise as the pieces scroll in (only once an observer is watching, so nothing stays hidden) */

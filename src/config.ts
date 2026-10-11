@@ -75,11 +75,6 @@ export interface Moment {
   line: string;
   /** true when the line or product pairing is not from the approved canvas */
   draft: boolean;
-  /** the hero arch: one of Claire's own studio photographs (public/img/studio/web/hero-*), chosen for the hour */
-  image: string;
-  imageAlt: string;
-  /** object-position for the arch, so the candle stays the subject at every crop */
-  imagePos: string;
   mood: Mood;
   /** the "ritual" pairing: scent of the diffuser and scent of the roller */
   pair: { diffuser: string; roller: string };
@@ -97,11 +92,11 @@ export interface Moment {
 // (Jarrah: "grounded and centred"), the lit Cabana tumbler for golden hour (Cabana is in the golden ritual) and the lit
 // Midnight Forest tin for night. Past scents are shown as craft, never as buyable: the alt text names what is in the picture.
 export const MOMENTS: Moment[] = [
-  { key: 'dawn', name: 'Dawn', time: '6:30 am', hour: 6.5, title: 'Wake up bright', line: 'Bright and clean. Citrus & Sun opens the day before the inbox does.', draft: true, image: '/img/studio/web/hero-spring-blooms-1000.webp', imageAlt: 'Spring Blooms candles in black tins, each topped by hand with dried flowers and blue petals', imagePos: '50% 42%', mood: 'fresh', pair: { diffuser: 'citrus & sun', roller: 'windy beach' }, sky: ['#6E5A8C', '#F2A58E', '#FCE5CE'], land: ['#C7A9BE', '#A07FA4', '#6F5690'], orb: '#FFD9B0', dark: false },
-  { key: 'morning', name: 'Morning', time: '9:00 am', hour: 9, title: 'Head out lighter', line: 'Salt air on your wrists for the walk, the commute or the school run.', draft: true, image: '/img/studio/web/hero-sea-salt-sage-1000.webp', imageAlt: 'Sea Salt & Sage candles in black tins, topped with salt crystals and green stones', imagePos: '50% 45%', mood: 'sunny', pair: { diffuser: 'cabana', roller: 'sea foam' }, sky: ['#7FB2D6', '#CFE6EE', '#FBF3E0'], land: ['#B5D1D0', '#86B0AA', '#5A8A82'], orb: '#FFF1C6', dark: false },
-  { key: 'midday', name: 'Midday', time: '1:00 pm', hour: 13, title: 'Reset at your desk', line: 'A grounding scent between meetings. One breath, then back to it.', draft: true, image: '/img/studio/web/hero-jarrah-1000.webp', imageAlt: 'Jarrah candles in black tins, each with a crescent of wood chips along the rim', imagePos: '50% 40%', mood: 'grounding', pair: { diffuser: 'inner sanctum', roller: 'golden meridian' }, sky: ['#5FA3CB', '#B7DCE8', '#EEF4EA'], land: ['#A9CABD', '#78A595', '#4A7A69'], orb: '#FFFBE3', dark: false },
-  { key: 'golden', name: 'Golden hour', time: '6:00 pm', hour: 18, title: 'Come home to yourself', line: 'Warm, dry and glowing. Desert Vesper or Cabana marks the line between work and the rest of your evening.', draft: false, image: '/img/studio/web/hero-cabana-1000.webp', imageAlt: 'A lit Cabana candle in a white glass tumbler, a small lit tin beside it', imagePos: '58% 38%', mood: 'woody', pair: { diffuser: 'desert vesper', roller: 'cabana' }, sky: ['#7A4F78', '#E9955B', '#F7CF94'], land: ['#C98597', '#9A6283', '#5A3A5C'], orb: '#FFB66E', dark: false },
-  { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, image: '/img/studio/web/hero-midnight-forest-1000.webp', imageAlt: 'A lit Midnight Forest candle in a black tin, its wooden wick burning among leaves', imagePos: '46% 36%', mood: 'floral', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2B2145', '#4A2D4F'], land: ['#4A3F73', '#33295A', '#1E1838'], orb: '#F5EBD3', dark: true },
+  { key: 'dawn', name: 'Dawn', time: '6:30 am', hour: 6.5, title: 'Wake up bright', line: 'Bright and clean. Citrus & Sun opens the day before the inbox does.', draft: true, mood: 'fresh', pair: { diffuser: 'citrus & sun', roller: 'windy beach' }, sky: ['#6E5A8C', '#F2A58E', '#FCE5CE'], land: ['#C7A9BE', '#A07FA4', '#6F5690'], orb: '#FFD9B0', dark: false },
+  { key: 'morning', name: 'Morning', time: '9:00 am', hour: 9, title: 'Head out lighter', line: 'Salt air on your wrists for the walk, the commute or the school run.', draft: true, mood: 'sunny', pair: { diffuser: 'cabana', roller: 'sea foam' }, sky: ['#7FB2D6', '#CFE6EE', '#FBF3E0'], land: ['#B5D1D0', '#86B0AA', '#5A8A82'], orb: '#FFF1C6', dark: false },
+  { key: 'midday', name: 'Midday', time: '1:00 pm', hour: 13, title: 'Reset at your desk', line: 'A grounding scent between meetings. One breath, then back to it.', draft: true, mood: 'grounding', pair: { diffuser: 'inner sanctum', roller: 'golden meridian' }, sky: ['#5FA3CB', '#B7DCE8', '#EEF4EA'], land: ['#A9CABD', '#78A595', '#4A7A69'], orb: '#FFFBE3', dark: false },
+  { key: 'golden', name: 'Golden hour', time: '6:00 pm', hour: 18, title: 'Come home to yourself', line: 'Warm, dry and glowing. Desert Vesper or Cabana marks the line between work and the rest of your evening.', draft: false, mood: 'woody', pair: { diffuser: 'desert vesper', roller: 'cabana' }, sky: ['#7A4F78', '#E9955B', '#F7CF94'], land: ['#C98597', '#9A6283', '#5A3A5C'], orb: '#FFB66E', dark: false },
+  { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, mood: 'floral', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2B2145', '#4A2D4F'], land: ['#4A3F73', '#33295A', '#1E1838'], orb: '#F5EBD3', dark: true },
 ];
 
 /** Moon Drop release date shown on the canvas ("Sunday, October 11"). Unconfirmed. */

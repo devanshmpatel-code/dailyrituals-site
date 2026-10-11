@@ -16,15 +16,23 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
 
   // ---- home: the opening shows Claire's real candles, and moons live only on Moon Drops
   await p.goto(base + '/'); await p.waitForSelector('#dStack img[data-mimg]'); await p.waitForTimeout(800);
-  const stack = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].map(i => ({ k: i.dataset.mimg, src: i.getAttribute('src'), on: i.classList.contains('on'), alt: i.alt, pos: i.style.objectPosition })));
-  ok(`${label}: the hero arch holds five of Claire's photographs, one per moment`, stack.length === 5 && new Set(stack.map(x => x.k)).size === 5 && stack.every(x => /^\/img\/studio\/web\/hero-/.test(x.src) && x.alt.length > 15 && x.pos), JSON.stringify(stack.map(x => x.src)));
+  const stack = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].map(i => ({ k: i.dataset.mimg, src: i.getAttribute('src') || i.dataset.src, on: i.classList.contains('on'), alt: i.alt })));
+  const per = stack.reduce((o, x) => (o[x.k] = (o[x.k] || 0) + 1, o), {});
+  ok(`${label}: the hero arch holds a mix of Claire's photographs, two or three per moment`, Object.keys(per).length === 5 && Object.values(per).every(n => n >= 2 && n <= 3) && new Set(stack.map(x => x.src)).size === stack.length && stack.every(x => /^\/img\/studio\/web\/hero-/.test(x.src) && x.alt.length > 15), JSON.stringify(per));
+  ok(`${label}: no past scent is named in the hero's alt text`, !stack.some(x => /midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|christmas eve|mulled wine|candy cane|hello cupcake|easter bread|apple cider|mother/i.test(x.alt)));
   ok(`${label}: exactly one hero photograph is showing`, stack.filter(x => x.on).length === 1);
+  ok(`${label}: only the photographs needed now have loaded (the rest wait)`, stack.filter(x => x.src && !x.on).length >= 0 && (await p.evaluate(() => document.querySelectorAll('#dStack img[data-src]').length)) > 0);
   for (const k of ['dawn', 'night']) {
     await p.evaluate(k => document.querySelector(`.moments [data-jump="${k}"]`).click(), k);
-    await p.waitForFunction(k => document.querySelector('.dayhero')?.dataset.m === k, k, { timeout: 20000 }); await p.waitForTimeout(1400);
+    await p.waitForFunction(k => document.querySelector('.dayhero')?.dataset.m === k, k, { timeout: 20000 }); await p.waitForTimeout(1800);
     const shown = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].filter(i => Number(getComputedStyle(i).opacity) > .9).map(i => [i.dataset.mimg, i.complete && i.naturalWidth > 0]));
-    ok(`${label}: at ${k} the arch shows the ${k} photograph, loaded`, shown.length === 1 && shown[0][0] === k && shown[0][1], JSON.stringify(shown));
+    ok(`${label}: at ${k} the arch shows one ${k} photograph, loaded`, shown.length === 1 && shown[0][0] === k && shown[0][1], JSON.stringify(shown));
   }
+  // the moment's pictures cross-fade on their own (every 6.5 s)
+  const firstOn = await p.evaluate(() => document.querySelector('#dStack img.on')?.dataset.mi);
+  await p.waitForTimeout(7600);
+  const nextOn = await p.evaluate(() => [document.querySelector('#dStack img.on')?.dataset.mimg, document.querySelector('#dStack img.on')?.dataset.mi]);
+  ok(`${label}: the night pictures cross-fade to the next one`, nextOn[0] === 'night' && nextOn[1] !== firstOn, `${firstOn} -> ${nextOn}`);
   ok(`${label}: the moons panel is gone from home`, (await p.locator('#moons, .moons-arc').count()) === 0);
   ok(`${label}: no moon-phase rows on the home seams`, (await p.locator('.cel-div .cel-moonrow').count()) === 0 && (await p.locator('.cel-div').count()) > 0);
   ok(`${label}: footer and cart carry a star, not a moon`, (await p.locator('.foot-moon .cel-glyph, .dh-moon .cel-glyph').count()) === 2 && (await p.locator('.foot-moon [aria-label*="moon" i], .dh-moon [aria-label*="moon" i]').count()) === 0);

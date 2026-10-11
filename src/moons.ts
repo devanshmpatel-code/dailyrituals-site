@@ -71,11 +71,69 @@ const ALT: Record<string, string> = {
 const alt = (slug: string) => ALT[slug] ?? `${byId[slug].name}: a candle seen from above`;
 
 // ---------- home: the hero arch ----------
-/** The five arch pictures, one per moment, from config MOMENTS. Real photographs, so none carries the render class (dimg) and
- *  the paths (/img/studio/web/*.webp) never match the render swap in photos.ts. All five sit stacked in the arch and are
- *  cross-faded by setMoment, so they load eagerly; the two sizes serve the arch at phone and desktop. */
-export function heroStackHTML(): string {
-  return MOMENTS.map(m => `<img data-mimg="${m.key}" src="${m.image}" srcset="${m.image.replace('-1000.webp', '-720.webp')} 720w, ${m.image} 1000w" sizes="(max-width: 820px) 80vw, 30vw" alt="${esc(m.imageAlt)}" width="1000" height="1000" style="object-position:${m.imagePos}" decoding="async">`).join('');
+// A mix of Claire's most colourful pours for each moment (retouched: white balance from the wax, levels, clarity,
+// vibrance, a soft vignette). The pictures of a moment cross-fade slowly while it is showing. Alt text describes what is
+// on each candle and never names a past scent (only Cabana and Verdant, both in the shop, are named).
+type HeroPic = { file: string; alt: string };
+const HERO: Record<string, HeroPic[]> = {
+  dawn: [
+    { file: 'spring-blooms', alt: 'Candles in black tins seen from above, each topped by hand with dried pink, blue and cream flowers' },
+    { file: 'mothers-garden', alt: 'Candles in black tins seen from above, each topped with a single dried flower in red, orange or purple' },
+    { file: 'sweet-romance', alt: 'Three candles seen from above, topped with dried rose petals and small purple flowers' },
+  ],
+  morning: [
+    { file: 'sea-salt-sage', alt: 'Candles in black tins seen from above, topped with pink salt crystals and green stones' },
+    { file: 'hello-cupcake', alt: 'Candles in black tins seen from above, scattered with rainbow sprinkles' },
+    { file: 'easter-bread', alt: 'Candles in black tins on a wooden table, topped with pastel sprinkles' },
+  ],
+  midday: [
+    { file: 'christmas-eve', alt: 'Candles in black tins seen from above, topped with dried orange, star anise and pink peppercorns' },
+    { file: 'crystal-mushrooms', alt: 'Candles in black tins topped with small stone mushrooms, stars and polished stones' },
+    { file: 'candy-cane-lane', alt: 'Candles in black tins seen from above, each with a curve of red and white candy along the rim' },
+  ],
+  golden: [
+    { file: 'cabana', alt: 'A lit Cabana candle in a white glass tumbler, a small lit tin and its labelled lid in front' },
+    { file: 'mulled-wine', alt: 'Candles seen from above, topped with dried orange slices, star anise and pink peppercorns' },
+    { file: 'apple-cider', alt: 'Candles in black tins seen from above, topped with dried orange and cinnamon' },
+  ],
+  night: [
+    { file: 'midnight-forest', alt: 'A lit candle in a black tin among leaves, its wooden wick burning beside small stones' },
+    { file: 'verdant', alt: 'A lit Verdant candle in a white glass tumbler, a small lit tin in front' },
+  ],
+};
+const heroSrc = (f: string, w: 720 | 1000) => `/img/studio/web/hero-${f}-${w}.webp`;
+/** Every arch picture, stacked. Only the first picture of the starting moment loads at once; the rest carry data-src and
+ *  load when their moment comes up (or just before their turn in the cross-fade). */
+export function heroStackHTML(first: string = MOMENTS[0].key): string {
+  return MOMENTS.flatMap(m => (HERO[m.key] ?? []).map((p, i) => {
+    const eager = m.key === first && i === 0;
+    const set = `${heroSrc(p.file, 720)} 720w, ${heroSrc(p.file, 1000)} 1000w`;
+    return `<img data-mimg="${m.key}" data-mi="${i}" ${eager ? `src="${heroSrc(p.file, 1000)}" srcset="${set}"` : `data-src="${heroSrc(p.file, 1000)}" data-srcset="${set}"`} sizes="(max-width: 820px) 80vw, 30vw" alt="${esc(p.alt)}" width="1000" height="1000" decoding="async">`;
+  })).join('');
+}
+const load = (img: HTMLImageElement | undefined) => {
+  if (!img?.dataset.src) return;
+  img.srcset = img.dataset.srcset ?? ''; img.src = img.dataset.src; delete img.dataset.src; delete img.dataset.srcset;
+};
+let heroTimer = 0;
+/** Show a moment's pictures in the arch: its first picture now, then a slow cross-fade through the rest (not with reduced
+ *  motion). The cycle stops by itself once the arch leaves the page. */
+export function showHero(app: ParentNode, key: string) {
+  const imgs = [...app.querySelectorAll<HTMLImageElement>('#dStack img[data-mimg]')];
+  const mine = imgs.filter(i => i.dataset.mimg === key);
+  let n = 0;
+  const show = () => { load(mine[n]); load(mine[(n + 1) % mine.length]); imgs.forEach(i => i.classList.toggle('on', i === mine[n])); };
+  show();
+  window.clearInterval(heroTimer);
+  if (mine.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  heroTimer = window.setInterval(() => {
+    if (!mine[0].isConnected) { window.clearInterval(heroTimer); return; }
+    if (document.hidden) return;
+    n = (n + 1) % mine.length; show();
+  }, 6500);
+  // the first picture of every other moment loads once the page is idle, so switching moments never shows an empty arch
+  const idle = (window as any).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 1500));
+  idle(() => MOMENTS.forEach(m => load(imgs.find(i => i.dataset.mimg === m.key && i.dataset.mi === '0'))));
 }
 
 // ---------- the extra photographs: Ritual on Repeat, Send a Sunrise, the product page ----------
