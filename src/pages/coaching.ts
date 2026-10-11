@@ -1,6 +1,8 @@
 import Coaching from '../canvas/pages/Coaching.html?raw';
+import { wireLoop } from './loop';
 import { loadServices, imgSrc, money, wix, saveTokens } from '../wix';
 import { fixImages, wireCommon, esc, errorBox, toast } from '../ui';
+import { navigate, routeUrl } from '../router';
 import { WRITES_ENABLED, TIME_ZONE, BOOKINGS_APP_ID, STAFF_RESOURCE_TYPE_ID } from '../config';
 
 const duration = (s: any) => s.schedule?.availabilityConstraints?.sessionDurations?.[0] as number | undefined;
@@ -15,6 +17,7 @@ export async function renderCoaching(app: HTMLElement) {
   app.innerHTML = fixImages(Coaching);
   wireCommon(app);
   wireCheckin(app);
+  wireLoop(app);
 
   const ways = [...app.querySelectorAll<HTMLAnchorElement>('.ways .way')];
   let list: any[] = [];
@@ -37,9 +40,9 @@ export async function renderCoaching(app: HTMLElement) {
   const faq = [...app.querySelectorAll('details')].find(d => /priced/i.test(d.querySelector('summary')?.textContent ?? ''));
   if (faq && program?.payment?.fixed) {
     faq.querySelector('.dbody')!.insertAdjacentHTML('beforeend',
-      `<p><span class="d">[Confirm: the live booking page lists ${esc(program.name)} at ${priceLabel(program)}. Keep this answer or show the price?]</span></p>`);
+      `<p><span class="d confirm">[Confirm: the live booking page lists ${esc(program.name)} at ${priceLabel(program)}. Keep this answer or show the price?]</span></p>`);
   }
-  app.querySelectorAll<HTMLAnchorElement>('a[href="#/book"]').forEach(a => { if (discovery) a.href = `#/book/${slugOf(discovery)}`; });
+  app.querySelectorAll<HTMLAnchorElement>('a[href="#/book"], a[href="/book"]').forEach(a => { if (discovery) a.href = `#/book/${slugOf(discovery)}`; });
 }
 
 function wireCheckin(app: HTMLElement) {
@@ -67,13 +70,19 @@ export async function renderBook(app: HTMLElement, slug?: string) {
     <div class="phead"><div class="crumbs"><a href="#/">Home</a> / <a href="#/coaching">Coaching</a> / Book</div></div>
     <div class="bk-grid">
       <div class="bk-intro"><span class="eyebrow" style="color:var(--euc)">Neuro coaching with Claire</span><h1 class="bk-title">Book a session</h1><div id="svcPick" class="segs"></div><div id="svcInfo"></div>
-        <p class="disclaimer">Coaching is not therapy or medical care. It does not diagnose or treat any condition and is not a substitute for care from a qualified professional. <span class="d">Claire to confirm wording.</span></p></div>
+        <p class="disclaimer">Coaching is not therapy or medical care. It does not diagnose or treat any condition and is not a substitute for care from a qualified professional. <span class="d confirm">Claire to confirm wording.</span></p></div>
       <div class="bk-panel"><h2 class="bk-h">Choose a time</h2><p class="small muted">Times shown in ${TIME_ZONE.replace('_', ' ')} time.</p><div id="slots"><div class="sk-line"></div><div class="sk-line short"></div></div><div id="bookForm"></div></div>
     </div></div>`;
   let list: any[];
   try { list = await loadServices(); } catch (e) { app.querySelector('#slots')!.innerHTML = errorBox(String((e as Error).message ?? e)); return; }
   const svc = list.find(s => slugOf(s) === slug) ?? list.find(s => /discovery/i.test(s.name)) ?? list[0];
-  if (!svc) { app.querySelector('#slots')!.innerHTML = '<p>No services are open for booking.</p>'; return; }
+  if (!svc) {
+    // nothing bookable yet: a warm empty state with the two free ways in. The wording below is a draft for Claire.
+    app.querySelector('#slots')!.innerHTML = `<div class="bk-empty"><h3>No open times right now</h3><p>New times are added as Claire's calendar opens up. Please check back soon.</p>
+      <div class="cta"><a class="btn euc" href="#/reset">Start the free 7-day reset</a><a class="btn line" href="#/coaching">Back to coaching</a></div></div>`;
+    app.querySelector('#svcInfo')!.innerHTML = `<div class="bk-aside"><span class="eyebrow">While you wait</span><h2>Try one practice <span class="it">today</span></h2><p>The free 7-day reset is ten minutes a day with Claire, self-paced, and a gentle way to see whether coaching is for you.</p></div>`;
+    return;
+  }
 
   app.querySelector('#svcPick')!.innerHTML = list.map(s =>
     `<a class="chip" href="#/book/${slugOf(s)}" aria-pressed="${s._id === svc._id}">${esc(s.name)}</a>`).join('');
@@ -158,11 +167,11 @@ async function createLiveBooking(svc: any, slot: any, formSubmission: Record<str
   const total = Number(summary?.priceSummary?.total?.amount ?? 0);
   const needsCheckout = svc.bookingPolicy?.cancellationFeePolicy?.enabled || (total > 0 && selectedPaymentOption === 'ONLINE');
   if (needsCheckout) {
-    const { redirectSession }: any = await wix.redirects.createRedirectSession({ ecomCheckout: { checkoutId: cart._id }, callbacks: { postFlowUrl: `${location.origin}/#/coaching` } });
+    const { redirectSession }: any = await wix.redirects.createRedirectSession({ ecomCheckout: { checkoutId: cart._id }, callbacks: { postFlowUrl: routeUrl('/coaching') } });
     location.href = redirectSession.fullUrl;
   } else {
     await wix.placeOrder(cart._id);
     toast('Booked. Check your email for the details.');
-    location.hash = '#/coaching';
+    navigate('/coaching');
   }
 }

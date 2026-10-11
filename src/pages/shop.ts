@@ -2,6 +2,7 @@ import Shop from '../canvas/pages/Shop.html?raw';
 import { loadCatalogue, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon } from '../ui';
 import { wireQuickAdd } from './shared';
+import { navigate } from '../router';
 import { MOODS, type Mood, type Format } from '../config';
 
 // The three concept cards from the canvas (not products in the live store yet).
@@ -40,7 +41,7 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   const sort = app.querySelector<HTMLSelectElement>('#sort');
   if (sort) {
     sort.value = s;
-    sort.addEventListener('change', () => { location.hash = `#/shop?${new URLSearchParams({ f, m, s: sort.value })}`; });
+    sort.addEventListener('change', () => { navigate(`/shop?${new URLSearchParams({ f, m, s: sort.value })}`); });
   }
 
   const grid = app.querySelector<HTMLElement>('.grid')!;
@@ -58,8 +59,26 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   else list.sort((a, b) => order.indexOf(a.format) - order.indexOf(b.format) || a.scent.localeCompare(b.scent));
 
   const showConcepts = f === 'all' && m === 'all';
-  grid.innerHTML = list.map(i => cardHTML(i, i.inStock ? undefined : 'Sold out')).join('') + (showConcepts ? concepts : '');
+  const GROUP: Record<Format, [string, string]> = {
+    roller: ['Wear it', 'Fragrance rollers. Roll onto your wrists and carry the scent all day.'],
+    diffuser: ['Diffuse it', 'Mini diffusers. A quiet, steady scent for a desk, bedside or small room.'],
+    candle: ['Light it', 'Candles. For the moments you want to mark: home, evening, slowing down.'],
+    deodorant: ['Wear it daily', 'Natural deodorant in our signature scents.'],
+  };
+  const card = (i: Item) => cardHTML(i, i.inStock ? undefined : 'Sold out');
+  // Format imagery: the candle and deodorant group heads carry a real studio photograph (the candles are black tins, not the
+  // amber-glass 3D render). The unnamed black-crescent moon stands for "a candle"; no real photos of rollers or diffusers exist yet.
+  const FORMAT_PHOTO: Partial<Record<Format, string>> = {
+    candle: '<img class="ghead-ph" src="/img/studio/moons/black-crescent.webp" alt="A candle from the studio seen from above: white wax in a black tin with a crescent of small black stones" width="520" height="520" loading="lazy" decoding="async">',
+    deodorant: '<img class="ghead-ph" src="/img/studio/web/westcoast-round.webp" alt="Natural deodorant jars from the studio" width="480" height="480" loading="lazy" decoding="async">',
+  };
+  grid.classList.toggle('grouped', s === 'featured');
+  if (s === 'featured') {
+    const fmts = order.filter(fm => list.some(i => i.format === fm));
+    grid.innerHTML = fmts.map((fm, k) => { const g = list.filter(i => i.format === fm); return `<header class="ghead g${k % 4}">${FORMAT_PHOTO[fm] ?? ''}<span class="eyebrow">${GROUP[fm][0]}</span><h2>${g[0].formatLabel}s</h2><span class="gc">${g.length === 1 ? 'Choose your scent' : `${g.length} scents`}</span><p class="muted">${GROUP[fm][1]}</p></header>` + g.map(card).join(''); }).join('')
+      + (showConcepts ? `<header class="ghead soon"><span class="eyebrow">Coming soon</span><h2>Kits and boxes</h2><p class="muted">Ideas we are getting ready. Not in the store yet.</p></header>${concepts}` : '');
+  } else grid.innerHTML = list.map(card).join('') + (showConcepts ? concepts : '');
   if (!list.length) grid.insertAdjacentHTML('afterbegin', `<p class="muted" style="grid-column:1/-1">Nothing matches ${m !== 'all' ? MOODS[m].label.toLowerCase() : 'that filter'} right now.</p>`);
-  if (countEl) countEl.textContent = `${list.length} product${list.length === 1 ? '' : 's'} · Hover a product to see its scent family`;
+  if (countEl) countEl.textContent = `${list.length} product${list.length === 1 ? '' : 's'} · ${matchMedia('(hover: hover)').matches ? 'Hover' : 'Tap'} a product to see its scent family`;
   wireQuickAdd(grid, items);
 }

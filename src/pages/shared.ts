@@ -1,6 +1,7 @@
 import { add } from '../cart';
 import { findLive, money, type Item } from '../wix';
 import { toast } from '../ui';
+import { navigate } from '../router';
 import type { Format } from '../config';
 
 /** Canvas product slugs look like "roller-citrus-and-sun"; map them to live products. */
@@ -19,8 +20,8 @@ export function canvasSlugToLive(items: Item[], canvasSlug: string): Item | unde
  * render (marked as a draft image) and link to a "not in the store yet" page.
  */
 export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
-  root.querySelectorAll<HTMLAnchorElement>('a[href^="#/product/"]').forEach(a => {
-    const slug = a.getAttribute('href')!.slice('#/product/'.length);
+  root.querySelectorAll<HTMLAnchorElement>('a[href^="#/product/"], a[href^="/product/"]').forEach(a => {
+    const slug = a.getAttribute('href')!.replace(/^#?\/product\//, '');
     if (items.some(i => i.slug === slug)) return; // already live
     const live = canvasSlugToLive(items, slug);
     if (!live) return;
@@ -37,14 +38,19 @@ export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
   });
   root.querySelectorAll<HTMLButtonElement>('button[data-add]').forEach(b => {
     const live = canvasSlugToLive(items, b.dataset.add!);
-    if (!live) { b.addEventListener('click', previewOff('This item is not in the live store yet, so it')); return; }
+    if (!live) {
+      // not in the store yet: say so plainly and offer the Sunday note instead of a dead "add" button
+      b.textContent = 'Coming soon · get notified'; b.classList.add('soon');
+      b.addEventListener('click', () => { const f = document.getElementById('nemail'); if (f) { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); (f as HTMLInputElement).focus({ preventScroll: true }); } else previewOff('This item is not in the live store yet, so it')(); });
+      return;
+    }
     b.textContent = `Quick add · ${money(live.priceMin)}`;
     b.addEventListener('click', () => quickAdd(live));
   });
 }
 
 export async function quickAdd(i: Item) {
-  if (i.choices.length > 1) { location.hash = `#/product/${i.slug}`; return; }
+  if (i.choices.length > 1) { navigate(`/product/${i.slug}`); return; }
   await add({ productId: i.id, slug: i.slug, name: i.name, price: i.priceMin, image: i.thumb, choice: i.choices[0]?.name, optionName: i.optionName });
   toast(`${i.name} added to your cart`);
 }

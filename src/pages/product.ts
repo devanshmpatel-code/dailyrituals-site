@@ -1,9 +1,11 @@
+import { replaceRoute } from '../router';
+import { mountLocalNav } from '../nav';
 import Product from '../canvas/pages/Product.html?raw';
 import { loadCatalogue, loadProduct, toItem, imgSrc, money, type Item } from '../wix';
 import { cardHTML, fixImages, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
 import { canvasSlugToLive, wireQuickAdd, previewOff } from './shared';
-import { MOODS, type Format } from '../config';
+import { MOODS, LOYALTY_ENABLED, type Format } from '../config';
 
 // Copy from the canvas product boards (roller = Product, diffuser = Cart drawer board).
 const CANVAS_COPY: Partial<Record<Format, { about: string; use: string[]; best: string }>> = {
@@ -40,7 +42,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   let item = items.find(i => i.slug === slug);
   if (!item) {
     const live = canvasSlugToLive(items, slug);
-    if (live) { location.replace(`#/product/${live.slug}`); return; }
+    if (live) { replaceRoute(`/product/${live.slug}`); return; }
     return renderNotInStore(app, slug);
   }
 
@@ -72,7 +74,8 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   // hotspots describe the roller bottle only
   if (it.format !== 'roller') { $('#hsLayer')?.remove(); $('.hs-tip')?.remove(); $('#mainWrap + p, .gallery + p')?.remove(); }
   else {
-    const tip = $('.hs-tip'); if (tip) tip.classList.add('d');
+    const tip = $('.hs-tip'); if (tip) tip.classList.add('d', 'confirm');
+    $('#mainWrap + p, .gallery + p')?.classList.add('confirm');
     app.querySelectorAll<HTMLButtonElement>('.hs').forEach(h => h.addEventListener('click', () => {
       app.querySelectorAll('.hs').forEach(x => x.setAttribute('aria-expanded', String(x === h)));
       const t = $('.hs-tip'); if (t) { t.style.top = `calc(${h.style.top} + 24px)`; t.style.left = `calc(${h.style.left} - 17px)`; t.querySelector('b')!.textContent = h.getAttribute('aria-label'); }
@@ -84,7 +87,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   // title block
   const mood = it.mood ? MOODS[it.mood] : undefined;
   const eyebrow = $('.buy .eyebrow')!;
-  eyebrow.innerHTML = mood ? `<span class="swatch" style="background:${mood.swatch}"></span>${mood.label}` : `<span class="d">[Confirm: scent family]</span>`;
+  eyebrow.innerHTML = mood ? `<span class="swatch" style="background:${mood.swatch}"></span>${mood.label}` : `<span class="d confirm">[Confirm: scent family]</span>`;
   $('.buy h1')!.textContent = it.scent;
   const metaRow = $('.buy h1')!.nextElementSibling as HTMLElement;
   const metaSpan = metaRow.querySelector('span')!;
@@ -107,7 +110,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   notes.classList.remove('d');
   if (liveNotes.length) notes.innerHTML = liveNotes.map(([k, v]) => `<div><span class="eyebrow">${k}</span><span>${esc(v)}</span></div>`).join('');
   else if (scentCopy) { notes.classList.add('d'); notes.innerHTML = ['Top', 'Heart', 'Base'].map((k, n) => `<div><span class="eyebrow">${k}</span><span>${esc(scentCopy.notes[n])}</span></div>`).join(''); }
-  else notes.innerHTML = `<div><span class="eyebrow">Notes</span><span>[Confirm: top, heart and base notes]</span></div>`;
+  else notes.innerHTML = `<div class="d confirm"><span class="eyebrow">Notes</span><span>[Confirm: top, heart and base notes]</span></div>`;
 
   // "Also in" chips across formats
   const siblings = items.filter(i => i.scent.toLowerCase() === it.scent.toLowerCase());
@@ -147,6 +150,8 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     addBtn.disabled = !inStock;
     addBtn.textContent = inStock ? `Add to cart · ${money(price * qty)}` : 'Sold out';
     const pts = $('.buy .points b'); if (pts) { pts.textContent = `${Math.floor(price * qty)} Ritual Points`; pts.classList.add('d'); }
+    // no Loyalty app yet: never promise points to customers
+    if (!LOYALTY_ENABLED) { const row = $('.buy .points span'); if (row && !row.dataset.fixed) { row.dataset.fixed = '1'; row.innerHTML = 'Made in small batches in British Columbia · Gift wrap available'; } }
   };
   $('#qd')!.addEventListener('click', () => { qty = Math.max(1, qty - 1); $('#qv')!.textContent = String(qty); refresh(); });
   $('#qi')!.addEventListener('click', () => { qty = Math.min(20, qty + 1); $('#qv')!.textContent = String(qty); refresh(); });
@@ -157,6 +162,20 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     toast(`${it.name}${choice && it.choices.length > 1 ? ` (${choice})` : ''} added to your cart`);
   });
   refresh();
+  // sticky local nav under the header: name + mood mark, the page's sections, and an add pill that drives #addBtn.
+  // Section labels are nav words, not product copy: draft for Claire.
+  const sectionOf = (el: Element | null | undefined, id: string, label: string) => { if (!el) return null; el.id = id; return { id, label }; };
+  const pageSections = app.querySelectorAll<HTMLElement>(':scope > .wrap > section');
+  mountLocalNav(app, {
+    name: it.scent, sub: it.formatLabel, mood: it.mood,
+    sections: [
+      sectionOf($('.pdp'), 'p-scent', 'Scent'),
+      sectionOf($('.tabsbar')?.parentElement, 'p-details', 'Details'),
+      sectionOf([...pageSections].find(s => s.querySelector('a[href$="/reset"]')), 'p-practice', 'Practice'),
+      sectionOf([...pageSections].find(s => s.querySelector('.grid')), 'p-more', 'More like this'),
+    ].filter((s): s is { id: string; label: string } => !!s),
+    addBtn,
+  });
 
   // tabs
   const sections: any[] = p?.infoSections ?? [];
@@ -173,15 +192,15 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   const paras = (arr: string[]) => arr.map(t => `<p>${esc(t)}</p>`).join('');
   panel(0).innerHTML = copy
     ? `<p>${esc(copy.about)}</p><p><b style="color:var(--ink)">Best for:</b> <span class="d">${esc(copy.best)}</span></p>`
-    : paras(aboutParas.slice(0, 1)) || '<p><span class="d">[Confirm: product description]</span></p>';
+    : paras(aboutParas.slice(0, 1)) || '<p><span class="d confirm">[Confirm: product description]</span></p>';
   panel(1).innerHTML = (copy
     ? `<ul style="padding-left:18px;display:flex;flex-direction:column;gap:6px">${copy.use.map(u => `<li>${esc(u)}</li>`).join('')}</ul>`
-    : '') + paras(useParas) || '<p><span class="d">[Confirm: how to use]</span></p>';
+    : '') + paras(useParas) || '<p><span class="d confirm">[Confirm: how to use]</span></p>';
   panel(2).innerHTML = (aboutParas.length ? `${paras(aboutParas)}<p class="small muted">From the product information in the store.</p>` : '')
     + '<p><span class="d">Full ingredient list to be added by Claire.</span></p>';
   // Shipping: the store's own policy text, then the canvas lines. They disagree, so both stay visible for Claire.
   panel(3).innerHTML = shipParas.length
-    ? `${paras(shipParas)}<p class="small muted">From the product information in the store.</p><p><span class="d">[Confirm: the canvas says "Ships in 2 to 3 business days. Free over $75 in Canada" and "10 days to start a return"; the store text above says otherwise. Which is current?]</span></p>`
+    ? `${paras(shipParas)}<p class="small muted">From the product information in the store.</p><p><span class="d confirm">[Confirm: the canvas says "Ships in 2 to 3 business days. Free over $75 in Canada" and "10 days to start a return"; the store text above says otherwise. Which is current?]</span></p>`
     : `<p><span class="d">Ships in 2 to 3 business days. Free over $75 in Canada.</span></p><p>If something isn't right, you have 10 days from the date your order arrives to reach out and start the return process.</p>`;
 
   // You may also like: same scent family, then same format
@@ -201,6 +220,6 @@ function renderNotInStore(app: HTMLElement, slug: string) {
   const name = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   app.innerHTML = `<div class="wrap" style="padding:clamp(64px,8vw,112px) 0;display:flex;flex-direction:column;gap:16px;max-width:640px">
     <span class="eyebrow">Concept product</span><h1 style="font-size:clamp(36px,5vw,56px)">${esc(name)}</h1>
-    <p class="muted">This product appears in the design canvas but is not in the live store yet. <span class="d">[Confirm: add to the store or remove from the design]</span></p>
+    <p class="muted">This product appears in the design canvas but is not in the live store yet. <span class="d confirm">[Confirm: add to the store or remove from the design]</span></p>
     <a class="btn" href="#/shop" style="align-self:flex-start">Browse the shop</a></div>`;
 }

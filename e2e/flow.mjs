@@ -1,0 +1,47 @@
+import { chromium } from 'playwright-core';
+import { setupMocks } from './mock.mjs';
+const base = process.env.BASE ?? 'http://localhost:4173/#';
+const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
+const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
+const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
+const errs = []; p.on('pageerror', e => errs.push(e.message));
+await p.goto(base + '/'); await p.waitForSelector('.jhere', { state: 'attached' }); await p.waitForTimeout(1500);
+const cs = (sel, prop) => p.evaluate(([s, pr]) => { const e = document.querySelector(s); return e ? getComputedStyle(e)[pr] || getComputedStyle(e).getPropertyValue(pr) : null; }, [sel, prop]);
+// the home page is a day: each chapter's ground blends out of the colour of the one before it, with no hard edge and no see-through fade
+const flow = await p.evaluate(() => [...document.querySelectorAll('main section.df')].map(el => ({ g: el.dataset.ground, bg: getComputedStyle(el).backgroundImage, mask: getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage || 'none', bt: getComputedStyle(el).borderTopWidth })));
+ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,sage,gold,rose,euc,plum,night,night-solid', flow.map(f => f.g).join(','));
+ok('home: every chapter after the first blends from the previous colour', flow.filter(f => f.g !== 'night-solid').every(f => /linear-gradient/.test(f.bg)), flow.map(f => f.bg.slice(0, 30)).join(' | '));
+ok('home: no see-through fades or hairlines between chapters', flow.every(f => f.mask === 'none' && f.bt === '0px'));
+ok('home: chapters are numbered 1 to 8 in journey order', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '12345678');
+ok('home: the first chapter eases down from the dark opening strip', /gradient/.test(await cs('.moment-shop', 'backgroundImage')));
+ok('home: the footer rises out of a soft fade', /gradient/.test(await p.evaluate(() => getComputedStyle(document.querySelector('footer'), '::before').backgroundImage)));
+const radii = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card .ph')].map(e => getComputedStyle(e).borderTopLeftRadius));
+ok('home: product pictures alternate arch and soft-window cutouts', new Set(radii).size >= 2 && radii.some(r => parseFloat(r) > 100), radii.join(' '));
+const plans = await p.evaluate(() => [...document.querySelectorAll('.plans .plan')].map(e => getComputedStyle(e).backgroundImage.includes('gradient')));
+ok('home: plan cards are tinted, none flat white', plans.length === 3 && plans.every(Boolean), plans.join(','));
+const discMask = await cs('.disc .ph', 'maskImage'); ok('home: the Discovery photo dissolves into its card', /gradient/.test(discMask ?? ''));
+const tiles = await p.evaluate(() => new Set([...document.querySelectorAll('.wall .tile img')].map(e => getComputedStyle(e).borderTopLeftRadius)).size);
+ok('home: Ritual Wall photos use a mix of cutouts', tiles >= 3, `${tiles} shapes`);
+const f = () => p.evaluate(() => getComputedStyle(document.querySelector('#msGrid .card .ph img.main, .stack img')).filter);
+ok('photo grade is on by default', /saturate/.test(await f()), await f());
+await p.locator('#gradeToggle').uncheck(); await p.waitForTimeout(200); ok('the Photo grade switch turns it off', (await f()) === 'none', await f());
+await p.reload(); await p.waitForSelector('#gradeToggle'); await p.waitForTimeout(500); ok('and the choice is remembered', !(await p.locator('#gradeToggle').isChecked()));
+await p.locator('#gradeToggle').check();
+await p.goto(base + '/coaching'); await p.waitForSelector('.c-hero'); await p.waitForTimeout(600);
+ok('coaching: the green hero fades into the page', /gradient/.test(await cs('.c-hero', 'maskImage')));
+ok('coaching: the hero picture has a leaf cutout', parseFloat(await cs('.c-hero .ph', 'borderTopLeftRadius')) > 100);
+await p.goto(base + '/product/cabana'); await p.waitForSelector('.mainimg'); await p.waitForTimeout(500);
+ok('product: the main photo has soft rounded corners', parseFloat(await cs('.mainimg', 'borderTopLeftRadius')) >= 24);
+for (const r of ['/', '/shop', '/coaching', '/subscribe', '/drops']) { await p.goto(base + r); await p.waitForTimeout(900); const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${r}: no sideways scroll`, o <= 1, `${o}`); }
+ok('product: photo pins are hidden from customers until checked against real photos', await (async () => { await p.goto(base + '/product/cabana-fragrance-roller'); await p.waitForTimeout(1200); return p.evaluate(() => [...document.querySelectorAll('.hs')].every(e => getComputedStyle(e).display === 'none')); })());
+// the breathing pause on the home page is the glowing orb only (no separate section repeating it)
+await p.goto(base + '/'); await p.waitForSelector('.breathorb'); await p.waitForTimeout(800);
+ok('home: no separate breathing section repeats the orb', (await p.locator('.breathband, #app [data-breathe]').count()) === 0);
+await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); ok('home: the glowing orb opens the breathing screen', true); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+await p.goto(base + '/coaching'); await p.waitForSelector('[data-breathe]'); await p.locator('.c-hero [data-breathe]').click(); await p.waitForSelector('.jbreathe.open'); ok('coaching: one mindful minute is offered before the discovery call', true); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+await p.goto(base + '/order-confirmed'); await p.waitForSelector('[data-breathe]'); await p.locator('main [data-breathe]').click(); await p.waitForSelector('.jbreathe.open'); ok('order confirmed: a breath while the order is packed', true); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+await p.goto(base + '/shop'); await p.reload(); await p.waitForSelector('#skipBtn'); await p.waitForTimeout(900); await p.keyboard.press('Tab'); ok('the skip link is the first thing a keyboard user reaches', await p.evaluate(() => document.activeElement?.id === 'skipBtn'));
+await p.keyboard.press('Enter'); ok('and it moves focus to the page content', await p.evaluate(() => document.activeElement?.id === 'app'));
+ok('headings never skip a level for screen readers', await p.evaluate(() => { let prev = 0, bad = 0; document.querySelectorAll('main h1,main h2,main h3,main h4').forEach(h => { const l = Number(h.getAttribute('aria-level') || h.tagName[1]); if (prev && l > prev + 1) bad++; prev = l; }); return bad === 0; }));
+ok('no JS errors', errs.length === 0, errs.join('|'));
+await b.close(); process.exit(res.every(Boolean) ? 0 : 1);

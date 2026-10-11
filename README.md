@@ -30,4 +30,16 @@ The client id is the public OAuth id of the "Daily Rituals coded preview" headle
 
 ## Routing
 
-Hash routes (`#/shop`, `#/product/<slug>`, `#/coaching`, `#/book/<slug>`). Change to path routes with server rewrites and per-page SEO before launch.
+Real addresses by default (`/shop`, `/product/<slug>`, `/coaching`, `/book/<slug>`). `vercel.json` serves `index.html` for every path and 301-redirects the old Wix page addresses. Old `#/…` links are upgraded automatically. Build with `VITE_ROUTING=hash` for a host without rewrites (the local test builds may use either).
+
+## Going live (decided: keep the existing Wix site as the backend)
+
+The existing dailyritualsco.com Wix site (with its plan, products, bookings and contacts) stays the backend. This frontend is hosted on Vercel and takes over `www.dailyritualsco.com`. Checkout and login run on Wix-hosted pages on a subdomain. This is Wix's documented path for replacing an editor-built site with your own frontend. A Wix-hosted frontend would need a new, empty Wix project instead.
+
+Step-by-step, including rollback: **[LAUNCH.md](LAUNCH.md)**. Switches: `VITE_LAUNCH=true` (production only) removes the preview bar, the `noindex` tag and the blocking `robots.txt`. `npm run build` also writes `dist/sitemap.xml` (with products when the build can reach Wix).
+
+## Real photographs instead of renders
+
+- `src/photos.ts` maps each 3D render to a real photo from the Wix media library (`PHOTO_FOR`). They were chosen from Wix's automatic content tags and size, **not reviewed by eye**: they show with the draft outline when "Show drafts" is on, and the render stays in place if a photo fails to load. To change one, edit its `id`, `name`, `w` and `h` (from the Wix media manager).
+- The opening's landscape is generated (`src/pages/landscape.ts`). To use real landscape photographs instead, add `dawn.jpg`, `morning.jpg`, `midday.jpg`, `golden.jpg` and `night.jpg` to `public/img/scenes/`; they replace the generated landscape automatically.
+- Browser tests: `npm run test:e2e` (they replay a saved copy of the catalogue, so they do not need the Wix network).
