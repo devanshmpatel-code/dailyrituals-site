@@ -6,7 +6,7 @@ import SendASunrise from '../canvas/pages/SendASunrise.html?raw';
 import OrderConfirmed from '../canvas/pages/OrderConfirmed.html?raw';
 import { fixImages, wireCommon, esc } from '../ui';
 import { LOYALTY_ENABLED } from '../config';
-import { moonArc } from './symbols';
+import { constellation } from '../celestial';
 import { loadCatalogue } from '../wix';
 import { bindCanvasProductLinks, previewOff } from './shared';
 import { wireVote, wireCountdown, wireSunrise, wireClub, wireRepeatCalc } from './home';
@@ -63,7 +63,7 @@ function clubSoon(app: HTMLElement) {
       <p>Our rewards club is opening soon. Join the Sunday note and you will be first to hear when the doors open, along with a small practice from Claire each week and first notice of every Moon Drop.</p>
       <form class="nform" id="csForm"><label for="csEmail" hidden>Email address</label><input id="csEmail" type="email" placeholder="Email address" required><button class="btn" type="submit">Tell me first</button></form>
       <span class="small" style="opacity:.75">You can unsubscribe any time.</span></div>
-    <div class="cs-moon" aria-hidden="true">${moonArc()}</div>
+    <div class="cs-const" aria-hidden="true">${constellation({ labels: true })}</div>
   </div></section>`;
   app.appendChild(plan);
   app.querySelector('#csForm')?.addEventListener('submit', e => { e.preventDefault(); previewOff('Sign-ups')(); });

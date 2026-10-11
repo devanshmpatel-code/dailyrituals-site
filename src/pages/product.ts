@@ -6,6 +6,7 @@ import { cardHTML, fixImages, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
 import { canvasSlugToLive, wireQuickAdd, previewOff } from './shared';
 import { MOODS, LOYALTY_ENABLED, type Format } from '../config';
+import { productStudioHTML } from '../moons';
 
 // Copy from the canvas product boards (roller = Product, diffuser = Cart drawer board).
 const CANVAS_COPY: Partial<Record<Format, { about: string; use: string[]; best: string }>> = {
@@ -54,6 +55,9 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   app.innerHTML = fixImages(Product);
   wireCommon(app);
   const $ = <T extends Element = HTMLElement>(sel: string) => app.querySelector<T>(sel);
+
+  // candles: one photograph of Claire's real bench work under the gallery (a past pour, not named, so nothing reads as buyable)
+  if (it.format === 'candle') $('.pdp > div:first-child')?.insertAdjacentHTML('beforeend', productStudioHTML());
 
   // breadcrumbs
   $('.crumbs')!.innerHTML = `<a href="#/">Home</a> / <a href="#/shop?f=${it.format}">${PLURAL[it.format]}</a> / ${esc(it.name)}`;

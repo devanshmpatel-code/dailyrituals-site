@@ -1,4 +1,5 @@
-// The studio photographs: the moons panel and collage on the home page, Claire's portrait on the coaching page,
+// The studio photographs: the hero arch, Ritual on Repeat, Send a Sunrise and the collage on the home page (no moons
+// outside Moon Drops), a bench photograph on candle pages, Claire's portrait on the coaching page,
 // the past-moons archive on Moon Drops (never buyable), and the real format photographs on the shop group heads.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
@@ -7,34 +8,30 @@ const b = await chromium.launch({ executablePath: process.env.CHROME || undefine
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const noScroll = p => p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
 const loaded = (p, sel) => p.evaluate(s => [...document.querySelectorAll(s)].map(i => i.complete && i.naturalWidth > 0), sel);
-const capVisible = (p, i) => p.evaluate(i => { const c = document.querySelectorAll('#moons .moon-pt')[i].querySelector('.moon-cap'); const s = getComputedStyle(c); return s.visibility === 'visible' && Number(s.opacity) > .9 ? c.textContent.trim() : ''; }, i);
 
 for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(10000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
 
-  // ---- home: every candle is a moon
-  await p.goto(base + '/'); await p.waitForSelector('#moons .moon-pt'); await p.waitForTimeout(500);
-  await p.evaluate(() => document.querySelector('#moons').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
-  const names = await p.evaluate(() => [...document.querySelectorAll('#moons .moon-pt .moon-name b')].map(e => e.textContent.trim()));
-  ok(`${label}: the moons panel shows eight labelled moons`, names.length === 8 && names.every(Boolean) && new Set(names).size === 8, names.join(', '));
-  ok(`${label}: every moon is a link into the archive with real alt text`, await p.evaluate(() => [...document.querySelectorAll('#moons .moon-pt')].every(li => { const a = li.querySelector('a.moon-link'); const img = li.querySelector('img'); return a && /drops\?moon=/.test(a.getAttribute('href')) && img.alt.length > 10 && img.getAttribute('loading') === 'lazy' && img.width > 0; })));
-  // on phones the row scrolls sideways, so only the moons on screen have loaded (the rest are lazy)
-  ok(`${label}: moon pictures load`, (await loaded(p, '#moons .moon-disc img')).slice(0, label === 'phone' ? 2 : 8).every(Boolean));
-  ok(`${label}: captions are hidden until asked for`, (await capVisible(p, 4)) === '');
-  if (label === 'desktop') {
-    const bb = await p.locator('#moons .moon-pt').nth(4).boundingBox(); await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.waitForTimeout(700);
-    ok('desktop: hovering a moon shows Claire\'s words', /Easter Bread, some call it Paska/.test(await capVisible(p, 4)), await capVisible(p, 4));
-    await p.mouse.move(5, 5); await p.waitForTimeout(600);
-  } else {
-    ok('phone: the moons are one swipeable row', await p.evaluate(() => { const a = document.querySelector('#moons .moons-arc'); return getComputedStyle(a).display === 'flex' && a.scrollWidth > a.clientWidth; }));
+  // ---- home: the opening shows Claire's real candles, and moons live only on Moon Drops
+  await p.goto(base + '/'); await p.waitForSelector('#dStack img[data-mimg]'); await p.waitForTimeout(800);
+  const stack = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].map(i => ({ k: i.dataset.mimg, src: i.getAttribute('src'), on: i.classList.contains('on'), alt: i.alt, pos: i.style.objectPosition })));
+  ok(`${label}: the hero arch holds five of Claire's photographs, one per moment`, stack.length === 5 && new Set(stack.map(x => x.k)).size === 5 && stack.every(x => /^\/img\/studio\/web\/hero-/.test(x.src) && x.alt.length > 15 && x.pos), JSON.stringify(stack.map(x => x.src)));
+  ok(`${label}: exactly one hero photograph is showing`, stack.filter(x => x.on).length === 1);
+  for (const k of ['dawn', 'night']) {
+    await p.evaluate(k => document.querySelector(`.moments [data-jump="${k}"]`).click(), k);
+    await p.waitForFunction(k => document.querySelector('.dayhero')?.dataset.m === k, k, { timeout: 20000 }); await p.waitForTimeout(1400);
+    const shown = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].filter(i => Number(getComputedStyle(i).opacity) > .9).map(i => [i.dataset.mimg, i.complete && i.naturalWidth > 0]));
+    ok(`${label}: at ${k} the arch shows the ${k} photograph, loaded`, shown.length === 1 && shown[0][0] === k && shown[0][1], JSON.stringify(shown));
   }
-  await p.locator('#moons .moon-pt').nth(1).locator('a').focus();
-  // the caption fades in over a third of a second; give a busy machine a little longer
-  const focused = await p.waitForFunction(() => { const c = document.querySelectorAll('#moons .moon-pt')[1].querySelector('.moon-cap'); const s = getComputedStyle(c); return s.visibility === 'visible' && Number(s.opacity) > .9; }, null, { timeout: 4000 }).then(() => true, () => false);
-  ok(`${label}: focusing a moon with the keyboard shows the words too`, focused && /Lavender Haze/.test(await capVisible(p, 1)), await capVisible(p, 1));
-  const links = await p.evaluate(() => [...document.querySelectorAll('#moons .moons-tx a')].map(a => a.getAttribute('href')));
-  ok(`${label}: the panel links to candles in the shop and to past moons`, links.some(h => /shop\?f=candle/.test(h)) && links.some(h => /drops/.test(h)), links.join(' '));
+  ok(`${label}: the moons panel is gone from home`, (await p.locator('#moons, .moons-arc').count()) === 0);
+  ok(`${label}: no moon-phase rows on the home seams`, (await p.locator('.cel-div .cel-moonrow').count()) === 0 && (await p.locator('.cel-div').count()) > 0);
+  ok(`${label}: footer and cart carry a star, not a moon`, (await p.locator('.foot-moon .cel-glyph, .dh-moon .cel-glyph').count()) === 2 && (await p.locator('.foot-moon [aria-label*="moon" i], .dh-moon [aria-label*="moon" i]').count()) === 0);
+  for (const [sel, name] of [['.rep-grid .ph-repeat', 'Ritual on Repeat'], ['.gift-grid .ph-gift', 'Send a Sunrise']]) {
+    await p.evaluate(s => document.querySelector(s).scrollIntoView({ block: 'center' }), sel); await p.waitForTimeout(900);
+    const f = await p.evaluate(s => { const f = document.querySelector(s); const i = f.querySelector('img'); const r = f.getBoundingClientRect(); return { ok: i.complete && i.naturalWidth > 0 && i.alt.length > 15 && !!f.querySelector('figcaption .d'), w: r.width }; }, sel);
+    ok(`${label}: ${name} carries a studio photograph with a draft caption`, f.ok && f.w > 150, JSON.stringify(f));
+  }
 
   // ---- home: the studio collage
   await p.evaluate(() => document.querySelector('.collage').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500);
@@ -43,7 +40,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: collage pictures are lazy, sized and captioned`, await p.evaluate(() => [...document.querySelectorAll('.collage .cg')].every(f => { const i = f.querySelector('img'); return i.getAttribute('loading') === 'lazy' && i.getAttribute('width') && i.getAttribute('height') && i.alt.length > 10 && f.querySelector('figcaption').textContent.trim(); })));
   const revealed = await p.waitForFunction(() => [...document.querySelectorAll('.collage .cg')].every(f => Number(getComputedStyle(f).opacity) > .9), null, { timeout: 5000 }).then(() => true, () => false);
   ok(`${label}: the collage is in view, not hidden by its reveal`, revealed);
-  ok(`${label}: no soy or healing claims in the new copy`, !/soy|heal|crystal/i.test(await p.evaluate(() => (document.querySelector('#moons').innerText + document.querySelector('.studio').innerText))));
+  ok(`${label}: no soy or healing claims in the new copy`, !/soy|heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.studio').innerText + document.querySelector('.rep-grid').innerText + document.querySelector('.gift-grid').innerText))));
   ok(`${label}: home has no sideways scroll`, (await noScroll(p)) <= 1);
 
   // ---- coaching: Claire's portrait
@@ -67,11 +64,16 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: the "bring one back" idea is a draft for Claire only`, !/bring one back/i.test(archiveText));
   ok(`${label}: drops has no sideways scroll`, (await noScroll(p)) <= 1);
   await p.goto(base + '/drops?moon=jarrah'); await p.waitForSelector('#pm-jarrah'); await p.waitForTimeout(1200);
-  ok(`${label}: a moon on the home arc deep-links to its card`, await p.evaluate(() => { const c = document.querySelector('#pm-jarrah'); const r = c.getBoundingClientRect(); return c.classList.contains('on') && r.top >= 0 && r.bottom <= innerHeight; }));
+  ok(`${label}: a deep link lights its card in the archive`, await p.evaluate(() => { const c = document.querySelector('#pm-jarrah'); const r = c.getBoundingClientRect(); return c.classList.contains('on') && r.top >= 0 && r.bottom <= innerHeight; }));
 
   // ---- shop: real format photographs on the candle and deodorant heads, the renders left for rollers and diffusers
   await p.goto(base + '/shop'); await p.waitForSelector('.ghead'); await p.waitForTimeout(600);
   ok(`${label}: candle and deodorant group heads carry a studio photograph`, await p.evaluate(() => { const h = [...document.querySelectorAll('.grid.grouped .ghead')]; const by = t => h.find(x => new RegExp(t, 'i').test(x.querySelector('h2')?.textContent ?? '')); return !!by('candle')?.querySelector('.ghead-ph[src*="studio"]') && !!by('deodorant')?.querySelector('.ghead-ph[src*="studio"]') && !by('roller')?.querySelector('.ghead-ph') && !by('diffuser')?.querySelector('.ghead-ph'); }));
+  await p.goto(base + '/shop?f=candle'); await p.waitForTimeout(1500);
+  const chref = await p.evaluate(() => document.querySelector('a[href*="/product/"]')?.getAttribute('href'));
+  await p.goto(base + chref.replace(/^#?\//, '/')); await p.waitForSelector('.pdp'); await p.waitForTimeout(1200);
+  ok(`${label}: a candle page shows a bench photograph under the gallery, scent unnamed`, await p.evaluate(() => { const f = document.querySelector('.pdp > div:first-child .ph-product'); return !!f && f.querySelector('img').alt.length > 15 && !/mother|florals/i.test(f.innerText); }));
+  ok(`${label}: candle page has no sideways scroll`, (await noScroll(p)) <= 1);
   ok(`${label}: no JS errors`, errs.length === 0, errs.join(' | ').slice(0, 200));
   await ctx.close();
 }

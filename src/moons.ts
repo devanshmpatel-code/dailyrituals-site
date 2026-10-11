@@ -1,16 +1,19 @@
-// The studio photographs: Claire's real candles, seen from above, as moons.
+// The studio photographs: Claire's real past candle work, placed across the site.
 //
-// Seen from above, every candle Claire pours is a small moon: a full face of wax in a black tin with a crescent of real
-// things (lavender, salt, stones, citrus, wood, petals) laid along the rim. The circular "moons" in /img/studio/moons/ are
-// cut from her own top-down photographs. The celestial system was already in her craft (Midnight Forest carries moon- and
-// star-shaped stones), so the moons become the visual heart of the site.
+// - home: the hero arch shows one of her photographs for the hour (heroStackHTML, pictures chosen in config MOMENTS);
+// - home: the studio collage after "Meet Claire", one photograph with Ritual on Repeat and one with Send a Sunrise;
+// - product pages: a "From the studio" photograph with the candle information;
+// - Moon Drops (/drops): the past moons archive. The circular "moons" in /img/studio/moons/ are cut from her own top-down
+//   photographs (the toppings are laid in a crescent along the rim). The moon idea lives only on that page now.
 //
 // Facts and quotations come only from the owner's Instagram captions (scratchpad/studio-facts.md). Every other sentence
 // here is copy and is a DRAFT FOR CLAIRE: in the markup it is wrapped in <span class="d"> so "Show drafts for Claire"
-// highlights it. Past scents are never shown as buyable: nothing here carries an add-to-cart.
+// highlights it. Past scents are never shown as buyable: nothing here carries an add-to-cart, and no photograph of a past
+// scent is captioned with its name outside the archive.
 import { esc } from './ui';
 import { glyph, moonRow, tonightName } from './celestial';
 import { currentRoute } from './router';
+import { MOMENTS } from './config';
 
 export type Season = 'winter' | 'love' | 'spring' | 'autumn' | 'any';
 export interface Moon {
@@ -67,71 +70,35 @@ const ALT: Record<string, string> = {
 };
 const alt = (slug: string) => ALT[slug] ?? `${byId[slug].name}: a candle seen from above`;
 
-/** The home arc: eight moons as one lunar month. The crescent of toppings is turned (CSS rotate) so waxing moons face right,
- *  waning moons face left, and the one candle covered edge to edge (Easter Bread) is the full moon. Sizes grow to the full. */
-export const HOME_ARC: { slug: string; phase: string; rot: number; size: number }[] = [
-  { slug: 'midnight-forest', phase: 'new moon', rot: 0, size: 60 },
-  { slug: 'lavender-haze', phase: 'waxing crescent', rot: -20, size: 70 },
-  { slug: 'irish-coffee', phase: 'first quarter', rot: 0, size: 84 },
-  { slug: 'mulled-wine', phase: 'waxing gibbous', rot: 45, size: 100 },
-  { slug: 'easter-bread', phase: 'full moon', rot: 0, size: 122 },
-  { slug: 'spring-blooms', phase: 'waning gibbous', rot: 170, size: 100 },
-  { slug: 'jarrah', phase: 'last quarter', rot: 180, size: 84 },
-  { slug: 'sea-salt-sage', phase: 'waning crescent', rot: 0, size: 70 },
-];
-
-/** The moonrise: a quadratic curve (viewBox 1000 x 600) that starts low on the left, beneath the words, and climbs through the
- *  empty sky on the right. The dashed path and the moon positions share it. */
-const ARC = { p0: [40, 540], p1: [560, 600], p2: [960, 50] };
-export const ARC_PATH = `M${ARC.p0.join(',')} Q${ARC.p1.join(',')} ${ARC.p2.join(',')}`;
-const arcPt = (t: number) => {
-  const { p0, p1, p2 } = ARC;
-  const x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0];
-  const y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1];
-  return [x / 10, y / 6];
-};
-
-// ---------- home: "Every candle is a moon" ----------
-export function moonsSectionHTML(): string {
-  const moons = HOME_ARC.map((h, i) => {
-    const m = byId[h.slug], [x, y] = arcPt(i / (HOME_ARC.length - 1));
-    // the low moons on the left open their caption beside them (the words sit above, the panel's edge below); the rest open below
-    const edge = (i === HOME_ARC.length - 1 ? ' at-end' : '') + (i < 4 ? ' side' : '');
-    return `<li class="moon-pt${edge}" style="--x:${x.toFixed(1)}%;--y:${y.toFixed(1)}%;--s:${h.size}px;--r:${h.rot}deg;--i:${i}">
-      <a class="moon-link" href="#/drops?moon=${m.slug}" aria-describedby="moon-cap-${m.slug}">
-        <span class="moon-disc"><img src="${moonSrc(m.slug)}" alt="${esc(alt(m.slug))}" width="520" height="520" loading="lazy" decoding="async"></span>
-        <span class="moon-name"><b>${esc(m.name)}</b><small>${esc(h.phase)}</small></span>
-      </a>
-      <span class="moon-cap" id="moon-cap-${m.slug}" role="tooltip"><q>${esc(m.quote ?? '')}</q><em>Claire</em></span>
-    </li>`;
-  }).join('');
-  // draft for Claire: the eyebrow, heading and paragraph below (facts used: White Rock, BC; wooden wicks; topped by hand with real botanicals and stones)
-  return `<section class="moons night" id="moons" aria-labelledby="moonsH">
-    <div class="wrap moons-in">
-      <div class="moons-tx">
-        <span class="eyebrow has-glyph">${glyph('moon')}From the studio</span>
-        <h2 id="moonsH"><span class="d">Every candle is a <span class="it">moon.</span></span></h2>
-        <p class="d">Seen from above, each candle Claire pours is a small moon: a face of wax in a black tin, finished by hand with a crescent of real botanicals and stones along the rim. Handmade in White Rock, BC, with wooden wicks.</p>
-        <div class="cta"><a class="btn white" href="#/shop?f=candle">Candles in the shop</a><a class="btn ghost-w" href="#/drops?past=1">Past moons</a></div>
-      </div>
-      <ul class="moons-arc" aria-label="Eight of Claire's candles, seen from above, as the phases of the moon">
-        <svg class="moons-path" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="${ARC_PATH}" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 7" vector-effect="non-scaling-stroke"/></svg>
-        ${moons}
-      </ul>
-      <p class="moons-hint small" aria-hidden="true">Hover a moon for Claire's words · past and seasonal pours, kept in the archive</p>
-    </div>
-  </section>`;
+// ---------- home: the hero arch ----------
+/** The five arch pictures, one per moment, from config MOMENTS. Real photographs, so none carries the render class (dimg) and
+ *  the paths (/img/studio/web/*.webp) never match the render swap in photos.ts. All five sit stacked in the arch and are
+ *  cross-faded by setMoment, so they load eagerly; the two sizes serve the arch at phone and desktop. */
+export function heroStackHTML(): string {
+  return MOMENTS.map(m => `<img data-mimg="${m.key}" src="${m.image}" srcset="${m.image.replace('-1000.webp', '-720.webp')} 720w, ${m.image} 1000w" sizes="(max-width: 820px) 80vw, 30vw" alt="${esc(m.imageAlt)}" width="1000" height="1000" style="object-position:${m.imagePos}" decoding="async">`).join('');
 }
+
+// ---------- the extra photographs: Ritual on Repeat, Send a Sunrise, the product page ----------
+// Each is a past pour shown as Claire's craft. The captions use only verified facts (topped by hand with real botanicals,
+// wooden wicks, White Rock, BC) and never name the scent, so nothing reads as buyable. The lines are drafts for Claire.
+const studioFigure = (file: string, w: number, h: number, altText: string, sizes: string, cls: string, cap: string) =>
+  `<figure class="studio-ph ${cls}"><img src="/img/studio/web/${file}-1000.webp" srcset="/img/studio/web/${file}-560.webp 560w, /img/studio/web/${file}-1000.webp 1000w" sizes="${sizes}" alt="${esc(altText)}" width="${w}" height="${h}" loading="lazy" decoding="async"><figcaption><span class="d">${cap}</span></figcaption></figure>`;
+/** Chapter 4, Ritual on Repeat: a batch of tins on the bench, under the chapter's words. */
+export const repeatPhotoHTML = () => studioFigure('howlite-batch', 1000, 666, 'A batch of candles in black tins on the workbench, each topped by hand with two white stones beside its wooden wick', '(max-width: 900px) 100vw, 40vw', 'ph-repeat', 'Poured, topped and lidded by hand in White Rock, BC');
+/** Chapter 5, Send a Sunrise: a petal-topped pour tucked behind the gift card. */
+export const giftPhotoHTML = () => studioFigure('sweet-romance', 1000, 750, 'Three candles in black tins, topped by hand with dried rose petals and small purple flowers', '(max-width: 820px) 60vw, 22vw', 'ph-gift', 'Finished by hand with dried petals');
+/** Product page (candles): a crowd of tins from the bench beside the candle information. */
+export const productStudioHTML = () => studioFigure('mothers-day-florals', 1000, 667, 'A bench of candles in black tins, each topped by hand with a dried flower beside its wooden wick', '(max-width: 820px) 100vw, 50vw', 'ph-product', 'From the studio · wooden wicks, and every tin finished by hand with real botanicals and stones');
 
 // ---------- home: the studio collage ----------
 interface Shot { file: string; w: number; h: number; alt: string; cap: string; cls: string }
 const SHOTS: Shot[] = [
-  { file: 'midnight-forest-lit', w: 1184, h: 1200, alt: 'A lit Midnight Forest candle in a black tin, its wooden wick burning, surrounded by leaves', cap: 'Midnight Forest', cls: 'a' },
+  { file: 'verdant-candles', w: 1000, h: 1333, alt: 'A lit Verdant candle in a white glass tumbler with a black label, a small lit tin beside it', cap: 'Verdant', cls: 'a' },
   { file: 'candle-season', w: 1200, h: 639, alt: 'A table covered with candles in black tins, each topped with dried fruit, flowers, sprinkles and stones', cap: 'Candle season', cls: 'b' },
   { file: 'crystal-mushrooms', w: 1200, h: 1159, alt: 'Black tins of white wax topped with small stone mushrooms, stars and moons', cap: 'Stone mushrooms, stars and moons', cls: 'c' },
   { file: 'large-candles', w: 1200, h: 1163, alt: 'Four large 16 oz candles in black tins topped with dried orange, cinnamon, lavender and stones', cap: 'Large candles · 16 oz', cls: 'd' },
   { file: 'black-crescent', w: 1058, h: 1200, alt: 'Candles in black tins, each with a crescent of small black stones along the rim', cap: 'A crescent of stones', cls: 'e' },
-  { file: 'howlite-tins', w: 1040, h: 1200, alt: 'Dark tins of wax, each topped with a few white stones beside the wooden wick', cap: 'From the studio', cls: 'f' },
+  { file: 'pumpkin-spice', w: 1000, h: 993, alt: 'Three candles in black tins seen from above, each topped by hand with cinnamon bark and small dark spices, one with a little candy pumpkin', cap: 'Autumn pours', cls: 'f' },
 ];
 export function collageHTML(): string {
   const figs = SHOTS.map((s, i) => `<figure class="cg cg-${s.cls}" style="--i:${i}">
@@ -183,7 +150,7 @@ export function pastMoonsHTML(): string {
   </section>`;
 }
 
-/** Deep links from the home arc: #/drops?moon=slug lights that card; #/drops?past=1 scrolls to the archive. */
+/** Deep links into the archive: #/drops?moon=slug lights that card; #/drops?past=1 scrolls to the archive. */
 export function wirePastMoons(app: HTMLElement) {
   const q = new URLSearchParams(currentRoute().split('?')[1] ?? '');
   const slug = q.get('moon'), past = q.get('past');

@@ -106,7 +106,8 @@ body:not(.show-drafts) .confirm { display: none !important; }
   --motif-sun: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 80'%3E%3Cpath d='M10 70a50 50 0 01100 0' fill='none' stroke='%23D9953A' stroke-width='3'/%3E%3Ccircle cx='60' cy='54' r='14' fill='%23E8A957' fill-opacity='.7'/%3E%3Cpath d='M0 70h120' stroke='%23D9953A' stroke-width='3'/%3E%3C/svg%3E");
   --motif-rings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%232F5249' stroke-opacity='.45' stroke-width='2.5'%3E%3Ccircle cx='50' cy='50' r='12'/%3E%3Ccircle cx='50' cy='50' r='26'/%3E%3Ccircle cx='50' cy='50' r='40'/%3E%3C/g%3E%3C/svg%3E");
   --motif-leaf: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='%23A8574A' fill-opacity='.35'%3E%3Cellipse cx='50' cy='30' rx='13' ry='28' transform='rotate(-35 50 30)'/%3E%3Cellipse cx='62' cy='64' rx='11' ry='24' transform='rotate(35 62 64)'/%3E%3C/g%3E%3C/svg%3E");
-  --motif-moon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='36' fill='%23E8A957' fill-opacity='.9'/%3E%3Ccircle cx='38' cy='40' r='7' fill='%23C98A38' fill-opacity='.55'/%3E%3Ccircle cx='60' cy='58' r='10' fill='%23C98A38' fill-opacity='.45'/%3E%3Ccircle cx='55' cy='33' r='4' fill='%23C98A38' fill-opacity='.5'/%3E%3C/svg%3E");
+  /* a four-point star with two small companions (gold), for the night tile: the moon motif is kept to Moon Drops */
+  --motif-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 14C52 38 62 48 86 50C62 52 52 62 50 86C48 62 38 52 14 50C38 48 48 38 50 14Z' fill='%23E8A957' fill-opacity='.9'/%3E%3Cpath d='M20 18C20.8 24 23 26.2 29 27C23 27.8 20.8 30 20 36C19.2 30 17 27.8 11 27C17 26.2 19.2 24 20 18Z' fill='%23E8A957' fill-opacity='.55'/%3E%3Ccircle cx='80' cy='80' r='3' fill='%23E8A957' fill-opacity='.6'/%3E%3C/svg%3E");
 }
 
 /* generic panels: sand to blush wash, soft shape */
@@ -127,7 +128,7 @@ body:not(.show-drafts) .confirm { display: none !important; }
 .ways > a.way:nth-child(4n+1) { background: linear-gradient(150deg, var(--tint-sage), #EEF3EF); border-radius: var(--shape-leaf); --m: var(--motif-rings); }
 .ways > a.way:nth-child(4n+2) { background: linear-gradient(150deg, var(--tint-butter), #FBF2E0); border-radius: var(--shape-tab); --m: var(--motif-sun); }
 .ways > a.way:nth-child(4n+3) { background: linear-gradient(150deg, var(--tint-blush), #F8E9E3); border-radius: var(--shape-leaf-r); --m: var(--motif-leaf); }
-.ways > a.way:nth-child(4n+4) { background: linear-gradient(150deg, #3B2A45, #2A1F33); border-radius: var(--shape-soft); --m: var(--motif-moon); color: #F3ECF5; }
+.ways > a.way:nth-child(4n+4) { background: linear-gradient(150deg, #3B2A45, #2A1F33); border-radius: var(--shape-soft); --m: var(--motif-star); color: #F3ECF5; }
 .ways > a.way:nth-child(4n+4) .eyebrow { color: #E8A957; }
 .ways > a.way:nth-child(4n+4) h3, .ways > a.way:nth-child(4n+4) p { color: #F3ECF5; }
 
@@ -149,7 +150,7 @@ body:not(.show-drafts) .confirm { display: none !important; }
 .ways > a.way:nth-child(4n+2)::after { width: 84px; height: 56px; }
 @media (min-width: 821px) {
   #sets > .panel:last-child { grid-column: span 2; background: linear-gradient(150deg, #3B2A45, #2A1F33); border-radius: 56px 12px 56px 12px; color: #F3ECF5; position: relative; overflow: hidden; padding-right: 150px; }
-  #sets > .panel:last-child::after { content: ""; position: absolute; right: 28px; top: 50%; width: 96px; height: 96px; transform: translateY(-50%); background: var(--motif-moon) no-repeat center / contain; }
+  #sets > .panel:last-child::after { content: ""; position: absolute; right: 28px; top: 50%; width: 96px; height: 96px; transform: translateY(-50%); background: var(--motif-star) no-repeat center / contain; }
   #sets > .panel:last-child .eyebrow { color: #E8A957; }
   #sets > .panel:last-child h3, #sets > .panel:last-child p, #sets > .panel:last-child .small { color: #F3ECF5; }
   #sets > .panel:last-child a { color: #F3ECF5; }
@@ -497,13 +498,12 @@ button.soon { background: transparent !important; color: inherit !important; bor
 .clubsoon .eyebrow { color: #F3D29A; } .clubsoon a { color: inherit; }
 .clubsoon .nform { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; max-width: 480px; } .clubsoon .nform input { flex: 1 1 220px; min-height: 48px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08); color: #fff; padding: 0 20px; font: inherit; }
 .clubsoon .nform input::placeholder { color: rgba(246, 238, 223, .6); } .clubsoon .nform .btn { background: linear-gradient(120deg, var(--gold), var(--gold-2)); color: #231A2B; border: 0; }
-.cs-moon { width: min(100%, 460px); justify-self: center; }
-.cs-moon .mp { animation: csRise 1.2s cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--d); }
-.cs-moon .full { filter: drop-shadow(0 0 18px rgba(243, 210, 154, .7)); }
-.cs-moon .halo { animation: csGlow 6s ease-in-out infinite; transform-origin: 200px 80px; }
-@keyframes csRise { from { opacity: 0; translate: 0 18px; } } @keyframes csGlow { 50% { opacity: .55; scale: 1.08; } }
-@media (prefers-reduced-motion: reduce) { .cs-moon .mp, .cs-moon .halo { animation: none; } }
-@media (max-width: 820px) { .clubsoon .wrap { grid-template-columns: 1fr; } .cs-moon { width: 220px; } }
+/* the five moods as a constellation beside the words (gold hairlines, moonstone stars), in place of the old moon arc */
+.cs-const { width: min(100%, 400px); justify-self: center; color: var(--moonstone, #EDE6DA); animation: csRise 1.2s cubic-bezier(.2,.7,.2,1) both; }
+.cs-const .cel { width: 100%; height: auto; overflow: visible; }
+@keyframes csRise { from { opacity: 0; translate: 0 18px; } }
+@media (prefers-reduced-motion: reduce) { .cs-const { animation: none; } }
+@media (max-width: 820px) { .clubsoon .wrap { grid-template-columns: 1fr; } .cs-const { width: 240px; } }
 @media (max-width: 820px) { body.loyalty-off .club-pill { display: none; } }
 
 /* Our story */
@@ -556,8 +556,8 @@ body:not(.no-grade) .dayhero[data-m="dawn"] img[data-mimg] { filter: brightness(
 
 /* two dark chapters side by side (Belong, then Moon Drops) join without a bright band between them */
 .club .head { display: grid !important; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); align-items: center; gap: 32px; }
-.club .head .cs-moon { width: min(100%, 420px); justify-self: center; }
-@media (max-width: 820px) { .club .head { grid-template-columns: 1fr; } .club .head .cs-moon { width: 240px; } }
+.club .head .cs-const { width: min(100%, 380px); justify-self: center; }
+@media (max-width: 820px) { .club .head { grid-template-columns: 1fr; } .club .head .cs-const { width: 240px; } }
 /* phones: the wall as a two-column mosaic, first six photos on the home page (the full wall is one tap away) */
 @media (max-width: 820px) {
   .wall { columns: 2; column-gap: 10px; }

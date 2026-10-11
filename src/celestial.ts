@@ -132,7 +132,7 @@ export function glyph(kind: Glyph, size = 18): string {
 
 // ---------- placing the motifs ----------
 const KINDS: Record<string, () => string> = {
-  moonrow: moonRow, 'moon-glyph': () => moonGlyph(18), constellation: () => constellation(), 'constellation-labels': () => constellation({ labels: true }),
+  moonrow: moonRow, 'moon-glyph': () => moonGlyph(18), 'star-glyph': () => glyph('star', 18), constellation: () => constellation(), 'constellation-labels': () => constellation({ labels: true }),
   orbits: () => orbitRings(), 'portrait-orbits': portraitOrbits, astrolabe, sun: () => sunGlyph(), flower: flowerOfLife,
 };
 /** Fill every `[data-cel="kind"]` placeholder inside root with its motif. */
@@ -144,12 +144,14 @@ export function hydrate(root: ParentNode) {
   });
 }
 
+// The moon glyph belongs to Moon Drops only (the owner keeps moons to that line); everything else uses the other marks.
 const HOME_GLYPHS: Record<string, Glyph> = { 1: 'sun', 2: 'flower', 3: 'star', 4: 'orbit', 5: 'sun', 6: 'orbit', 7: 'constellation', 8: 'moon' };
 function pickGlyph(text: string): Glyph {
   const t = text.toLowerCase();
   const n = t.match(/chapter (\d)/)?.[1];
   if (n && HOME_GLYPHS[n]) return HOME_GLYPHS[n];
-  if (/moon|drop|night|wind down|light it|archive|coming soon/.test(t)) return 'moon';
+  if (/moon drop|past moons/.test(t)) return 'moon';
+  if (/night|wind down|light it|archive|coming soon/.test(t)) return 'star';
   if (/coach|practi|repeat|habit|expect|begin|check-in|refill|run out|subscription|days|while you wait/.test(t)) return 'orbit';
   if (/sun|morning|first light|wear|gift|share|feeling|sunrise|arrives/.test(t)) return 'sun';
   if (/discover|try|story|began|craft|batch|meet|intention|questions|contact|shipping/.test(t)) return 'flower';
@@ -170,7 +172,7 @@ function glyphEyebrows(root: ParentNode) {
 }
 
 const LIGHT = new Set(['sand', 'sage', 'gold', 'rose', 'euc']); // the seam above each of these is light (the euc chapter opens on rose)
-/** The home chapters below the opening: on the seam into each chapter, a moon-phase row where the seam is light, a gold hairline with a moonstone point where it is dark. */
+/** The home chapters below the opening: on the seam into each chapter, a gold hairline with a small star where the seam is light, a moonstone point where it is dark. */
 function homeDividers(app: HTMLElement) {
   app.querySelectorAll<HTMLElement>('section.df').forEach(sec => {
     if (sec.querySelector(':scope > .cel-div')) return;
@@ -179,7 +181,7 @@ function homeDividers(app: HTMLElement) {
     const div = document.createElement('div');
     div.className = `cel-div ${light ? 'light' : 'dark'} g-${g}`;
     div.setAttribute('aria-hidden', 'true');
-    div.innerHTML = light ? `<i></i>${moonRow().replace(/role="img" aria-label="[^"]*"/, 'aria-hidden="true"')}<i></i>` : '<i></i><b class="cel-rulept"></b><i></i>';
+    div.innerHTML = light ? `<i></i>${glyph('star', 14)}<i></i>` : '<i></i><b class="cel-rulept"></b><i></i>';
     sec.prepend(div);
   });
 }

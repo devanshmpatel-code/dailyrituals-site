@@ -2,7 +2,6 @@ import { MOODS, MOMENTS, FORMAT_LABEL, type Mood, type Moment, type Format } fro
 import { money, findLive, type Item } from '../wix';
 import { esc, toast } from '../ui';
 import { add } from '../cart';
-import { moonPhase } from './sky';
 import '../wheel.css';
 
 // The scent atlas. A nocturne star-chart plate: each mood is a constellation with a lit sphere at its heart (the mood,
@@ -11,8 +10,8 @@ import '../wheel.css';
 // and the lines follow. Choosing a constellation turns the whole sky so it comes to rest under the index at the top of
 // the chart ("into alignment") and leans in a little; its sphere grows and takes its name, its scent balls grow into
 // named, tappable points. Choosing a ball shows that scent's formats and prices in the panel beside the plate.
-// Tonight's real moon phase is drawn in the corner (computed, no meaning attached). The plate is drawn once and
-// transformed in place, so every change animates; one frame loop (about 30 frames a second) drives the drift and the
+// The plate's corners carry its title and where it is made (no moon: the owner keeps moons to Moon Drops). The plate is
+// drawn once and transformed in place, so every change animates; one frame loop (about 30 frames a second) drives the drift and the
 // turn, and it only runs while the plate is on screen, the tab is visible and motion is welcome.
 //
 // Design mapping (draft for Claire): the five constellations sit evenly around the pole, cool to warm to earth:
@@ -28,7 +27,6 @@ const INK_ON: Record<Mood, boolean> = { fresh: true, sunny: true, floral: false,
 const SHORT: Record<Mood, string> = { fresh: 'Fresh', sunny: 'Sunny', floral: 'Floral', woody: 'Woody', grounding: 'Grounding' };
 /** draft for Claire: how the "Guide me" path names each format */
 const VERB: Record<Format, string> = { diffuser: 'Diffuse it', roller: 'Wear it', candle: 'Light it', deodorant: 'Wear it' };
-const PHASES = ['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'];
 
 type Pt = [number, number]; // offset of a scent ball from its mood sphere, drawn upright (outward from the pole is up)
 /** the crown of 1 to 5 scent balls above the sphere, as it appears when the constellation is at the top of the chart;
@@ -62,14 +60,6 @@ const mix = (a: string, b: string, t: number) => '#' + hex(a).map((v, i) => Math
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isNarrow = () => window.matchMedia('(max-width: 820px)').matches;
 
-/** tonight's moon, outline only, lit portion filled: 0 = new, .5 = full; waxing lights the right side */
-function moonSVG(p: number, r: number) {
-  const k = Math.cos(2 * Math.PI * p), waxing = p < .5, rx = Math.max(.01, Math.abs(k) * r);
-  const d = waxing ? `M0 ${-r}A${r} ${r} 0 0 1 0 ${r}A${rx} ${r} 0 0 ${k > 0 ? 0 : 1} 0 ${-r}Z` : `M0 ${-r}A${r} ${r} 0 0 0 0 ${r}A${rx} ${r} 0 0 ${k > 0 ? 1 : 0} 0 ${-r}Z`;
-  return `<circle class="wmoon-o" r="${r}"/><path class="wmoon-l" d="${d}"/>`;
-}
-export const phaseName = (p: number) => PHASES[Math.round(p * 8) % 8];
-
 /** a ball's own slow path: two layered sines on each axis, each with its own period (7 to 15 s) and phase */
 type Drift = { a: number[]; w: number[]; p: number[] };
 type Ball = { el: SVGGElement; bx: number; by: number; x: number; y: number; d: Drift };
@@ -92,7 +82,6 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
   const formatsOf = (m: Mood) => [...new Set(items.filter(i => i.mood === m).map(i => i.format))].sort();
   let selMood: Mood | null = initialMood && byMood.has(initialMood) ? initialMood : null, selScent: string | null = null;
   let guide = 0, gMoment: Moment | null = null, fmtFilter: Format | null = null;
-  const phase = moonPhase();
 
   // ---- the plate, drawn once (and again if the viewport crosses the phone breakpoint) ----
   let portrait = isNarrow();
@@ -144,7 +133,7 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
             <g class="wup" data-x="0" data-y="0"><text class="wmname ${INK_ON[m] ? 'ink' : 'wht'}" text-anchor="middle" dominant-baseline="central">${esc(SHORT[m])}</text><text class="wreg" data-below="${ORB + (portrait ? 22 : 19)}" data-above="${-(ORB + (portrait ? 17 : 14))}" text-anchor="middle" dominant-baseline="middle">${SHORT[m].toUpperCase()}</text></g></g></g>${stars}</g>`;
     }).join('');
     const all = items.filter(i => i.mood), nScents = new Set(all.map(i => i.scent)).size;
-    // draft for Claire: the plate's corner captions. The moon phase is tonight's, computed; no meaning is attached to it.
+    // draft for Claire: the plate's corner captions ("White Rock, BC" is from the logo: MADE IN WHITE ROCK, BC).
     el.innerHTML = `<div class="wheelwrap watlas"><div class="wheel wplate${portrait ? ' portrait' : ''}">
       <svg class="wsvg" viewBox="0 ${top} 600 ${h}" role="group" aria-label="Scent atlas: five constellations, one for each mood; each star is a scent">
         <defs><clipPath id="wclip"><circle cx="${CX}" cy="${CY}" r="${R - 1}"/></clipPath>
@@ -159,8 +148,7 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
           <g class="wpole">${pole}<circle cx="${CX}" cy="${CY}" r="1.6"/></g>
           <g class="wouter"><circle class="wg2" cx="${CX}" cy="${CY}" r="281"/><g class="wtick">${ring}</g></g>
           <text class="wcap" x="22" y="${bandT}">The scent atlas</text><text class="wcap dim" x="22" y="${bandT + 16}">Plate I · ${moods.length} moods</text>
-          <g class="wmoon" transform="translate(560 ${bandT + 6})">${moonSVG(phase, 14)}</g>
-          <text class="wcap" x="534" y="${bandT - 4}" text-anchor="end">Tonight</text><text class="wcap dim" x="534" y="${bandT + 12}" text-anchor="end">${esc(phaseName(phase))}</text>
+          <text class="wcap" x="578" y="${bandT}" text-anchor="end">Made in</text><text class="wcap dim" x="578" y="${bandT + 16}" text-anchor="end">White Rock, BC</text>
           <text class="wcap dim" x="22" y="${bandB}">${nScents} scents · ${moods.length} constellations</text><text class="wcap dim" x="578" y="${bandB}" text-anchor="end">✦ one star, one scent</text>
         </g>
         <g clip-path="url(#wclip)"><g class="wsky">${field.join('')}${cons}</g></g>

@@ -22,7 +22,7 @@
 .wpole line { stroke: var(--goldl); stroke-opacity: .7; stroke-width: .9; } .wpole circle { fill: var(--goldl); }
 .wplate .wcap { font: 500 10px var(--mono, "DM Mono", monospace); letter-spacing: .18em; text-transform: uppercase; fill: var(--gold); }
 .wplate .wcap.dim { fill: var(--moon); fill-opacity: .55; }
-.wmoon-o { fill: none; stroke: var(--moon); stroke-opacity: .7; stroke-width: 1; } .wmoon-l { fill: var(--moon); fill-opacity: .85; }
+
 .windex { fill: var(--goldl); opacity: .45; transition: opacity .5s; }
 .wplate.picked .windex { opacity: 1; }
 /* the outer tick ring turns once every four minutes, only while the plate is on screen */

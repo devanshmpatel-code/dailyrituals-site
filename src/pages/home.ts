@@ -1,6 +1,6 @@
 import Main from '../canvas/pages/Main.html?raw';
 import { MOMENTS, MOODS, NEXT_DROP_ISO, LOYALTY_ENABLED, type Moment, type MomentKey } from '../config';
-import { moonArc } from './symbols';
+import { constellation } from '../celestial';
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
@@ -11,7 +11,7 @@ import { mountJourney } from './journey';
 import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
-import { moonsSectionHTML, collageHTML, wireStudio } from '../moons';
+import { collageHTML, wireStudio, heroStackHTML, repeatPhotoHTML, giftPhotoHTML } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -42,14 +42,19 @@ function greeting(d = new Date()) {
 export async function renderHome(app: HTMLElement) {
   useRealClock = true;
   app.innerHTML = fixImages(Main);
-  // the studio photographs: the moons panel sits between the opening and Chapter 1; the collage closes Chapter 2 after "Meet Claire"
-  app.querySelector('.proof-strip')?.insertAdjacentHTML('afterend', moonsSectionHTML());
+  // the studio photographs: the hero arch shows Claire's past candle work for the hour (set here, before swapRenders, so the
+  // canvas renders it replaces are never swapped for Wix photos); the collage closes Chapter 2 after "Meet Claire"; one
+  // photograph each sits with Ritual on Repeat and Send a Sunrise
+  const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) stack.innerHTML = heroStackHTML();
   app.querySelector('.claire')?.insertAdjacentHTML('afterend', collageHTML());
+  app.querySelector('.rep-grid .stick')?.insertAdjacentHTML('beforeend', repeatPhotoHTML());
+  app.querySelector('.gift-grid > div:has(.gcard)')?.insertAdjacentHTML('beforeend', giftPhotoHTML());
   swapRenders(app);
   wireStudio(app);
   wireCommon(app);
   wireHeroStatic(app);
-  if (!LOYALTY_ENABLED) app.querySelector('.club .head')?.insertAdjacentHTML('beforeend', `<div class="cs-moon" aria-hidden="true">${moonArc()}</div>`);
+  // the Ritualists head: the five moods as a constellation (gold hairlines on the night), in place of the old moon arc
+  if (!LOYALTY_ENABLED) app.querySelector('.club .head')?.insertAdjacentHTML('beforeend', `<div class="cs-const" aria-hidden="true">${constellation({ labels: true })}</div>`);
   wireRepeatCalc(app, null);
   wireVote(app);
   wireCountdown(app);
