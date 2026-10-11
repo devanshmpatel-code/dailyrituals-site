@@ -1,26 +1,26 @@
-/* The breathing pause: the sky of the hour above a candlelit dusk, a Bodhi tree lit by the candle at its foot, and a flame that breathes with you. */
+/* The breathing pause: the sky of the hour above a dark night ground, a Bodhi tree lit by the candle at its foot, and a flame that breathes with you. */
 .jbreathe.fb { position: fixed; inset: 0; z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px;
   text-align: center; color: #F3ECE2; background: #120E1A; opacity: 0; transition: opacity .4s ease; overflow: hidden; isolation: isolate; --k: .5; }
 .jbreathe.fb.open { opacity: 1; }
-/* the hour's sky in the top of the window, deepening to a warm dark room where the flame sits */
+/* the hour's sky in the top of the window, deepening to the dark ground the candle stands on; the lower part stays dark
+   whatever the hour, so the words below it are always readable */
 .fb-sky { position: absolute; inset: 0; z-index: -3;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--s0) 70%, #120E1A) 0%, color-mix(in srgb, var(--s1) 45%, #1A1426) 34%, #1A1322 62%, #0E0A14 100%); }
+  background: linear-gradient(180deg, rgba(14, 10, 20, 0) 54%, rgba(14, 10, 20, .5) 75%, rgba(14, 10, 20, .8) 100%),
+    linear-gradient(180deg, color-mix(in srgb, var(--s0) 70%, #120E1A) 0%, color-mix(in srgb, var(--s1) 45%, #1A1426) 34%, #1A1322 62%, #0E0A14 100%); }
 .fb-stars { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; fill: #F3ECE2; opacity: .9; }
-/* the flame's light in the room: a warm wash that swells with the breath, behind the tree so it fills the gaps in the canopy */
-.fb-glow { position: absolute; left: 50%; top: 50%; width: min(150vw, 1400px); aspect-ratio: 1; margin: calc(min(150vw, 1400px) / -2) 0 0 calc(min(150vw, 1400px) / -2); z-index: -2; pointer-events: none;
-  background: radial-gradient(circle at 50% 46%, rgba(255, 184, 104, .34) 0%, rgba(255, 150, 80, .14) 22%, rgba(120, 70, 60, .06) 42%, transparent 62%); will-change: opacity, transform; }
+/* the faintest warmth in the night air around the flame (its place is set from the flame); the candle's real light is on
+   the tree and the ground */
+.fb-glow { position: absolute; left: 50%; top: 50%; width: min(120vmin, 900px); aspect-ratio: 1; transform: translate(-50%, -50%); z-index: -2; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 170, 100, .1) 0%, rgba(255, 160, 96, .06) 20%, rgba(255, 150, 90, .032) 40%, rgba(255, 140, 90, .014) 60%, rgba(255, 140, 90, .004) 80%, rgba(255, 140, 90, 0) 100%); will-change: opacity; }
 /* the Bodhi tree, painted on a canvas that covers the whole pause; the trunk rises behind the candle, the crown fills the top */
 .jbreathe.fb .jb-tree { position: absolute; inset: 0; z-index: -1; display: block; overflow: hidden; pointer-events: none; opacity: 1; mix-blend-mode: normal; }
-/* its layers: the still tree, the candlelit tree (seen through a mask that grows with the breath) and the leaves that move */
+/* its layers: the still tree, the candle's light on the tree and the ground (its opacity follows the flame) and the leaves that move */
 .jbreathe.fb .jb-tree canvas { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 100%; }
-.jbreathe.fb .jb-tree .fb-bodhi, .jbreathe.fb .jb-tree .fb-bodhi-lit { will-change: transform; }
-/* a quiet dark ground beneath the words, so they stay readable whatever the hour */
-.jbreathe.fb::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 46%; z-index: -1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(14, 10, 20, 0) 0%, rgba(14, 10, 20, .55) 45%, rgba(14, 10, 20, .8) 100%); }
+.jbreathe.fb .jb-tree .fb-bodhi-lit { will-change: opacity; }
 .fb-stage { position: relative; width: min(70vw, 360px); aspect-ratio: 3 / 4; margin-bottom: -6px; }
 .fb-flame { width: 100%; height: 100%; display: block; }
 .jbreathe.fb .jb-word { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 6.4vw, 66px); line-height: 1; margin: 0; letter-spacing: -.01em; color: #FBF3E6;
-  text-shadow: 0 0 calc(10px + var(--k) * 26px) rgba(255, 190, 110, calc(.18 + var(--k) * .3)); }
+  text-shadow: 0 0 calc(10px + var(--k) * 26px) rgba(255, 190, 110, calc(.14 + var(--k) * .22)); }
 .jbreathe.fb .jb-word.fb-in { animation: fbWord .9s ease both; }
 @keyframes fbWord { from { opacity: 0; transform: translateY(6px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 .jbreathe.fb .jb-sub { margin: 4px 0 6px; max-width: 40ch; color: rgba(243, 236, 226, .72); font-size: 15px; }
