@@ -66,11 +66,11 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
     deodorant: ['Wear it daily', 'Natural deodorant in our signature scents.'],
   };
   const card = (i: Item) => cardHTML(i, i.inStock ? undefined : 'Sold out');
-  // Format imagery: the candle and deodorant group heads carry a real studio photograph (the candles are black tins, not the
-  // amber-glass 3D render). The unnamed black-crescent moon stands for "a candle"; no real photos of rollers or diffusers exist yet.
+  // Format imagery: the candle and deodorant group heads carry a real cut-out from Claire's photographs (Verdant, a candle
+  // in the catalogue; Westcoast natural deodorant). No real photos of rollers or diffusers exist yet.
   const FORMAT_PHOTO: Partial<Record<Format, string>> = {
-    candle: '<img class="ghead-ph" src="/img/studio/moons/black-crescent.webp" alt="A candle from the studio seen from above: white wax in a black tin with a crescent of small black stones" width="520" height="520" loading="lazy" decoding="async">',
-    deodorant: '<img class="ghead-ph" src="/img/studio/web/westcoast-round.webp" alt="Natural deodorant jars from the studio" width="480" height="480" loading="lazy" decoding="async">',
+    candle: '<img class="ghead-ph cut" src="/img/studio/cut/verdant-480.webp" alt="Verdant: a lit candle in a white glass tumbler, a small lit black tin in front" width="480" height="362" loading="lazy" decoding="async">',
+    deodorant: '<img class="ghead-ph cut tall" src="/img/studio/cut/westcoast.webp" alt="Westcoast natural deodorant: an open jar on its black-labelled tin" width="238" height="454" loading="lazy" decoding="async">',
   };
   grid.classList.toggle('grouped', s === 'featured');
   if (s === 'featured') {

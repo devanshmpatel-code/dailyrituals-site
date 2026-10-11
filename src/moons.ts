@@ -90,34 +90,71 @@ export const giftPhotoHTML = () => studioFigure('sweet-romance', 1000, 750, 'Thr
 /** Product page (candles): a crowd of tins from the bench beside the candle information. */
 export const productStudioHTML = () => studioFigure('mothers-day-florals', 1000, 667, 'A bench of candles in black tins, each topped by hand with a dried flower beside its wooden wick', '(max-width: 820px) 100vw, 50vw', 'ph-product', 'From the studio · wooden wicks, and every tin finished by hand with real botanicals and stones');
 
-// ---------- home: the studio collage ----------
-interface Shot { file: string; w: number; h: number; alt: string; cap: string; cls: string }
+// ---------- home: From the studio ----------
+// Real cut-outs (backgrounds removed from Claire's own photographs, /img/studio/cut/): Verdant and Cabana, both in the
+// current catalogue, stand on a lit shelf and link to their pages; Westcoast deodorant sits in front. Beside them, four large
+// 16 oz tins seen from above (her photograph), with what each is topped with labelled. Below, a neat row of photographs from the bench.
+// Every sentence of copy here is a DRAFT FOR CLAIRE (wrapped in .d); the facts are from studio-facts.md.
+const cut = (k: string, w: number, h: number, alt: string, two = true) => two
+  ? `<img src="/img/studio/cut/${k}-900.webp" srcset="/img/studio/cut/${k}-480.webp 480w, /img/studio/cut/${k}-900.webp 900w" sizes="(max-width: 820px) 60vw, 26vw" alt="${esc(alt)}" width="${w}" height="${h}" loading="lazy" decoding="async">`
+  : `<img src="/img/studio/cut/${k}.webp" alt="${esc(alt)}" width="${w}" height="${h}" loading="lazy" decoding="async">`;
+interface Shot { file: string; w: number; h: number; alt: string; cap: string }
 const SHOTS: Shot[] = [
-  { file: 'verdant-candles', w: 1000, h: 1333, alt: 'A lit Verdant candle in a white glass tumbler with a black label, a small lit tin beside it', cap: 'Verdant', cls: 'a' },
-  { file: 'candle-season', w: 1200, h: 639, alt: 'A table covered with candles in black tins, each topped with dried fruit, flowers, sprinkles and stones', cap: 'Candle season', cls: 'b' },
-  { file: 'crystal-mushrooms', w: 1200, h: 1159, alt: 'Black tins of white wax topped with small stone mushrooms, stars and moons', cap: 'Stone mushrooms, stars and moons', cls: 'c' },
-  { file: 'large-candles', w: 1200, h: 1163, alt: 'Four large 16 oz candles in black tins topped with dried orange, cinnamon, lavender and stones', cap: 'Large candles · 16 oz', cls: 'd' },
-  { file: 'black-crescent', w: 1058, h: 1200, alt: 'Candles in black tins, each with a crescent of small black stones along the rim', cap: 'A crescent of stones', cls: 'e' },
-  { file: 'pumpkin-spice', w: 1000, h: 993, alt: 'Three candles in black tins seen from above, each topped by hand with cinnamon bark and small dark spices, one with a little candy pumpkin', cap: 'Autumn pours', cls: 'f' },
+  { file: 'candle-season', w: 1200, h: 639, alt: 'A table covered with candles in black tins, each topped with dried fruit, flowers, sprinkles and stones', cap: 'Candle season' },
+  { file: 'crystal-mushrooms', w: 1200, h: 1159, alt: 'Black tins of white wax topped with small stone mushrooms, stars and moons', cap: 'Stone mushrooms and stars' },
+  { file: 'pumpkin-spice', w: 1000, h: 993, alt: 'Three candles in black tins seen from above, each topped by hand with cinnamon bark and small dark spices, one with a little candy pumpkin', cap: 'Autumn pours' },
+  { file: 'midnight-forest-lit', w: 1184, h: 1200, alt: 'A lit candle in a black tin, its wooden wick burning, with small stones on the wax and leaves around it', cap: 'Lit, on a wooden wick' },
+  { file: 'black-crescent', w: 1058, h: 1200, alt: 'Candles in black tins, each with a curve of small black stones along the rim', cap: 'A curve of black stones' },
 ];
-export function collageHTML(): string {
-  const figs = SHOTS.map((s, i) => `<figure class="cg cg-${s.cls}" style="--i:${i}">
-      <img src="/img/studio/web/${s.file}-1000.webp" srcset="/img/studio/web/${s.file}-560.webp 560w, /img/studio/web/${s.file}-1000.webp 1000w" sizes="${s.cls === 'a' ? '(max-width: 820px) 100vw, 34vw' : s.cls === 'b' ? '(max-width: 820px) 100vw, 60vw' : '(max-width: 820px) 50vw, 16vw'}" alt="${esc(s.alt)}" width="${s.w}" height="${s.h}" loading="lazy" decoding="async">
-      <figcaption>${esc(s.cap)}</figcaption>
+export function studioHTML(): string {
+  const strip = SHOTS.map((s, i) => `<figure class="sx" style="--r:${(s.w / s.h).toFixed(3)};--i:${i}">
+      <span class="sx-ph"><img src="/img/studio/web/${s.file}-1000.webp" srcset="/img/studio/web/${s.file}-560.webp 560w, /img/studio/web/${s.file}-1000.webp 1000w" sizes="(max-width: 820px) 70vw, 24vw" alt="${esc(s.alt)}" width="${s.w}" height="${s.h}" loading="lazy" decoding="async"></span>
+      <figcaption><span class="d">${esc(s.cap)}</span></figcaption>
     </figure>`).join('');
-  // draft for Claire: eyebrow, heading and the line under it (facts used: White Rock, BC; wooden wicks; finished by hand with real botanicals and stones)
-  return `<div class="wrap studio" aria-labelledby="studioH">
-    <div class="head"><div class="col"><span class="eyebrow">The studio</span><h2 id="studioH"><span class="d">Made by hand in <span class="it">White Rock, BC.</span></span></h2><p class="muted d">Wooden wicks, and every tin finished by hand with real botanicals and stones. A few pictures from Claire's bench.</p></div><a class="tlink" href="#/shop?f=candle">Shop candles</a></div>
-    <div class="collage">${figs}</div>
-  </div>`;
+  return `<section class="wrap studio" aria-labelledby="studioH">
+    <div class="st-head">
+      <div><span class="eyebrow">From the studio</span>
+        <h2 id="studioH"><span class="d">Poured, topped and finished <span class="it">by hand.</span></span></h2></div>
+      <ul class="st-facts">
+        <li><b>Wooden wicks</b></li>
+        <li><b>Topped by hand</b><span class="d">dried flowers, citrus, spices and stones</span></li>
+        <li><b>Black tins and glass tumblers</b><span class="d">up to a full 16 oz</span></li>
+        <li><b>Made in White Rock, BC</b></li>
+      </ul>
+    </div>
+    <div class="st-show">
+      <div class="shelf" role="group" aria-label="Verdant and Cabana candles and Westcoast natural deodorant">
+        <span class="sh-glow" aria-hidden="true"></span><span class="sh-top" aria-hidden="true"></span>
+        <a class="sh-item sh-verdant" href="#/product/verdant">${cut('verdant', 1057, 797, 'Verdant: a lit candle in a white glass tumbler with a black Daily Rituals label, a small lit black tin in front')}<span class="sh-flame f1" aria-hidden="true"></span><span class="sh-flame f2" aria-hidden="true"></span><span class="sh-tag">Verdant <small>candle</small></span></a>
+        <a class="sh-item sh-cabana" href="#/product/cabana">${cut('cabana', 986, 878, 'Cabana: a lit candle in a white glass tumbler with a black Daily Rituals label, a small lit black tin and its labelled lid in front')}<span class="sh-flame f1" aria-hidden="true"></span><span class="sh-flame f2" aria-hidden="true"></span><span class="sh-tag">Cabana <small>candle</small></span></a>
+        <a class="sh-item sh-west" href="#/product/natural-deodorant">${cut('westcoast', 238, 454, 'Westcoast natural deodorant: an open jar on top of its black-labelled tin', false)}<span class="sh-tag">Westcoast <small>deodorant</small></span></a>
+      </div>
+      <figure class="above">
+        <div class="ab-tins"><img src="/img/studio/web/large-candles-1000.webp" srcset="/img/studio/web/large-candles-560.webp 560w, /img/studio/web/large-candles-1000.webp 1000w" sizes="(max-width: 960px) 90vw, 30vw" alt="Four large 16 oz candles in black tins seen from above: one topped with a dried orange slice and cinnamon, one with lavender, two with small stones" width="1200" height="1163" loading="lazy" decoding="async">
+          <span class="ab-l l1 r"><i></i><span class="d">Dried orange and cinnamon</span></span>
+          <span class="ab-l l2 lf"><i></i><span class="d">Lavender</span></span>
+          <span class="ab-l l3 lf"><i></i><span class="d">Wooden wick</span></span>
+          <span class="ab-l l4 lf"><i></i><span class="d">Small stones</span></span>
+        </div>
+        <figcaption><span class="eyebrow">Seen from above</span><span class="d">Large candles, a full 16 oz, each finished with what its scent calls for.</span></figcaption>
+      </figure>
+    </div>
+    <div class="st-strip" role="list" aria-label="More from Claire's bench">${strip.replace(/<figure class="sx"/g, '<figure role="listitem" class="sx"')}</div>
+    <div class="st-cta"><a class="btn" href="#/shop?f=candle">Shop candles</a></div>
+  </section>`;
 }
 
-/** Ease the collage in as it scrolls into view. Pictures are visible by default; they are only hidden once an observer is in place. */
+/** Claire, cut out of her own photograph and set in a warm arch with a gold orbit (she has approved the photo). */
+export const claireCutHTML = () => `<div class="claire-cut"><span class="cc-ring" aria-hidden="true"></span><span class="cc-arch">
+  <img src="/img/studio/cut/claire-900.webp" srcset="/img/studio/cut/claire-480.webp 480w, /img/studio/cut/claire-900.webp 900w" sizes="(max-width: 820px) 80vw, 34vw" alt="Claire, founder of Daily Rituals Co." width="1002" height="1200" loading="lazy" decoding="async"></span></div>`;
+
+/** Ease the studio pieces in as they scroll into view. Visible by default; only hidden once an observer is in place. */
 export function wireStudio(app: HTMLElement) {
-  const figs = [...app.querySelectorAll<HTMLElement>('.collage .cg')];
+  const figs = [...app.querySelectorAll<HTMLElement>('.studio .sh-item, .studio .above, .studio .sx')];
   if (!figs.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
-  figs.forEach(f => { if (f.getBoundingClientRect().top > window.innerHeight * 0.9) { f.classList.add('will-reveal'); io.observe(f); } });
+  // only pieces below the fold rise in; photographs further along the phone strip (off to the side) are left as they are
+  figs.forEach(f => { const r = f.getBoundingClientRect(); if (r.top > window.innerHeight * 0.9 && r.left < window.innerWidth) { f.classList.add('will-reveal'); io.observe(f); } });
 }
 
 // ---------- Moon Drops: the past moons archive ----------

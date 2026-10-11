@@ -11,7 +11,7 @@ import { mountJourney } from './journey';
 import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
-import { collageHTML, wireStudio, heroStackHTML, repeatPhotoHTML, giftPhotoHTML } from '../moons';
+import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, repeatPhotoHTML, giftPhotoHTML } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -43,10 +43,11 @@ export async function renderHome(app: HTMLElement) {
   useRealClock = true;
   app.innerHTML = fixImages(Main);
   // the studio photographs: the hero arch shows Claire's past candle work for the hour (set here, before swapRenders, so the
-  // canvas renders it replaces are never swapped for Wix photos); the collage closes Chapter 2 after "Meet Claire"; one
+  // canvas renders it replaces are never swapped for Wix photos); Claire's cut-out in "Meet Claire", then From the studio; one
   // photograph each sits with Ritual on Repeat and Send a Sunrise
   const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) stack.innerHTML = heroStackHTML();
-  app.querySelector('.claire')?.insertAdjacentHTML('afterend', collageHTML());
+  app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
+  app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
   app.querySelector('.rep-grid .stick')?.insertAdjacentHTML('beforeend', repeatPhotoHTML());
   app.querySelector('.gift-grid > div:has(.gcard)')?.insertAdjacentHTML('beforeend', giftPhotoHTML());
   swapRenders(app);
