@@ -1,11 +1,12 @@
 import { MOMENTS, type Moment } from '../config';
-import { treeSVG } from './symbols';
+import { createBodhi } from './bodhi';
 import '../flamebreath.css';
 
 // The breathing pause, opened by the breathing orb on every page and by [data-breathe] buttons.
 // The original pause (the sky of the hour, the tree, "Take a moment", then in, hold, out for as long as you like) with a
 // candle flame at its heart in place of the old glowing circle: the flame grows as you breathe in, rests while you hold,
 // and softens and sways as you breathe out, sending up a spark now and then. Its light warms the whole sky.
+// The candle stands at the foot of a full Bodhi tree (src/pages/bodhi.ts), painted on a canvas and lit by the flame.
 // No products and no claims: the rhythm is described only as in, hold, out.
 
 const IN = 4000, HOLD = 2000, OUT = 6000, CYCLE = IN + HOLD + OUT, LEAD = 1200;
@@ -40,7 +41,7 @@ export function openBreathe(opener: HTMLElement) {
   // the sky of the hour fades down into a candlelit dusk, so the flame always has a dark room to glow in
   el.style.setProperty('--s0', m.sky[0]); el.style.setProperty('--s1', m.sky[1]); el.style.setProperty('--s2', m.sky[2]);
   el.innerHTML = `<div class="fb-sky" aria-hidden="true"></div>${stars(m.dark)}<div class="fb-glow" aria-hidden="true"></div>
-    <div class="jb-tree" aria-hidden="true">${treeSVG()}</div>
+    <div class="jb-tree fb-tree" aria-hidden="true"><canvas class="fb-bodhi"></canvas></div>
     <div class="fb-stage" aria-hidden="true"><canvas class="fb-flame"></canvas></div>
     <p class="jb-word" id="jbWord" aria-live="polite">Take a moment</p><p class="jb-sub">Breathe in, hold, breathe out. Stay as long as you like.</p>
     <button class="btn jb-close" type="button">Done</button>`;
@@ -51,6 +52,10 @@ export function openBreathe(opener: HTMLElement) {
   let W = 0, H = 0;
   const size = () => { const r = cv.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); };
   size(); const ro = new ResizeObserver(size); ro.observe(cv);
+  // the tree is laid out from the flame's base: the trunk rises just behind the candle
+  const stage = el.querySelector<HTMLElement>('.fb-stage')!;
+  const tree = createBodhi({ canvas: el.querySelector<HTMLCanvasElement>('.fb-bodhi')!, sky: m.sky, reduce,
+    anchor: () => { const r = stage.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height * 0.74, h: Math.min(r.width, r.height) * 0.34 }; } });
 
   const teardrop = (x: number, y: number, w: number, h: number, lean: number) => {
     ctx.beginPath(); ctx.moveTo(x - w / 2, y);
@@ -112,17 +117,18 @@ export function openBreathe(opener: HTMLElement) {
   const t0 = performance.now(); let raf = 0, last = '', prev = t0, hidden = 0, hiddenAt = 0;
   const loop = (now: number) => {
     const el2 = (now - t0 - hidden) * speed, dt = Math.min(0.05, (now - prev) / 1000 * speed); prev = now;
-    let k = 0.15, sway = 0, w = 'Take a moment';
+    let k = 0.15, sway = 0, outp = -1, w = 'Take a moment';
     if (el2 >= LEAD) {
       const c = (el2 - LEAD) % CYCLE;
       if (c < IN) { w = 'Breathe in'; k = 0.15 + 0.85 * sineInOut(c / IN); }
       else if (c < IN + HOLD) { w = 'Hold'; k = 1; }
-      else { w = 'Breathe out'; const p = (c - IN - HOLD) / OUT; k = 1 - 0.85 * sineInOut(p); sway = Math.sin(Math.PI * Math.min(1, p * 1.4)) * 0.9; }
+      else { w = 'Breathe out'; outp = (c - IN - HOLD) / OUT; k = 1 - 0.85 * sineInOut(outp); sway = Math.sin(Math.PI * Math.min(1, outp * 1.4)) * 0.9; }
     } else k = 0.15 * (el2 / LEAD) + 0.05;
     if (reduce) { k = 0.75; sway = 0; }
     if (w !== last) { word.textContent = w; word.classList.remove('fb-in'); void word.offsetWidth; word.classList.add('fb-in'); last = w; el.dataset.phase = w; }
     glow.style.opacity = (0.45 + 0.55 * k).toFixed(3); glow.style.transform = `scale(${(0.9 + 0.25 * k).toFixed(3)})`;
     el.style.setProperty('--k', k.toFixed(3));
+    tree.update((now - t0) / 1000, k, sway, outp, dt);
     draw((now - t0) / 1000, k, sway, dt);
     raf = requestAnimationFrame(loop);
   };
@@ -131,7 +137,7 @@ export function openBreathe(opener: HTMLElement) {
   document.addEventListener('visibilitychange', onVis);
 
   const close = () => {
-    cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener('keydown', onKey); document.removeEventListener('visibilitychange', onVis);
+    cancelAnimationFrame(raf); ro.disconnect(); tree.destroy(); document.removeEventListener('keydown', onKey); document.removeEventListener('visibilitychange', onVis);
     el.classList.remove('open'); window.setTimeout(() => { el.remove(); opener.focus(); }, reduce ? 0 : 400);
   };
   const onKey = (e: KeyboardEvent) => {
