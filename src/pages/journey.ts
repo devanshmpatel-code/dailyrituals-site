@@ -17,8 +17,8 @@ const P = (r: number, deg: number, c = 260) => `${(c + r * Math.cos(rad(deg))).t
 const sector = (r0: number, r1: number, a0: number, a1: number) => `M${P(r1, a0)} A${r1},${r1} 0 0 1 ${P(r1, a1)} L${P(r0, a1)} A${r0},${r0} 0 0 0 ${P(r0, a0)} Z`;
 
 
-// The breathing pause (Light & Scent) lives in ./lightscent; it is re-exported here so the orb and [data-breathe] keep one import.
-import { openBreathe } from './lightscent';
+// The breathing pause (the flame) lives in ./flamebreath; it is re-exported here so the orb and [data-breathe] keep one import.
+import { openBreathe } from './flamebreath';
 export { openBreathe };
 
 export function mountJourney(app: HTMLElement) {
