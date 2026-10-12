@@ -19,7 +19,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.locator('#loopWrap').scrollIntoViewIfNeeded(); await p.waitForTimeout(300);
   await p.locator('#loopWrap').screenshot({ path: `${process.env.SHOTS ?? '/tmp'}/${label}-loop-old.png` });
   await p.locator('[data-mode="new"]').click(); await p.waitForTimeout(200);
-  ok(`${label}: new loop has 4 circles incl. Pause`, (await p.locator('.lp-node').count()) === 4 && /Pause/.test(await p.locator('#loopWrap svg').textContent()));
+  ok(`${label}: new loop has 4 circles incl. Pause`, (await p.locator('.lp-node').count()) === 4 && /Pause/.test(await p.locator('#loopWrap .lp3').textContent()));
   await p.locator('.lp-node[data-node="1"]').click(); ok(`${label}: new loop step 2 is Pause`, (await h()) === 'Pause');
   await p.locator('#loopWrap').screenshot({ path: `${process.env.SHOTS ?? '/tmp'}/${label}-loop-new.png` });
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
