@@ -95,8 +95,9 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: every top has its contact shadow`, (await p.locator('.st-tops .tp .tp-sh').count()) === 7);
   if (label === 'desktop') {
     ok('desktop: all seven tops fit in one row inside the strip', await p.evaluate(() => { const s = document.querySelector('.st-tops').getBoundingClientRect(); return [...document.querySelectorAll('.st-tops .tp-c')].every(e => { const r = e.getBoundingClientRect(); return r.left >= s.left && r.right <= s.right; }); }));
-    const tin = p.locator('.st-tops .tp').nth(3); const bb = await tin.boundingBox(); await p.mouse.move(bb.x + bb.width * 0.8, bb.y + bb.width * 0.3); await p.waitForTimeout(700);
-    ok('desktop: a top leans towards the pointer (3D tilt)', await p.evaluate(() => { const t = document.querySelectorAll('.st-tops .tp-tin')[3]; return /matrix3d/.test(getComputedStyle(t).transform) && t.style.getPropertyValue('--ry') !== ''; }));
+    const tin = p.locator('.st-tops .tp').nth(3); const bb = await tin.boundingBox(); await p.mouse.move(bb.x + bb.width * 0.5, bb.y + bb.width * 0.5); await p.mouse.move(bb.x + bb.width * 0.8, bb.y + bb.width * 0.3, { steps: 4 });
+    // (waits for the lean to settle: on a busy machine the .6s transition can take longer)
+    ok('desktop: a top leans towards the pointer (3D tilt)', await p.waitForFunction(() => { const t = document.querySelectorAll('.st-tops .tp-tin')[3]; return /matrix3d/.test(getComputedStyle(t).transform) && t.style.getPropertyValue('--ry') !== ''; }, null, { timeout: 5000 }).then(() => true, () => false));
     await p.mouse.move(5, 5);
   } else ok('phone: the tops are a swipeable row', await p.evaluate(() => { const s = document.querySelector('.st-tops'); return s.scrollWidth > s.clientWidth + 40 && getComputedStyle(s).overflowX === 'auto'; }));
   const revealed = await p.waitForFunction(() => [...document.querySelectorAll('.studio .sh-item, .studio .above, .studio .tp')].every(f => Number(getComputedStyle(f).opacity) > .9), null, { timeout: 5000 }).then(() => true, () => false);
