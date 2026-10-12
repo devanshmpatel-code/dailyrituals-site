@@ -122,7 +122,11 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   const fb = await bbox('.wcon-btn[data-mood="floral"] .whit'); await p.mouse.click(fb.x + fb.width + 14, fb.y + fb.height / 2); await settled();
   ok(`${label}: tapping the sky near a constellation chooses it`, /Soft and floral/.test(await h3()), await h3());
   await tap('.wcon-btn[data-mood="grounding"] .whit'); ok(`${label}: a dimmed constellation switches the mood`, /Grounding/.test(await h3()));
-  const rb = await bbox('.wcon.on .wreg'); await p.mouse.click(rb.x + rb.width / 2, rb.y + rb.height / 2); await settled();
+  // the balls drift, so aim at a point on the label that no star happens to be crossing right now
+  const rp = await p.evaluate(() => { const r = document.querySelector('.wcon.on .wreg').getBoundingClientRect(), y = r.y + r.height / 2;
+    for (const f of [0.5, 0.3, 0.7, 0.15, 0.85, 0.4, 0.6]) { const x = r.x + r.width * f, el = document.elementFromPoint(x, y); if (el && !el.closest('.wstar')) return { x, y }; }
+    return { x: r.x + r.width / 2, y }; });
+  await p.mouse.click(rp.x, rp.y); await settled();
   ok(`${label}: tapping the sky by the chosen constellation again releases it`, /sky/.test(await h3()) && (await p.locator('.wstar.open').count()) === 0 && (await p.locator('.wplate.picked').count()) === 0, await h3());
   ok(`${label}: the sky settles back to its home orientation`, await p.evaluate(() => /scale\(1\.000\) rotate\(0\.00\)/.test(document.querySelector('.wsky').getAttribute('transform'))), await p.evaluate(() => document.querySelector('.wsky').getAttribute('transform')));
 
