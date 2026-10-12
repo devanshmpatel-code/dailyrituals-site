@@ -28,7 +28,9 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const par = await p.evaluate(() => Number(document.getElementById('day').style.getPropertyValue('--p'))); ok(`${label}: the opening's landscape drifts as you scroll away`, par > 0.15 && par <= 1, `--p ${par}`);
   // breathe
   ok(`${label}: the orb breathes (it is animated)`, await p.locator('.breathorb .bo-core').evaluate(e => getComputedStyle(e).animationName !== 'none'));
-  await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); const seen = new Set();
+  await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.waitForTimeout(300);
+  // the guide waits while you choose; lighting the candle starts the breathing
+  await p.locator('.jbreathe .fb-light').click(); await p.waitForTimeout(1300); const seen = new Set();
   for (let i = 0; i < 14; i++) { seen.add(await p.locator('#jbWord').innerText()); await p.waitForTimeout(700); }
   ok(`${label}: the breathing guide cycles in, hold, out`, ['Breathe in', 'Hold', 'Breathe out'].every(w => seen.has(w)), [...seen].join(' / '));
   await shot('breathe'); await p.locator('.jb-close').click(); await p.waitForTimeout(700); ok(`${label}: Done closes the breathing screen`, (await p.locator('.jbreathe').count()) === 0);

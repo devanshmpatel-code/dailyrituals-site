@@ -69,9 +69,9 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
     ok(`${label}: swiping the candles chooses the next one`, swiped === 'verdant', swiped);
   }
   const o0 = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll on the picker`, o0 <= 1, `${o0}`);
-  // the breath keeps its pace while choosing
+  // the guide waits quietly while you choose; the breathing starts when a candle is lit
   const seen0 = new Set(); for (let i = 0; i < 30; i++) { seen0.add(await p.evaluate(() => document.querySelector('.jbreathe').dataset.phase)); await p.waitForTimeout(50); }
-  ok(`${label}: the words cycle in, hold, out while you choose`, ['Breathe in', 'Hold', 'Breathe out'].every(w => seen0.has(w)), [...seen0].join(' / '));
+  ok(`${label}: while you choose, the guide invites you to light one and does not start the breath`, seen0.size === 1 && seen0.has('Choose one to light'), [...seen0].join(' / '));
   // Add to cart from the picker calls the cart
   await p.locator('.fb-add').click(); await p.waitForTimeout(300);
   const cart1 = await p.evaluate(() => JSON.parse(localStorage.getItem('dr_cart') ?? '[]'));

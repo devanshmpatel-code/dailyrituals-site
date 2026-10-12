@@ -399,6 +399,8 @@ export function openBreathe(opener: HTMLElement) {
       else if (c < IN + HOLD) { w = 'Hold'; k = 1; }
       else { w = 'Breathe out'; const outp = (c - IN - HOLD) / OUT; k = 1 - 0.85 * sineInOut(outp); sway = Math.sin(Math.PI * Math.min(1, outp * 1.4)) * 0.9; }
     } else k = 0.15 * (el2 / LEAD);
+    // while choosing, the guide waits quietly: the breathing starts when a candle is lit
+    if (stageName === 'pick') { w = 'Choose one to light'; k = 0.3 + 0.08 * Math.sin(now / 1600); sway = 0; }
     if (reduce) { k = 0.75; sway = 0; }
     if (w !== last) { word.textContent = w; word.classList.remove('fb-in'); void word.offsetWidth; word.classList.add('fb-in'); last = w; el.dataset.phase = w; }
     const t = (now - t0) / 1000, [f, gut] = flicker(t), lit = stageName === 'lit';
