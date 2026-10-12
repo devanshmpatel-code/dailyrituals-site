@@ -20,7 +20,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const kinds = await p.evaluate(() => new Set([...document.querySelectorAll('.jhead > .jorn')].map(s => s.innerHTML.includes('ellipse') && !s.innerHTML.includes('translate') ? 'mandala' : s.innerHTML.includes('rotate(') && s.innerHTML.includes('translate(') ? 'leaf' : s.innerHTML.includes('orn-stars') ? 'stars' : s.innerHTML.includes('r="22"') ? 'emblem' : 'lotus')).size);
   ok(`${label}: chapters use different symbols (not only the mandala)`, kinds >= 4, `${kinds} kinds`);
   ok(`${label}: a lotus divider sits above the footer`, (await p.locator('.lotusdiv').count()) === 1);
-  await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open');
+  await p.locator('.breathorb').focus(); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open');
   ok(`${label}: the breathing screen opens on the candles under a starry night sky`, (await p.locator('.jbreathe canvas.fb-stars').count()) === 1 && (await p.locator('.jbreathe .fb-c').count()) >= 1);
   await p.keyboard.press('Escape'); await p.waitForTimeout(700);
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);

@@ -54,10 +54,13 @@
 /* ---------- the breathing orb on phones: smaller, and out of the way while you scroll down ---------- */
 .breathorb { transition: bottom .4s cubic-bezier(.2, .7, .2, 1), opacity .35s ease, translate .35s cubic-bezier(.2, .7, .2, 1); }
 @media (max-width: 820px) {
-  .bo-orb, .bo-core { width: 44px; height: 44px; }
-  .bo-core svg { width: 18px; height: 18px; }
-  .bo-orb::before { inset: -8px; }
-  .breathorb { right: max(12px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); }
+  /* a 44px button round a 40px orb, tucked further into the corner; no ripples spreading over the page, a tight glow */
+  .bo-orb { width: 44px; height: 44px; }
+  .bo-core { width: 40px; height: 40px; }
+  .bo-core svg { width: 17px; height: 17px; }
+  .bo-orb::before { inset: -5px; }
+  .bo-orb .r { display: none; }
+  .breathorb { right: max(10px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
   .breathorb.bo-tucked { opacity: 0; translate: 0 calc(100% + 24px); pointer-events: none; }
   .breathorb.bo-tucked:focus-visible { opacity: 1; translate: 0 0; pointer-events: auto; }
   /* the last lines of the footer stay clear of the orb */

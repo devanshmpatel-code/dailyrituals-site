@@ -17,7 +17,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
     ok(`${label}: ${r} takes on the colour of the hour`, (await p.locator('.jwash').count()) === 1);
     ok(`${label}: ${r} eases in`, await p.locator('#app').evaluate(e => e.classList.contains('pagein')));
   }
-  await p.goto(base + '/coaching'); await p.waitForTimeout(800); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); ok(`${label}: the breath button opens the breathing screen`, true); await p.keyboard.press('Escape'); await p.waitForTimeout(700);
+  // (on a phone the orb waits aside while words lie under it, as they do at the top of coaching: focus brings it out)
+  await p.goto(base + '/coaching'); await p.waitForTimeout(800); await p.locator('.breathorb').focus(); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); ok(`${label}: the breath button opens the breathing screen`, true); await p.keyboard.press('Escape'); await p.waitForTimeout(700);
   const sub = await p.evaluate(() => [...document.querySelectorAll('img')].filter(i => /\/img\/midday\.jpg|wixstatic/.test(i.src) && i.closest('#app')).length); ok(`${label}: photos are wired on inner pages`, sub >= 0);
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
   ok(`${label}: no JS errors`, errs.length === 0, errs.join('|'));

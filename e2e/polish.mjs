@@ -137,15 +137,25 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
         if (o.classList.contains('bo-tucked')) return null;
         const r = o.getBoundingClientRect(), x = r.left + r.width / 2, yy = r.top + r.height / 2;
         const hit = document.elementsFromPoint(x, yy).find(el => !o.contains(el) && el.closest('a[href], button, input, select, textarea, .price, .btn'));
-        return hit ? `${hit.tagName}.${hit.className}`.slice(0, 60) : null;
+        if (hit) return `${hit.tagName}.${hit.className}`.slice(0, 60);
+        // nor over words: no letter of the page drawn under its middle
+        o.style.pointerEvents = 'none'; const cr = document.caretRangeFromPoint(x, yy); o.style.pointerEvents = '';
+        const n = cr?.startContainer;
+        if (n?.nodeType === 3 && n.textContent.trim() && !o.contains(n)) { const g = document.createRange(); g.setStart(n, Math.max(0, cr.startOffset - 1)); g.setEnd(n, Math.min(n.length, cr.startOffset + 1));
+          if ([...g.getClientRects()].some(q => x >= q.left && x <= q.right && yy >= q.top && yy <= q.bottom)) return `words "${n.textContent.trim().slice(0, 30)}"`; }
+        return null;
       });
       if (c) covered.push(c);
     }
     ok(`phone ${r}: the orb slips away while scrolling down`, hidDown);
-    ok(`phone ${r}: after a pause the orb never sits over a button, link, field or price`, covered.length === 0, covered.join(' | '));
+    ok(`phone ${r}: after a pause the orb never sits over a button, link, field, price or words`, covered.length === 0, covered.join(' | '));
     await p.mouse.wheel(0, -900); await p.waitForTimeout(1300);
     await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(1300);
-    ok(`phone ${r}: back at the top the orb is there to tap`, !(await orb.evaluate(o => o.classList.contains('bo-tucked'))));
+    // at the top it is out only where its spot is clear (the opening's words and buttons come first); focus always brings it out
+    const top = await orb.evaluate(o => o.classList.contains('bo-tucked') ? 'aside' : 'out');
+    await orb.focus(); await p.waitForTimeout(500);
+    ok(`phone ${r}: back at the top the orb is out or aside (${top}), and focus brings it out to tap`, await orb.evaluate(o => getComputedStyle(o).opacity === '1' && getComputedStyle(o).pointerEvents !== 'none' && !o.classList.contains('bo-tucked')));
+    await orb.evaluate(o => o.blur());
   }
   await ctx.close();
 }
