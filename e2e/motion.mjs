@@ -1,4 +1,4 @@
-// Scroll-driven motion: the pinned day, statements that light up, shapes that open, the product local nav, page morph fallbacks.
+// Scroll-driven motion: (the day no longer plays on scroll; it is a manual control) statements that light up, shapes that open, the product local nav, page morph fallbacks.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
 const origin = (process.env.BASE ?? 'http://localhost:4173/#').replace(/\/?#?$/, '');
@@ -9,19 +9,13 @@ const scrollTo = (p, y) => p.evaluate(y => window.scrollTo(0, y), y);
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp'); await p.waitForTimeout(800);
-  ok('desktop: the opening is pinned for the day', await p.evaluate(() => document.querySelector('.daypin')?.classList.contains('on')));
-  const len = await p.evaluate(() => Number(document.querySelector('.daypin').dataset.len));
   const clock0 = await p.locator('#dClock').innerText();
   const m0 = await p.locator('#day').getAttribute('data-m');
-  await scrollTo(p, Math.round(len * 0.37)); await p.waitForTimeout(500);
-  const top = await p.evaluate(() => Math.round(document.getElementById('day').getBoundingClientRect().top));
-  const clock1 = await p.locator('#dClock').innerText();
-  ok('desktop: the opening stays in place while the day plays', top >= 0 && top < 120, `${top}px`);
-  ok('desktop: scrolling moves the clock on', clock1 !== clock0, `${clock0.replace(/\s+/g, ' ')} -> ${clock1.replace(/\s+/g, ' ')}`);
-  const moms = new Set(); for (const f of [0.1, 0.3, 0.5, 0.7, 0.9]) { await scrollTo(p, Math.round(len * f)); await p.waitForTimeout(250); moms.add(await p.locator('#day').getAttribute('data-m')); }
-  ok('desktop: the whole day plays through several moments', moms.size >= 4, [...moms].join(','));
-  await scrollTo(p, 0); await p.waitForTimeout(500);
-  ok('desktop: scrolling back returns to where it started', (await p.locator('#day').getAttribute('data-m')) === m0, m0);
+  ok('desktop: the opening is not pinned (the day is a manual control now)', (await p.locator('.daypin').count()) === 0);
+  for (const y of [300, 700, 1100]) { await scrollTo(p, y); await p.waitForTimeout(250); }
+  ok('desktop: scrolling leaves the time of day where it is', (await p.locator('#day').getAttribute('data-m')) === m0 && (await p.locator('#dClock').innerText()) === clock0, `${m0} / ${clock0.replace(/\s+/g, ' ')}`);
+  await scrollTo(p, 0); await p.waitForTimeout(400);
+  const len = 0;
   ok('desktop: the home page has no one-product buy bar', (await p.locator('.buybar').count()) === 0);
   await scrollTo(p, len + 1400); await p.waitForTimeout(600);
   ok('desktop: still no buy bar once the hero button has gone (the menu is the door to every product)', (await p.locator('.buybar, .lnav').count()) === 0);
@@ -50,7 +44,7 @@ const scrollTo = (p, y) => p.evaluate(y => window.scrollTo(0, y), y);
 { // phone: no pinning, no buy bar; the product local nav keeps the name and the add pill
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp'); await p.waitForTimeout(800);
-  ok('phone: the opening is not pinned', !(await p.evaluate(() => document.querySelector('.daypin')?.classList.contains('on'))));
+  ok('phone: the opening is not pinned', (await p.locator('.daypin').count()) === 0);
   await scrollTo(p, 2200); await p.waitForTimeout(600);
   ok('phone: no one-product buy bar rises on the home page', (await p.locator('.buybar').count()) === 0);
   ok('phone: no sideways scroll', (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 1);

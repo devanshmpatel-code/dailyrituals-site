@@ -1,6 +1,6 @@
 // The studio photographs: Claire's real past candle work, placed across the site.
 //
-// - home: the hero arch shows one of her photographs for the hour (heroStackHTML, pictures chosen in config MOMENTS);
+// - home: the opening shows two of her pours for each moment, cut out as whole tins (heroStackHTML, HERO below);
 // - home: the studio collage after "Meet Claire", one photograph with Ritual on Repeat and one with Send a Sunrise;
 // - product pages: a "From the studio" photograph with the candle information;
 // - Moon Drops (/drops): the past moons archive. The circular "moons" in /img/studio/moons/ are cut from her own top-down
@@ -70,71 +70,79 @@ const ALT: Record<string, string> = {
 };
 const alt = (slug: string) => ALT[slug] ?? `${byId[slug].name}: a candle seen from above`;
 
-// ---------- home: the hero arch ----------
-// A mix of Claire's most colourful pours for each moment (retouched: white balance from the wax, levels, clarity,
-// vibrance, a soft vignette). The pictures of a moment cross-fade slowly while it is showing. Alt text describes what is
-// on each candle and never names a past scent (only Cabana and Verdant, both in the shop, are named).
-type HeroPic = { file: string; alt: string };
-const HERO: Record<string, HeroPic[]> = {
+// ---------- home: the opening ----------
+// Each moment shows two of Claire's pours, cut out of her photographs as whole tins (public/img/studio/tins): a large
+// group in front and a smaller one floating behind it. They drift gently, tilt a little toward the pointer, and turn
+// and cross-fade into the next pair when the visitor changes the time of day (it never changes on its own or on scroll).
+// Alt text describes what is on each candle and never names a past scent.
+type HeroPic = { file: string; w: number; h: number; alt: string };
+const HERO: Record<string, [HeroPic, HeroPic]> = {
   dawn: [
-    { file: 'spring-blooms', alt: 'Candles in black tins seen from above, each topped by hand with dried pink, blue and cream flowers' },
-    { file: 'mothers-garden', alt: 'Candles in black tins seen from above, each topped with a single dried flower in red, orange or purple' },
-    { file: 'sweet-romance', alt: 'Three candles seen from above, topped with dried rose petals and small purple flowers' },
+    { file: 'spring-blooms', w: 900, h: 734, alt: 'Candles in black tins seen from above, each topped by hand with dried pink, blue and cream flowers' },
+    { file: 'sweet-romance', w: 545, h: 541, alt: 'A candle seen from above, topped with dried rose petals and small purple flowers' },
   ],
   morning: [
-    { file: 'sea-salt-sage', alt: 'Candles in black tins seen from above, topped with pink salt crystals and green stones' },
-    { file: 'hello-cupcake', alt: 'Candles in black tins seen from above, scattered with rainbow sprinkles' },
-    { file: 'easter-bread', alt: 'Candles in black tins on a wooden table, topped with pastel sprinkles' },
+    { file: 'easter-bread', w: 900, h: 709, alt: 'Candles in black tins seen from above, topped with pastel sprinkles' },
+    { file: 'hello-cupcake', w: 644, h: 983, alt: 'Candles in black tins seen from above, scattered with rainbow sprinkles' },
   ],
   midday: [
-    { file: 'christmas-eve', alt: 'Candles in black tins seen from above, topped with dried orange, star anise and pink peppercorns' },
-    { file: 'crystal-mushrooms', alt: 'Candles in black tins topped with small stone mushrooms, stars and polished stones' },
-    { file: 'candy-cane-lane', alt: 'Candles in black tins seen from above, each with a curve of red and white candy along the rim' },
+    { file: 'mothers-garden', w: 900, h: 850, alt: 'Candles in black tins seen from above, each topped with a single dried flower in red, orange or purple' },
+    { file: 'candy-cane-lane', w: 770, h: 606, alt: 'Candles in black tins seen from above, each with a curve of red and white candy along the rim' },
   ],
   golden: [
-    { file: 'cabana', alt: 'A lit Cabana candle in a white glass tumbler, a small lit tin and its labelled lid in front' },
-    { file: 'mulled-wine', alt: 'Candles seen from above, topped with dried orange slices, star anise and pink peppercorns' },
-    { file: 'apple-cider', alt: 'Candles in black tins seen from above, topped with dried orange and cinnamon' },
+    { file: 'christmas-eve', w: 774, h: 914, alt: 'Candles in black tins seen from above, topped with dried orange, star anise and pink peppercorns' },
+    { file: 'apple-cider', w: 625, h: 656, alt: 'Candles in black tins seen from above, topped with dried orange and cinnamon bark' },
   ],
   night: [
-    { file: 'midnight-forest', alt: 'A lit candle in a black tin among leaves, its wooden wick burning beside small stones' },
-    { file: 'verdant', alt: 'A lit Verdant candle in a white glass tumbler, a small lit tin in front' },
+    { file: 'black-crescent', w: 900, h: 990, alt: 'Candles in black tins seen from above, each with a curve of small black stones along the rim' },
+    { file: 'lavender-haze', w: 892, h: 1097, alt: 'Candles in black tins seen from above, topped with dried lavender buds' },
   ],
 };
-const heroSrc = (f: string, w: 720 | 1000) => `/img/studio/web/hero-${f}-${w}.webp`;
-/** Every arch picture, stacked. Only the first picture of the starting moment loads at once; the rest carry data-src and
- *  load when their moment comes up (or just before their turn in the cross-fade). */
+const tinSrc = (f: string, w: 480 | 900) => `/img/studio/tins/${f}-${w}.webp`;
+/** The opening's pictures: one figure per moment holding its front and back pours. Only the starting moment's pictures
+ *  load at once; the others carry data-src and load when the page is idle or their moment is chosen. */
 export function heroStackHTML(first: string = MOMENTS[0].key): string {
-  return MOMENTS.flatMap(m => (HERO[m.key] ?? []).map((p, i) => {
-    const eager = m.key === first && i === 0;
-    const set = `${heroSrc(p.file, 720)} 720w, ${heroSrc(p.file, 1000)} 1000w`;
-    return `<img data-mimg="${m.key}" data-mi="${i}" ${eager ? `src="${heroSrc(p.file, 1000)}" srcset="${set}"` : `data-src="${heroSrc(p.file, 1000)}" data-srcset="${set}"`} sizes="(max-width: 820px) 80vw, 30vw" alt="${esc(p.alt)}" width="1000" height="1000" decoding="async">`;
-  })).join('');
+  return MOMENTS.map(m => {
+    const pair = HERO[m.key]; if (!pair) return '';
+    const eager = m.key === first;
+    const img = (p: HeroPic, cls: string, sizes: string) => {
+      const set = `${tinSrc(p.file, 480)} 480w, ${tinSrc(p.file, 900)} 900w`;
+      return `<img class="${cls}" data-mimg="${m.key}" ${eager ? `src="${tinSrc(p.file, 900)}" srcset="${set}"` : `data-src="${tinSrc(p.file, 900)}" data-srcset="${set}"`} sizes="${sizes}" alt="${esc(p.alt)}" width="${p.w}" height="${p.h}" decoding="async">`;
+    };
+    return `<figure class="tset" data-mset="${m.key}">${img(pair[1], 't2', '(max-width: 820px) 40vw, 16vw')}${img(pair[0], 't1', '(max-width: 820px) 72vw, 30vw')}</figure>`;
+  }).join('');
 }
 const load = (img: HTMLImageElement | undefined) => {
   if (!img?.dataset.src) return;
   img.srcset = img.dataset.srcset ?? ''; img.src = img.dataset.src; delete img.dataset.src; delete img.dataset.srcset;
 };
-let heroTimer = 0;
-/** Show a moment's pictures in the arch: its first picture now, then a slow cross-fade through the rest (not with reduced
- *  motion). The cycle stops by itself once the arch leaves the page. */
+let tiltWired = false;
+/** Show a moment's pair: it turns and fades in as the previous pair fades out. */
 export function showHero(app: ParentNode, key: string) {
-  const imgs = [...app.querySelectorAll<HTMLImageElement>('#dStack img[data-mimg]')];
-  const mine = imgs.filter(i => i.dataset.mimg === key);
-  let n = 0;
-  const show = () => { load(mine[n]); load(mine[(n + 1) % mine.length]); imgs.forEach(i => i.classList.toggle('on', i === mine[n])); };
-  show();
-  window.clearInterval(heroTimer);
-  if (mine.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  heroTimer = window.setInterval(() => {
-    if (!mine[0].isConnected) { window.clearInterval(heroTimer); return; }
-    if (document.hidden) return;
-    n = (n + 1) % mine.length; show();
-  }, 6500);
-  // the first picture of every other moment loads once the page is idle, so switching moments never shows an empty arch
+  const sets = [...app.querySelectorAll<HTMLElement>('#dStack .tset')];
+  sets.forEach(f => {
+    const on = f.dataset.mset === key;
+    f.querySelectorAll<HTMLImageElement>('img').forEach(i => { if (on) load(i); i.classList.toggle('on', on); });
+    f.classList.toggle('on', on);
+  });
+  const stack = app.querySelector<HTMLElement>('#dStack');
+  if (stack && !tiltWired && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    tiltWired = true;
+    // a gentle tilt toward the pointer over the opening (desktop pointers only)
+    const hero = stack.closest<HTMLElement>('.dayhero') ?? stack;
+    hero.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      const r = hero.getBoundingClientRect();
+      stack.style.setProperty('--tx', (((e.clientX - r.left) / r.width) - 0.5).toFixed(3));
+      stack.style.setProperty('--ty', (((e.clientY - r.top) / r.height) - 0.5).toFixed(3));
+    });
+    hero.addEventListener('pointerleave', () => { stack.style.setProperty('--tx', '0'); stack.style.setProperty('--ty', '0'); });
+  }
+  // every other moment's pictures load once the page is idle, so changing the time never shows an empty space
   const idle = (window as any).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 1500));
-  idle(() => MOMENTS.forEach(m => load(imgs.find(i => i.dataset.mimg === m.key && i.dataset.mi === '0'))));
+  idle(() => app.querySelectorAll<HTMLImageElement>('#dStack img[data-src]').forEach(load));
 }
+export const resetHeroTilt = () => { tiltWired = false; };
 
 // ---------- the extra photographs: Ritual on Repeat, Send a Sunrise, the product page ----------
 // Each is a past pour shown as Claire's craft. The captions use only verified facts (topped by hand with real botanicals,

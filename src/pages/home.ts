@@ -11,7 +11,7 @@ import { mountJourney } from './journey';
 import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
-import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, repeatPhotoHTML, giftPhotoHTML } from '../moons';
+import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHeroTilt, repeatPhotoHTML, giftPhotoHTML } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -45,7 +45,8 @@ export async function renderHome(app: HTMLElement) {
   // the studio photographs: the hero arch shows Claire's past candle work for the hour (set here, before swapRenders, so the
   // canvas renders it replaces are never swapped for Wix photos); Claire's cut-out in "Meet Claire", then From the studio; one
   // photograph each sits with Ritual on Repeat and Send a Sunrise
-  const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) stack.innerHTML = heroStackHTML();
+  const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) { stack.innerHTML = heroStackHTML(); stack.classList.add('tins'); }
+  resetHeroTilt();
   app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
   app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
   app.querySelector('.rep-grid .stick')?.insertAdjacentHTML('beforeend', repeatPhotoHTML());
@@ -61,7 +62,8 @@ export async function renderHome(app: HTMLElement) {
   wireCountdown(app);
   wireSunrise(app);
   wireClub(app);
-  mountDayScrub(app);
+  // the time of day is the visitor's to change (drag the sun, tap a moment, arrow keys); scrolling only scrolls
+  stopDayScrub();
   mountJourney(app);
 
   const grid = app.querySelector<HTMLElement>('#msGrid');
@@ -207,65 +209,15 @@ function tweenTo(app: HTMLElement, to: number, ms: number, ease: (k: number) => 
   raf = requestAnimationFrame(step);
 }
 
-// ---------- scroll through the day ----------
-// The opening stays pinned while scrolling plays a full day, starting from the visitor's own time and coming back round to it.
-// Only when the opening fits on screen (desktop and tablet landscape); phones and reduced motion keep a normal page.
+// ---------- the day is the visitor's to change ----------
+// The opening used to play a full day as you scrolled; the owner prefers the time of day as a manual control only (drag
+// the sun, tap a moment, arrow keys), so scrolling just scrolls. These hooks stay so leaving the page cleans up the same way.
 let scrubCleanup: (() => void) | null = null;
 /** Re-anchor the scrolling day so the current scroll position shows this hour (after a moment button, a drag or a key). */
 let scrubRebase: ((hour: number) => void) | null = null;
 const stopDayScrub = () => { scrubCleanup?.(); scrubCleanup = null; scrubRebase = null; };
 /** Leaving the home page: the scrolling day and the opening (its timers and pointer listeners) are taken down together. */
 export function unmountDayScrub() { stopDayScrub(); unmountOpening(); }
-function scrubFrame(app: HTMLElement, h: number, hold?: Moment) {
-  const hh = ((h % 24) + 24) % 24;
-  applyLook(app, hh); moveSun(app, hh); setClockLive(app, hh);
-  const m = hold ?? look(hh).nearest;
-  if (!heroCurrent || m.key !== heroCurrent.key) { heroCurrent = m; setMoment(app, m, true, hh); setClockLive(app, hh); }
-}
-function mountDayScrub(app: HTMLElement) {
-  stopDayScrub();
-  const hero = app.querySelector<HTMLElement>('#day');
-  if (!hero || reduceMotion()) return;
-  const pin = document.createElement('div'); pin.className = 'daypin';
-  hero.before(pin); pin.appendChild(hero);
-  const cue = document.createElement('div'); cue.className = 'daycue'; cue.setAttribute('aria-hidden', 'true');
-  cue.innerHTML = '<span>Scroll to live the day</span><i></i>';
-  hero.appendChild(cue);
-  let enabled = false, start = 0, len = 0, active = false, startHour = liveHour, ticking = false, lastY = -1, startMoment: Moment | null = heroCurrent;
-  const progress = () => (enabled ? Math.min(1, Math.max(0, (window.scrollY - start) / len)) : 0);
-  const measure = () => {
-    const hdr = document.querySelector('header.top')?.getBoundingClientRect().height ?? 0;
-    pin.style.height = ''; pin.classList.remove('on');
-    const h = hero.offsetHeight;
-    enabled = window.innerWidth > 820 && h <= window.innerHeight - hdr + 2;
-    len = enabled ? Math.round(window.innerHeight * 1.5) : 0;
-    pin.classList.toggle('on', enabled); pin.style.setProperty('--hdr', `${hdr}px`);
-    pin.style.height = enabled ? `${h + len}px` : ''; pin.dataset.len = String(len);
-    start = pin.getBoundingClientRect().top + window.scrollY - hdr;
-  };
-  const update = () => {
-    ticking = false;
-    if (!enabled || window.scrollY === lastY) return;
-    lastY = window.scrollY;
-    const p = progress();
-    hero.style.setProperty('--dp', p.toFixed(3));
-    cue.style.opacity = String(Math.max(0, 1 - p * 10));
-    if (p <= 0.002) { if (active) { active = false; scrubFrame(app, startHour, startMoment ?? undefined); } return; }
-    if (!active) { active = true; startHour = liveHour; startMoment = heroCurrent; stopTween(app); }
-    useRealClock = false;
-    // a full day comes back round to exactly where the visitor started
-    scrubFrame(app, startHour + p * 24, p >= 0.985 ? startMoment ?? undefined : undefined);
-  };
-  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
-  const onResize = () => { measure(); onScroll(); };
-  const ro = new ResizeObserver(() => { if (!active) measure(); });
-  ro.observe(hero);
-  window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onResize);
-  measure();
-  scrubRebase = (hour: number) => { if (!enabled) return; const p = progress(); startHour = hour - p * 24; startMoment = nearest(hour); active = p > 0.002; lastY = window.scrollY; };
-  scrubCleanup = () => { ro.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); };
-}
-
 function nearest(hour: number) {
   return MOMENTS.reduce((a, b) => (Math.abs(b.hour - hour) < Math.abs(a.hour - hour) ? b : a));
 }
