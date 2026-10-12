@@ -111,7 +111,7 @@ function wireSky(host: HTMLElement) {
 const HOW = () => [
   ['$1', 'Set aside from every order', 'One dollar from every order placed here goes into our giving fund.'],
   ['→', 'Sent where it matters', '<span class="d">To children’s cancer care at BC Children’s Hospital, and to local causes in White Rock and the Semiahmoo Peninsula.</span>'],
-  ['✓', 'Posted with proof', 'We donate regularly, and every donation is posted publicly on our giving tracker, with its receipt.'],
+  ['✓', 'Posted with proof', '<span class="d">We give once a month, starting after our first month of orders.</span> Every donation is posted publicly on our giving tracker, with its receipt.'],
 ];
 const howList = (cls: string) => `<ol class="${cls}">${HOW().map(([n, t, d], i) => `<li style="--i:${i}"><span class="gv-n" aria-hidden="true">${n}</span><div><h3>${t}</h3><p>${d}</p></div></li>`).join('')}</ol>`;
 
