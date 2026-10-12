@@ -97,6 +97,10 @@ vec3 sky(vec2 uv, out float cloudOut){
   col = mix(col, pal, 0.16);
   // after dark, a faint cool airglow low over the hills
   col += dark * vec3(0.05, 0.07, 0.10) * pow(1.0 - h, 3.0) * 0.8;
+  // before sunrise and after sunset, the glow climbs well above the horizon on the sun's side (rose over amber): the band
+  // the hills hide is only its foot, so the sky the visitor sees above the ridges still says "first light"
+  float pre = smoothstep(-0.3, -0.12, e) * (1.0 - smoothstep(-0.02, 0.08, e));
+  col += pre * exp(-dx * dx * 2.2) * (vec3(0.5, 0.24, 0.17) * exp(-h * 1.7) + vec3(0.2, 0.1, 0.2) * exp(-h * 0.9)) * 1.3;
 
   float d = distance(a, s);
   // ---- high cirrus: a thin, streaked veil that drifts slowly and leans least with the pointer (it is furthest away);

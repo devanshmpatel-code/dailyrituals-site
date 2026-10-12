@@ -169,6 +169,10 @@ body[data-page="home"] #app.pagein { animation: none; }
 /* ---------- off screen: everything that drifts holds still (the sky's own drawing stops too, sky.ts) ---------- */
 .scene.paused, .scene.paused *, .scene.paused *::before, .scene.paused *::after { animation-play-state: paused !important; }
 
+/* light words over pale hills (dawn's rose ridges under a twilight sky): the shade behind the words sits under the hills, so
+   the lines that reach down over them carry their own soft dark halo */
+.dayhero.sky-dark .dline, .dayhero.sky-dark .greet { text-shadow: 0 0 14px rgba(12, 8, 22, .6), 0 1px 3px rgba(12, 8, 22, .55); }
+
 /* ---------- reduced motion: no opening, no particles, a still sky ---------- */
 @media (prefers-reduced-motion: reduce) {
   .wakeveil { display: none; }
