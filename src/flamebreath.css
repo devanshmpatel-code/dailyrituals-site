@@ -10,7 +10,7 @@
    and its depth, and the trunk stands out as the dark, solid thing it is */
 .fb-sky { position: absolute; inset: 0; z-index: -6; overflow: hidden; pointer-events: none;
   background: linear-gradient(180deg, #4E739C 0, #5F7FA4 calc(var(--groundY, 60vh) * .3), #7F8AA6 calc(var(--groundY, 60vh) * .62), #9C8C9E calc(var(--groundY, 60vh) * .84),
-    #A48390 calc(var(--groundY, 60vh) - 6px), #3A2A3A calc(var(--groundY, 60vh) + 30px), #140E19 calc(var(--groundY, 60vh) + 120px), #0E0A13 100%); }
+    #A48390 calc(var(--groundY, 60vh) - 4px), #5A4558 calc(var(--groundY, 60vh) + 18px), #2C2030 calc(var(--groundY, 60vh) + 80px), #160F1A calc(var(--groundY, 60vh) + 200px), #0E0A13 100%); }
 .fb-drift { position: absolute; inset: -3%; will-change: transform, opacity; animation: fbDrift 96s ease-in-out infinite alternate; }
 @keyframes fbDrift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-1.6%, .9%, 0) scale(1.035); } }
 /* the first stars of the evening, faint against the blue */
@@ -61,9 +61,11 @@
 .fb-stage { position: relative; min-height: 0; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
 .fb-dragging .fb-stage { cursor: grabbing; }
 .jbreathe.fb[data-stage="lit"] .fb-stage { cursor: default; }
-.fb-ground { position: absolute; z-index: -3; left: 0; right: 0; top: calc(var(--groundY, 70vh) - 24px); bottom: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(30, 21, 38, .9) 0, #1A1220 24px, #140E19 calc(24px + var(--pw) * .5), #0D0911 100%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 30px); mask-image: linear-gradient(180deg, transparent 0, #000 30px); }
+/* the ground running away into the dusk: pale and hazy far off, darkening as it comes towards us (the far trees and the
+   mist on the horizon are painted with the tree, see bodhi.ts) */
+.fb-ground { position: absolute; z-index: -3; left: 0; right: 0; top: calc(var(--groundY, 70vh) - 10px); bottom: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(70, 54, 72, .5) 0, rgba(40, 29, 44, .82) 60px, #1A1220 140px, #140E19 calc(140px + var(--pw) * .4), #0D0911 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 70px); mask-image: linear-gradient(180deg, transparent 0, #000 70px); }
 /* close to the flame the air itself glows a little, over the light the tree's layer throws on the ground */
 .fb-pool { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .1); width: calc(var(--pw) * 1.7); height: calc(var(--pw) * .5); transform: translateX(-50%); pointer-events: none; opacity: 0;
   background: radial-gradient(ellipse 50% 50% at 54% 46%, rgba(255, 176, 110, .22) 0%, rgba(255, 150, 90, .08) 44%, rgba(255, 140, 80, 0) 72%); mix-blend-mode: screen; will-change: opacity; }

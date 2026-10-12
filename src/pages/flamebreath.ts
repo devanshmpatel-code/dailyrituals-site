@@ -266,7 +266,7 @@ export function openBreathe(opener: HTMLElement) {
     // the crown's underside just below the words (on a short screen, behind them: the trunk still rises well above the
     // candles before it forks, at least one and a quarter times their height; on a tall one, lower, so the tree is not
     // blown up past the size of the window)
-    const sy = Math.max(Math.min((footY - underY) / 0.45, r.width * 1.15), (footY - floorY + 1.25 * pw * ar) / 0.29), sx = phone ? Math.max(pw * 3.9, sy * 0.72) : Math.max(pw * 4.6, sy * 1.25);
+    const sy = Math.max(Math.min((footY - underY) / 0.45, r.width * 1.15), (footY - floorY + 1.25 * pw * ar) / 0.29), sx = phone ? Math.max(pw * 4.15, sy * 0.72) : Math.max(pw * 4.6, sy * 1.25);
     // the tree is painted again only when the window really changes: a line of text appearing below (a size, "in your
     // cart") moves the candles a few px, which no one sees, but painting the whole tree again would make it flicker
     const moved = Math.abs(r.left + r.width / 2 - tree.x) > 24 || Math.abs(footY - tree.y) > 24 || Math.abs(sx / tree.sx - 1) > 0.06 || Math.abs(sy / tree.sy - 1) > 0.06;

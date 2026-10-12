@@ -303,22 +303,29 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     return { A, B, C };
   };
   const rootPoly = (g: CanvasRenderingContext2D, s: Root, fill = true) => { const { A, B } = rootEdges(s); outline(g, A, B, fill); };
-  // the trunk: broad and fluted, flaring into the roots at the foot and swelling again where the limbs part
+  // the trunk: broad and fluted, flaring into the buttress roots at the foot and narrowing smoothly as it rises, to just the
+  // width the great limbs take where they part, so it divides into them in natural crotches rather than ending in a
+  // rounded cap (seen near, a cap reads as a cut-out)
   const trunkX = (t: number) => 0.022 * Math.sin(t * 3.1 + 0.4) * (1 - t * 0.4) + 0.012 * t;
-  const trunkW = (t: number) => 0.19 + 0.17 * Math.pow(1 - t, 4) + 0.05 * Math.pow(t, 3);
+  const trunkW = (t: number) => 0.155 + 0.175 * Math.pow(1 - t, 2.6);
   const trunkPoly = (g: CanvasRenderingContext2D) => {
     const A: number[][] = [], B: number[][] = [];
     for (let i = 0; i <= 22; i++) {
-      const t = i / 22, y = 0.02 + (TRUNK_TOP - 0.03) * t, x = trunkX(t), w = (trunkW(t) / 2) * (t > 0.8 ? 1 - 0.55 * ((t - 0.8) / 0.2) ** 2 : 1), gl = 0.008 * Math.sin(t * 15 + 1) * Math.sin(Math.PI * t), gr = 0.007 * Math.sin(t * 13 + 4) * Math.sin(Math.PI * t);
+      const t = i / 22, y = 0.02 + (TRUNK_TOP - 0.03) * t, x = trunkX(t), w = trunkW(t) / 2, gl = 0.008 * Math.sin(t * 15 + 1) * Math.sin(Math.PI * t), gr = 0.007 * Math.sin(t * 13 + 4) * Math.sin(Math.PI * t);
       A.push([X(x - w + gl), Y(y)]); B.push([X(x + w + gr), Y(y)]);
     }
-    outline(g, A, B);
+    // no flat top: between where the outer limbs part, the wood dips down into the crotch, under the limbs that rise from it
+    const tx = trunkX(1), tw = trunkW(1) / 2; A.push([X(tx - tw * 0.4), Y(TRUNK_TOP + 0.03)], [X(tx + tw * 0.4), Y(TRUNK_TOP + 0.03)]);
+    // and no flat foot: the round base meets the ground in a curve, seen a little from above
+    const w0 = trunkW(0) / 2, x0 = trunkX(0), foot: number[][] = [];
+    for (let k = 1; k <= 9; k++) { const u = 1 - (2 * k) / 10; foot.push([X(x0 + u * w0), Y(0.02 + 0.022 * (1 - u * u))]); }
+    outline(g, [...foot, ...A], B);
   };
   const flutes = (g: CanvasRenderingContext2D, style: string, dx: number, lw: number) => {
     g.strokeStyle = style; g.lineCap = 'round'; g.lineWidth = lw;
     for (let i = 0; i < 9; i++) {
       // grooves of uneven length and spacing, where the stems that make up the trunk have grown together
-      const u = (i - 4) / 4.6 + 0.04 * Math.sin(i * 2.7), ta = 0.03 + 0.25 * ((i * 0.37) % 1), tb = 0.62 + 0.33 * ((i * 0.61) % 1); g.beginPath();
+      const u = (i - 4) / 4.6 + 0.04 * Math.sin(i * 2.7), ta = 0.03 + 0.25 * ((i * 0.37) % 1), tb = 0.55 + 0.28 * ((i * 0.61) % 1); g.beginPath();
       for (let j = 0; j <= 14; j++) { const t = ta + (tb - ta) * (j / 14), y = 0.02 + (TRUNK_TOP - 0.03) * t, x = trunkX(t) + u * trunkW(t) * 0.42 + 0.006 * Math.sin(t * 11 + i * 2.1); j ? g.lineTo(X(x) + dx, Y(y)) : g.moveTo(X(x) + dx, Y(y)); }
       g.stroke();
     }
@@ -415,8 +422,11 @@ export function createBodhi(o: BodhiOptions): Bodhi {
       d.save(); d.beginPath(); d.rect(0, Y(TRUNK_TOP * 0.72), W, H); d.clip(); d.fillStyle = moon; trunkPoly(d); d.restore(); d.restore();
       d.fillStyle = bark; for (const s of T.roots) rootPoly(d, s); trunkPoly(d); drawWood(d, bark, (x, y) => [X(x), Y(y)], sc);
       // the trunk's flutes, soft: seen near, sharp grooves would read as strokes of a pen
-      d.save(); d.filter = `blur(${Math.max(1, sc * 0.004).toFixed(1)}px)`; flutes(d, 'rgba(6,4,10,0.3)', 0, Math.max(1.5, sc * 0.012)); d.restore();
+      d.save(); d.filter = `blur(${Math.max(1, sc * 0.004).toFixed(1)}px)`; flutes(d, 'rgba(4,2,8,0.42)', 0, Math.max(1.5, sc * 0.013)); d.restore();
       paintBark(d);
+      // where the trunk's round foot goes into the earth it is lost in its own shade, so it has no drawn edge
+      d.save(); d.translate(ox, Y(0.035)); d.scale(1, (0.06 * sy) / (trunkW(0) * sx * 0.8)); const fs2 = d.createRadialGradient(0, 0, 0, 0, 0, trunkW(0) * sx * 0.8);
+      fs2.addColorStop(0, 'rgba(14,9,18,0.9)'); fs2.addColorStop(0.6, 'rgba(14,9,18,0.6)'); fs2.addColorStop(1, 'rgba(14,9,18,0)'); d.fillStyle = fs2; d.beginPath(); d.arc(0, 0, trunkW(0) * sx * 0.8, 0, 6.283); d.fill(); d.restore();
       return 700;
     });
     slices(order.filter(l => onScreen(l.px, l.py, leafPx * 1.5)), 700, l => drawLeaf(d, l, l.px, l.py, l.a, 0, near(l)));
@@ -438,6 +448,9 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     const oc = document.createElement('canvas'), og = size(oc, bw, bh); og.translate(-x0, -y0);
     trunkPoly(og); og.clip(); og.filter = `blur(${(Math.max(2, sc * 0.02) * dpr).toFixed(1)}px)`; og.strokeStyle = 'rgba(128,136,184,0.22)'; og.lineWidth = trunkW(0.5) * sx * 0.3; og.lineCap = 'round';
     og.beginPath(); for (let i = 0; i <= 20; i++) { const t = i / 20, x = X(trunkX(t) - trunkW(t) / 2) + trunkW(t) * sx * 0.06, y = Y(0.02 + (TRUNK_TOP - 0.03) * t); if (i) og.lineTo(x, y); else og.moveTo(x, y); } og.stroke();
+    // and the far side of the round turns away from the moon into deeper shade
+    og.strokeStyle = 'rgba(3,2,6,0.55)'; og.lineWidth = trunkW(0.5) * sx * 0.34;
+    og.beginPath(); for (let i = 0; i <= 20; i++) { const t = i / 20, x = X(trunkX(t) + trunkW(t) / 2) - trunkW(t) * sx * 0.04, y = Y(0.02 + (TRUNK_TOP - 0.03) * t); if (i) og.lineTo(x, y); else og.moveTo(x, y); } og.stroke();
     og.filter = 'none'; og.setTransform(1, 0, 0, 1, 0, 0); og.globalCompositeOperation = 'destination-in';
     const fade = og.createLinearGradient(0, (Y(0.02) - y0) * dpr, 0, (Y(TRUNK_TOP * 0.8) - y0) * dpr); fade.addColorStop(0, 'rgba(0,0,0,1)'); fade.addColorStop(0.5, 'rgba(0,0,0,0.75)'); fade.addColorStop(1, 'rgba(0,0,0,0)');
     og.fillStyle = fade; og.fillRect(0, 0, oc.width, oc.height);
@@ -447,7 +460,8 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     const br = rng(seed + 5);
     for (let i = 0; i < 420; i++) {
       const t = br() * 0.95, u = br() - 0.5, x = X(trunkX(t) + u * trunkW(t) * 0.96), y = Y(0.02 + (TRUNK_TOP - 0.03) * t), len = sy * (0.012 + br() * 0.04), pale = br() < 0.3;
-      d.strokeStyle = pale ? `rgba(150,154,200,${((0.03 + br() * 0.06) * (0.5 - u) * (1 - smooth(0.4, 0.8, t))).toFixed(3)})` : `rgba(4,2,8,${(0.18 + br() * 0.25).toFixed(2)})`;
+      const fadeUp = 1 - smooth(0.6, 0.92, t);
+      d.strokeStyle = pale ? `rgba(150,154,200,${((0.03 + br() * 0.06) * (0.5 - u) * (1 - smooth(0.4, 0.8, t))).toFixed(3)})` : `rgba(4,2,8,${((0.18 + br() * 0.25) * fadeUp).toFixed(3)})`;
       d.lineWidth = (0.6 + br() * 1.3) * Math.max(1, sc / 650);
       d.beginPath(); d.moveTo(x, y); d.quadraticCurveTo(x + (br() - 0.5) * 3, y - len / 2, x + (br() - 0.5) * 2, y - len); d.stroke();
     }
@@ -462,6 +476,18 @@ export function createBodhi(o: BodhiOptions): Bodhi {
   const paintGround = (d: CanvasRenderingContext2D) => {
     const gr = rng(seed + 11), y0 = groundY, y1 = Math.min(H, cgy + REACH * E * 0.8), k = Math.max(0.7, sc / 700);
     d.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // far off, where the ground meets the sky: a low line of trees, soft and pale with distance, two rows of them, and a
+    // haze of evening mist over their feet, so the ground runs away into the dusk instead of ending at a ruler-straight edge
+    const tl = rng(seed + 21);
+    for (const [row, hMax, col] of [[0, 22, 'rgba(96,82,108,0.5)'], [1, 13, 'rgba(66,52,76,0.7)']] as const) {
+      // each row: clumps of round crowns of uneven size, with gaps where the land is open
+      const base = y0 + 4 + row * 7; d.beginPath(); d.rect(0, base, W, 24);
+      for (let x = -10; x < W + 20;) {
+        if (tl() < 0.12) { x += (20 + tl() * 60) * k; continue; } // an open stretch
+        const r = (0.3 + tl() * 0.7) * hMax * k * 0.6; d.moveTo(x + r, base - r * 0.55); d.ellipse(x, base - r * 0.55, r, r * 0.95, 0, 0, 6.283); x += r * (0.9 + tl() * 0.8);
+      }
+      d.filter = `blur(${(1.4 + row * 0.6).toFixed(1)}px)`; d.fillStyle = col; d.fill(); d.filter = 'none';
+    }
     for (let i = 0; i < 46; i++) { // the earth: soft low swells and hollows, flattened by the angle we see it at
       const depth = gr(), y = y0 + depth * (y1 - y0), x = gr() * W, r = (30 + depth * 100) * k, light = gr() < 0.5;
       d.save(); d.translate(x, y); d.scale(1, 0.22); const m = d.createRadialGradient(0, 0, 0, 0, 0, r);
@@ -481,6 +507,10 @@ export function createBodhi(o: BodhiOptions): Bodhi {
         if (gr() < 0.22) { d.strokeStyle = 'rgba(150,148,200,0.1)'; d.lineWidth = Math.max(0.5, h * 0.06); d.beginPath(); d.moveTo(x, y - h * 0.45); d.lineTo(x - h * 0.1, y - h * 0.8); d.stroke(); }
       }
     }
+    // and the evening mist lying over the far trees' feet and the far ground, thinning as the ground comes towards us
+    const mist = d.createLinearGradient(0, y0 - 26 * k, 0, y0 + 90 * k);
+    mist.addColorStop(0, 'rgba(176,150,170,0)'); mist.addColorStop(0.25, 'rgba(176,150,170,0.24)'); mist.addColorStop(0.55, 'rgba(126,104,128,0.14)'); mist.addColorStop(1, 'rgba(60,44,64,0)');
+    d.fillStyle = mist; d.fillRect(0, y0 - 26 * k, W, 116 * k);
   };
 
   /**
