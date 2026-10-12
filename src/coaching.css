@@ -55,7 +55,7 @@
 .co-breath { margin: 0; }
 .c-hero.co-hero [data-breathe] { color: var(--co-cream); text-decoration-color: rgba(251, 243, 234, .4); text-underline-offset: 4px; }
 
-/* Claire in a sunrise arch. The arch clips the cropped edges of her photograph (the flat top, her arm at the right). */
+/* Claire in a sunrise arch: her portrait plate (4:5, transparent, faded softly where the photograph ends) fills the arch from the bottom. */
 .co-portal { position: relative; width: min(500px, 100%); aspect-ratio: 5 / 6.1; justify-self: center; perspective: 1300px; }
 .co-tilt { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
 .co-glow { position: absolute; left: -12%; right: -12%; top: 2%; bottom: -6%; border-radius: 50%; background: radial-gradient(closest-side, rgba(243, 196, 150, .5), rgba(239, 164, 155, .18) 55%, transparent 75%); transform: translateZ(-120px); filter: blur(6px); animation: coBreathe 8s ease-in-out infinite; }
@@ -70,7 +70,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 .co-sun { position: absolute; left: 50%; top: 9%; width: 78%; aspect-ratio: 1; translate: -50% 0; border-radius: 50%;
   background: repeating-conic-gradient(from 0deg, rgba(255, 246, 226, .22) 0deg 2deg, transparent 2deg 10deg); -webkit-mask: radial-gradient(closest-side, #000 40%, transparent 100%); mask: radial-gradient(closest-side, #000 40%, transparent 100%); animation: coSpin 120s linear infinite; }
 @keyframes coSpin { to { rotate: 360deg; } }
-.co-claire { position: absolute; left: -9%; top: -4%; width: 118%; max-width: none; height: auto; display: block; }
+.co-claire { position: absolute; left: -3%; top: -3%; width: 106%; height: 103%; max-width: none; object-fit: cover; object-position: 50% 100%; display: block; }
 .co-arch-line { position: absolute; left: calc(10% - 16px); right: calc(10% - 16px); top: calc(5% - 16px); bottom: calc(7% - 16px); border-radius: 999px 999px 44px 44px; border: 1px solid var(--co-hair); transform: translateZ(-40px); pointer-events: none; }
 .co-arch-line::before { content: ""; position: absolute; inset: -14px; border-radius: inherit; border: 1px dashed rgba(233, 212, 161, .22); }
 .co-ring { position: absolute; left: 50%; top: 56%; width: 112%; aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(233, 212, 161, .55); pointer-events: none; transform: translate(-50%, -50%) rotateX(76deg) rotateZ(0deg); animation: coOrbit 36s linear infinite; }

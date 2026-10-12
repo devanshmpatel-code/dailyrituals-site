@@ -189,7 +189,7 @@ export function studioHTML(): string {
 
 /** Claire, cut out of her own photograph and set in a warm arch with a gold orbit (she has approved the photo). */
 export const claireCutHTML = () => `<div class="claire-cut"><span class="cc-ring" aria-hidden="true"></span><span class="cc-arch">
-  <img src="/img/studio/cut/claire-900.webp" srcset="/img/studio/cut/claire-480.webp 480w, /img/studio/cut/claire-900.webp 900w" sizes="(max-width: 820px) 80vw, 34vw" alt="Claire, founder of Daily Rituals Co." width="1002" height="1200" loading="lazy" decoding="async"></span></div>`;
+  <img src="/img/studio/cut/claire-900.webp" srcset="/img/studio/cut/claire-480.webp 480w, /img/studio/cut/claire-900.webp 900w" sizes="(max-width: 820px) 80vw, 34vw" alt="Claire, founder of Daily Rituals Co." width="900" height="1125" loading="lazy" decoding="async"></span></div>`;
 
 /** Ease the studio pieces in as they scroll into view. Visible by default; only hidden once an observer is in place. */
 export function wireStudio(app: HTMLElement) {
