@@ -1,6 +1,6 @@
 // The studio photographs: Claire's real past candle work, placed across the site.
 //
-// - home: the opening shows two of her pours for each moment, cut out as whole tins (heroStackHTML, HERO below);
+// - home: the opening sets three of Claire's tins on a knoll in front of the hills, drawn in 3D with her real top-down photographs as their tops (HERO below, pages/tins3d.ts);
 // - home: the studio collage after "Meet Claire", one photograph with Ritual on Repeat and one with Send a Sunrise;
 // - product pages: a "From the studio" photograph with the candle information;
 // - Moon Drops (/drops): the past moons archive. The circular "moons" in /img/studio/moons/ are cut from her own top-down
@@ -14,6 +14,7 @@ import { esc } from './ui';
 import { glyph, moonRow, tonightName } from './celestial';
 import { currentRoute } from './router';
 import { MOMENTS } from './config';
+import { mountTins, type Tin, type TinSize, type TinSpot, type TinsHero } from './pages/tins3d';
 
 export type Season = 'winter' | 'love' | 'spring' | 'autumn' | 'any';
 export interface Moon {
@@ -71,78 +72,66 @@ const ALT: Record<string, string> = {
 const alt = (slug: string) => ALT[slug] ?? `${byId[slug].name}: a candle seen from above`;
 
 // ---------- home: the opening ----------
-// Each moment shows two of Claire's pours, cut out of her photographs as whole tins (public/img/studio/tins): a large
-// group in front and a smaller one floating behind it. They drift gently, tilt a little toward the pointer, and turn
-// and cross-fade into the next pair when the visitor changes the time of day (it never changes on its own or on scroll).
-// Alt text describes what is on each candle and never names a past scent.
-type HeroPic = { file: string; w: number; h: number; alt: string };
-const HERO: Record<string, [HeroPic, HeroPic]> = {
-  dawn: [
-    { file: 'spring-blooms', w: 900, h: 734, alt: 'Candles in black tins seen from above, each topped by hand with dried pink, blue and cream flowers' },
-    { file: 'sweet-romance', w: 545, h: 541, alt: 'A candle seen from above, topped with dried rose petals and small purple flowers' },
-  ],
-  morning: [
-    { file: 'easter-bread', w: 900, h: 709, alt: 'Candles in black tins seen from above, topped with pastel sprinkles' },
-    { file: 'hello-cupcake', w: 644, h: 983, alt: 'Candles in black tins seen from above, scattered with rainbow sprinkles' },
-  ],
-  midday: [
-    { file: 'mothers-garden', w: 900, h: 850, alt: 'Candles in black tins seen from above, each topped with a single dried flower in red, orange or purple' },
-    { file: 'candy-cane-lane', w: 770, h: 606, alt: 'Candles in black tins seen from above, each with a curve of red and white candy along the rim' },
-  ],
-  golden: [
-    { file: 'christmas-eve', w: 774, h: 914, alt: 'Candles in black tins seen from above, topped with dried orange, star anise and pink peppercorns' },
-    { file: 'apple-cider', w: 625, h: 656, alt: 'Candles in black tins seen from above, topped with dried orange and cinnamon bark' },
-  ],
-  night: [
-    { file: 'black-crescent', w: 900, h: 990, alt: 'Candles in black tins seen from above, each with a curve of small black stones along the rim' },
-    { file: 'lavender-haze', w: 892, h: 1097, alt: 'Candles in black tins seen from above, topped with dried lavender buds' },
-  ],
+// A still life in the opening: three of Claire's candle tins on a grassy knoll in the foreground, close to us, with the hills
+// of the landscape far behind (pages/tins3d.ts draws them as our own 3D art). Being near, they are seen from a little above,
+// the way a table-top is, and one group at one scale keeps the sizes believable. Black tins, each top textured with one of
+// her real top-down photographs (public/img/studio/moons), so the real toppings show: a large tin at the back, a medium one in
+// front on the left with its lid leaning against it, a small one in front on the right. Florals at dawn, sprinkles, salt and
+// green stones in the morning, single flowers and candy at midday, citrus and spice at golden hour (the large one lit), and
+// lit tins at night. They rise into place when the visitor changes the time of day (it never changes on its own or on
+// scroll). The picture is described in general words; it never names a past scent.
+const T = (top: string, size: TinSize, at: TinSpot, extra: Partial<Tin> = {}): Tin => ({ top, size, at, ...extra });
+const HERO: Record<string, { alt: string; tins: Tin[] }> = {
+  dawn: {
+    alt: 'Three candles in black tins, topped by hand with dried flowers, on a grassy knoll at dawn with hills behind',
+    tins: [T('spring-blooms', 'l', 'back'), T('mothers-garden', 'm', 'left', { lid: -1 }), T('sweet-romance', 's', 'right')],
+  },
+  morning: {
+    alt: 'Three candles in black tins, topped by hand with sprinkles and green stones, on a grassy knoll in the morning',
+    tins: [T('easter-bread', 'l', 'back'), T('hello-cupcake', 'm', 'left', { lid: -1 }), T('sea-salt-sage', 's', 'right')],
+  },
+  midday: {
+    alt: 'Three candles in black tins, topped by hand with a dried flower and crushed candy, on a grassy knoll at midday',
+    tins: [T('mothers-garden', 'l', 'back'), T('candy-cane-lane', 'm', 'left', { lid: -1 }), T('jarrah', 's', 'right')],
+  },
+  golden: {
+    alt: 'Three candles in black tins, topped by hand with dried orange, star anise and cinnamon, one of them lit, on a grassy knoll at golden hour',
+    tins: [T('christmas-eve', 'l', 'back', { lit: true }), T('apple-cider', 'm', 'left', { lid: -1 }), T('mulled-wine', 's', 'right')],
+  },
+  night: {
+    alt: 'Candles in black tins, topped by hand with lavender and petals, two of them lit, on a knoll at night',
+    tins: [T('lavender-haze', 'l', 'back', { lit: true }), T('sweet-romance', 'm', 'left', { lit: true, lid: -1 }), T('black-crescent', 's', 'right')],
+  },
 };
-const tinSrc = (f: string, w: 480 | 900) => `/img/studio/tins/${f}-${w}.webp`;
-/** The opening's pictures: one figure per moment holding its front and back pours. Only the starting moment's pictures
- *  load at once; the others carry data-src and load when the page is idle or their moment is chosen. */
+/** The opening's picture: #dStack becomes one described picture (role img). It holds, hidden, the photographs that texture the
+ *  tin tops, one figure per moment; only the starting moment's load at once, the rest carry data-src and load when the page is
+ *  idle or their moment is chosen. The tins themselves are drawn by pages/tins3d.ts. */
 export function heroStackHTML(first: string = MOMENTS[0].key): string {
   return MOMENTS.map(m => {
-    const pair = HERO[m.key]; if (!pair) return '';
+    const set = HERO[m.key]; if (!set) return '';
     const eager = m.key === first;
-    const img = (p: HeroPic, cls: string, sizes: string) => {
-      const set = `${tinSrc(p.file, 480)} 480w, ${tinSrc(p.file, 900)} 900w`;
-      return `<img class="${cls}" data-mimg="${m.key}" ${eager ? `src="${tinSrc(p.file, 900)}" srcset="${set}"` : `data-src="${tinSrc(p.file, 900)}" data-srcset="${set}"`} sizes="${sizes}" alt="${esc(p.alt)}" width="${p.w}" height="${p.h}" decoding="async">`;
-    };
-    return `<figure class="tset" data-mset="${m.key}">${img(pair[1], 't2', '(max-width: 820px) 40vw, 16vw')}${img(pair[0], 't1', '(max-width: 820px) 72vw, 30vw')}</figure>`;
+    const tops = [...new Set(set.tins.map(t => t.top))];
+    return `<figure class="tset" data-mset="${m.key}">${tops.map(t => `<img data-mimg="${m.key}" data-top="${t}" ${eager ? `src="${moonSrc(t)}"` : `data-src="${moonSrc(t)}"`} alt="" width="520" height="520" decoding="async" hidden>`).join('')}</figure>`;
   }).join('');
 }
-const load = (img: HTMLImageElement | undefined) => {
-  if (!img?.dataset.src) return;
-  img.srcset = img.dataset.srcset ?? ''; img.src = img.dataset.src; delete img.dataset.src; delete img.dataset.srcset;
-};
-let tiltWired = false;
-/** Show a moment's pair: it turns and fades in as the previous pair fades out. */
-export function showHero(app: ParentNode, key: string) {
-  const sets = [...app.querySelectorAll<HTMLElement>('#dStack .tset')];
-  sets.forEach(f => {
-    const on = f.dataset.mset === key;
-    f.querySelectorAll<HTMLImageElement>('img').forEach(i => { if (on) load(i); i.classList.toggle('on', on); });
-    f.classList.toggle('on', on);
-  });
+let tins: TinsHero | null = null;
+/** Show a moment's tins: they rise into place as the previous ones fade. */
+export function showHero(app: HTMLElement, key: string) {
   const stack = app.querySelector<HTMLElement>('#dStack');
-  if (stack && !tiltWired && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    tiltWired = true;
-    // a gentle tilt toward the pointer over the opening (desktop pointers only)
-    const hero = stack.closest<HTMLElement>('.dayhero') ?? stack;
-    hero.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse') return;
-      const r = hero.getBoundingClientRect();
-      stack.style.setProperty('--tx', (((e.clientX - r.left) / r.width) - 0.5).toFixed(3));
-      stack.style.setProperty('--ty', (((e.clientY - r.top) / r.height) - 0.5).toFixed(3));
-    });
-    hero.addEventListener('pointerleave', () => { stack.style.setProperty('--tx', '0'); stack.style.setProperty('--ty', '0'); });
-  }
-  // every other moment's pictures load once the page is idle, so changing the time never shows an empty space
-  const idle = (window as any).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 1500));
-  idle(() => app.querySelectorAll<HTMLImageElement>('#dStack img[data-src]').forEach(load));
+  if (!stack) return;
+  stack.querySelectorAll<HTMLElement>('.tset').forEach(f => {
+    const on = f.dataset.mset === key;
+    f.classList.toggle('on', on);
+    // the chosen moment's photographs load now if they have not yet
+    if (on) f.querySelectorAll<HTMLImageElement>('img[data-src]').forEach(i => { i.src = i.dataset.src!; delete i.dataset.src; });
+  });
+  stack.setAttribute('role', 'img');
+  stack.setAttribute('aria-label', HERO[key]?.alt ?? 'Candles in black tins, topped by hand, on a knoll in front of the hills');
+  if (!tins) tins = mountTins(app, stack, Object.fromEntries(Object.entries(HERO).map(([k, v]) => [k, v.tins])));
+  tins.show(key);
 }
-export const resetHeroTilt = () => { tiltWired = false; };
+/** Leaving or re-rendering the home page: take the tins down so a fresh hero mounts its own. */
+export const resetHeroTilt = () => { tins?.destroy(); tins = null; };
 
 // ---------- the extra photographs: Ritual on Repeat, Send a Sunrise, the product page ----------
 // Each is a past pour shown as Claire's craft. The captions use only verified facts (topped by hand with real botanicals,

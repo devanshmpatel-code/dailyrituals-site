@@ -33,11 +33,12 @@ const svgPoint = (t: number) => ({
 });
 const tFor = (hour: number) => Math.min(1, Math.max(0, (hour - 6) / 16));
 
-function greeting(d = new Date()) {
+/** The line above the clock: the visitor's real time; once they choose another time of day, it says which one they see. */
+function greeting(d = new Date(), shown?: string) {
   const h = d.getHours();
   const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
   const time = d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }).replace('a.m.', 'am').replace('p.m.', 'pm');
-  return `${part}. It is ${time} where you are.`;
+  return shown ? `It is ${time} where you are. Here is ${shown.toLowerCase()}.` : `${part}. It is ${time} where you are.`;
 }
 
 export async function renderHome(app: HTMLElement) {
@@ -46,7 +47,7 @@ export async function renderHome(app: HTMLElement) {
   // the studio photographs: the hero arch shows Claire's past candle work for the hour (set here, before swapRenders, so the
   // canvas renders it replaces are never swapped for Wix photos); Claire's cut-out in "Meet Claire", then From the studio; one
   // photograph each sits with Ritual on Repeat and Send a Sunrise
-  const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) { stack.innerHTML = heroStackHTML(); stack.classList.add('tins'); }
+  const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) { stack.innerHTML = heroStackHTML(momentForHour(hourNow()).key); stack.classList.add('tins'); }
   resetHeroTilt();
   app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
   app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
@@ -116,6 +117,9 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
     const [hm, ap] = useRealClock ? clockParts(new Date()) : (m.time.split(' ') as [string, string]);
     clock.innerHTML = `<span class="mono">${hm}</span><span class="ap">${ap}</span><span class="mname">${m.name}</span>`;
   }
+  const greet = app.querySelector('.greet');
+  const greetLine = greeting(new Date(), useRealClock ? undefined : m.name);
+  if (greet && greet.textContent !== greetLine) greet.innerHTML = `<span class="dot-live"></span>${greetLine}`;
   const title = app.querySelector('#dTitle')!;
   title.textContent = m.title;
   const line = app.querySelector('#dLine')!;

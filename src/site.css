@@ -215,11 +215,12 @@ body:not(.show-drafts) .confirm { display: none !important; }
 .bird svg { display: block; animation: flap .7s ease-in-out infinite alternate; transform-origin: 50% 70%; }
 @keyframes birdfly { from { translate: 0 0; } 50% { translate: 55vw -18px; } to { translate: calc(100vw + 120px) 6px; } }
 @keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(.42); } }
-.b1 { top: 20%; --bd: 38s; --bl: -4s; }
-.b2 { top: 26%; --bd: 46s; --bl: -18s; }
-.b3 { top: 15%; --bd: 52s; --bl: -30s; }
-.b4 { top: 32%; --bd: 41s; --bl: -9s; }
-.b5 { top: 23%; --bd: 58s; --bl: -40s; }
+/* high in the sky, above the words */
+.b1 { top: 6%; --bd: 38s; --bl: -4s; }
+.b2 { top: 9%; --bd: 46s; --bl: -18s; }
+.b3 { top: 4%; --bd: 52s; --bl: -30s; }
+.b4 { top: 11%; --bd: 41s; --bl: -9s; }
+.b5 { top: 7.5%; --bd: 58s; --bl: -40s; }
 .dayhero[data-m="dawn"] .b1, .dayhero[data-m="dawn"] .b2 { opacity: .6; }
 .dayhero[data-m="morning"] .bird { opacity: .75; }
 .dayhero[data-m="midday"] .b1, .dayhero[data-m="midday"] .b3, .dayhero[data-m="midday"] .b5 { opacity: .5; }
