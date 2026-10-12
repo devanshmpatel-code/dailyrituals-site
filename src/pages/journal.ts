@@ -4,9 +4,9 @@ import '../journal.css';
 
 // The Journal: short, useful pieces on caring for a candle and making a ritual of it, each ending with the products it
 // relates to. Facts about candle care are general guidance and every article lists its sources. Anything about Claire's
-// own candles uses only confirmed facts (wooden wicks, black tins and glass tumblers, topped by hand, White Rock, BC).
+// own candles uses only confirmed facts (soy wax, wooden wicks, black tins and glass tumblers, topped by hand, White Rock, BC).
 // All copy is a DRAFT FOR CLAIRE: the whole article body is wrapped in .d so "Show drafts for Claire" outlines it.
-// The wax type of Claire's candles is not confirmed, so the wax guide never says which wax she uses.
+// Claire has confirmed her candles are soy wax (owner, October 2026).
 
 type Source = { label: string; url: string };
 type Article = {
@@ -78,7 +78,7 @@ export const ARTICLES: Article[] = [
     dek: 'What the common candle waxes are, and what actually changes how a candle smells and burns.',
     pic: { file: 'tuscan-sandalwood', w: 900, h: 622, alt: 'Candles in black tins seen from above, freshly poured' },
     body: `
-      <p class="d confirm">[Confirm with Claire: which wax she uses, so this guide can say so plainly.]</p>
+      <p><b>Our candles are poured with soy wax</b>, on wooden wicks, and topped by hand in White Rock, BC. Here is how soy compares with the other common waxes.</p>
       <h2>Soy</h2>
       <p>Made from hydrogenated soybean oil. It tends to burn cooler and slower, which can mean a longer burn, and it is often described as having a softer, more ambient scent. It can show a little frosting on the surface, which is natural.</p>
       <h2>Coconut</h2>

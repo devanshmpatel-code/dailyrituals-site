@@ -184,7 +184,7 @@ export function studioHTML(): string {
       <div><span class="eyebrow">From the studio</span>
         <h2 id="studioH"><span class="d">Poured, topped and finished <span class="it">by hand.</span></span></h2></div>
       <ul class="st-facts">
-        <li><b>Wooden wicks</b></li>
+        <li><b>Soy wax, wooden wicks</b></li>
         <li><b>Topped by hand</b><span class="d">dried flowers, citrus, spices and stones</span></li>
         <li><b>Black tins and glass tumblers</b><span class="d">up to a full 16 oz</span></li>
         <li><b>Made in White Rock, BC</b></li>

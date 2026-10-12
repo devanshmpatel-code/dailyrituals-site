@@ -1,5 +1,5 @@
 // The Journal: an index of candle-care and ritual articles, each with sources and a way back to the shop; the home page
-// teaser; the newsletter is the Monthly Ritual (no more "Sunday note"); the wax guide never claims a wax type.
+// teaser; the newsletter is the Monthly Ritual (no more "Sunday note"); the wax guide says the candles are soy (confirmed).
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
 const base = process.env.BASE ?? 'http://localhost:4173/#';
@@ -22,8 +22,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   }
   await p.goto(base + '/journal/wax-guide'); await p.waitForSelector('.jr-body');
   const text = await p.locator('.jr-body').innerText();
-  ok(`${label}: the wax guide never says which wax Claire uses (unconfirmed)`, !/(our|claire'?s?|daily rituals)[^.]{0,40}\b(soy|coconut|paraffin)/i.test(text));
-  ok(`${label}: the "confirm the wax" note is hidden from customers`, !(await p.locator('.jr-body .confirm').isVisible()));
+  ok(`${label}: the wax guide says plainly that our candles are soy (confirmed by Claire)`, /our candles are poured with soy wax/i.test(text) && !/coconut wax candles|our candles are (coconut|paraffin)/i.test(text));
   await p.goto(base + '/journal/not-a-real-article'); await p.waitForSelector('.jr-grid');
   ok(`${label}: an unknown article goes back to the Journal`, /\/journal$/.test(new URL(p.url()).pathname));
   // home: teaser and the Monthly Ritual

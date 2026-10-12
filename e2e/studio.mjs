@@ -57,7 +57,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   const revealed = await p.waitForFunction(() => [...document.querySelectorAll('.studio .sh-item, .studio .above, .studio .sx')].every(f => Number(getComputedStyle(f).opacity) > .9), null, { timeout: 5000 }).then(() => true, () => false);
   ok(`${label}: the studio pieces are in view, not hidden by their reveal`, revealed);
   ok(`${label}: no past scent is named on the home page outside Moon Drops`, !/midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt/i.test(await p.evaluate(() => document.querySelector('.studio').innerText + document.querySelector('.claire').innerText)));
-  ok(`${label}: no soy or healing claims in the new copy`, !/soy|heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.studio').innerText + document.querySelector('.claire').innerText + document.querySelector('.rep-grid').innerText + document.querySelector('.gift-grid').innerText))));
+  ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.studio').innerText + document.querySelector('.claire').innerText + document.querySelector('.rep-grid').innerText + document.querySelector('.gift-grid').innerText))));
   ok(`${label}: home has no sideways scroll`, (await noScroll(p)) <= 1);
 
   // ---- coaching: Claire's portrait
