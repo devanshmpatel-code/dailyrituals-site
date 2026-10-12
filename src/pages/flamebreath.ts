@@ -11,9 +11,9 @@ import '../flamebreath.css';
 // it, breathe".
 //
 // Stage 1, choose: night under a great Bodhi tree (bodhi.ts). Its crown spreads across the top like a canopy and runs out
-// past the edges of the window; its broad trunk and roots stand in the middle on dark earth, a silhouette with a little
-// moonlight on its rim; behind it the night sky (deep plum and indigo, stars that each dim and brighten on their own slow
-// cycle, the whole sky drifting very slowly). The shop's candles stand unlit on the ground at the trunk's foot, small beside
+// past the edges of the window; its broad trunk and roots stand in the middle on dark earth, solid rough bark with a little
+// moonlight on its rim; behind it the blue hour (a slate-blue sky fading to a dusky rose on the horizon, its first faint
+// stars each dimming and brightening on their own slow cycle, the whole sky drifting very slowly). The shop's candles stand unlit on the ground at the trunk's foot, small beside
 // it, in a carousel: the chosen one in the middle, the others smaller and dimmer to the sides, further back under the tree.
 // Swipe or drag, arrow keys, or the ‹ › buttons. Under it: its name and a short line, the live price, "Light it & breathe"
 // and "Add to cart". The breath already keeps its pace at the top ("Take a moment", then in, hold, out).
@@ -38,8 +38,8 @@ const IN = 4000, HOLD = 2000, OUT = 6000, CYCLE = IN + HOLD + OUT, LEAD = 1200, 
 const FLAME_SCALE = 1.4;
 /** the strength of the candle's light that the tree's light layer is painted at; the flicker can briefly reach it */
 const LIGHT_MAX = 1.12;
-/** the night of the picker, for the haze on the tree's far canopy */
-const SKY = ['#0A0817', '#1D1532', '#2C1E3C'] as const;
+/** the blue-hour sky behind the tree (see .fb-sky), for the haze on its far canopy */
+const SKY = ['#4E739C', '#9FAEC4', '#A48390'] as const;
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sineInOut = (t: number) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, t)));
 const clamp = (x: number, a: number, b: number) => (x < a ? a : x > b ? b : x);
@@ -259,8 +259,9 @@ export function openBreathe(opener: HTMLElement) {
     const r = stage.getBoundingClientRect(); if (!r.width) return;
     const ar = Math.max(...candles.map(c => c.scale * c.foot * c.h / c.w)), phone = r.width < 700, head = $('.fb-head').getBoundingClientRect();
     // the candles stand on the floor line, a little above the bottom of the stage, small enough to sit at the trunk's foot
-    floor = Math.round(clamp(r.height * 0.07, 18, 44));
-    pw = Math.round(Math.min(phone ? clamp(r.width * 0.35, 112, 150) : clamp(r.height * 0.37, 132, 210), (r.height - floor - 10) / ar));
+    // they are the focus of the scene, so they stand low and as large as the trunk allows
+    floor = Math.round(clamp(r.height * 0.035, 12, 30));
+    pw = Math.round(Math.min(phone ? clamp(r.width * 0.4, 120, 168) : clamp(r.height * 0.5, 160, 290), (r.height - floor - 10) / ar));
     const floorY = r.bottom - floor, footY = floorY - pw * 0.36, underY = head.bottom + (phone ? 56 : 70);
     // the crown's underside just below the words (on a short screen, behind them: the trunk still rises well above the
     // candles before it forks, at least one and a quarter times their height; on a tall one, lower, so the tree is not
@@ -357,7 +358,8 @@ export function openBreathe(opener: HTMLElement) {
     // while choosing, the guide waits quietly: the breathing starts when a candle is lit
     if (stageName === 'pick') { w = 'Choose one to light'; k = 0.3 + 0.08 * Math.sin(now / 1600); sway = 0; outp = -1; }
     if (reduce) { k = 0.75; sway = 0; outp = -1; }
-    if (w !== last) { word.textContent = w; word.classList.remove('fb-in'); void word.offsetWidth; word.classList.add('fb-in'); last = w; el.dataset.phase = w; }
+    // each new word rises in again: two identical animations taken in turn restart it without forcing a layout mid-frame
+    if (w !== last) { word.textContent = w; const odd = word.classList.contains('fb-in'); word.classList.toggle('fb-in', !odd); word.classList.toggle('fb-in2', odd); last = w; el.dataset.phase = w; }
     const t = (now - t0) / 1000, [f, gut] = flicker(t), lit = stageName === 'lit';
     // the carousel eases to the chosen candle
     if (!dragging) pos = reduce ? sel : Math.abs(sel - pos) < 0.001 ? sel : pos + (sel - pos) * (1 - Math.exp(-dt / speed * 10));
@@ -367,7 +369,7 @@ export function openBreathe(opener: HTMLElement) {
     const life = lit ? (0.12 + 0.88 * k) * (0.92 + 0.08 * f) : 0.35 + 0.25 * k;
     setOp(drift, 0.3 + 0.7 * life);
     setOp(horizon, 0.3 + 0.7 * life, ` scale(${(0.86 + 0.26 * life).toFixed(3)})`);
-    setOp(cool, lit ? 0.8 * (1 - life) : 0.3 - 0.14 * k);
+    setOp(cool, lit ? 0.6 * (1 - life) : 0.3 - 0.14 * k);
     setOp(pool, catchK * (0.25 + 0.75 * life) * f);
     // the tree: its light layer shows as strongly as the flame burns (the breath and the same flicker), the leaves nearest
     // the light tremble, and on an out-breath one may fall

@@ -5,22 +5,27 @@
   --pw: 420px; --floor: 15%; --gold: #E9D4A1; --cream: #FBF3E6; }
 .jbreathe.fb.open { opacity: 1; }
 
-/* the night: deep indigo above, plum lower down, a warm glow low in the middle where the candles stand */
+/* the blue hour behind the tree: a soft slate blue high up, paling and warming to a dusky rose low on the horizon, then the
+   night on the ground (--groundY: where the ground meets the sky behind the trunk). Against it the crown shows its leaves
+   and its depth, and the trunk stands out as the dark, solid thing it is */
 .fb-sky { position: absolute; inset: 0; z-index: -6; overflow: hidden; pointer-events: none;
-  background: linear-gradient(180deg, #0A0817 0%, #120E26 24%, #1D1532 46%, #2C1E3C 64%, #392640 76%, #24182C 88%, #140E1C 100%); }
+  background: linear-gradient(180deg, #4E739C 0, #5F7FA4 calc(var(--groundY, 60vh) * .3), #7F8AA6 calc(var(--groundY, 60vh) * .62), #9C8C9E calc(var(--groundY, 60vh) * .84),
+    #A48390 calc(var(--groundY, 60vh) - 6px), #3A2A3A calc(var(--groundY, 60vh) + 30px), #140E19 calc(var(--groundY, 60vh) + 120px), #0E0A13 100%); }
 .fb-drift { position: absolute; inset: -3%; will-change: transform, opacity; animation: fbDrift 96s ease-in-out infinite alternate; }
 @keyframes fbDrift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-1.6%, .9%, 0) scale(1.035); } }
-.fb-stars { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* the first stars of the evening, faint against the blue */
+.fb-stars { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: .38; }
+.fb-tw { position: absolute; inset: 0; opacity: .55; }
 .fb-tw i { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); border-radius: 50%; background: #FFF8EE; opacity: .3;
   animation: fbTw var(--d) ease-in-out var(--l) infinite alternate; }
 .fb-tw i.b { box-shadow: 0 0 5px 1px rgba(255, 236, 214, .55), 0 0 14px 3px rgba(200, 190, 255, .16); }
 @keyframes fbTw { 0% { opacity: .06; transform: scale(.65); } 55% { opacity: calc(var(--a) * .7); } 100% { opacity: var(--a); transform: scale(1); } }
-/* a warm glow low on the horizon behind the tree, so its trunk and roots stand out against the night */
+/* the last warmth of the dusk low on the horizon behind the tree, so its trunk and roots stand out against it */
 .fb-horizon { position: absolute; z-index: -5; left: calc(50% - min(760px, 90vw)); width: min(1520px, 180vw); top: calc(var(--groundY, 70vh) - 46vh); height: 62vh; pointer-events: none; transform-origin: 50% 74%;
   background: radial-gradient(ellipse 50% 50% at 50% 74%, rgba(214, 138, 112, .42) 0%, rgba(176, 100, 112, .26) 26%, rgba(112, 64, 104, .13) 50%, rgba(70, 40, 90, 0) 74%); will-change: opacity, transform; }
-/* the cool of the out-breath: the night deepens and turns blue, then warms again as you breathe in */
+/* the cool of the out-breath: the dusk deepens and turns blue, then warms again as you breathe in */
 .fb-cool { position: absolute; inset: 0; z-index: -4; pointer-events: none; opacity: .3; will-change: opacity;
-  background: linear-gradient(180deg, rgba(6, 8, 30, .62) 0%, rgba(10, 16, 48, .42) 48%, rgba(8, 10, 34, .66) 100%); }
+  background: linear-gradient(180deg, rgba(14, 22, 52, .5) 0%, rgba(16, 22, 56, .36) 48%, rgba(8, 10, 34, .5) 100%); }
 
 /* top: sound and Done */
 .fb-bar { position: absolute; z-index: 30; top: max(14px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); display: flex; gap: 8px; }
@@ -41,7 +46,9 @@
   transition: font-size .9s ease, color .9s ease; height: clamp(48px, 5.6vw, 68px); display: flex; align-items: center; justify-content: center; }
 .jbreathe.fb[data-stage="lit"] .jb-word { font-size: clamp(40px, 5.4vw, 62px); color: var(--cream); text-shadow: 0 1px 3px rgba(8, 5, 14, .9), 0 0 22px rgba(8, 5, 14, .85), 0 0 34px rgba(255, 190, 110, .22); }
 .jbreathe.fb .jb-word.fb-in { animation: fbWord .9s ease both; }
+.jbreathe.fb .jb-word.fb-in2 { animation: fbWord2 .9s ease both; }
 @keyframes fbWord { from { opacity: 0; transform: translateY(5px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes fbWord2 { from { opacity: 0; transform: translateY(5px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 
 /* the Bodhi tree (bodhi.ts), painted on a canvas that covers the whole pause, under everything that can be read or
    pressed: its layers are the still tree and the ground at its foot, the candle's light on them (its opacity follows the
@@ -84,6 +91,15 @@
 .fb-low { display: grid; padding: 0 16px max(22px, env(safe-area-inset-bottom)); }
 .fb-info, .fb-breath { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; transition: opacity .6s ease, visibility .6s; }
 .jbreathe.fb[data-stage="pick"] .fb-breath, .jbreathe.fb[data-stage="lit"] .fb-info { opacity: 0; visibility: hidden; pointer-events: none; }
+/* while it burns, the breath's few words sit in the middle of the dark ground below the candle, not crowded under it */
+.fb-breath { justify-content: center; }
+/* on a wide screen the sizes, the price and the two buttons share one row, so the candles can stand lower and larger */
+@media (min-width: 900px) {
+  .fb-info { display: grid; grid-template-columns: auto auto; justify-content: center; justify-items: center; align-items: center; column-gap: 22px; row-gap: 6px; }
+  .fb-info > * { grid-column: 1 / -1; }
+  .fb-info > .fb-buy, .fb-info > .fb-actions { grid-column: auto; margin-top: 6px; }
+  .fb-dots { display: none; }
+}
 .fb-mood { margin: 0; font: 600 11px/1.2 var(--body, system-ui); letter-spacing: .2em; text-transform: uppercase; color: rgba(233, 212, 161, .82); }
 .fb-namerow { display: flex; align-items: center; gap: clamp(14px, 3vw, 26px); }
 .jbreathe.fb .fb-name { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 4.2vw, 52px); line-height: 1.02; margin: 0; color: var(--cream); min-width: 5ch; letter-spacing: -.01em; }
@@ -145,7 +161,7 @@
 }
 @media (max-height: 700px) and (min-width: 701px) { .fb-head { padding-top: 54px; } .fb-line { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .jbreathe.fb, .jbreathe.fb .jb-word, .jbreathe.fb .jb-word.fb-in, .fb-c, .fb-info, .fb-breath, .fb-offer, .fb-offer-t, .fb-offer-a { transition: none; animation: none; }
+  .jbreathe.fb, .jbreathe.fb .jb-word, .jbreathe.fb .jb-word.fb-in, .jbreathe.fb .jb-word.fb-in2, .fb-c, .fb-info, .fb-breath, .fb-offer, .fb-offer-t, .fb-offer-a { transition: none; animation: none; }
   .fb-drift, .fb-tw i { animation: none; }
   .fb-tw i { opacity: calc(var(--a) * .7); }
 }

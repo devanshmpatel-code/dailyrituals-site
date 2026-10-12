@@ -386,7 +386,7 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     for (const l of T.leaves) { l.px = X(l.x); l.py = Y(l.y); }
     placeLight();
     // the leaves that move are the near ones the light reaches: they catch it and tremble; the rest are baked
-    live = T.leaves.filter(l => l.layer === 2 && l.lb > 0.22 && onScreen(l.px, l.py, leafPx)).sort((a, b) => b.lb - a.lb).slice(0, 200).sort((a, b) => a.py - b.py);
+    live = T.leaves.filter(l => l.layer === 2 && l.lb > 0.22 && onScreen(l.px, l.py, leafPx)).sort((a, b) => b.lb - a.lb).slice(0, 160).sort((a, b) => a.py - b.py);
     const isLive = new Set(live); order = T.leaves.filter(l => !isLive.has(l)).sort((a, b) => a.layer - b.layer);
     // for the tests, and the page: where the trunk stands and how big it is, in CSS px in the viewport
     cv.dataset.foot = `${an.x.toFixed(1)},${an.y.toFixed(1)}`; cv.dataset.fork = (rc.top + Y(TRUNK_TOP)).toFixed(1); cv.dataset.trunk = (trunkW(0.5) * sx).toFixed(1);
@@ -410,10 +410,13 @@ export function createBodhi(o: BodhiOptions): Bodhi {
       // leaves a thin rim on the edges that face the moon
       const moon = 'rgba(146,144,196,0.22)', mo = Math.max(1, sc * 0.0028);
       d.save(); d.translate(-mo, -mo * 0.55); d.fillStyle = 'rgba(146,144,196,0.14)'; for (const s of T.roots) rootPoly(d, s);
-      d.fillStyle = moon; trunkPoly(d); drawWood(d, moon, (x, y) => [X(x), Y(y)], sc, 0.016); d.restore();
+      drawWood(d, moon, (x, y) => [X(x), Y(y)], sc, 0.016);
+      // (the trunk's rim only below where it parts into limbs: on its narrowing shoulders it would outline it like a cut-out)
+      d.save(); d.beginPath(); d.rect(0, Y(TRUNK_TOP * 0.72), W, H); d.clip(); d.fillStyle = moon; trunkPoly(d); d.restore(); d.restore();
       d.fillStyle = bark; for (const s of T.roots) rootPoly(d, s); trunkPoly(d); drawWood(d, bark, (x, y) => [X(x), Y(y)], sc);
       // the trunk's flutes, soft: seen near, sharp grooves would read as strokes of a pen
-      d.save(); d.filter = `blur(${Math.max(1, sc * 0.004).toFixed(1)}px)`; flutes(d, 'rgba(6,4,10,0.26)', 0, Math.max(1.5, sc * 0.012)); d.restore();
+      d.save(); d.filter = `blur(${Math.max(1, sc * 0.004).toFixed(1)}px)`; flutes(d, 'rgba(6,4,10,0.3)', 0, Math.max(1.5, sc * 0.012)); d.restore();
+      paintBark(d);
       return 700;
     });
     slices(order.filter(l => onScreen(l.px, l.py, leafPx * 1.5)), 700, l => drawLeaf(d, l, l.px, l.py, l.a, 0, near(l)));
@@ -423,6 +426,33 @@ export function createBodhi(o: BodhiOptions): Bodhi {
   };
   /** Lay the tree out again: it is grown and laid out in the first idle slice, not in a frame. */
   const relayout = () => { dirty = false; still = false; treeReady = false; unschedule(); jobs = [() => { build(); return 0; }]; schedule(); };
+
+  /**
+   * The bark in the night: the moon catches the left of the round trunk in a cool sheen that fades towards its middle and
+   * up into the fork, and the bark is streaked with its grain, so the trunk is solid, rough wood and not a cut-out.
+   */
+  const paintBark = (d: CanvasRenderingContext2D) => {
+    // the sheen: a broad soft stroke of cool light down the trunk's left edge, painted apart and faded out on its way up,
+    // so it is gone before the fork and never stops at an edge where the limbs part
+    const x0 = Math.floor(X(-0.4)), y0 = Math.floor(Y(TRUNK_TOP - 0.04)), bw = Math.ceil(0.8 * sx), bh = Math.ceil(Y(0.06) - y0);
+    const oc = document.createElement('canvas'), og = size(oc, bw, bh); og.translate(-x0, -y0);
+    trunkPoly(og); og.clip(); og.filter = `blur(${(Math.max(2, sc * 0.02) * dpr).toFixed(1)}px)`; og.strokeStyle = 'rgba(128,136,184,0.22)'; og.lineWidth = trunkW(0.5) * sx * 0.3; og.lineCap = 'round';
+    og.beginPath(); for (let i = 0; i <= 20; i++) { const t = i / 20, x = X(trunkX(t) - trunkW(t) / 2) + trunkW(t) * sx * 0.06, y = Y(0.02 + (TRUNK_TOP - 0.03) * t); if (i) og.lineTo(x, y); else og.moveTo(x, y); } og.stroke();
+    og.filter = 'none'; og.setTransform(1, 0, 0, 1, 0, 0); og.globalCompositeOperation = 'destination-in';
+    const fade = og.createLinearGradient(0, (Y(0.02) - y0) * dpr, 0, (Y(TRUNK_TOP * 0.8) - y0) * dpr); fade.addColorStop(0, 'rgba(0,0,0,1)'); fade.addColorStop(0.5, 'rgba(0,0,0,0.75)'); fade.addColorStop(1, 'rgba(0,0,0,0)');
+    og.fillStyle = fade; og.fillRect(0, 0, oc.width, oc.height);
+    d.save(); d.setTransform(1, 0, 0, 1, 0, 0); d.drawImage(oc, x0 * dpr, y0 * dpr); d.restore(); oc.width = oc.height = 0;
+    d.save(); trunkPoly(d); d.clip(); d.lineCap = 'round';
+    // the grain: short uneven streaks running up the bark, dark in its cracks and pale where the moon finds an edge
+    const br = rng(seed + 5);
+    for (let i = 0; i < 420; i++) {
+      const t = br() * 0.95, u = br() - 0.5, x = X(trunkX(t) + u * trunkW(t) * 0.96), y = Y(0.02 + (TRUNK_TOP - 0.03) * t), len = sy * (0.012 + br() * 0.04), pale = br() < 0.3;
+      d.strokeStyle = pale ? `rgba(150,154,200,${((0.03 + br() * 0.06) * (0.5 - u) * (1 - smooth(0.4, 0.8, t))).toFixed(3)})` : `rgba(4,2,8,${(0.18 + br() * 0.25).toFixed(2)})`;
+      d.lineWidth = (0.6 + br() * 1.3) * Math.max(1, sc / 650);
+      d.beginPath(); d.moveTo(x, y); d.quadraticCurveTo(x + (br() - 0.5) * 3, y - len / 2, x + (br() - 0.5) * 2, y - len); d.stroke();
+    }
+    d.restore();
+  };
 
   /**
    * The ground at the tree's foot, under the night: dark earth, mottled where it dips and rises, with short grass growing in
