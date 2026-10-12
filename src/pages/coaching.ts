@@ -1,6 +1,6 @@
 import Coaching from '../canvas/pages/Coaching.html?raw';
 import { wireLoop } from './loop';
-import { mountCue, candleSVG } from './coaching-cue';
+import { mountCue, candlePhoto, lightCandle } from './coaching-cue';
 import { mountCoachingFx } from './coaching-fx';
 import '../coaching.css';
 import { loadServices, imgSrc, money, wix, saveTokens } from '../wix';
@@ -23,7 +23,11 @@ export async function renderCoaching(app: HTMLElement) {
   mountCue(app.querySelector<HTMLElement>('#cue'));
   mountCoachingFx(app);
   const lastFlame = app.querySelector<HTMLElement>('.co-final-flame');
-  if (lastFlame) lastFlame.innerHTML = candleSVG('cf'); // the same candle, fully lit, under the last call to action
+  if (lastFlame) { // the same candle, fully lit, under the last call to action: it catches as it comes into view
+    lastFlame.innerHTML = candlePhoto('co-final-photo', '260px');
+    const c = lightCandle(lastFlame.querySelector<HTMLElement>('.co-final-photo'));
+    if (c) { const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io?.disconnect(); window.setTimeout(() => c.set(1), 250); } }, { threshold: 0.4 }) : null; if (io) io.observe(lastFlame); else c.set(1); }
+  }
 
   const ways = [...app.querySelectorAll<HTMLAnchorElement>('.ways .way')];
   let list: any[] = [];

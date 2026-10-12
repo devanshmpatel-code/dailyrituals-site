@@ -44,6 +44,10 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.waitForFunction(() => /\$/.test(document.querySelector('.fb-price')?.textContent ?? ''));
   const prices = await p.evaluate(() => (document.querySelector('.jbreathe').textContent.match(/\$\d[\d,.]*/g) ?? []));
   ok(`${label}: prices come from the live catalogue, none invented`, prices.length > 0 && prices.every(x => allowed.has(x)), prices.join(' '));
+  // a chosen size shows its own price (not "From" the cheapest), the same price Add to cart will use
+  await p.waitForFunction(() => !/From/.test(document.querySelector('.fb-price').textContent), null, { timeout: 4000 }).catch(() => {});
+  const own = await p.evaluate(() => ({ size: document.querySelector('.fb-size[aria-pressed="true"]')?.textContent, price: document.querySelector('.fb-price').textContent, add: document.querySelector('.fb-add').textContent }));
+  ok(`${label}: the chosen size shows its exact price, not "From"`, !!own.size && /^\$\d+\.\d\d$/.test(own.price) && allowed.has(own.price) && own.add.endsWith(own.price), JSON.stringify(own));
   ok(`${label}: no other products are named`, await p.evaluate(() => !/Citrus|Campfire|Desert|Golden Meridian|Amber|Licorice|Lilac|Peony|Sea Foam|Windy/i.test(document.querySelector('.jbreathe').textContent)));
   ok(`${label}: Light it & breathe has focus`, await p.evaluate(() => document.activeElement?.classList.contains('fb-light')));
   // choosing: arrow keys, the ‹ › buttons, a drag
@@ -97,7 +101,15 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: the flame swells with the in-breath and settles on the out-breath`, big > small * 1.15, `${big} vs ${small}`);
   ok(`${label}: the sub line keeps the original words`, /Stay as long as you like/.test(await p.locator('.jbreathe .jb-sub').textContent()));
   // after three breaths, the offer: quiet, never taking focus
-  await p.waitForFunction(() => document.querySelector('.jbreathe').dataset.offer === 'shown'); await p.waitForTimeout(1400);
+  await p.waitForFunction(() => document.querySelector('.jbreathe').dataset.offer === 'shown');
+  // its buttons are legible from the moment they appear and stay so through the breath (the scene dims, they do not)
+  const seenOp = new Set(); let minOp = 1;
+  for (let i = 0; i < 28; i++) {
+    const [ph, o] = await p.evaluate(() => { const op = n => { let v = 1; for (; n; n = n.parentElement) v *= Number(getComputedStyle(n).opacity); return v; }; return [document.querySelector('.jbreathe').dataset.phase, Math.min(op(document.querySelector('.fb-home')), op(document.querySelector('.fb-pair')))]; });
+    seenOp.add(ph); minOp = Math.min(minOp, o); await p.waitForTimeout(50);
+  }
+  ok(`${label}: the offer's buttons never fade below 0.85 opacity, through in, hold and out`, minOp >= 0.85 && ['Breathe in', 'Breathe out'].every(w => seenOp.has(w)), `${minOp.toFixed(2)} over ${[...seenOp].join(' / ')}`);
+  await p.waitForTimeout(400);
   const off = await p.evaluate(() => ({ vis: getComputedStyle(document.querySelector('.fb-offer')).opacity, focus: document.activeElement?.className, pair: document.querySelector('.fb-pair').getAttribute('href'), home: document.querySelector('.fb-home').textContent, words: document.querySelector('.jbreathe').dataset.phase }));
   ok(`${label}: after three breaths the offer appears without taking focus or stopping the breath`, Number(off.vis) > 0.3 && /jb-close/.test(off.focus) && !!off.words, JSON.stringify(off));
   ok(`${label}: it pairs Cabana with its roller`, /^#?\/product\/cabana-fragrance-roller$/.test(off.pair) && /Bring this candle home/.test(off.home), off.pair);

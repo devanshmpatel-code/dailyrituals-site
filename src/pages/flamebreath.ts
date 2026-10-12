@@ -1,7 +1,8 @@
 import { add } from '../cart';
 import { money, loadProduct } from '../wix';
 import { MOODS } from '../config';
-import { PICKER_CANDLES, pickerSrc, matchLive, rememberCandle, lastCandle, type PickerCandle, type LiveCandle, type Wick } from './picker';
+import { PICKER_CANDLES, pickerSrc, matchLive, rememberCandle, lastCandle, type PickerCandle, type LiveCandle } from './picker';
+import { PhotoFlames, createFlicker } from './candleflame';
 import { createCrackle, type Crackle } from './pickersound';
 import '../flamebreath.css';
 
@@ -31,54 +32,7 @@ const sineInOut = (t: number) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math
 const clamp = (x: number, a: number, b: number) => (x < a ? a : x > b ? b : x);
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
-// a small seeded value noise, so the flicker is organic rather than a keyframe wobble
-const hash = (x: number) => { let h = (x * 374761393) | 0; h = (h ^ (h >>> 13)) * 1274126177; return (((h ^ (h >>> 16)) >>> 0) % 10000) / 10000; };
-const noise1 = (t: number, seed = 0) => { const x = t + seed * 31.7, i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return (hash(i) + (hash(i + 1) - hash(i)) * u) * 2 - 1; };
 const seeded = (seed: number) => { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; };
-
-const offscreen = (w: number, h: number) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return [c, c.getContext('2d')!] as const; };
-const linear = (g: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, stops: [number, string][]) => { const l = g.createLinearGradient(x0, y0, x1, y1); for (const [o, c] of stops) l.addColorStop(o, c); return l; };
-
-/** A flame's outline, its base at (x, y) and its tip h above: round at the bottom, widest a quarter of the way up, a long taper. */
-const tear = (g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
-  g.beginPath(); g.moveTo(x, y + w * 0.1);
-  g.bezierCurveTo(x + w * 0.66, y + w * 0.08, x + w * 0.6, y - h * 0.34, x + w * 0.26, y - h * 0.64);
-  g.bezierCurveTo(x + w * 0.1, y - h * 0.82, x + w * 0.02, y - h * 0.93, x, y - h);
-  g.bezierCurveTo(x - w * 0.02, y - h * 0.93, x - w * 0.1, y - h * 0.82, x - w * 0.26, y - h * 0.64);
-  g.bezierCurveTo(x - w * 0.6, y - h * 0.34, x - w * 0.66, y + w * 0.08, x, y + w * 0.1); g.closePath();
-};
-
-/**
- * The flame, painted once at its tallest in device px: an orange envelope, the yellow body, a near-white core low down and
- * the faint blue cup where it meets the wick, each softened with a blur. Returns the sprite and the row of the flame's base.
- */
-function flameSprite(hpx: number) {
-  const [c, g] = offscreen(hpx * 0.7, hpx * 1.24), x = c.width / 2, by = hpx * 1.12;
-  g.filter = `blur(${(hpx * 0.05).toFixed(1)}px)`; // the faint outer mantle
-  g.fillStyle = linear(g, 0, by, 0, by - hpx * 1.08, [[0, 'rgba(255,120,40,0)'], [0.1, 'rgba(255,128,48,0.42)'], [0.45, 'rgba(255,140,56,0.5)'], [0.8, 'rgba(250,110,40,0.3)'], [1, 'rgba(240,90,30,0)']]);
-  tear(g, x, by, hpx * 0.38, hpx * 1.06); g.fill();
-  g.filter = `blur(${(hpx * 0.009).toFixed(1)}px)`; // the luminous body: soot glowing yellow, deepening to orange at the tip
-  g.fillStyle = linear(g, 0, by, 0, by - hpx, [[0, 'rgba(255,170,80,0)'], [0.1, 'rgba(255,186,96,0.62)'], [0.22, 'rgba(255,222,146,0.98)'], [0.55, 'rgba(255,204,108,1)'], [0.8, 'rgba(255,156,62,0.86)'], [0.96, 'rgba(255,120,44,0.2)'], [1, 'rgba(255,110,40,0)']]);
-  tear(g, x, by, hpx * 0.29, hpx); g.fill();
-  g.filter = `blur(${(hpx * 0.028).toFixed(1)}px)`; // the hottest part, almost white, low in the flame
-  g.fillStyle = linear(g, 0, by - hpx * 0.07, 0, by - hpx * 0.7, [[0, 'rgba(255,255,250,0)'], [0.12, 'rgba(255,255,250,0.95)'], [0.5, 'rgba(255,254,244,1)'], [0.78, 'rgba(255,240,200,0.55)'], [1, 'rgba(255,228,170,0)']]);
-  tear(g, x, by - hpx * 0.07, hpx * 0.18, hpx * 0.6); g.fill();
-  // the dark heart just above the wick, where the wax vapour has not caught yet, and the blue cup around it
-  g.filter = `blur(${(hpx * 0.02).toFixed(1)}px)`; g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,0.5)';
-  g.beginPath(); g.ellipse(x, by - hpx * 0.06, hpx * 0.07, hpx * 0.07, 0, 0, Math.PI * 2); g.fill();
-  g.globalCompositeOperation = 'lighter'; g.filter = `blur(${(hpx * 0.012).toFixed(1)}px)`;
-  g.strokeStyle = 'rgba(96,128,236,0.45)'; g.lineWidth = hpx * 0.03;
-  g.beginPath(); g.ellipse(x, by - hpx * 0.06, hpx * 0.125, hpx * 0.085, 0, Math.PI * 0.05, Math.PI * 0.95); g.stroke();
-  g.filter = 'none'; g.globalCompositeOperation = 'source-over';
-  return { c, by, hpx };
-}
-
-/** The glow of the flame in the air: a soft warm radial falloff, drawn scaled. */
-function bloomSprite() {
-  const [c, g] = offscreen(128, 128), r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-  for (let i = 0; i <= 16; i++) { const u = i / 16, a = Math.exp(-u * 5.2) * (1 - u) ** 2; r.addColorStop(u, `rgba(255,${(176 - 50 * u) | 0},${(104 - 40 * u) | 0},${a.toFixed(3)})`); }
-  g.fillStyle = r; g.fillRect(0, 0, 128, 128); return c;
-}
 
 /** The faint stars of the night, painted once: many, small and still, thinning towards the horizon. */
 function paintStars(cv: HTMLCanvasElement, d: number) {
@@ -107,7 +61,6 @@ function twinkles(count: number) {
 const FLAME_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M12 2.5c.6 3.2 4.8 5.6 4.8 10.2A4.8 4.8 0 0 1 12 17.5a4.8 4.8 0 0 1-4.8-4.8c0-2.2 1.3-3.7 2.3-4.9.3 1.6 1 2.5 1.9 2.9-.4-3 .1-5.6.6-8.2z" fill="currentColor"/><path d="M11 18.5h2v3h-2z" fill="currentColor" opacity=".55"/></svg>';
 const SOUND_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
 
-type Flame = { wick: Wick; cv: HTMLCanvasElement; g: CanvasRenderingContext2D; halo: HTMLElement; href: number; bx: number; by: number; seed: number };
 
 export function openBreathe(opener: HTMLElement) {
   document.querySelectorAll('.jbreathe').forEach(n => n.remove());
@@ -120,7 +73,7 @@ export function openBreathe(opener: HTMLElement) {
   const el = document.createElement('div');
   el.className = 'jbreathe fb'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'A moment to breathe: choose your candle');
   el.dataset.stage = 'pick';
-  const slide = (c: PickerCandle, i: number) => `<button class="fb-c" type="button" data-i="${i}" data-slug="${c.slug}" aria-pressed="${i === sel}" aria-label="${esc(c.name)}, candle ${i + 1} of ${N}" style="--ar:${c.w} / ${c.h}">
+  const slide = (c: PickerCandle, i: number) => `<button class="fb-c" type="button" data-i="${i}" data-slug="${c.slug}" aria-pressed="${i === sel}" aria-label="${esc(c.name)}, candle ${i + 1} of ${N}" style="--ar:${c.w} / ${c.h};--sc:${c.scale};--drop:${((1 - c.foot) * c.scale * c.h / c.w).toFixed(4)}">
       <span class="fb-ph"><span class="fb-pic"><img class="fb-unlit" src="${pickerSrc(c, 'unlit')}" srcset="${pickerSrc(c, 'unlit', 480)} 480w, ${pickerSrc(c, 'unlit')} 900w" sizes="(max-width: 700px) 80vw, 560px" alt="${esc(c.alt)}" width="${c.w}" height="${c.h}" decoding="async" draggable="false"><img class="fb-glow" src="${pickerSrc(c, 'glow')}" srcset="${pickerSrc(c, 'glow', 480)} 480w, ${pickerSrc(c, 'glow')} 900w" sizes="(max-width: 700px) 80vw, 560px" alt="" width="${c.w}" height="${c.h}" decoding="async" draggable="false"></span></span></button>`;
   el.innerHTML = `<div class="fb-sky" aria-hidden="true"><div class="fb-drift"><canvas class="fb-stars"></canvas><div class="fb-tw">${twinkles(window.innerWidth < 700 ? 44 : 84)}</div></div></div>
     <div class="fb-horizon" aria-hidden="true"></div><div class="fb-cool" aria-hidden="true"></div><div class="fb-ground" aria-hidden="true"></div>
@@ -162,12 +115,13 @@ export function openBreathe(opener: HTMLElement) {
   const cur = () => candles[sel];
   const itemOf = (c: PickerCandle) => live.get(c.slug)?.item;
   const choiceOf = (c: PickerCandle) => { const it = itemOf(c); if (!it || !it.choices.length) return undefined; return size.get(c.slug) ?? (it.choices.find(x => x.inStock) ?? it.choices[0]).name; };
-  /** the price of a size, from the product's variants once they are loaded; until then (or for one size) the catalogue's lowest price */
-  const priceOf = (c: PickerCandle, choice?: string): { n: number; exact: boolean } | null => {
+  /** the price of a size, from the product's variants once they are loaded; until then (or for one size) the catalogue's lowest
+   * price, with its highest for the range (n2) */
+  const priceOf = (c: PickerCandle, choice?: string): { n: number; n2: number; exact: boolean } | null => {
     const it = itemOf(c); if (!it) return null;
     const v = choice ? variantPrice.get(c.slug)?.get(choice) : undefined;
-    if (v != null) return { n: v, exact: true };
-    return { n: it.priceMin, exact: it.priceMax === it.priceMin };
+    if (v != null) return { n: v, n2: v, exact: true };
+    return { n: it.priceMin, n2: it.priceMax, exact: it.priceMax === it.priceMin };
   };
   const renderInfo = () => {
     const c = cur(), it = itemOf(c), lv = live.get(c.slug);
@@ -181,7 +135,9 @@ export function openBreathe(opener: HTMLElement) {
       sizesEl.innerHTML = it.choices.map(ch => `<button class="fb-size" type="button" data-size="${esc(ch.name)}" aria-pressed="${ch.name === choice}" ${ch.inStock ? '' : 'disabled'}>${esc(ch.name)}${ch.inStock ? '' : ' · sold out'}</button>`).join('');
       sizesEl.hidden = false;
     } else { sizesEl.innerHTML = ''; sizesEl.hidden = true; }
-    priceEl.textContent = p ? (p.exact ? money(p.n) : `From ${money(p.n)}`) : '';
+    // a chosen size shows its own price; until the shop has said what that is, the honest range rather than "From" the
+    // cheapest, which would read as the chosen size's price ("From" only when no size is chosen)
+    priceEl.textContent = !p ? '' : p.exact ? money(p.n) : choice ? `${money(p.n)} – ${money(p.n2)}` : `From ${money(p.n)}`;
     priceEl.hidden = !p;
     const inStock = !!it && (choice ? it.choices.find(x => x.name === choice)?.inStock !== false : it.inStock);
     addBtn.hidden = !it; addBtn.disabled = !inStock;
@@ -280,83 +236,34 @@ export function openBreathe(opener: HTMLElement) {
   // ---------- sizes ----------
   const resize = () => {
     const r = stage.getBoundingClientRect(); if (!r.width) return;
-    const ar = Math.max(...candles.map(c => c.h / c.w)), phone = r.width < 700;
+    const ar = Math.max(...candles.map(c => c.scale * c.foot * c.h / c.w)), phone = r.width < 700;
     // the candles stand on the floor line, a little above the bottom of the stage; the tallest fits under the heading
     const floor = Math.round(clamp(r.height * 0.13, 34, 96));
     pw = Math.round(Math.min(phone ? r.width * 0.9 : Math.min(560, r.width * 0.4), (r.height - floor - 10) / ar));
     spacing = phone ? Math.min(r.width * 0.66, pw * 0.86) : pw * 0.98;
     el.style.setProperty('--pw', `${pw}px`); el.style.setProperty('--floor', `${floor}px`); el.style.setProperty('--floorY', `${Math.round(r.bottom - floor)}px`); lastLayout = ''; layout();
     paintStars(starCv, d);
-    if (flames.length) buildFlames();
-    // paint the flame for this size while nothing else is happening, so lighting the candle does not stall a frame
-    const idle = (window as any).requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 200));
-    idle(() => { if (!closing) { spriteFor(flameHpx()); bloom ??= bloomSprite(); } });
+    if (flames) buildFlames();
   };
 
-  // ---------- the flames ----------
-  let flames: Flame[] = [], sprite: ReturnType<typeof flameSprite> | null = null, bloom: HTMLCanvasElement | null = null, drawnStatic = false;
-  const spriteFor = (hpx: number) => (sprite?.hpx === hpx ? sprite : (sprite = flameSprite(hpx)));
-  const flameHpx = () => Math.ceil(Math.max(...cur().wicks.map(w => w.h)) * pw * 1.22 * 1.3 * d);
+  // ---------- the flames (see candleflame.ts: wooden-wick flames matched to the photographed ones) ----------
+  let flames: PhotoFlames | null = null, drawnStatic = false;
   const buildFlames = () => {
-    flames.forEach(f => { f.cv.remove(); f.halo.remove(); }); flames = [];
-    const c = cur(), ph = slides[sel].querySelector<HTMLElement>('.fb-ph')!, phH = pw * c.h / c.w;
-    const maxH = Math.max(...c.wicks.map(w => w.h)) * pw * 1.22;
-    spriteFor(Math.ceil(maxH * 1.3 * d)); bloom ??= bloomSprite(); drawnStatic = false;
-    c.wicks.forEach((w, i) => {
-      const href = w.h * pw * 1.22, cw = href * 2.6, ch = href * 2.5, bx = cw / 2, by = ch * 0.84;
-      const cv = document.createElement('canvas'); cv.className = 'fb-flame'; cv.width = Math.round(cw * d); cv.height = Math.round(ch * d);
-      Object.assign(cv.style, { left: `${(w.x * pw - bx).toFixed(1)}px`, top: `${(w.y * phH - by).toFixed(1)}px`, width: `${cw.toFixed(1)}px`, height: `${ch.toFixed(1)}px` });
-      cv.dataset.base = `${bx.toFixed(1)},${by.toFixed(1)}`; cv.setAttribute('aria-hidden', 'true');
-      const halo = document.createElement('span'); halo.className = 'fb-halo'; halo.setAttribute('aria-hidden', 'true');
-      Object.assign(halo.style, { left: `${(w.x * pw).toFixed(1)}px`, top: `${(w.y * phH - href * 0.45).toFixed(1)}px`, width: `${(href * 9).toFixed(1)}px`, height: `${(href * 9).toFixed(1)}px` });
-      ph.append(halo, cv); flames.push({ wick: w, cv, g: cv.getContext('2d')!, halo, href, bx, by, seed: i * 7 + 3 });
-    });
-  };
-  /** one flame: grow is how far it has caught (0 to 1), k the breath, f and gut the flicker */
-  const drawFlame = (fl: Flame, t: number, k: number, f: number, gut: number, grow: number, sway: number) => {
-    const { g, cv, href, bx, by, seed } = fl; if (!sprite || !bloom) return;
-    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); if (grow <= 0.001) return;
-    g.setTransform(d, 0, 0, d, 0, 0);
-    const n2 = reduce ? 0 : noise1(t * 6.1, seed), n3 = reduce ? 0 : noise1(t * 0.9, seed + 1), n4 = reduce ? 0 : noise1(t * 2.7, seed + 2);
-    const catching = grow < 1, h = href * (0.8 + 0.26 * k) * f * (catching ? 0.25 + 0.75 * grow : 1);
-    const sy = h / sprite.hpx, sx = sy * Math.pow(href / h, 0.3) * 1.7 * (1 + 0.05 * n2 + 0.25 * gut) * (catching ? 0.7 + 0.3 * grow : 1);
-    const lean = h * (0.06 * n3 + 0.03 * n4) + sway * h * 0.1, L = clamp((0.55 + 0.45 * k) * f, 0, 1.1) * grow;
-    // the warm air close around the flame
-    g.globalCompositeOperation = 'lighter';
-    const B = href * 1.05; g.globalAlpha = 0.34 * L; g.drawImage(bloom, bx + lean * 0.3 - B, by - h * 0.42 - B * 1.1, B * 2, B * 2.2);
-    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-    // the flame in strips, each shifted by the lean (more towards the tip) and by a ripple running up it; behind a glass rim
-    // nothing below the flame's base is drawn
-    const fw = sprite.c.width * sx, Nst = 18, sd = sy * d, top = Math.round((by - sprite.by * sy) * d), Hd = sprite.c.height * sd;
-    const ripple = reduce ? 0 : h * (0.012 + 0.02 * sway + 0.05 * gut), cut = fl.wick.rim ? Math.round(by * d) : Infinity;
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    for (let j = 0; j < Nst; j++) {
-      const y0 = top + Math.round((j * Hd) / Nst); let y1 = top + Math.round(((j + 1) * Hd) / Nst); if (y0 >= cut) break; y1 = Math.min(y1, cut); if (y1 <= y0) continue;
-      const s0 = (y0 - top) / sd, s1 = Math.min(sprite.c.height, (y1 - top) / sd), u = Math.max(0, (sprite.by - (s0 + s1) / 2) / sprite.hpx);
-      const off = lean * Math.pow(u, 1.7) + ripple * Math.pow(u, 1.3) * Math.sin(u * 7.5 - t * 8.5);
-      g.drawImage(sprite.c, 0, s0, sprite.c.width, s1 - s0, (bx - fw / 2 + off) * d, y0, fw * d, y1 - y0);
-    }
-    if (catching) { // the wood catching: a bright ember at the wick
-      g.setTransform(d, 0, 0, d, 0, 0); g.globalCompositeOperation = 'lighter'; const e = (1 - grow) * 0.9;
-      g.globalAlpha = e; g.drawImage(bloom, bx - href * 0.3, by - href * 0.3, href * 0.6, href * 0.5); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-    }
-    fl.halo.style.opacity = clamp(L, 0, 1).toFixed(2);
+    flames?.destroy();
+    const c = cur(), ph = slides[sel].querySelector<HTMLElement>('.fb-ph')!, w = pw * c.scale;
+    flames = new PhotoFlames(ph, c.wicks, { reduce, dpr: d, cls: 'fb-flame', haloCls: 'fb-halo', haloSize: 6 });
+    flames.layout(w, w * c.h / c.w); drawnStatic = false;
   };
 
   // ---------- the flicker, shared by the flames and their light; a pop of the wood makes it duck for a moment ----------
-  let gutAt = -10, nextGut = 5 + Math.random() * 6, gutS = 1;
-  const flicker = (t: number): [number, number] => {
-    if (reduce) return [1, 0];
-    if (!crackle && t > nextGut) { gutAt = t; gutS = 0.7; nextGut = t + 6 + Math.random() * 10; }
-    const a = t - gutAt, gut = a >= 0 && a < 0.5 ? gutS * Math.sin((Math.PI * a) / 0.5) * (0.75 + 0.25 * Math.sin(a * 47)) : 0;
-    return [1 + 0.05 * noise1(t * 1.7, 5) + 0.03 * noise1(t * 4.9, 6) + 0.015 * noise1(t * 12.5, 7) - 0.14 * gut, gut];
-  };
+  const flick = createFlicker(reduce);
+  const flicker = (t: number) => flick.at(t, !crackle);
 
   // ---------- sound: off until the toggle is tapped ----------
   let crackle: Crackle | null = null, soundOn = false;
   soundBtn?.addEventListener('click', () => {
     soundOn = !soundOn;
-    if (soundOn && !crackle) { crackle = createCrackle(); if (crackle) crackle.onPop = s => { gutAt = (performance.now() - t0) / 1000; gutS = s; }; }
+    if (soundOn && !crackle) { crackle = createCrackle(); if (crackle) crackle.onPop = s => flick.pop((performance.now() - t0) / 1000, s); }
     if (crackle) { if (soundOn) crackle.resume(); else crackle.set(false, 0); }
     soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.querySelector('span')!.textContent = soundOn ? 'Sound on' : 'Sound off';
     el.dataset.sound = soundOn ? 'on' : 'off';
@@ -378,7 +285,7 @@ export function openBreathe(opener: HTMLElement) {
   const unlight = () => {
     if (stageName !== 'lit') return;
     stageName = 'pick'; el.dataset.stage = 'pick'; el.setAttribute('aria-label', 'A moment to breathe: choose your candle');
-    slides.forEach(s => s.classList.remove('lit')); flames.forEach(f => { f.cv.remove(); f.halo.remove(); }); flames = []; lastLayout = '';
+    slides.forEach(s => s.classList.remove('lit')); flames?.destroy(); flames = null; lastLayout = '';
     word.removeAttribute('aria-live'); crackle?.set(false, 0); offer.hidden = true; $('.fb-eyebrow').textContent = 'Choose your candle';
     $<HTMLButtonElement>('.fb-light').focus();
   };
@@ -418,7 +325,7 @@ export function openBreathe(opener: HTMLElement) {
       const g = slides[sel].querySelector<HTMLElement>('.fb-glow')!; setOp(g, catchK * (0.5 + 0.5 * life));
       // the wooden wicks catch one after the other, then burn with the breath
       if (!(reduce && drawnStatic)) {
-        flames.forEach((fl, i) => drawFlame(fl, t + i * 3.1, k, f, gut, reduce ? 1 : clamp((sinceLit - 0.15 - i * 0.45) / 0.9, 0, 1), sway));
+        flames?.draw(t, { k, f, gut, sway, grow: cur().wicks.map((_, i) => reduce ? 1 : clamp((sinceLit - 0.15 - i * 0.45) / 0.9, 0, 1)) });
         drawnStatic = true;
       }
       if (crackle && soundOn) crackle.set(sinceLit > 0.2, k);
