@@ -54,6 +54,8 @@ interface Face {
   th: number; x: number; y: number; s: number;
   /** what it was last shaded with, to skip work when nothing changed */
   sig: string;
+  /** its average colour as last shaded */
+  avg?: RGB;
 }
 
 export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key: string) => HTMLImageElement | null): MoonArc {
@@ -207,9 +209,82 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       f.el.dataset.off = String(Math.round(off));
     });
     arc.dataset.full = keys[ci];
+    captions();
+  }
+
+  // ---------- captions: none may crowd a neighbouring moon or another caption ----------
+  // Each caption hangs under its moon. Where one would touch another moon (a crescent tucked under a gibbous moon's name, say),
+  // it slides sideways a little; if no room is found it keeps only the name, and failing that it steps aside altogether. The
+  // full moon's caption is placed first, then the gibbous, then the crescents.
+  const widths = new Map<string, number>();
+  let meas: CanvasRenderingContext2D | null = null;
+  function textW(t: string, size: number, spacing: number) {
+    const id = `${t}|${size}`;
+    let wv = widths.get(id);
+    if (wv == null) {
+      meas ??= document.createElement('canvas').getContext('2d');
+      const fam = getComputedStyle(faces[0].cap).fontFamily || 'monospace';
+      if (meas) meas.font = `500 ${size}px ${fam}`;
+      wv = (meas ? meas.measureText(t.toUpperCase()).width : t.length * size * 0.62) + t.length * size * spacing;
+      widths.set(id, wv);
+    }
+    return wv;
+  }
+  function captions() {
+    const box = { w: arc.clientWidth };
+    const tight = arc.classList.contains('tight');
+    const discs = faces.map(f => ({ f, x: f.x, y: f.y, r: (D * f.s) / 2 + 3, on: Number(f.el.style.opacity || 1) > 0.3 }));
+    const placed: { l: number; t: number; r: number; b: number }[] = [];
+    const order = [...faces].sort((a, b) => Math.abs(a.th) - Math.abs(b.th));
+    const hitDisc = (q: { l: number; t: number; r: number; b: number }, self: Face) => discs.some(d => {
+      if (d.f === self || !d.on) return false;
+      const nx = Math.max(q.l, Math.min(d.x, q.r)), ny = Math.max(q.t, Math.min(d.y, q.b));
+      return (nx - d.x) ** 2 + (ny - d.y) ** 2 < (d.r + 6) ** 2;
+    });
+    const hitCap = (q: { l: number; t: number; r: number; b: number }) => placed.some(p => q.l < p.r + 8 && q.r > p.l - 8 && q.t < p.b + 4 && q.b > p.t - 4);
+    for (const f of order) {
+      const visible = Number(f.el.style.opacity || 1) > 0.3 && !(tight && !f.el.classList.contains('full'));
+      let cx = 0, mode = '';
+      if (visible) {
+        const [name, ph] = (f.cap.dataset.t || '|').split('|');
+        const small = !phone;
+        const top = f.y + f.s * (D / 2 + (phone ? 6 : 10));
+        const wFull = Math.max(textW(name, phone ? 9 : 10, 0.16), small ? textW(ph, 9, 0.14) : 0), hFull = small ? 23 : 10;
+        const wName = textW(name, phone ? 9 : 10, 0.16), hName = phone ? 10 : 11;
+        const inward = f.x < cx0() ? 1 : -1;
+        const tryFit = (wv: number, hv: number) => {
+          for (const step of [0, 1, 2, 3, 4, 5, 6]) for (const dir of step ? [inward, -inward] : [1]) {
+            const dx = step * 8 * dir, l = f.x + dx - wv / 2;
+            const q = { l, t: top, r: l + wv, b: top + hv };
+            if (q.l < 2 || q.r > box.w - 2) continue;
+            if (!hitDisc(q, f) && !hitCap(q)) { placed.push(q); return dx; }
+          }
+          return null;
+        };
+        let dx = tryFit(wFull, hFull);
+        if (dx == null && small) { dx = tryFit(wName, hName); if (dx != null) mode = 'mini'; }
+        if (dx == null) mode = 'off'; else cx = dx;
+      }
+      f.el.style.setProperty('--cx', `${(cx / f.s).toFixed(1)}px`);
+      f.cap.classList.toggle('mini', mode === 'mini');
+      f.cap.classList.toggle('off', mode === 'off');
+    }
+  }
+  const cx0 = () => cx;
+
+  /** the full candle moon's path of light on the lake (the realistic sky draws it) */
+  function glint() {
+    const sky = getSky(); if (!sky) return;
+    const full = faces.reduce((a, b) => (Math.cos(b.th) > Math.cos(a.th) ? b : a));
+    const w = arc.clientWidth || 1;
+    const c = full.avg ?? [250, 238, 220];
+    sky.set({ glint: [full.x / w, Math.max(0.012, (D * full.s) / w * 0.32), 0.12 + 0.6 * night], glintC: c.map(v => Math.min(255, v * 1.05)) as RGB });
   }
 
   function orbAt(): [number, number] {
+    // the realistic sky's sun (or moon, at night) is where the light really comes from; the CSS sky's orb otherwise
+    const l = getSky()?.lightAt();
+    if (l) return [l.x, l.y];
     const o = scene.querySelector<HTMLElement>('#sunorb'), box = arc.getBoundingClientRect();
     if (!o) return [box.width * 0.7, -100];
     const r = o.getBoundingClientRect();
@@ -257,6 +332,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
 
   function shade(f: Face, L: number[], H: number[], P: number[], hz: number, haze: RGB, dark: RGB, lit: RGB) {
     const g = geo!, src = f.px!, out = f.out!.data, R = N / 2;
+    const px3 = [0, 0, 0], KNEE = 210, TOP = 243, sum = [0, 0, 0, 0];
     const night01 = night, spec = 0.2 * (1 - 0.6 * night01), sharp = 26;
     const rimC = [lit[0], lit[1], lit[2]];
     const lxy = Math.hypot(L[0], L[1]) || 1, rlx = L[0] / lxy, rly = L[1] / lxy;
@@ -283,10 +359,18 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
         const d = dark[c] * shine;
         let v = d + (l - d) * ph;
         v = v + (haze[c] - v) * hz;
-        out[o + c] = v;
+        px3[c] = v;
       }
+      // the brightest wax eases toward a ceiling just under white, all three channels in proportion, so a sunlit candle top
+      // keeps its texture and warmth instead of clipping to a flat white patch
+      const m = Math.max(px3[0], px3[1], px3[2]);
+      const sc = m > KNEE ? (KNEE + (TOP - KNEE) * (1 - Math.exp(-(m - KNEE) / (TOP - KNEE)))) / m : 1;
+      out[o] = px3[0] * sc; out[o + 1] = px3[1] * sc; out[o + 2] = px3[2] * sc;
+      if (r < 0.5) { sum[0] += out[o]; sum[1] += out[o + 1]; sum[2] += out[o + 2]; sum[3]++; }
       out[o + 3] = 255 * a;
     }
+    // the face's average colour, for its glitter path on the lake
+    if (sum[3]) f.avg = [sum[0] / sum[3], sum[1] / sum[3], sum[2] / sum[3]];
   }
 
   // ---------- the loop: only while the ring turns, the light moves or a photograph arrives ----------
@@ -301,11 +385,18 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     }
     place();
     shadeAll();
+    glint();
     if (tween || faces.some(f => !f.px && f.img && !f.img.complete)) raf = requestAnimationFrame(frame);
   }
   function kick() { if (!raf && alive) raf = requestAnimationFrame(frame); }
 
-  let rt = 0;
+  let rt = 0, lastLight = 0, lightT = 0;
+  const onSkyLight = () => {
+    const now = performance.now();
+    if (now - lastLight > 120) { lastLight = now; kick(); }
+    else if (!lightT) lightT = window.setTimeout(() => { lightT = 0; lastLight = performance.now(); kick(); }, 130);
+  };
+  scene.addEventListener('skylight', onSkyLight);
   const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { if (layout()) { faces.forEach(f => { f.sig = ''; }); kick(); } }, 200); };
   window.addEventListener('resize', onResize);
   const ro = new ResizeObserver(onResize);
@@ -313,7 +404,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
   ro.observe(hero);
   function destroy() {
     if (!alive) return;
-    alive = false; cancelAnimationFrame(raf); window.clearTimeout(rt); getSky()?.set({ discs: 1 });
+    alive = false; cancelAnimationFrame(raf); window.clearTimeout(rt); window.clearTimeout(lightT); scene.removeEventListener('skylight', onSkyLight); getSky()?.set({ discs: 1, glint: [0.5, 0.04, 0] });
     window.removeEventListener('resize', onResize); ro.disconnect(); arc.remove();
   }
 

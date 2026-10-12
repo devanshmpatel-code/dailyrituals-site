@@ -1,8 +1,10 @@
 // A procedurally generated mountain landscape, drawn on a canvas. It looks natural because it uses the same ideas a
 // landscape painter or photographer relies on: ridgelines from fractal noise (not hand-drawn curves), five layers that fade
-// into haze with distance, rim light from the sun or moon along each ridge, pine forests on the near ridges, and fine grain.
+// into haze with distance, rim light from the sun or moon along each ridge (strongest on the ridges nearest the light, as a
+// backlit range is), the air toward the sun glowing over the far ranges, pine forests on the near ridges, and fine grain.
 
-export interface ScenePalette { sky: [string, string, string]; land: [string, string, string]; orb: string; dark: boolean }
+/** sunX: where the sun or moon stands across the picture (0..1); the ridges nearest it catch the most light. */
+export interface ScenePalette { sky: [string, string, string]; land: [string, string, string]; orb: string; dark: boolean; sunX?: number }
 
 const rgb = (h: string): [number, number, number] => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
 const mix = (a: string, b: string, t: number) => { const x = rgb(a), y = rgb(b); return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`; };
@@ -57,6 +59,7 @@ export function drawLandscape(canvas: HTMLCanvasElement, pal: ScenePalette, seed
     mix(pal.land[0], haze, 0.4), mix(pal.land[0], pal.land[1], 0.55), pal.land[1], mix(pal.land[1], pal.land[2], 0.6), pal.land[2],
   ].map(c => (c.startsWith('#') ? c : toHex(c)));
   const rand = rng(seed);
+  const sx = pal.sunX;
 
   LAYERS.forEach((L, i) => {
     let prof = profile(9, L.rough, rand);
@@ -79,7 +82,15 @@ export function drawLandscape(canvas: HTMLCanvasElement, pal: ScenePalette, seed
     // rim light along the ridge
     ctx.beginPath();
     for (let x = 0; x <= w; x += 2) (x ? ctx.lineTo(x, yAt(x)) : ctx.moveTo(x, yAt(x)));
-    ctx.strokeStyle = rgba(pal.orb, pal.dark ? 0.22 : 0.3 - i * 0.04); ctx.lineWidth = 1.4 * dpr; ctx.stroke();
+    const rimA = pal.dark ? 0.22 : 0.3 - i * 0.04;
+    if (sx == null) ctx.strokeStyle = rgba(pal.orb, rimA);
+    else {
+      // brighter toward the light, fading away from it (but never gone: the sky lights every ridge a little)
+      const rg = ctx.createLinearGradient(0, 0, w, 0);
+      for (let k = 0; k <= 10; k++) { const t = k / 10; rg.addColorStop(t, rgba(pal.orb, Math.min(0.62, rimA * (0.5 + (pal.dark ? 0.6 : 1.25) * Math.exp(-((t - sx) ** 2) * 7))))); }
+      ctx.strokeStyle = rg;
+    }
+    ctx.lineWidth = 1.4 * dpr; ctx.stroke();
     // pine forest on the two near ridges
     if (i >= 3) {
       const tree = mix(layerColor[i], '#000000', i === 4 ? 0.34 : 0.22);
@@ -100,6 +111,17 @@ export function drawLandscape(canvas: HTMLCanvasElement, pal: ScenePalette, seed
       ctx.fillStyle = hg; ctx.fillRect(0, y0, w, y1 - y0);
     }
   });
+
+  // the air toward the sun: over the far ranges nearest the light the haze glows in its colour (aerial perspective), so the
+  // hills sit inside the light rather than in front of it
+  if (sx != null) {
+    ctx.save(); ctx.globalCompositeOperation = 'source-atop';
+    const gx = sx * w, gy = h * 0.12, R = Math.max(w * 0.5, h);
+    const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, R);
+    const a = pal.dark ? 0.1 : 0.24;
+    g.addColorStop(0, rgba(pal.orb, a)); g.addColorStop(0.35, rgba(pal.orb, a * 0.45)); g.addColorStop(1, rgba(pal.orb, 0));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); ctx.restore();
+  }
 
   // fine film grain keeps it from looking like flat vector art
   ctx.save(); ctx.globalCompositeOperation = 'source-atop'; ctx.globalAlpha = pal.dark ? 0.9 : 1; // only where land has been drawn

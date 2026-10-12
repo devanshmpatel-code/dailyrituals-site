@@ -60,4 +60,81 @@ const settled = async (p, max = 10000) => { let last = '', t0 = Date.now(); whil
   ok('reduced motion: birds and fireflies are not shown', await p.evaluate(() => getComputedStyle(document.querySelector('.b1')).display === 'none' && getComputedStyle(document.querySelector('.f1')).display === 'none'));
   await ctx.close();
 }
+// ---- the sun's light: never a clipped white patch, at any moment, in either sky; and the opening's wider effects are there ----
+// A screenshot of the scene alone (words, offers, dial and moons hidden) is read back in the page: "clipped" is a pixel whose
+// three channels are all 250 or more. The candle moons are read from their own canvases.
+const HIDE = '.zz-hide .day-grid, .zz-hide .dial-row, .zz-hide .moonarc, .zz-hide .breathorb { visibility: hidden !important; }';
+const clipped = async p => {
+  await p.evaluate(() => document.body.classList.add('zz-hide')); await p.waitForTimeout(120);
+  const r = await p.evaluate(() => { const r = document.querySelector('#day').getBoundingClientRect(); return { x: Math.max(0, r.left), y: Math.max(0, r.top), width: r.width, height: Math.min(r.height, innerHeight - Math.max(0, r.top)) }; });
+  const png = (await p.screenshot({ clip: r })).toString('base64');
+  await p.evaluate(() => document.body.classList.remove('zz-hide'));
+  return p.evaluate(async b64 => {
+    const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height).data; let n = 0, max = 0;
+    for (let i = 0; i < d.length; i += 4) { const m = Math.min(d[i], d[i + 1], d[i + 2]); if (m >= 250) n++; const l = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; if (l > max) max = l; }
+    return { pct: (n / (d.length / 4)) * 100, max: Math.round(max) };
+  }, png);
+};
+const moonClip = p => p.evaluate(() => [...document.querySelectorAll('.moonarc .cm canvas')].reduce((n, c) => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 250 && Math.min(d[i], d[i + 1], d[i + 2]) >= 250) n++; return n; }, 0));
+const go = async (p, k) => { await p.evaluate(k => document.querySelector(`.moments [data-jump="${k}"]`).click(), k); await p.waitForFunction(k => document.querySelector('.dayhero')?.dataset.m === k && document.querySelector('#dStack')?.dataset.shown === k, k, { timeout: 25000 }).catch(() => {}); await p.waitForTimeout(1800); };
+for (const [label, url, vp] of [['CSS sky', '/', { width: 1440, height: 900 }], ['realistic sky', '/?sky=gl', { width: 1440, height: 900 }], ['realistic sky phone', '/?sky=gl', { width: 390, height: 844 }]]) {
+  const gl = url.includes('gl');
+  if (gl && !(await (async () => { const c = await b.newContext(); const q = await c.newPage(); const ok2 = await q.evaluate(() => !!document.createElement('canvas').getContext('webgl')); await c.close(); return ok2; })())) { console.log('NOTE no WebGL: skipped', label); continue; }
+  const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(30000); await setupMocks(p);
+  await p.addInitScript(() => { try { sessionStorage.setItem('dr_opened', '1'); } catch {} });
+  await p.goto(base.replace(/\/?#?$/, '') + url); await p.waitForSelector('#dProducts .sp-ritual', { timeout: 20000 }); await p.addStyleTag({ content: HIDE }); await p.waitForTimeout(1200);
+  for (const k of ['dawn', 'morning', 'midday', 'golden', 'night']) {
+    await go(p, k);
+    const c = await clipped(p), mc = await moonClip(p);
+    ok(`${label}: at ${k} the sun leaves no clipped white in the sky`, c.pct < 0.01, JSON.stringify(c));
+    ok(`${label}: at ${k} the candle moons keep their texture (no clipped white wax)`, mc === 0, `${mc} px`);
+  }
+  if (gl) {
+    ok(`${label}: the lake mirrors the painted hills (the flat CSS mirror steps aside)`, await p.evaluate(() => document.getElementById('scene').classList.contains('refl') && !/below/.test(getComputedStyle(document.querySelector('#scene canvas.land')).webkitBoxReflect || '')));
+    ok(`${label}: the haze over the hills follows the sky's own sun`, await p.evaluate(() => /%$/.test(document.getElementById('scene').style.getPropertyValue('--sx'))));
+    ok(`${label}: the moons' names keep their small type (not the glossary's display type)`, await p.evaluate(() => [...document.querySelectorAll('.moonarc .cm-cap b')].every(b => parseFloat(getComputedStyle(b).fontSize) <= 11)));
+  }
+  if (vp.width > 1000) {
+    // no caption crowds another moon or another caption, at any moment
+    for (const k of ['dawn', 'midday', 'golden']) {
+      await go(p, k);
+      const bad = await p.evaluate(() => {
+        const ms = [...document.querySelectorAll('.moonarc .cm')];
+        const caps = ms.map(m => m.querySelector('.cm-cap')).filter(c => getComputedStyle(c).visibility !== 'hidden' && Number(getComputedStyle(c).opacity) > 0.2).map(c => ({ el: c.parentElement, r: c.getBoundingClientRect() }));
+        const discs = ms.map(m => ({ el: m, r: m.querySelector('canvas').getBoundingClientRect() }));
+        const hit = (a, b, pad) => a.left < b.right + pad && a.right > b.left - pad && a.top < b.bottom + pad && a.bottom > b.top - pad;
+        const out = [];
+        caps.forEach(c => { discs.forEach(d => { if (d.el !== c.el) { const cx = (d.r.left + d.r.right) / 2, cy = (d.r.top + d.r.bottom) / 2, rr = d.r.width / 2; const nx = Math.max(c.r.left, Math.min(cx, c.r.right)), ny = Math.max(c.r.top, Math.min(cy, c.r.bottom)); if ((nx - cx) ** 2 + (ny - cy) ** 2 < (rr + 2) ** 2) out.push(c.el.dataset.k + '>' + d.el.dataset.k); } });
+          caps.forEach(o => { if (o !== c && hit(c.r, o.r, 2)) out.push(c.el.dataset.k + '~' + o.el.dataset.k); }); });
+        return out;
+      });
+      ok(`${label}: at ${k} no moon's caption crowds a neighbouring moon or caption`, bad.length === 0, bad.join(' '));
+    }
+  }
+  await go(p, 'night');
+  ok(`${label}: night: fireflies blink over the trees (each at its own pace)`, await p.evaluate(() => { const f = [...document.querySelectorAll('.ff')]; return f.length >= 12 && getComputedStyle(f[0], '::before').animationName === 'ffblink' && new Set(f.map(x => getComputedStyle(x, '::before').animationDuration)).size >= 5; }));
+  ok(`${label}: mist lies in the valleys as wisps (a noise mask, only translate animated)`, await p.evaluate(() => { const m = getComputedStyle(document.querySelector('.k2')); return m.maskImage.includes('svg') || (m.webkitMaskImage || '').includes('svg'); }));
+  ok(`${label}: a low sun's haze washes the hills`, await p.evaluate(() => !!document.querySelector('#scene .sunhaze')));
+  await p.evaluate(() => window.scrollTo(0, document.querySelector('#day').offsetHeight + 900));
+  ok(`${label}: off screen, the scene's drifting layers pause`, await p.waitForFunction(() => document.getElementById('scene').classList.contains('paused'), null, { timeout: 15000 }).then(() => true, () => false));
+  await p.evaluate(() => window.scrollTo(0, 0));
+  ok(`${label}: back on screen, they move again`, await p.waitForFunction(() => !document.getElementById('scene').classList.contains('paused'), null, { timeout: 15000 }).then(() => true, () => false));
+  await ctx.close();
+}
+{ // reduced motion: still and complete, in both skies
+  for (const url of ['/', '/?sky=gl']) {
+    const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' }); const p = await ctx.newPage(); p.setDefaultTimeout(30000); await setupMocks(p);
+    await p.goto(base.replace(/\/?#?$/, '') + url); await p.waitForSelector('#dProducts .sp-ritual', { timeout: 20000 }); await p.addStyleTag({ content: HIDE }); await p.waitForTimeout(1500);
+    await p.evaluate(() => document.body.classList.add('zz-hide'));
+    const r = await p.evaluate(() => { const r = document.querySelector('#scene').getBoundingClientRect(); return { x: 0, y: Math.max(0, r.top), width: r.width, height: Math.min(r.height, innerHeight - Math.max(0, r.top)) }; });
+    const a = await p.screenshot({ clip: r }); await p.waitForTimeout(1600); const c = await p.screenshot({ clip: r });
+    const label = url.includes('gl') ? 'realistic sky' : 'CSS sky';
+    ok(`reduced motion (${label}): the opening's scene is perfectly still`, a.equals(c));
+    ok(`reduced motion (${label}): mist and the sun's haze do not drift, no fireflies`, await p.evaluate(() => ['.k1', '.k2', '.sunhaze'].every(s => getComputedStyle(document.querySelector(s)).animationName === 'none') && getComputedStyle(document.querySelector('.f10')).display === 'none'));
+    ok(`reduced motion (${label}): still beautiful: the hills, the moons and the sky are all drawn`, await p.evaluate(() => document.querySelectorAll('.moonarc .cm canvas').length === 5 && Math.abs([...document.querySelectorAll('canvas.land')].reduce((n, c) => n + Number(c.style.opacity), 0) - 1) < 0.02));
+    await ctx.close();
+  }
+}
 await b.close(); process.exit(res.every(Boolean) ? 0 : 1);
