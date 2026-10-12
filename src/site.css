@@ -522,8 +522,8 @@ button.soon { background: transparent !important; color: inherit !important; bor
 .gcard[data-candle][data-t="golden"] { --gcg: rgba(255, 176, 96, 0); --gcr: rgba(255, 204, 128, .95); --gct: #FFE2BC; }
 .gcard[data-candle][data-t="night"] { --gcg: rgba(255, 176, 104, .3); --gcr: rgba(200, 208, 255, .7); --gct: #C9C3E4; }
 .gcard[data-candle] .sunarc { display: none; }
-.gcard[data-candle] .note { margin-bottom: max(0px, calc(var(--cd) * .87 - var(--gpad) - 4px)); }
-.gcard[data-candle] #gCardTo { max-width: calc(100% + var(--gpad) - var(--cd) * .9 - 12px); }
+.gcard[data-candle] .note { margin-bottom: max(0px, calc(var(--cd) + var(--gci) - var(--gpad) - 4px)); }
+.gcard[data-candle] #gCardTo { max-width: calc(100% + var(--gpad) - var(--cd) - var(--gci) - 12px); }
 /* the sky: three layers that cross-fade (the card's own background is the one in view) */
 .gc-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .gc-sky i { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; }
@@ -531,7 +531,9 @@ button.soon { background: transparent !important; color: inherit !important; bor
 .gc-sky i[data-layer="golden"] { background: linear-gradient(160deg, #6B4A6E 0%, #E08E5A 60%, #F4C98E 100%); }
 .gc-sky i[data-layer="night"] { background: linear-gradient(160deg, #0F0D1C 0%, #2A1F3D 60%, #4A2D4F 100%); }
 .gcard[data-t="dawn"] .gc-sky i[data-layer="dawn"], .gcard[data-t="golden"] .gc-sky i[data-layer="golden"], .gcard[data-t="night"] .gc-sky i[data-layer="night"] { opacity: 1; }
-.gc-candle { position: absolute; z-index: 1; width: var(--cd); aspect-ratio: 1; right: calc(var(--cd) * -.1); bottom: calc(var(--cd) * -.13); pointer-events: none; }
+/* (the whole tin sits inside the card, a little in from its corner: cut by the card's edges it read as a cropped photo) */
+.gcard[data-candle] { --gci: clamp(12px, 3cqw, 22px); }
+.gc-candle { position: absolute; z-index: 1; width: var(--cd); aspect-ratio: 1; right: var(--gci); bottom: var(--gci); pointer-events: none; }
 /* the candle's own light on the card round it, at night only: warm, faint, and falling away fast (no ring of colour) */
 .gc-halo { position: absolute; inset: -38%; border-radius: 50%; background: radial-gradient(closest-side, var(--gcg) 0%, color-mix(in srgb, var(--gcg) 40%, transparent) 38%, transparent 70%); }
 /* its shadows on the card: a soft one thrown up and to the left, away from the bright sky, and a tight one where it sits */

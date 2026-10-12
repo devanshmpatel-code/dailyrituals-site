@@ -177,7 +177,7 @@ for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
     const shown = [...card.querySelectorAll('.gc-tin img')].filter(i => Number(getComputedStyle(i).opacity) > .99);
     return { t: card.dataset.t, shown: shown.map(i => i.getAttribute('src')), loaded: shown.every(i => i.complete && i.naturalWidth > 0),
       hidden: [...card.querySelectorAll('.gc-tin img')].filter(i => Number(getComputedStyle(i).opacity) < .01).length,
-      vis, card: cr.toJSON(), note: [...rng.getClientRects()].map(r => r.toJSON()), to: card.querySelector('#gCardTo').getBoundingClientRect().toJSON(),
+      vis, tin: tin.toJSON(), card: cr.toJSON(), note: [...rng.getClientRects()].map(r => r.toJSON()), to: card.querySelector('#gCardTo').getBoundingClientRect().toJSON(),
       cap: document.querySelector('#gCandleCap').textContent, live: document.querySelector('#gCandleCap').getAttribute('aria-live'), aria: card.querySelector('.gc-candle').getAttribute('aria-hidden'),
       glow: getComputedStyle(card).getPropertyValue('--gcg').trim(), wick: Number(getComputedStyle(card.querySelector('.gc-wick')).opacity), dur: getComputedStyle(card.querySelector('.gc-tin img')).transitionDuration };
   });
@@ -188,7 +188,8 @@ for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
     ok(`${label} /gift ${sky}: the card's candle shows its own topping (one candle, the others faded out)`, s.t === sky && s.shown.length === 1 && s.shown[0].includes(`/img/studio/moons/${TOPS[sky][0]}.webp`) && s.loaded && s.hidden === 2, JSON.stringify(s.shown));
     ok(`${label} /gift ${sky}: the line under the card names the topping, never a scent`, TOPS[sky][1].test(s.cap) && !/Spring Blooms|Mulled Wine|Lavender Haze/i.test(s.cap) && s.live === 'polite' && s.aria === 'true', s.cap);
     const cx = (s.vis.left + s.vis.right) / 2, cy = (s.vis.top + s.vis.bottom) / 2;
-    ok(`${label} /gift ${sky}: the candle sits tucked into the bottom-right corner, partly off the card`, cx > (s.card.left + s.card.right) / 2 && cy > (s.card.top + s.card.bottom) / 2 && s.vis.right >= s.card.right - 1 && s.vis.bottom >= s.card.bottom - 1 && (s.vis.right - s.vis.left) >= 80, JSON.stringify(s.vis));
+    // (the whole tin, a little in from the corner: cut off by the card's edges it read as a cropped photograph)
+    ok(`${label} /gift ${sky}: the candle sits in the bottom-right corner, whole, inside the card`, cx > (s.card.left + s.card.right) / 2 && cy > (s.card.top + s.card.bottom) / 2 && s.tin.right <= s.card.right - 8 && s.tin.bottom <= s.card.bottom - 8 && s.card.right - s.tin.right <= 32 && s.card.bottom - s.tin.bottom <= 32 && (s.vis.right - s.vis.left) >= 80, JSON.stringify({ tin: s.tin, card: s.card }));
     ok(`${label} /gift ${sky}: it covers neither the note nor the recipient line`, !s.note.some(r => hits(r, s.vis)) && !hits(s.to, s.vis));
   }
   const s = await state();

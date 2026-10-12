@@ -10,6 +10,14 @@
 /* Send a Sunrise: the gift card and the Discovery Kit are shown but cannot be chosen */
 .fmt-pick .gr-soon { opacity: .62; cursor: not-allowed; border-style: dashed; }
 .fmt-pick .gr-soon .soon-tag { font-size: 10px; }
+/* in two columns the tag sits under the name, so a name like "The Morning Ritual" keeps to one line */
+@media (min-width: 601px) {
+  .fmt-pick .gr-soon { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; row-gap: 4px; align-items: center; justify-items: start; padding: 10px 14px; }
+  .fmt-pick .gr-soon > span:first-child { display: contents !important; }
+  .fmt-pick .gr-soon > span:first-child > :first-child { grid-row: span 2; }
+  .fmt-pick .gr-soon b { align-self: end; line-height: 1.25; }
+  .fmt-pick .gr-soon .soon-tag { align-self: start; }
+}
 .gr-ic { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; background: rgba(35, 26, 43, .06); font: 500 18px var(--display); color: var(--muted, #6B5F6E); flex: none; }
 /* product page: the refill choice is coming soon */
 .po label.po-soon { opacity: .6; cursor: not-allowed; }
