@@ -46,3 +46,13 @@ objects' real shapes instead of a mask's outline. Run them from the repository r
 The masters are `/tmp/retouch/master/<name>.png` (grade.py); when one is missing `moon_faces.master()` grades it on the fly.
 The flawed whole-tin cut-outs that no page showed (apple-cider, candy-cane-lane, easter-bread, mulled-wine, sea-salt-sage)
 were removed rather than left to be picked up later.
+
+## The logo (October 2026)
+- `logo_cut.py public/img/studio/logo.jpg public/img/brand`: lifts Claire's logo (white "Daily Rituals", cream "Co.",
+  tagline and "Made in White Rock, BC" arc on black) off its black square. Because the ground is black, each pixel is ink
+  times coverage, so the alpha is read back exactly (the pixel's projection on its ink colour) instead of cut with a mask.
+  Each letter is assigned to the white or the cream ink as a whole shape (JPEG blurs colour at the edges of thin letters),
+  faint edge pixels take the ink of the nearest letter, JPEG speckle and ringing are clipped, and the colour is set to the
+  exact ink everywhere, so there is no grey fringe or dark halo. Writes `logo.png`, `logo-1200.webp` and `logo-600.webp`
+  (used by the footer's signature and the Ritualists' membership card, `src/brand.ts`). It is made for dark grounds: the
+  cream lettering is too pale to read on the light pages.
