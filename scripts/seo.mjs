@@ -9,7 +9,7 @@ const launched = get('VITE_LAUNCH') === 'true';
 const origin = (get('SITE_URL') || 'https://www.dailyritualsco.com').replace(/\/$/, '');
 const clientId = get('VITE_WIX_CLIENT_ID');
 
-const pages = ['', 'shop', 'explore', 'coaching', 'reset', 'subscribe', 'drops', 'gift', 'wall', 'club', 'story', 'help', 'privacy', 'terms', 'accessibility', 'refund-policy'];
+const pages = ['', 'shop', 'explore', 'coaching', 'reset', 'subscribe', 'drops', 'gift', 'wall', 'club', 'story', 'journal', 'journal/wooden-wick', 'journal/first-burn', 'journal/candle-safety', 'journal/wax-guide', 'journal/candle-and-roller', 'help', 'privacy', 'terms', 'accessibility', 'refund-policy'];
 
 async function productSlugs() {
   if (!clientId) return [];

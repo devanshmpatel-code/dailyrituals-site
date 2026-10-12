@@ -35,7 +35,7 @@ const MENU: Entry[] = [
     id: 'shop', label: 'Shop', href: '#/shop', constellation: true, columns: [
       { kind: 'elevated', links: [{ label: 'Shop all', href: '#/shop' }, { label: 'Fragrance rollers', href: '#/shop?f=roller' }, { label: 'Mini diffusers', href: '#/shop?f=diffuser' }, { label: 'Candles', href: '#/shop?f=candle' }, { label: 'Natural deodorant', href: '#/shop?f=deodorant' }] },
       { title: 'By mood', kind: 'moods', links: moodLinks(m => `#/shop?f=all&m=${m}&s=featured`) },
-      { title: 'More', phone: false, links: [{ label: 'Ritual on Repeat', href: '#/subscribe' }, { label: 'Moon Drops', href: '#/drops' }, { label: 'Send a Sunrise', href: '#/gift' }, { label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }] },
+      { title: 'More', phone: false, links: [{ label: 'Ritual on Repeat', href: '#/subscribe' }, { label: 'Moon Drops', href: '#/drops' }, { label: 'Send a Sunrise', href: '#/gift' }, { label: 'The Journal', href: '#/journal' }, { label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }] },
     ],
   },
   {
@@ -56,7 +56,7 @@ const MENU: Entry[] = [
 ];
 /** Phone-only rows and small links (all existing pages). */
 const PHONE_ROWS: Link[] = [{ label: 'Ritual on Repeat', href: '#/subscribe' }];
-const PHONE_SMALL: Link[] = [{ label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }, { label: 'Our story', href: '#/story' }, { label: 'Help', href: '#/help' }, { label: 'My account', href: '#/account' }];
+const PHONE_SMALL: Link[] = [{ label: 'The Journal', href: '#/journal' }, { label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }, { label: 'Our story', href: '#/story' }, { label: 'Help', href: '#/help' }, { label: 'My account', href: '#/account' }];
 
 const fine = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;

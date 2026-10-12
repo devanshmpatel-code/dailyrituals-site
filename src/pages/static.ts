@@ -60,7 +60,7 @@ function clubSoon(app: HTMLElement) {
   app.innerHTML = `<section class="clubsoon"><div class="wrap">
     <div class="cs-tx"><a class="small" href="#/" style="opacity:.8">Home</a><span class="eyebrow">Free rewards club</span>
       <h1>The <span class="it goldtext">Ritualists</span> are gathering.</h1>
-      <p>Our rewards club is opening soon. Join the Sunday note and you will be first to hear when the doors open, along with a small practice from Claire each week and first notice of every Moon Drop.</p>
+      <p>Our rewards club is opening soon. Join the Monthly Ritual and you will be first to hear when the doors open, along with a short practice from Claire each month and first notice of every Moon Drop.</p>
       <form class="nform" id="csForm"><label for="csEmail" hidden>Email address</label><input id="csEmail" type="email" placeholder="Email address" required><button class="btn" type="submit">Tell me first</button></form>
       <span class="small" style="opacity:.75">You can unsubscribe any time.</span></div>
     <div class="cs-const" aria-hidden="true">${constellation({ labels: true })}</div>

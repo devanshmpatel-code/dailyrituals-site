@@ -14,6 +14,7 @@ import { renderHome } from './pages/home';
 import { unmountJourney, openBreathe } from './pages/journey';
 import { decoratePage } from './pages/calm';
 import { cleanupMotion, mountSay, mountShapes, markMorphTarget } from './pages/motion';
+import { renderJournal } from './pages/journal';
 import { unmountDayScrub } from './pages/home';
 import { getSky } from './pages/sky';
 import { treeSVG, lotusDivider } from './pages/symbols';
@@ -164,7 +165,7 @@ updateCount();
 const PAGE_TITLES: Record<string, string> = {
   shop: 'Shop', coaching: 'Coaching', book: 'Book a session', subscribe: 'Ritual on Repeat',
   drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
-  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Our story', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset',
+  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Our story', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset',
 };
 
 async function route() {
@@ -195,6 +196,7 @@ async function route() {
       case 'coaching': return renderCoaching(app);
       case 'help': return renderHelp(app);
       case 'story': return renderStory(app);
+      case 'journal': return renderJournal(app, arg ? decodeURIComponent(arg) : undefined);
       case 'account': return renderAccount(app);
       case 'explore': return renderExplore(app, params);
       // older links: the quiz is a tab of Find your scent; build a ritual and ritual sets live in the wheel

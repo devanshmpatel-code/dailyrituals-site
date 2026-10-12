@@ -11,6 +11,7 @@ import { mountJourney } from './journey';
 import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
+import { journalTeaserHTML } from './journal';
 import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHeroTilt, repeatPhotoHTML, giftPhotoHTML } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
@@ -49,6 +50,7 @@ export async function renderHome(app: HTMLElement) {
   resetHeroTilt();
   app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
   app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
+  app.querySelector('section.newsflow')?.insertAdjacentHTML('beforebegin', journalTeaserHTML());
   app.querySelector('.rep-grid .stick')?.insertAdjacentHTML('beforeend', repeatPhotoHTML());
   app.querySelector('.gift-grid > div:has(.gcard)')?.insertAdjacentHTML('beforeend', giftPhotoHTML());
   swapRenders(app);
