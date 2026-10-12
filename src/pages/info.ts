@@ -87,7 +87,7 @@ export function renderAccount(app: HTMLElement) {
     </div>
     <span class="eyebrow acct-while">While you are here</span>
     <div class="ways three acct-ways">
-      <a class="way" href="#/explore?tab=quiz"><span class="eyebrow">Four questions</span><h3>Find your scent</h3><p class="muted small">A quick quiz that points you to a mood and the scents in it.</p></a>
+      <a class="way" href="#/explore?tab=quiz"><span class="eyebrow">Four questions</span><h3>Find your scent</h3><p class="muted small">A quick quiz that leads you to a mood and the scents in it.</p></a>
       <a class="way" href="#/reset"><span class="eyebrow">Free · Self-paced</span><h3>The free 7-day reset</h3><p class="muted small">Ten minutes a day with Claire.</p></a>
       <a class="way" href="#/journal"><span class="eyebrow">The Journal</span><h3>Candle care</h3><p class="muted small">How to burn a wooden-wick candle, and the rituals around it.</p></a>
     </div></div>`;

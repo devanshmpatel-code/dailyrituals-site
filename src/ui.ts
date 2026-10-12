@@ -37,7 +37,7 @@ export function cardHTML(i: Item, badge?: string): string {
     </div>
     <a href="${productHref(i)}" style="text-decoration:none;display:flex;flex-direction:column;gap:4px">
       <div class="meta"><h3>${esc(i.scent)}</h3><span>${priceText(i)}</span></div>
-      <div class="sub" style="display:flex;gap:8px;align-items:center">${sw}${esc(metaText(i))}</div>
+      <div class="sub" style="display:flex;gap:8px;align-items:center">${sw}<span>${esc(i.formatLabel)}${i.sizeLabel ? ` · <span class="nw">${esc(i.sizeLabel)}</span>` : ''}</span></div>
     </a>
   </div>`;
 }
