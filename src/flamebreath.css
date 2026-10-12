@@ -1,4 +1,4 @@
-/* The breathing pause: choose your candle under a night sky, light it, breathe with it. */
+/* The breathing pause: choose your candle at the foot of a Bodhi tree at night, light it, breathe with it. */
 .jbreathe.fb { position: fixed; inset: 0; z-index: 95; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); padding: 0; gap: 0;
   align-items: stretch; justify-items: stretch; align-content: stretch; justify-content: stretch;
   text-align: center; color: #F3ECE2; background: #0E0B1A; opacity: 0; transition: opacity .45s ease; overflow: hidden; isolation: isolate;
@@ -6,7 +6,7 @@
 .jbreathe.fb.open { opacity: 1; }
 
 /* the night: deep indigo above, plum lower down, a warm glow low in the middle where the candles stand */
-.fb-sky { position: absolute; inset: 0; z-index: -4; overflow: hidden; pointer-events: none;
+.fb-sky { position: absolute; inset: 0; z-index: -6; overflow: hidden; pointer-events: none;
   background: linear-gradient(180deg, #0A0817 0%, #120E26 24%, #1D1532 46%, #2C1E3C 64%, #392640 76%, #24182C 88%, #140E1C 100%); }
 .fb-drift { position: absolute; inset: -3%; will-change: transform, opacity; animation: fbDrift 96s ease-in-out infinite alternate; }
 @keyframes fbDrift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-1.6%, .9%, 0) scale(1.035); } }
@@ -15,42 +15,51 @@
   animation: fbTw var(--d) ease-in-out var(--l) infinite alternate; }
 .fb-tw i.b { box-shadow: 0 0 5px 1px rgba(255, 236, 214, .55), 0 0 14px 3px rgba(200, 190, 255, .16); }
 @keyframes fbTw { 0% { opacity: .06; transform: scale(.65); } 55% { opacity: calc(var(--a) * .7); } 100% { opacity: var(--a); transform: scale(1); } }
-.fb-horizon { position: absolute; z-index: -3; left: calc(50% - min(760px, 90vw)); width: min(1520px, 180vw); bottom: -6vh; height: 82vh; pointer-events: none; transform-origin: 50% 72%;
-  background: radial-gradient(ellipse 50% 50% at 50% 72%, rgba(214, 138, 112, .5) 0%, rgba(176, 100, 112, .3) 26%, rgba(112, 64, 104, .16) 50%, rgba(70, 40, 90, 0) 74%); will-change: opacity, transform; }
+/* a warm glow low on the horizon behind the tree, so its trunk and roots stand out against the night */
+.fb-horizon { position: absolute; z-index: -5; left: calc(50% - min(760px, 90vw)); width: min(1520px, 180vw); top: calc(var(--groundY, 70vh) - 46vh); height: 62vh; pointer-events: none; transform-origin: 50% 74%;
+  background: radial-gradient(ellipse 50% 50% at 50% 74%, rgba(214, 138, 112, .42) 0%, rgba(176, 100, 112, .26) 26%, rgba(112, 64, 104, .13) 50%, rgba(70, 40, 90, 0) 74%); will-change: opacity, transform; }
 /* the cool of the out-breath: the night deepens and turns blue, then warms again as you breathe in */
-.fb-cool { position: absolute; inset: 0; z-index: -2; pointer-events: none; opacity: .3; will-change: opacity;
+.fb-cool { position: absolute; inset: 0; z-index: -4; pointer-events: none; opacity: .3; will-change: opacity;
   background: linear-gradient(180deg, rgba(6, 8, 30, .62) 0%, rgba(10, 16, 48, .42) 48%, rgba(8, 10, 34, .66) 100%); }
 
 /* top: sound and Done */
 .fb-bar { position: absolute; z-index: 30; top: max(14px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); display: flex; gap: 8px; }
 .jbreathe.fb .fb-sound, .jbreathe.fb .jb-close { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; font: 600 14px var(--body, system-ui);
-  color: var(--cream); background: rgba(16, 11, 28, .45); border: 1px solid rgba(233, 212, 161, .38); cursor: pointer; box-shadow: none; }
+  color: var(--cream); background: rgba(16, 11, 28, .78); border: 1px solid rgba(233, 212, 161, .38); cursor: pointer; box-shadow: none; }
 .jbreathe.fb .fb-sound:hover, .jbreathe.fb .jb-close:hover { border-color: var(--gold); background: rgba(233, 212, 161, .1); }
 .fb-sound .on { display: none; } .fb-sound[aria-pressed="true"] .on { display: inline; } .fb-sound[aria-pressed="true"] .off { display: none; }
 .fb-sound[aria-pressed="true"] { border-color: var(--gold); }
 
-/* the heading and the breath word */
-.fb-head { padding: clamp(62px, 9vh, 80px) 16px 0; min-height: 0; }
+/* the heading and the breath word, over the crown: a soft deeper shade in the leaves behind them keeps them clear when the
+   candle's light warms the crown */
+.fb-head { position: relative; padding: clamp(62px, 9vh, 80px) 16px 0; min-height: 0; }
+.fb-head::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 18%; width: min(760px, 120vw); height: 120%; transform: translateX(-50%); pointer-events: none;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(10, 7, 18, .72) 0%, rgba(10, 7, 18, .5) 42%, rgba(10, 7, 18, 0) 100%); }
+.fb-head p { text-shadow: 0 1px 2px rgba(8, 5, 14, .9), 0 0 18px rgba(8, 5, 14, .8); }
 .fb-eyebrow { margin: 0 0 10px; font: 600 12px/1.2 var(--body, system-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--gold); transition: opacity .5s; }
 .jbreathe.fb .jb-word { font-family: var(--display); font-weight: 400; font-size: 25px; line-height: 1.05; margin: 0; letter-spacing: -.005em; color: rgba(251, 243, 230, .82);
   transition: font-size .9s ease, color .9s ease; height: clamp(48px, 5.6vw, 68px); display: flex; align-items: center; justify-content: center; }
-.jbreathe.fb[data-stage="lit"] .jb-word { font-size: clamp(40px, 5.4vw, 62px); color: var(--cream); text-shadow: 0 0 28px rgba(255, 190, 110, .32); }
+.jbreathe.fb[data-stage="lit"] .jb-word { font-size: clamp(40px, 5.4vw, 62px); color: var(--cream); text-shadow: 0 1px 3px rgba(8, 5, 14, .9), 0 0 22px rgba(8, 5, 14, .85), 0 0 34px rgba(255, 190, 110, .22); }
 .jbreathe.fb .jb-word.fb-in { animation: fbWord .9s ease both; }
 @keyframes fbWord { from { opacity: 0; transform: translateY(5px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 
-/* the surface the candles stand on, and the carousel */
+/* the Bodhi tree (bodhi.ts), painted on a canvas that covers the whole pause, under everything that can be read or
+   pressed: its layers are the still tree and the ground at its foot, the candle's light on them (its opacity follows the
+   flame) and the leaves that move */
+.fb-tree { position: absolute; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+.fb-tree canvas { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 100%; }
+.fb-tree .fb-bodhi-lit { will-change: opacity; }
+
+/* the carousel */
 .fb-stage { position: relative; min-height: 0; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
 .fb-dragging .fb-stage { cursor: grabbing; }
 .jbreathe.fb[data-stage="lit"] .fb-stage { cursor: default; }
-.fb-table { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .3); width: min(1500px, 175vw); height: calc(var(--pw) * .78); transform: translateX(-50%); pointer-events: none;
-  background: radial-gradient(ellipse 50% 50% at 50% 54%, rgba(142, 94, 98, .5) 0%, rgba(100, 62, 86, .34) 28%, rgba(52, 33, 60, .15) 54%, rgba(30, 20, 40, 0) 72%); }
-/* the ground the candles stand on: lit softly near them, falling away into shadow towards you; its top edge sits just behind
-   their feet */
-.fb-ground { position: absolute; z-index: -1; left: 0; right: 0; top: calc(var(--floorY, 70vh) - var(--pw) * .12); bottom: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(24, 15, 34, .55) 0%, rgba(17, 11, 26, .78) calc(var(--pw) * .3), rgba(12, 8, 19, .9) 100%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--pw) * .16)); mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--pw) * .16)); }
-.fb-pool { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .13); width: calc(var(--pw) * 2.1); height: calc(var(--pw) * .48); transform: translateX(-50%); pointer-events: none; opacity: 0;
-  background: radial-gradient(ellipse 50% 50% at 50% 46%, rgba(255, 176, 110, .34) 0%, rgba(255, 150, 90, .14) 40%, rgba(255, 140, 80, 0) 72%); mix-blend-mode: screen; will-change: opacity; }
+.fb-ground { position: absolute; z-index: -3; left: 0; right: 0; top: calc(var(--groundY, 70vh) - 24px); bottom: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(30, 21, 38, .9) 0, #1A1220 24px, #140E19 calc(24px + var(--pw) * .5), #0D0911 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 30px); mask-image: linear-gradient(180deg, transparent 0, #000 30px); }
+/* close to the flame the air itself glows a little, over the light the tree's layer throws on the ground */
+.fb-pool { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .1); width: calc(var(--pw) * 1.7); height: calc(var(--pw) * .5); transform: translateX(-50%); pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse 50% 50% at 54% 46%, rgba(255, 176, 110, .22) 0%, rgba(255, 150, 90, .08) 44%, rgba(255, 140, 80, 0) 72%); mix-blend-mode: screen; will-change: opacity; }
 .fb-track { position: absolute; inset: 0; }
 /* every candle at the same scale and on the same floor: --sc and --drop come from picker.ts (scale, foot) */
 .fb-c { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * var(--drop, 0)); width: calc(var(--pw) * var(--sc, 1)); aspect-ratio: var(--ar); padding: 0; margin: 0; border: 0; background: none; color: inherit; cursor: pointer;
@@ -101,7 +110,7 @@
 .jbreathe.fb .fb-add:hover, .jbreathe.fb .fb-pair:hover { border-color: var(--gold); background: rgba(233, 212, 161, .1); }
 .jbreathe.fb .fb-add:disabled, .jbreathe.fb .fb-home:disabled { opacity: .6; cursor: default; }
 .jbreathe.fb [hidden] { display: none !important; }
-.fb-status { margin: 4px 0 0; min-height: 1.4em; font-size: 14px; color: rgba(243, 236, 226, .86); }
+.fb-status { margin: 4px 0 0; min-height: 36px; font-size: 14px; color: rgba(243, 236, 226, .86); } /* room for "View cart", so the scene above does not shift when it appears */
 .fb-viewcart, .fb-back { background: none; border: 0; padding: 0 4px; min-height: 36px; font: 600 14px var(--body, system-ui); color: var(--gold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .fb-back { color: rgba(243, 236, 226, .7); text-decoration: none; }
 .fb-back:hover { color: var(--cream); text-decoration: underline; }

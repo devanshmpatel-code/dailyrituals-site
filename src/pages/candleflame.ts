@@ -96,6 +96,9 @@ export function createFlicker(reduce: boolean) {
 /** k: the breath (0 to 1); f, gut: the flicker; grow: how far the wick has caught (0 to 1); sway: a breath out; size: how big the flame has grown (1: as photographed) */
 export interface FlameState { k: number; f: number; gut: number; grow: number; sway: number; size?: number }
 
+/** scale: how much larger than the photographed flame each flame stands (1: as measured), painted at that size so it stays sharp */
+export interface FlameOptions { reduce: boolean; dpr: number; cls: string; haloCls?: string; haloSize?: number; scale?: number }
+
 /**
  * The flames of one photographed candle: a small canvas over each wick (class cls, with data-base: the flame's base in the
  * canvas's CSS px) and, optionally, a soft warm halo element (class haloCls) whose opacity follows the flame.
@@ -105,15 +108,15 @@ export class PhotoFlames {
   canvases: HTMLCanvasElement[] = [];
   private fl: { w: FlameWick; cv: HTMLCanvasElement; g: CanvasRenderingContext2D; halo?: HTMLElement; href: number; bx: number; by: number; seed: number; spr?: Sprite }[] = [];
   private bloom: HTMLCanvasElement | null = null;
-  private host: HTMLElement; private wicks: FlameWick[]; private o: { reduce: boolean; dpr: number; cls: string; haloCls?: string; haloSize?: number };
-  constructor(host: HTMLElement, wicks: FlameWick[], o: { reduce: boolean; dpr: number; cls: string; haloCls?: string; haloSize?: number }) { this.host = host; this.wicks = wicks; this.o = o; }
+  private host: HTMLElement; private wicks: FlameWick[]; private o: FlameOptions;
+  constructor(host: HTMLElement, wicks: FlameWick[], o: FlameOptions) { this.host = host; this.wicks = wicks; this.o = o; }
   /** paint the sprites for this size ahead of time */
   layout(pw: number, ph: number) {
     this.destroy();
     const d = this.o.dpr;
     this.bloom ??= bloomSprite();
     this.wicks.forEach((w, i) => {
-      const href = w.h * pw, cw = href * 2.6, ch = href * 3, bx = cw / 2, by = ch * 0.76;
+      const href = w.h * pw * (this.o.scale ?? 1), cw = href * 2.6, ch = href * 3, bx = cw / 2, by = ch * 0.76;
       const cv = document.createElement('canvas'); cv.className = this.o.cls; cv.width = Math.round(cw * d); cv.height = Math.round(ch * d);
       Object.assign(cv.style, { position: 'absolute', left: `${(w.x * pw - bx).toFixed(1)}px`, top: `${(w.y * ph - by).toFixed(1)}px`, width: `${cw.toFixed(1)}px`, height: `${ch.toFixed(1)}px`, pointerEvents: 'none' });
       cv.dataset.base = `${bx.toFixed(1)},${by.toFixed(1)}`; cv.setAttribute('aria-hidden', 'true');

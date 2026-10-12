@@ -1,8 +1,9 @@
-// The breathing pause: choose your candle under a night sky, light it, breathe with it.
+// The breathing pause: choose your candle at the foot of a Bodhi tree at night, light it, breathe with it.
 // Opened by the breathing orb. Stage 1 is a carousel of the shop's real candles (only Cabana and Verdant have photographs),
-// unlit, with the live price and Add to cart; the breath already keeps its pace at the top. "Light it & breathe" lights the
-// wooden wicks (canvas flames on the wicks, the lit glass fading in) and the in / hold / out cycle begins again with the
-// candle: the scene comes to life on the in-breath and cools on the out-breath. After three breaths a quiet offer appears.
+// unlit, standing on the ground at the trunk's foot, with the live price and Add to cart; the tree's crown spreads across
+// the top; the breath already keeps its pace at the top. "Light it & breathe" lights the wooden wicks (canvas flames on the
+// wicks, the lit glass fading in) and the in / hold / out cycle begins again with the candle: its light on the tree and the
+// ground rises on the in-breath and settles on the out-breath. After three breaths a quiet offer appears.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
 import { readFileSync } from 'node:fs';
@@ -23,6 +24,39 @@ const onWick = p => p.evaluate(() => [...document.querySelectorAll('.jbreathe ca
   for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) { const i = (y * c.width + x) * 4; if (d[i + 3] > 200 && d[i] > 230 && d[i + 1] > 170) { sx += x; n++; low = Math.max(low, y); top = Math.min(top, y); } }
   const h = (low - top) / s || 1; return { n, off: n ? Math.abs(sx / n / s - bx) / h : 99, gap: n ? (by - low / s) / h : 99 };
 }));
+// the flames' visible height (alpha over 120), as a fraction of the candle photo's width, one per wick
+const flameSize = p => p.evaluate(() => { const ph = document.querySelector('.fb-c[aria-pressed="true"] .fb-ph'); return [...document.querySelectorAll('.jbreathe canvas.fb-flame')].map(c => {
+  const s = c.width / c.clientWidth, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let low = 0, top = 1e9;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 120) { low = Math.max(low, y); top = Math.min(top, y); }
+  return (low - top) / s / ph.clientWidth;
+}); });
+// before this change, measured the same way at Hold (the most of three breaths, desktop and phone): the tumbler's flame and the tin's
+const FLAME_BEFORE = [0.102, 0.078];
+// the tree: its canvas, where its trunk stands (data-foot, data-fork, data-trunk) and its light layer
+const treeInfo = p => p.evaluate(() => {
+  const c = document.querySelector('.jbreathe canvas.fb-bodhi'), g = c.getContext('2d'), W = c.width, H = c.height, d = g.getImageData(0, 0, W, H).data, s = W / c.clientWidth;
+  let n = 0; for (let i = 3; i < d.length; i += 4 * 7) if (d[i] > 200) n++;
+  // the crown across the top: how much of the top tenth of the window is painted, in each fifth across
+  const band = [0, 1, 2, 3, 4].map(k => { let m = 0, t = 0; for (let y = 0; y < Math.round(H * 0.1); y += 3) for (let x = Math.round(W * k / 5); x < Math.round(W * (k + 1) / 5); x += 3) { t++; if (d[(y * W + x) * 4 + 3] > 120) m++; } return m / t; });
+  const lit = document.querySelector('.jbreathe .fb-bodhi-lit');
+  return { painted: n / (d.length / 4 / 7), band, ready: !!c.dataset.readyMs, foot: c.dataset.foot?.split(',').map(Number), fork: Number(c.dataset.fork), trunk: Number(c.dataset.trunk), s,
+    litOp: Number(getComputedStyle(lit).opacity), litPx: lit.width * lit.height };
+});
+// how dark the scene is behind a piece of text: the text is hidden for a moment, the box is photographed, and the contrast
+// of the text's colour against the brightest tenth of what was behind it is worked out (WCAG relative luminance)
+const contrastBehind = async (p, sel) => {
+  const box = await p.locator(sel).boundingBox(), color = await p.evaluate(s => getComputedStyle(document.querySelector(s)).color, sel);
+  await p.evaluate(s => document.querySelector(s).style.visibility = 'hidden', sel);
+  const png = await p.screenshot({ clip: box, animations: 'disabled' });
+  await p.evaluate(s => document.querySelector(s).style.visibility = '', sel);
+  return p.evaluate(async ([b64, col]) => {
+    const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }, L = (r, g2, b) => 0.2126 * lin(r) + 0.7152 * lin(g2) + 0.0722 * lin(b);
+    const d = g.getImageData(0, 0, c.width, c.height).data, ls = []; for (let i = 0; i < d.length; i += 4) ls.push(L(d[i], d[i + 1], d[i + 2])); ls.sort((a, b) => a - b);
+    const bg = ls[Math.floor(ls.length * 0.9)], [r, g2, b] = col.match(/[\d.]+/g).map(Number), fg = L(r, g2, b);
+    return (fg + 0.05) / (bg + 0.05);
+  }, [png.toString('base64'), color]);
+};
 const open = async (p, q = '?breath=fast') => { await p.goto(base + '/coaching' + q); await p.waitForSelector('.breathorb'); await p.waitForTimeout(500); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); };
 const sel = p => p.evaluate(() => [document.querySelector('.fb-c[aria-pressed="true"]')?.dataset.slug, document.querySelector('.fb-name')?.textContent]);
 const countAudio = () => { window.__audio = 0; const A = window.AudioContext; window.AudioContext = class extends A { constructor(...a) { super(...a); window.__audio++; } }; };
@@ -36,6 +70,20 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: the orb opens a modal dialog with a name, on the candle picker`, dlg[0] === 'dialog' && dlg[1] === 'true' && dlg[2] && dlg[3] === 'pick', dlg.join(','));
   const sky = await p.evaluate(() => { const c = document.querySelector('.jbreathe .fb-stars'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) n++; return { n, tw: document.querySelectorAll('.jbreathe .fb-tw i').length, anim: getComputedStyle(document.querySelector('.fb-tw i')).animationName, drift: getComputedStyle(document.querySelector('.fb-drift')).animationName }; });
   ok(`${label}: a night sky: painted stars, stars that twinkle on their own cycles, a slow drift`, sky.n > 100 && sky.tw > 30 && sky.anim !== 'none' && sky.drift !== 'none', JSON.stringify(sky));
+  // the Bodhi tree: painted (once, while the page is idle), its crown spreading right across the top of the window, unlit
+  await p.waitForFunction(() => !!document.querySelector('.jbreathe canvas.fb-bodhi')?.dataset.readyMs, null, { timeout: 15000 });
+  const tree0 = await treeInfo(p);
+  ok(`${label}: the Bodhi tree is painted behind the candles`, tree0.ready && tree0.painted > 0.25, `${(tree0.painted * 100).toFixed(0)}% of the window`);
+  ok(`${label}: its crown spreads across the top like a canopy, from edge to edge`, tree0.band.every(f => f > 0.5), tree0.band.map(f => f.toFixed(2)).join(' '));
+  ok(`${label}: before a candle is lit, the tree is in the night (its light layer is off)`, tree0.litOp === 0 && tree0.litPx > 0, `${tree0.litOp}`);
+  ok(`${label}: the tree is under the words and buttons, never over them`, await p.evaluate(() => { const z = n => Number(getComputedStyle(n).zIndex) || 0; const t = document.querySelector('.fb-tree'); return z(t) < 0 && getComputedStyle(t).pointerEvents === 'none' && ['.fb-head', '.fb-low', '.fb-bar', '.fb-stage'].every(s => z(document.querySelector(s)) >= 0); }));
+  // the candles at its foot: the chosen one in the middle in front of the trunk, small beside it; the others smaller, dimmer and further back
+  const foot = await p.evaluate(() => { const r = n => n.getBoundingClientRect(); const on = document.querySelector('.fb-c[aria-pressed="true"]'), off = document.querySelector('.fb-c[aria-pressed="false"]');
+    const a = r(on.querySelector('.fb-ph')), b = r(off.querySelector('.fb-ph'));
+    return { cx: (a.left + a.right) / 2, top: a.top, bottom: a.bottom, w: a.width, h: a.height, ow: b.width, obottom: b.bottom, oc: (b.left + b.right) / 2, dim: Number(off.style.getPropertyValue('--dim')), op: Number(getComputedStyle(off).opacity) }; });
+  ok(`${label}: the chosen candle stands centred at the foot of the trunk, in front of it`, Math.abs(foot.cx - tree0.foot[0]) < tree0.trunk * 0.25 && foot.bottom > tree0.foot[1] && foot.bottom - tree0.foot[1] < foot.h * 0.6, `candle ${foot.cx.toFixed(0)},${foot.bottom.toFixed(0)} trunk foot ${tree0.foot.map(Math.round)}`);
+  ok(`${label}: the tree is large beside the candles: the trunk is broader than the three of them and forks well above them`, tree0.trunk > foot.w * 0.8 && tree0.fork < foot.top - foot.h * 0.25, `trunk ${tree0.trunk} vs candles ${foot.w.toFixed(0)} wide; fork at ${tree0.fork}, candles' top ${foot.top.toFixed(0)}`);
+  ok(`${label}: the other candle stands smaller, dimmer and further back to the side, still in the carousel`, foot.ow < foot.w * 0.75 && foot.dim < 0.7 && foot.op > 0.3 && foot.obottom < foot.bottom && Math.abs(foot.oc - foot.cx) > foot.w * 0.6, JSON.stringify({ w: foot.ow / foot.w, dim: foot.dim, op: foot.op }));
   // only the shop's real candles, photographed, with their images loaded
   await p.waitForFunction(() => [...document.querySelectorAll('.jbreathe .fb-c img')].every(i => i.complete && i.naturalWidth > 0));
   const cands = await p.evaluate(() => [...document.querySelectorAll('.jbreathe .fb-c')].map(s => ({ slug: s.dataset.slug, label: s.getAttribute('aria-label'), imgs: [...s.querySelectorAll('img')].map(i => i.getAttribute('src')) })));
@@ -95,10 +143,22 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: Light it lights a flame on each wick`, wick.length === 2 && wick.every(w => w.n > 15) && lit > 30, JSON.stringify(wick.map(w => w.n)));
   ok(`${label}: each flame stands on its wick`, wick.every(w => w.off < 0.25 && w.gap > -0.1 && w.gap < 0.35), JSON.stringify(wick.map(w => [w.off.toFixed(2), w.gap.toFixed(2)])));
   ok(`${label}: the lit glass and wax glow in`, await p.evaluate(() => Number(getComputedStyle(document.querySelector('.fb-c[aria-pressed="true"] .fb-glow')).opacity) > 0.6));
-  const seen = new Set(); let big = 0, small = 1e9;
-  for (let i = 0; i < 50; i++) { const ph = await p.evaluate(() => document.querySelector('.jbreathe').dataset.phase); seen.add(ph); const n = await flamePx(p); if (ph === 'Hold') big = Math.max(big, n); if (ph === 'Breathe out') small = Math.min(small, n); await p.waitForTimeout(50); }
+  const seen = new Set(); let big = 0, small = 1e9, litHold = 0, litOut = 1, sizes = [0, 0];
+  const litOp = () => p.evaluate(() => Number(getComputedStyle(document.querySelector('.jbreathe .fb-bodhi-lit')).opacity));
+  for (let i = 0; i < 50; i++) {
+    const ph = await p.evaluate(() => document.querySelector('.jbreathe').dataset.phase); seen.add(ph); const n = await flamePx(p);
+    if (ph === 'Hold') { big = Math.max(big, n); litHold = Math.max(litHold, await litOp()); (await flameSize(p)).forEach((v, j) => (sizes[j] = Math.max(sizes[j], v))); }
+    if (ph === 'Breathe out') { small = Math.min(small, n); litOut = Math.min(litOut, await litOp()); }
+    await p.waitForTimeout(50);
+  }
   ok(`${label}: the breath cycle runs with the candle: in, hold, out`, ['Breathe in', 'Hold', 'Breathe out'].every(w => seen.has(w)), [...seen].join(' / '));
   ok(`${label}: the flame swells with the in-breath and settles on the out-breath`, big > small * 1.15, `${big} vs ${small}`);
+  ok(`${label}: the flames are about a third bigger than before, against the candle`, sizes.every((v, j) => v > FLAME_BEFORE[j] * 1.25), sizes.map((v, j) => `${(v / FLAME_BEFORE[j]).toFixed(2)}x`).join(', '));
+  ok(`${label}: the candle's light on the tree and the ground rises with the in-breath and settles on the out-breath`, litHold > 0.6 && litHold > litOut * 1.4, `${litHold.toFixed(2)} at Hold, ${litOut.toFixed(2)} breathing out`);
+  ok(`${label}: the tree is painted once: its lit and still layers are not redrawn per frame`, await p.evaluate(() => { const c = document.querySelector('.jbreathe canvas.fb-bodhi'); return !!c.dataset.readyMs && Number(c.dataset.buildMs) > 0; }));
+  await p.waitForFunction(() => document.querySelector('.jbreathe').dataset.phase === 'Hold');
+  const cWord = await contrastBehind(p, '.jbreathe .jb-word'), cEye = await contrastBehind(p, '.jbreathe .fb-eyebrow');
+  ok(`${label}: the breath word and the candle's name stay legible over the lit crown`, cWord >= 4.5 && cEye >= 4.5, `${cWord.toFixed(1)}:1, ${cEye.toFixed(1)}:1`);
   ok(`${label}: the sub line keeps the original words`, /Stay as long as you like/.test(await p.locator('.jbreathe .jb-sub').textContent()));
   // after three breaths, the offer: quiet, never taking focus
   await p.waitForFunction(() => document.querySelector('.jbreathe').dataset.offer === 'shown');
@@ -155,6 +215,10 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await r.locator('.fb-light').click(); await r.waitForTimeout(800);
   const a = await flamePx(r); await r.waitForTimeout(400); const c2 = await flamePx(r);
   ok(`${label}: reduced motion keeps a steady, lit flame`, a > 30 && a === c2, `${a} / ${c2}`);
+  const treeStill = () => r.evaluate(() => { const c = document.querySelector('.jbreathe .fb-bodhi-live'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 0; for (let i = 0; i < d.length; i += 97) h = (h * 31 + d[i]) >>> 0; return [h, Number(getComputedStyle(document.querySelector('.jbreathe .fb-bodhi-lit')).opacity)]; });
+  await r.waitForFunction(() => !!document.querySelector('.jbreathe canvas.fb-bodhi')?.dataset.readyMs, null, { timeout: 15000 }); await r.waitForTimeout(300);
+  const ts1 = await treeStill(); await r.waitForTimeout(700); const ts2 = await treeStill();
+  ok(`${label}: reduced motion: the tree stands still and lit, no leaf moves or falls`, ts1[0] === ts2[0] && ts1[1] === ts2[1] && ts1[1] > 0.5, `${ts1} / ${ts2}`);
   const seenR = new Set(); for (let i = 0; i < 30; i++) { seenR.add(await r.evaluate(() => document.querySelector('.jbreathe').dataset.phase)); await r.waitForTimeout(50); }
   ok(`${label}: reduced motion: the words still cycle`, ['Breathe in', 'Hold', 'Breathe out'].every(w => seenR.has(w)), [...seenR].join(' / '));
   await r.context().close();
