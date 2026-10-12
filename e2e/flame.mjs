@@ -97,7 +97,15 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: the flame swells with the in-breath and settles on the out-breath`, big > small * 1.15, `${big} vs ${small}`);
   ok(`${label}: the sub line keeps the original words`, /Stay as long as you like/.test(await p.locator('.jbreathe .jb-sub').textContent()));
   // after three breaths, the offer: quiet, never taking focus
-  await p.waitForFunction(() => document.querySelector('.jbreathe').dataset.offer === 'shown'); await p.waitForTimeout(1400);
+  await p.waitForFunction(() => document.querySelector('.jbreathe').dataset.offer === 'shown');
+  // its buttons are legible from the moment they appear and stay so through the breath (the scene dims, they do not)
+  const seenOp = new Set(); let minOp = 1;
+  for (let i = 0; i < 28; i++) {
+    const [ph, o] = await p.evaluate(() => { const op = n => { let v = 1; for (; n; n = n.parentElement) v *= Number(getComputedStyle(n).opacity); return v; }; return [document.querySelector('.jbreathe').dataset.phase, Math.min(op(document.querySelector('.fb-home')), op(document.querySelector('.fb-pair')))]; });
+    seenOp.add(ph); minOp = Math.min(minOp, o); await p.waitForTimeout(50);
+  }
+  ok(`${label}: the offer's buttons never fade below 0.85 opacity, through in, hold and out`, minOp >= 0.85 && ['Breathe in', 'Breathe out'].every(w => seenOp.has(w)), `${minOp.toFixed(2)} over ${[...seenOp].join(' / ')}`);
+  await p.waitForTimeout(400);
   const off = await p.evaluate(() => ({ vis: getComputedStyle(document.querySelector('.fb-offer')).opacity, focus: document.activeElement?.className, pair: document.querySelector('.fb-pair').getAttribute('href'), home: document.querySelector('.fb-home').textContent, words: document.querySelector('.jbreathe').dataset.phase }));
   ok(`${label}: after three breaths the offer appears without taking focus or stopping the breath`, Number(off.vis) > 0.3 && /jb-close/.test(off.focus) && !!off.words, JSON.stringify(off));
   ok(`${label}: it pairs Cabana with its roller`, /^#?\/product\/cabana-fragrance-roller$/.test(off.pair) && /Bring this candle home/.test(off.home), off.pair);

@@ -10,6 +10,11 @@ const b = await chromium.launch({ executablePath: process.env.CHROME || undefine
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const noScroll = p => p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
 const active = p => p.evaluate(() => document.querySelector('.cue-hl')?.textContent);
+// Claire's candle in the loop: how many flame canvases it has, how many bright flame pixels they hold above their wicks, and how
+// far the lit photograph has glowed in
+const candle = p => p.evaluate(() => { const box = document.querySelector('.cue-candle'); let flame = 0;
+  for (const c of box.querySelectorAll('canvas.lc-flame')) { const [, by] = c.dataset.base.split(',').map(Number), top = Math.floor(by * c.width / c.clientWidth), d = c.getContext('2d').getImageData(0, 0, c.width, top).data; for (let i = 3; i < d.length; i += 4) if (d[i] > 200 && d[i - 3] > 230 && d[i - 2] > 170) flame++; }
+  return { canvases: box.querySelectorAll('canvas.lc-flame').length, flame, glow: Number(getComputedStyle(box.querySelector('.lc-glow')).opacity) }; });
 const pressed = p => p.evaluate(() => [...document.querySelectorAll('.cue-pill')].findIndex(x => x.getAttribute('aria-pressed') === 'true'));
 
 for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, false], ['phone', { width: 390, height: 844 }, true]]) {
@@ -36,12 +41,34 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
   // ---- the 3D cue loop
   await p.evaluate(() => document.querySelector('#method').scrollIntoView({ block: 'start' })); await p.waitForTimeout(600);
   await p.evaluate(() => document.querySelector('.cue-stage').scrollIntoView({ block: 'center' })); await p.waitForTimeout(500);
-  ok(`${label}: the loop has four steps orbiting a candle`, (await p.locator('.cue-card').count()) === 4 && (await p.locator('.cue-candle svg').count()) === 1);
+  const photo = await p.evaluate(() => { const c = document.querySelector('.cue-candle'), i = c?.querySelector('img.lc-unlit'), g = c?.querySelector('img.lc-glow');
+    return { unlit: i?.currentSrc || i?.src || '', glow: g?.currentSrc || g?.src || '', loaded: !!i && i.complete && i.naturalWidth > 0 && !!g && g.complete && g.naturalWidth > 0, drawn: c?.querySelectorAll('svg').length ?? -1 }; });
+  ok(`${label}: the loop has four steps orbiting Claire's candle, her photograph (not a drawing)`, (await p.locator('.cue-card').count()) === 4 && photo.loaded && photo.drawn === 0
+    && /\/img\/studio\/picker\/(verdant|cabana)-unlit-(480|900)\.webp$/.test(photo.unlit) && /\/img\/studio\/picker\/(verdant|cabana)-glow-(480|900)\.webp$/.test(photo.glow), JSON.stringify(photo));
+  // the candle catches once the loop is on screen: the lit photograph begins to glow in and a flame stands on each wick
+  await p.waitForFunction(() => Number(getComputedStyle(document.querySelector('.cue-candle .lc-glow')).opacity) > 0.2, null, { timeout: 6000 }).catch(() => {});
+  await p.waitForTimeout(1500);
+  const lit0 = await candle(p);
+  ok(`${label}: the first step lights the candle a little: a flame on each wick, the lit glass only beginning to glow`, lit0.canvases === 2 && lit0.flame > 8 && lit0.glow > 0.2 && lit0.glow < 0.7, JSON.stringify(lit0));
   const is3d = await p.evaluate(() => { const cs = [...document.querySelectorAll('.cue-card')].map(c => new DOMMatrix(getComputedStyle(c).transform));
     return getComputedStyle(document.querySelector('.cue-tilt')).transformStyle === 'preserve-3d' && !cs[0].is2D && new Set(cs.map(m => Math.round(m.m43))).size > 1; });
   ok(`${label}: the steps sit at different depths in real 3D`, is3d);
   ok(`${label}: it starts on the cue`, (await active(p)) === 'Cue' && (await pressed(p)) === 0);
-  const flame0 = await p.evaluate(() => document.querySelector('.cue-flame').getBoundingClientRect().height);
+  // a clean composition: the candle stands on the ring (its foot inside the floor's ellipse, near its middle, which perspective
+  // draws above the middle of its box), and at every
+  // step, and halfway between steps, no words show on the steps round the back, nor overlap words on another step
+  const seat = await p.evaluate(() => { const c = document.querySelector('.cue-candle').getBoundingClientRect(), f = document.querySelector('.cue-floor').getBoundingClientRect(); return { foot: (c.bottom - f.top) / f.height, top: c.top }; });
+  ok(`${label}: the candle stands on the ring, not floating above it`, seat.foot > 0.25 && seat.foot < 0.6, JSON.stringify(seat));
+  const words = () => p.evaluate(() => [...document.querySelectorAll('.cue-card')].map(c => { const o = Number(getComputedStyle(c).opacity), z = new DOMMatrix(getComputedStyle(c).transform).m43;
+    return { z, rects: [...c.querySelectorAll('b, .cue-t, .cue-n')].map(e => ({ r: e.getBoundingClientRect().toJSON(), o: o * Number(getComputedStyle(e).opacity) })).filter(w => w.o > 0.06) }; }));
+  const clash = ws => { const n = []; ws.forEach((a, i) => ws.forEach((b, j) => { if (j <= i) return; for (const x of a.rects) for (const y of b.rects) if (x.r.left < y.r.right && y.r.left < x.r.right && x.r.top < y.r.bottom && y.r.top < x.r.bottom) n.push([i, j]); })); return n; };
+  const comp = [];
+  for (let k = 0; k < 4; k++) {
+    await p.locator('.cue-stage').focus(); await p.keyboard.press('ArrowRight'); await p.waitForTimeout(160);
+    const mid = await words(); await p.waitForTimeout(1400); const rest = await words();
+    comp.push({ k, midClash: clash(mid).length, restClash: clash(rest).length, backWords: rest.filter(w => w.z < 0).reduce((n, w) => n + w.rects.length, 0) });
+  }
+  ok(`${label}: no step's words collide with another's, and the steps round the back show none`, comp.every(c => !c.midClash && !c.restClash && !c.backWords), JSON.stringify(comp));
   await p.locator('.cue-stage').focus(); await p.keyboard.press('ArrowRight'); await p.waitForTimeout(300);
   ok(`${label}: the right arrow key turns the ring to the pause`, (await active(p)) === 'Pause' && (await pressed(p)) === 1, await active(p));
   ok(`${label}: the pause offers the one-minute breathing practice`, await p.locator('.cue-try').isVisible());
@@ -65,9 +92,12 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
   await p.locator('.cue-pill[data-pick="0"]').click(); await p.waitForTimeout(200);
   for (let k = 0; k < 3; k++) { await p.locator('.cue-arrow[data-go="1"]').click(); await p.waitForTimeout(250); }
   ok(`${label}: the next button walks the loop to Repeat`, (await active(p)) === 'Repeat');
-  await p.waitForTimeout(1400);
-  const done = await p.evaluate(() => ({ c: document.querySelector('.cue').classList.contains('complete'), lit: getComputedStyle(document.querySelector('.cue')).getPropertyValue('--lit').trim(), arcs: document.querySelectorAll('.cue-arc.lit').length, h: document.querySelector('.cue-flame').getBoundingClientRect().height }));
-  ok(`${label}: the flame brightens as the loop completes`, done.c && Number(done.lit) === 1 && done.arcs === 4 && done.h > flame0 * 1.2, JSON.stringify({ ...done, flame0 }));
+  await p.waitForTimeout(2600);
+  const done = await p.evaluate(() => ({ c: document.querySelector('.cue').classList.contains('complete'), lit: getComputedStyle(document.querySelector('.cue')).getPropertyValue('--lit').trim(), arcs: document.querySelectorAll('.cue-arc.lit').length }));
+  const lit1 = await candle(p);
+  ok(`${label}: the candle comes fully alight as the loop completes: the flames grow and the lit photograph glows in`, done.c && Number(done.lit) === 1 && done.arcs === 4 && lit1.flame > lit0.flame * 1.4 && lit1.glow > 0.9, JSON.stringify({ ...done, lit0, lit1 }));
+  const fin = await p.evaluate(() => { const i = document.querySelector('.co-final-flame img.lc-unlit'); return { photo: !!i && /\/img\/studio\/picker\//.test(i.getAttribute('src')), drawn: document.querySelectorAll('.co-final-flame svg').length }; });
+  ok(`${label}: the candle under the last call to action is the same photograph`, fin.photo && fin.drawn === 0, JSON.stringify(fin));
   ok(`${label}: a completed loop leads to the free reset`, await p.locator('.cue-done').isVisible() && /\/reset$/.test(await p.locator('.cue-done a').getAttribute('href')));
   ok(`${label}: the step text is real text for screen readers`, (await p.locator('.cue-h[aria-live="polite"]').count()) === 1 && (await p.locator('.cue-stage[aria-label]').count()) === 1);
 

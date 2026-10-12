@@ -52,12 +52,14 @@
 .fb-pool { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .13); width: calc(var(--pw) * 2.1); height: calc(var(--pw) * .48); transform: translateX(-50%); pointer-events: none; opacity: 0;
   background: radial-gradient(ellipse 50% 50% at 50% 46%, rgba(255, 176, 110, .34) 0%, rgba(255, 150, 90, .14) 40%, rgba(255, 140, 80, 0) 72%); mix-blend-mode: screen; will-change: opacity; }
 .fb-track { position: absolute; inset: 0; }
-.fb-c { position: absolute; left: 50%; bottom: var(--floor); width: var(--pw); aspect-ratio: var(--ar); padding: 0; margin: 0; border: 0; background: none; color: inherit; cursor: pointer;
+/* every candle at the same scale and on the same floor: --sc and --drop come from picker.ts (scale, foot) */
+.fb-c { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * var(--drop, 0)); width: calc(var(--pw) * var(--sc, 1)); aspect-ratio: var(--ar); padding: 0; margin: 0; border: 0; background: none; color: inherit; cursor: pointer;
   transform-origin: 50% 100%; transition: opacity .6s ease; -webkit-tap-highlight-color: transparent; }
 .fb-c[aria-pressed="true"] { cursor: inherit; }
 .fb-c:focus { outline: none; }
 .fb-c:focus-visible .fb-ph::after { content: ""; position: absolute; inset: -10px -10px 0; border-radius: 18px; border: 2px solid var(--gold); }
-.fb-ph { position: absolute; inset: 0; display: block; -webkit-box-reflect: below 0 linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, .075)); }
+/* (no mirror reflection: the candles stand on a matte surface, and a mirrored lid label gave the trick away) */
+.fb-ph { position: absolute; inset: 0; display: block; }
 /* the contact shadow: the photo's lowest edge (where the original photograph cut off the tin and lid) fades into it */
 .fb-ph::before { content: ""; position: absolute; left: -10%; right: -4%; bottom: -9%; height: 24%; pointer-events: none;
   background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(4, 2, 9, .97) 0%, rgba(5, 3, 10, .9) 38%, rgba(8, 4, 14, .45) 66%, rgba(8, 4, 14, 0) 100%); }
@@ -95,7 +97,7 @@
   box-shadow: 0 14px 40px -14px rgba(255, 190, 120, .7); }
 .jbreathe.fb .fb-light svg { color: #D9873A; }
 .jbreathe.fb .fb-light:hover, .jbreathe.fb .fb-home:hover { background: #fff; box-shadow: 0 16px 46px -12px rgba(255, 190, 120, .85); }
-.jbreathe.fb .fb-add, .jbreathe.fb .fb-pair { min-height: 52px; padding: 0 24px; border-radius: 999px; background: rgba(16, 11, 28, .3); color: var(--cream); border: 1px solid rgba(233, 212, 161, .62); font: 700 15px var(--body, system-ui); box-shadow: none; }
+.jbreathe.fb .fb-add, .jbreathe.fb .fb-pair { min-height: 52px; padding: 0 24px; border-radius: 999px; background: rgba(16, 11, 28, .55); color: var(--cream); border: 1px solid rgba(233, 212, 161, .62); font: 700 15px var(--body, system-ui); box-shadow: none; }
 .jbreathe.fb .fb-add:hover, .jbreathe.fb .fb-pair:hover { border-color: var(--gold); background: rgba(233, 212, 161, .1); }
 .jbreathe.fb .fb-add:disabled, .jbreathe.fb .fb-home:disabled { opacity: .6; cursor: default; }
 .jbreathe.fb [hidden] { display: none !important; }
@@ -104,9 +106,14 @@
 .fb-back { color: rgba(243, 236, 226, .7); text-decoration: none; }
 .fb-back:hover { color: var(--cream); text-decoration: underline; }
 .jbreathe.fb .jb-sub { margin: 0 0 2px; max-width: 40ch; color: rgba(243, 236, 226, .74); font-size: 15px; }
-.fb-offer { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; transform: translateY(8px); transition: opacity 1.2s ease, transform 1.2s ease; }
-.fb-offer.in { opacity: 1; transform: none; }
-.fb-offer-t { margin: 0; font-family: var(--display); font-size: 20px; color: var(--cream); }
+/* the offer arrives quietly, but its buttons are never faint: only its line fades in, and the buttons rise into place
+   already legible (the night behind them may dim and brighten with the breath; they do not) */
+.fb-offer { display: flex; flex-direction: column; align-items: center; gap: 2px; transform: translateY(8px); transition: transform 1.2s ease; }
+.fb-offer.in { transform: none; }
+.fb-offer-t { margin: 0; font-family: var(--display); font-size: 20px; color: var(--cream); opacity: 0; transition: opacity 1.2s ease; }
+.fb-offer.in .fb-offer-t { opacity: 1; }
+.fb-offer-a { opacity: .88; transition: opacity .5s ease; }
+.fb-offer.in .fb-offer-a { opacity: 1; }
 .jbreathe.fb :is(button, a):focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .fb-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -127,7 +134,7 @@
 }
 @media (max-height: 700px) and (min-width: 701px) { .fb-head { padding-top: 54px; } .fb-line { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .jbreathe.fb, .jbreathe.fb .jb-word, .jbreathe.fb .jb-word.fb-in, .fb-c, .fb-info, .fb-breath, .fb-offer { transition: none; animation: none; }
+  .jbreathe.fb, .jbreathe.fb .jb-word, .jbreathe.fb .jb-word.fb-in, .fb-c, .fb-info, .fb-breath, .fb-offer, .fb-offer-t, .fb-offer-a { transition: none; animation: none; }
   .fb-drift, .fb-tw i { animation: none; }
   .fb-tw i { opacity: calc(var(--a) * .7); }
 }
