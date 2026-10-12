@@ -1,10 +1,12 @@
 // The opening's candle moons: five of Claire's past pours, seen from above, as moons on one ring across the sky.
 //
 // Seen from above, each candle is a small moon: a round face of wax with its toppings along the rim. One candle stands for
-// each time of day (moons.ts, HERO). They sit on a ring in 3D, one every 72 degrees, and the ring is turned so the moment
-// being shown faces us at the top of the arc: the full moon, the largest, glowing. The two either side are gibbous, the two
-// furthest round the back are crescents, smaller and hazier with distance, setting behind the far hills. Choosing another
-// time of day turns the ring (the shorter way round), so the new moment's candle rises to the front and fills.
+// each time of day (moons.ts, HERO). They sit on a ring in 3D, one every 72 degrees, seen from in front and a little below,
+// so it reads as an arch across the sky like the moon's path: the moment being shown faces us at the top of the arch, the
+// full moon, the largest, glowing; the two either side are gibbous, lower and further; the two at the ends are crescents,
+// smallest and hazier, low in the sky but always clear of the hills. Choosing another time of day turns the ring (the
+// shorter way round), so the new moment's candle rises to the top and fills; a moon carried past the end of the arch sinks
+// out of sight there and rises again at the other end, as the moon sets and rises.
 //
 // Each face is shaded here, per pixel, on a small canvas: a slightly domed disc lit from where the sun (or the moon) of the
 // moment really is in the sky, a soft lit rim on that side, ambient occlusion where the wax meets the edge, and a phase:
@@ -15,6 +17,7 @@
 // The shading is only recomputed when something changes (the ring turning, the light moving, the hour's colours), so
 // nothing runs while the opening is still; reduced motion turns the ring without the glide and stills the drift.
 import { MOMENTS } from '../config';
+import { getSky } from './sky';
 
 export interface MoonArc {
   show(key: string): void;
@@ -111,6 +114,23 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
 
   // ---------- layout: the ring's place on screen ----------
   const rel = (el: Element | null, to: DOMRect) => { if (!el) return null; const r = el.getBoundingClientRect(); return { l: r.left - to.left, t: r.top - to.top, r: r.right - to.left, b: r.bottom - to.top }; };
+  /** The highest point of the far hills between x0 and x1 (in the ring's own box): the moons all stay above it, fully in
+   *  the sky. Read off the landscape canvas itself (every moment's hills have the same shape), by its layout box, not its
+   *  on-screen one (the opening and the parallax move it while this measures). */
+  function ridge(x0: number, x1: number): number {
+    const c = [...scene.querySelectorAll<HTMLCanvasElement>('canvas.land')].find(x => x.width > 2 && x.offsetHeight > 0);
+    if (!c) return Infinity;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    if (!x) return Infinity;
+    let best = Infinity;
+    for (let i = 0; i <= 16; i++) {
+      const px = x0 + ((x1 - x0) * i) / 16, cx = Math.round(((px - c.offsetLeft) / c.offsetWidth) * c.width);
+      if (cx < 0 || cx >= c.width) continue;
+      const col = x.getImageData(cx, 0, 1, c.height).data;
+      for (let j = 0; j < c.height; j++) if (col[j * 4 + 3] > 200) { best = Math.min(best, c.offsetTop + (j / c.height) * c.offsetHeight); break; }
+    }
+    return best;
+  }
   function layout() {
     phone = phoneMQ().matches;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -122,8 +142,9 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       const band = rel(stack, box);
       if (!band) return false;
       W = box.width - 24; left = 12; H = band.b - band.t; top = band.t + 6;
-      D = clamp(Math.min(H * 0.44, W * 0.3), 76, 132);
-      RX = (W - D * 0.9) / 2; RY = (H - 6 - D * 0.5 - D * 0.5 * 0.5) / 1.81;
+      D = clamp(Math.min(H * 0.42, W * 0.25), 76, 120);
+      RX = W / 2 - Math.max(D * 0.27, 42); // room for the end moons' captions
+      RY = H - 24 - D * 0.77; // the ends low in the band, with their captions
     } else {
       // beside the words, in the sky above the offers: the front moon near the top, the two round the back no lower than
       // the far ridges (where they may set a little behind them), all clear of the words and the offers
@@ -133,13 +154,15 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       const words = [...hero.querySelectorAll('.day-copy > *')].map(e => rel(e, box)!.r);
       left = Math.max(copy ? copy.r : box.width * 0.5, ...words) + 40;
       W = box.width - 40 - left;
-      top = Math.max(28, vis * 0.065);
+      // the birds keep to a high band of the sky (studio.css): the ring starts below it
+      const birds = [...scene.querySelectorAll<HTMLElement>('.bird')].map(b => b.offsetTop + b.offsetHeight);
+      top = Math.max(28, vis * 0.06, (birds.length ? Math.max(...birds) : 0) + 16);
       // the lowest any moon's foot may reach: the two round the back stand on the far ridges, half set behind them
-      const low = Math.min(box.height * 0.54, (offers ? offers.t : vis * 0.7) - 12);
+      const low = Math.min(box.height * 0.54, (offers ? offers.t : vis * 0.7) - 12, ridge(left, left + W) - 40); // (with the captions under the ends)
       H = low - top;
-      D = clamp(Math.min(vis * 0.245, W * 0.25, H * 0.52), 96, 200);
-      RX = Math.min(W / 2 - D * 0.45, D * 1.85);
-      RY = Math.max(20, (H - D * 0.5 - D * 0.5 * 0.5) / 1.81);
+      D = clamp(Math.min(vis * 0.22, W * 0.21, H * 0.62), 84, 190);
+      RX = Math.min(W / 2 - Math.max(D * 0.3, 56), D * 2.4);
+      RY = Math.max(20, Math.min(H - D * 0.5 - D * 0.27, D * 1.15)); // how far the ends of the arch fall
     }
     cx = left + W / 2;
     const n = Math.round(D * dpr);
@@ -147,6 +170,8 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     faces.forEach(f => { f.cv.style.width = f.cv.style.height = `${D}px`; });
     arc.style.setProperty('--d', `${D}px`);
     arc.dataset.mode = phone ? 'phone' : 'desktop';
+    // a narrow sky (tablets): only the full moon keeps its caption, so no name is crowded by the moons below it
+    arc.classList.toggle('tight', !phone && RX < D * 1.95);
     return true;
   }
 
@@ -158,16 +183,22 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       const th = off * STEP, c = Math.cos(th), depth = (1 + c) / 2;
       f.th = th;
       f.s = 0.47 + 0.53 * Math.pow(depth, 1.25);
-      f.x = cx + RX * Math.sin(th);
-      f.y = top + D * 0.5 + RY * (1 - c);
+      // along the arch: evenly out to the ends, falling away more steeply the further from the top
+      const u = off * 0.7;
+      f.x = cx + (RX * Math.sin(u)) / Math.sin(1.4);
+      f.y = top + D * 0.5 + (RY * (1 - Math.cos(u))) / (1 - Math.cos(1.4));
       const el = f.el;
+      // past the ends of the arch (only while the ring turns) a moon sinks out of sight, and rises at the other end
+      const a = Math.abs(off), gone = smooth(2.06, 2.45, a);
+      f.y += gone * D * 0.22;
+      el.style.opacity = (1 - gone).toFixed(3);
       el.style.transform = `translate3d(${(f.x - D / 2).toFixed(1)}px, ${(f.y - D / 2).toFixed(1)}px, 0) scale(${f.s.toFixed(4)})`;
       el.style.zIndex = String(Math.round(depth * 100));
       el.style.setProperty('--dz', depth.toFixed(3));
       el.style.setProperty('--inv', (1 / f.s).toFixed(4)); // the caption keeps one size whatever the moon's
       el.style.setProperty('--glow', smooth(0.55, 1, c).toFixed(3));
-      // captions: in front and either side, never round the back
-      el.style.setProperty('--cap', smooth(-0.1, 0.35, c).toFixed(3));
+      // captions: full under the front three, softer under the crescents at the ends
+      el.style.setProperty('--cap', (1 - 0.35 * smooth(1.2, 2, a)).toFixed(3));
       el.classList.toggle('full', Math.abs(off) < 0.5);
       const name = MOMENTS[f.i].name;
       const ph = phaseName(Math.round(off));
@@ -191,9 +222,13 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     const front = faces.reduce((a, b) => (Math.cos(b.th) > Math.cos(a.th) ? b : a));
     const haze = sky[1], deep = sky[0];
     const day = 1 - night;
-    // the unlit side: the photograph in deep shadow, sinking into the sky's own colour (by day the shadowed part of a moon
-    // takes the sky's blue, by night it is nearly black with a faint earthshine)
-    const shadowTint: RGB = [0, 1, 2].map(c => haze[c] * 0.72 * day + deep[c] * 0.14 * night) as RGB;
+    // the night side of each moon, as a real moon's: it takes on the sky behind it. By day it is the haze, a little deeper
+    // (so a daytime moon's dark side almost melts into the sky); by night a deep, cool dusk violet-blue, lifted just enough
+    // that the earthshine shows the wax and its toppings faintly
+    const NIGHT_SIDE: RGB = [58, 60, 104];
+    const daySide: RGB = [0, 1, 2].map(c => (haze[c] * 0.5 + deep[c] * 0.5) * 0.88) as RGB;
+    const nightSide: RGB = [0, 1, 2].map(c => deep[c] * 0.45 + NIGHT_SIDE[c] * 0.75) as RGB;
+    const shadowTint: RGB = [0, 1, 2].map(c => daySide[c] * day + nightSide[c] * night) as RGB;
     const lit: RGB = [mixc(255, orb[0], 0.18 + 0.12 * night), mixc(255, orb[1], 0.18 + 0.12 * night), mixc(255, orb[2], 0.18 + 0.12 * night)];
     for (const f of faces) {
       if (!f.px && !grab(f)) continue;
@@ -206,7 +241,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       let px = front.x - f.x, py = front.y - f.y; const pl = Math.hypot(px, py);
       if (pl < 1) { px = -Math.sign(off) || 1; py = 0; } else { px /= pl; py /= pl; }
       const P = [px * Math.sin(alpha), py * Math.sin(alpha), Math.cos(alpha)];
-      const hz = (1 - f.s) * (0.55 * day + 0.25 * night); // the haze of distance
+      const hz = (1 - f.s) * (0.4 * day + 0.2 * night); // the haze of distance
       const sig = [Math.round(L[0] * 60), Math.round(L[1] * 60), Math.round(P[0] * 200), Math.round(P[1] * 200), Math.round(P[2] * 200), Math.round(hz * 100), haze.join(), Math.round(night * 50), N].join(',');
       if (sig === f.sig) continue;
       f.sig = sig;
@@ -231,7 +266,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       if (a <= 0) { out[o + 3] = 0; continue; }
       // the phase: a soft terminator on the sphere of this face
       const pd = g.nx[k] * P[0] + g.ny[k] * P[1] + g.nz[k] * P[2];
-      const ph = smooth(-0.09, 0.12, pd);
+      const ph = smooth(-0.16, 0.17, pd);
       // the dome in the light of the sun or moon: diffuse, a broad satin sheen, a lit rim on the light's side
       const nd = g.dx[k] * L[0] + g.dy[k] * L[1] + g.dz[k] * L[2];
       const diff = 0.74 + 0.36 * Math.max(0, nd);
@@ -239,10 +274,13 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       const sp = hd > 0.8 ? spec * Math.pow(hd, sharp) : 0;
       const ao = g.ao[k];
       const rim = g.rim[k] * Math.max(0, g.nx[k] * rlx + g.ny[k] * rly);
+      // earthshine: the photograph's brightness only (no colour), so the toppings show faintly in the shadow, never brown
+      const lum = (src[o] * 0.3 + src[o + 1] * 0.59 + src[o + 2] * 0.11) / 255;
+      const shine = (0.58 + 0.5 * lum) * (0.88 + 0.12 * ao);
       for (let c = 0; c < 3; c++) {
         const base = src[o + c];
         const l = base * diff * ao * (lit[c] / 255) + 255 * sp + rimC[c] * rim * ph;
-        const d = base * 0.16 * ao + dark[c] * 0.84;
+        const d = dark[c] * shine;
         let v = d + (l - d) * ph;
         v = v + (haze[c] - v) * hz;
         out[o + c] = v;
@@ -275,7 +313,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
   ro.observe(hero);
   function destroy() {
     if (!alive) return;
-    alive = false; cancelAnimationFrame(raf); window.clearTimeout(rt);
+    alive = false; cancelAnimationFrame(raf); window.clearTimeout(rt); getSky()?.set({ discs: 1 });
     window.removeEventListener('resize', onResize); ro.disconnect(); arc.remove();
   }
 
@@ -287,6 +325,8 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       const first = !key;
       key = k;
       if (first || !geo) layout();
+      // the realistic sky draws its own sun and moon: only their glow stays, so no plain disc competes with the candle moons
+      getSky()?.set({ discs: 0 });
       delete stack.dataset.shown;
       if (first || reduce()) { phi = i; tween = null; }
       else {
