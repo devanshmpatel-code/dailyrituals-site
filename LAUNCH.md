@@ -22,6 +22,26 @@ Only step 5 changes the live site. Everything before it is safe to do while the 
 - [ ] **Question for Claire: are Amber + Rose, Licorice Sweets and Fleur de Lilac still for sale?** In Wix their addresses end in `-need-pics` (`amber-rose-need-pics`, `licorice-sweets-need-pics`, `fleur-de-lilac-need-pics`), they have no photos, and they come in Mini / Medium / Large rather than 2 oz / 8 oz. They may be past seasonal scents. Today they are visible and buyable in the store, so the site shows them in the shop and on Find your scent. If they are past scents, hide them in Wix (the site follows) so they never look buyable; if they are current, add photos and set their mood.
 - [ ] Moon Drops: the site counts down to the next new moon (computed) and offers only "get notified". To announce a real release date, set `VITE_DROP_DATE` (or `DROP_DATE_OVERRIDE` in `src/config.ts`).
 - [ ] Concepts shown as "Coming soon" with no price: Discovery Kit, Moon Drops, Solstice Box, Ritual on Repeat (refills), digital gift cards. Claire to confirm which, if any, should launch, and their prices.
+- [ ] **Giving back ($1 from every order): get permission before launch.** The story section ("Light that travels", on Meet the maker), the tracker at `/giving` and the line in the cart and under Add to cart name BC Children's Hospital. All of that wording is a draft for Claire, and nothing uses the hospital's logo.
+  - [ ] Contact BC Children's Hospital Foundation (bcchf.ca) and set up an approved partnership (cause-marketing or third-party fundraising agreement) **before launch**. Its policy reportedly restricts percentage-of-sales programs to approved corporate cause-marketing partners (unverified, so ask). Ask how the Foundation wants to be named, whether gifts can be directed to children's cancer care (oncology), and whether a receipt or acknowledgement can be posted publicly. If permission is not given, change the wording to not name the hospital (search `src/pages/giving.ts`) before launch.
+  - [ ] Confirm which local causes in White Rock and the Semiahmoo Peninsula receive donations, and how the money is split between them and the Foundation. Then update "Where it goes" on `/giving`.
+  - [ ] Honour the $1 per order once checkout is live: every month, count the orders in the Wix dashboard (leave out cancelled and fully refunded orders), set aside $1 for each, and donate on the schedule Claire chooses (monthly or quarterly). Confirm the "How the amount is calculated" wording matches what you actually do.
+  - [ ] Add each donation to the tracker after it is made, never before. Edit `src/data/giving.ts`, add one entry, and redeploy. Put receipts and photos in `public/giving/` (they are served at `/giving/<file>`). The page adds up its totals from these entries only, and shows "Our first giving report will be posted after our first month of orders" while the list is empty. Example:
+    ```ts
+    export const GIVING: GivingEntry[] = [
+      {
+        date: '2026-12-01',                         // the day the donation was made, YYYY-MM-DD
+        amount: 48,                                 // dollars actually given (CAD), no "$"
+        recipient: "BC Children's Hospital Foundation",
+        note: "Our November orders: $1 from each, toward children's cancer care.",
+        orders: 48,                                 // optional: orders this covers
+        proofUrl: '/giving/2026-11-receipt.pdf',    // optional: the receipt
+        photo: '/giving/2026-11.webp',              // optional: a photo of the moment
+        photoAlt: 'Claire holding the donation receipt beside a lit Verdant candle',
+      },
+    ];
+    ```
+  - [ ] Never state impact ("helped X children") unless it comes from a posted entry or from the recipient in writing.
 - [ ] The Send a Sunrise sets (The Morning Ritual, The Midday Reset, The Evening Wind Down) are not products in Wix and had invented draft prices ($34 / $36 / $46). They now show as "Coming soon" with no price. Claire to define what each set contains; then create them in Wix so the site can show real prices.
 
 ## 1. Vercel (owner: Devansh)

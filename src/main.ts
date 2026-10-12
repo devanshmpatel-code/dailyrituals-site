@@ -26,6 +26,7 @@ import { renderCoaching, renderBook } from './pages/coaching';
 import { renderHelp, renderStory, renderAccount, renderExplore, renderReset } from './pages/info';
 import { renderStatic, renderMissing, hasStatic } from './pages/static';
 import { renderLegal } from './pages/legal';
+import { renderGiving, givingNote } from './pages/giving';
 import { mountNav, navRouteChange } from './nav';
 
 const root = document.getElementById('root')!;
@@ -113,6 +114,7 @@ function renderDrawer() {
   const n = count(); dhN.textContent = n ? `${n} item${n === 1 ? '' : 's'}` : '';
   const df = drawer.querySelector<HTMLElement>('.df')!;
   df.innerHTML = `<div class="row"><span>Subtotal</span><b style="font-weight:600">${money(sub)}</b></div><span class="small muted">GST, PST and shipping calculated at checkout.</span>
+    ${lines.length ? givingNote('cart') : ''}
     <button class="btn" id="checkoutBtn" ${lines.length ? '' : 'disabled'}>Checkout · ${money(sub)}</button>
     ${WRITES_ENABLED ? '' : '<span class="small muted">Private preview: checkout is switched off, and this cart is saved only in this browser.</span>'}`;
   df.querySelector('#checkoutBtn')!.addEventListener('click', async () => {
@@ -168,7 +170,7 @@ updateCount();
 const PAGE_TITLES: Record<string, string> = {
   shop: 'Shop', coaching: 'Coaching', book: 'Book a session', subscribe: 'Ritual on Repeat',
   drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
-  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Meet the maker', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset',
+  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Meet the maker', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset', giving: 'Giving back',
 };
 
 async function route() {
@@ -206,6 +208,7 @@ async function route() {
       case 'quiz': return renderExplore(app, new URLSearchParams('tab=quiz'));
       case 'build': case 'sets': return renderExplore(app);
       case 'reset': return renderReset(app);
+      case 'giving': return renderGiving(app);
       case 'book': return renderBook(app, arg);
       case 'checkout': await renderHome(app); openCart(); return;
       case 'privacy': case 'terms': case 'accessibility': case 'refund-policy': return renderLegal(app, seg);
