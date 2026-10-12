@@ -1,58 +1,43 @@
-import { MOMENTS, type Moment } from '../config';
-import { createBodhi } from './bodhi';
+import { add } from '../cart';
+import { money, loadProduct } from '../wix';
+import { MOODS } from '../config';
+import { PICKER_CANDLES, pickerSrc, matchLive, rememberCandle, lastCandle, type PickerCandle, type LiveCandle, type Wick } from './picker';
+import { createCrackle, type Crackle } from './pickersound';
 import '../flamebreath.css';
 
-// The breathing pause, opened by the breathing orb on every page and by [data-breathe] buttons.
-// The original pause (the sky of the hour, the tree, "Take a moment", then in, hold, out for as long as you like) with a
-// candle at its heart: the brand's candle, a matte black tin with a white wax top and a flat wooden wick, stands on the
-// ground at the foot of a Bodhi tree (src/pages/bodhi.ts) at night. Its flame grows a little as you breathe in, rests while
-// you hold and settles as you breathe out, and its light, on the ground, the roots, the bark and the underside of the crown,
-// grows and recedes with it. No products and no claims: the rhythm is described only as in, hold, out.
+// The breathing pause, opened by the breathing orb on every page and by [data-breathe] buttons: "choose your candle, light
+// it, breathe".
 //
-// How it is drawn: the tin, the wax and the flame are painted once per size into small offscreen sprites; a frame is a
-// handful of drawImage calls (the tin in the night, the same tin as the flame lights it at that frame's strength, the flame
-// in horizontal strips so it can bend and ripple, its bloom) on a canvas no bigger than the stage. The light on the tree and
-// the ground is one pre-lit layer in bodhi.ts whose opacity follows the same flicker value as the flame.
+// Stage 1, choose: a night sky (deep plum and indigo, a warm glow low in the middle, stars that each dim and brighten on
+// their own slow cycle, the whole sky drifting very slowly) above a softly lit surface where the shop's candles stand,
+// unlit, in a carousel: the chosen one large in the middle, its neighbours smaller, dimmer and further back. Swipe or drag,
+// arrow keys, or the ‹ › buttons. Under it: its name and a short line, the live price, "Light it & breathe" and "Add to cart".
+// The breath already keeps its pace at the top ("Take a moment", then in, hold, out).
+//
+// Stage 2, breathe: the wooden wicks catch (small canvas flames on the wicks, the photographed glow of the lit glass and
+// wax fading in, and, only if the sound toggle was tapped, a soft crackle made with the Web Audio API). The breath begins
+// again with the candle: on the in-breath everything comes to life (the stars brighten, the warm light spreads, the flames
+// swell); on the out-breath the night cools and dims, still beautiful. After three full breaths a quiet offer appears below:
+// bring the candle home, or pair it with its roller. It never takes focus or stops the breath.
+//
+// How it is drawn: the stars are painted once onto one canvas (and a few dozen twinkle as tiny elements with their own CSS
+// cycles); the sky, the glow and the surface are CSS gradients whose opacity follows the breath; the candles are photographs
+// (cut-outs of Claire's photos, made unlit by hand, see picker.ts). A frame sets a few opacities and, while a candle is
+// lit, draws its two flames on two small canvases (a pre-painted teardrop sprite drawn in strips so it bends and ripples).
 
-const IN = 4000, HOLD = 2000, OUT = 6000, CYCLE = IN + HOLD + OUT, LEAD = 1200;
+const IN = 4000, HOLD = 2000, OUT = 6000, CYCLE = IN + HOLD + OUT, LEAD = 1200, BREATHS_BEFORE_OFFER = 3;
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sineInOut = (t: number) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, t)));
 const clamp = (x: number, a: number, b: number) => (x < a ? a : x > b ? b : x);
-/** The strength of the candle's light that the lit layers are painted at; the flicker can briefly reach it. */
-const LIGHT_MAX = 1.12;
+const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
 // a small seeded value noise, so the flicker is organic rather than a keyframe wobble
 const hash = (x: number) => { let h = (x * 374761393) | 0; h = (h ^ (h >>> 13)) * 1274126177; return (((h ^ (h >>> 16)) >>> 0) % 10000) / 10000; };
 const noise1 = (t: number, seed = 0) => { const x = t + seed * 31.7, i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return (hash(i) + (hash(i + 1) - hash(i)) * u) * 2 - 1; };
+const seeded = (seed: number) => { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; };
 
-const momentNow = (q: URLSearchParams): Moment => {
-  const forced = MOMENTS.find(m => m.key === q.get('moment')); if (forced) return forced;
-  const h = new Date().getHours() + new Date().getMinutes() / 60, dist = (a: number, b: number) => { const x = Math.abs(a - b); return Math.min(x, 24 - x); };
-  return MOMENTS.reduce((a, b) => (dist(b.hour, h) < dist(a.hour, h) ? b : a));
-};
-
-/** Faint stars, deterministic so screenshots compare; brighter after dark. */
-function stars(dark: boolean) {
-  let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  let s = ''; for (let i = 0; i < 70; i++) { const y = rnd() * 620; s += `<circle cx="${(rnd() * 1000).toFixed(0)}" cy="${y.toFixed(0)}" r="${(0.5 + rnd() * 1.2).toFixed(2)}" opacity="${((dark ? 0.5 : 0.22) * (1 - y / 700) + rnd() * 0.25).toFixed(2)}"/>`; }
-  return `<svg class="fb-stars" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">${s}</svg>`;
-}
-
-/**
- * Where everything stands, in CSS px of the stage. The tree's foot is where the flame used to be (so the tree keeps its
- * place); the candle stands on the ground a little in front of it. Seen slightly from above: a circle on the ground, or the
- * candle's top, is an ellipse e times as tall as it is wide.
- */
-type Geo = { W: number; H: number; cx: number; oy: number; R: number; e: number; gy: number; rimY: number; waxY: number; wickY: number; href: number; lightY: number };
-const geometry = (W: number, H: number, top: number): Geo => {
-  // the candle is small beside the trunk: its size follows the stage, but never more than a fraction of the tree's width
-  // (bodhi.ts lays the tree out the same way: sy from the height of its foot, sx from that and the window's width)
-  const treeSx = Math.min(Math.max(140, (top + H * 0.74 + 2) * 0.86) * 0.92, window.innerWidth * 0.43);
-  const R = Math.max(9, Math.min(Math.min(W, H) * 0.07, treeSx * 0.09)), e = 0.3, oy = H * 0.74, cx = W / 2;
-  const gy = oy + R * 1.05; // the middle of the tin's foot: seen at this angle, about three and a half tin radii in front of the trunk
-  const rimY = gy - R * 1.22, waxY = rimY + R * 0.16, wickY = waxY - R * 0.2, href = R * 2.5; // a tin 2R wide and 1.2R tall, burnt a little down
-  return { W, H, cx, oy, R, e, gy, rimY, waxY, wickY, href, lightY: wickY - href * 0.36 };
-};
+const offscreen = (w: number, h: number) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return [c, c.getContext('2d')!] as const; };
+const linear = (g: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, stops: [number, string][]) => { const l = g.createLinearGradient(x0, y0, x1, y1); for (const [o, c] of stops) l.addColorStop(o, c); return l; };
 
 /** A flame's outline, its base at (x, y) and its tip h above: round at the bottom, widest a quarter of the way up, a long taper. */
 const tear = (g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
@@ -62,8 +47,6 @@ const tear = (g: CanvasRenderingContext2D, x: number, y: number, w: number, h: n
   g.bezierCurveTo(x - w * 0.02, y - h * 0.93, x - w * 0.1, y - h * 0.82, x - w * 0.26, y - h * 0.64);
   g.bezierCurveTo(x - w * 0.6, y - h * 0.34, x - w * 0.66, y + w * 0.08, x, y + w * 0.1); g.closePath();
 };
-const offscreen = (w: number, h: number) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return [c, c.getContext('2d')!] as const; };
-const linear = (g: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, stops: [number, string][]) => { const l = g.createLinearGradient(x0, y0, x1, y1); for (const [o, c] of stops) l.addColorStop(o, c); return l; };
 
 /**
  * The flame, painted once at its tallest in device px: an orange envelope, the yellow body, a near-white core low down and
@@ -81,210 +64,397 @@ function flameSprite(hpx: number) {
   g.fillStyle = linear(g, 0, by - hpx * 0.07, 0, by - hpx * 0.7, [[0, 'rgba(255,255,250,0)'], [0.12, 'rgba(255,255,250,0.95)'], [0.5, 'rgba(255,254,244,1)'], [0.78, 'rgba(255,240,200,0.55)'], [1, 'rgba(255,228,170,0)']]);
   tear(g, x, by - hpx * 0.07, hpx * 0.18, hpx * 0.6); g.fill();
   // the dark heart just above the wick, where the wax vapour has not caught yet, and the blue cup around it
-  g.filter = `blur(${(hpx * 0.02).toFixed(1)}px)`; g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,0.55)';
+  g.filter = `blur(${(hpx * 0.02).toFixed(1)}px)`; g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,0.5)';
   g.beginPath(); g.ellipse(x, by - hpx * 0.06, hpx * 0.07, hpx * 0.07, 0, 0, Math.PI * 2); g.fill();
   g.globalCompositeOperation = 'lighter'; g.filter = `blur(${(hpx * 0.012).toFixed(1)}px)`;
-  g.strokeStyle = 'rgba(96,128,236,0.5)'; g.lineWidth = hpx * 0.03;
+  g.strokeStyle = 'rgba(96,128,236,0.45)'; g.lineWidth = hpx * 0.03;
   g.beginPath(); g.ellipse(x, by - hpx * 0.06, hpx * 0.125, hpx * 0.085, 0, Math.PI * 0.05, Math.PI * 0.95); g.stroke();
-  g.fillStyle = 'rgba(80,110,230,0.14)'; g.beginPath(); g.ellipse(x, by - hpx * 0.05, hpx * 0.11, hpx * 0.06, 0, 0, Math.PI * 2); g.fill();
   g.filter = 'none'; g.globalCompositeOperation = 'source-over';
   return { c, by, hpx };
 }
 
-/** The glow of the flame in the air (and the eye): a soft warm radial falloff, drawn scaled. */
+/** The glow of the flame in the air: a soft warm radial falloff, drawn scaled. */
 function bloomSprite() {
   const [c, g] = offscreen(128, 128), r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
   for (let i = 0; i <= 16; i++) { const u = i / 16, a = Math.exp(-u * 5.2) * (1 - u) ** 2; r.addColorStop(u, `rgba(255,${(176 - 50 * u) | 0},${(104 - 40 * u) | 0},${a.toFixed(3)})`); }
   g.fillStyle = r; g.fillRect(0, 0, 128, 128); return c;
 }
 
-/**
- * The candle, once in the night and once as its own flame lights it (the frame mixes the two by the light's strength).
- * A matte black tin seen slightly from above, its rolled rim, the creamy wax a little below the rim with a translucent
- * pool of melt around the wick, and a soft contact shadow on the ground.
- */
-function candleSprite(G: Geo, d: number, lit: boolean) {
-  const { cx, R, e, gy, rimY, waxY } = G, x0 = cx - R * 1.8, y0 = rimY - R * e - R * 0.25, w = R * 3.6, h = gy + R * e + R * 0.6 - y0;
-  const [c, g] = offscreen(w * d, h * d); g.setTransform(d, 0, 0, d, -x0 * d, -y0 * d);
-  const E = (x: number, y: number, rx: number, ry: number) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); };
-  if (!lit) { // where the tin meets the ground: a soft contact shadow, darkest right under the edge
-    g.filter = `blur(${(R * 0.22 * d).toFixed(1)}px)`; g.fillStyle = 'rgba(4,2,8,0.7)'; E(cx, gy + R * 0.04, R * 1.3, R * e * 1.5); g.fill();
-    g.filter = `blur(${(R * 0.06 * d).toFixed(1)}px)`; g.fillStyle = 'rgba(0,0,0,0.85)'; E(cx, gy + R * 0.02, R * 1.04, R * e * 1.12); g.fill(); g.filter = 'none';
+/** The faint stars of the night, painted once: many, small and still, thinning towards the horizon. */
+function paintStars(cv: HTMLCanvasElement, d: number) {
+  const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+  cv.width = Math.round(W * d); cv.height = Math.round(H * d);
+  const g = cv.getContext('2d')!; g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
+  const rnd = seeded(11), n = Math.round(Math.min(760, (W * H) / (W < 700 ? 1500 : 2300)));
+  for (let i = 0; i < n; i++) {
+    const y = H * Math.pow(rnd(), 1.35) * 0.8, x = rnd() * W, r = 0.35 + rnd() ** 3 * 1.1, fade = 1 - y / (H * 0.85);
+    const warm = rnd(), a = (0.22 + rnd() ** 1.6 * 0.7) * fade;
+    g.fillStyle = warm < 0.2 ? `rgba(255,226,196,${a.toFixed(3)})` : warm > 0.85 ? `rgba(200,214,255,${a.toFixed(3)})` : `rgba(246,240,255,${a.toFixed(3)})`;
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
   }
-  // the tin's side: matte black, rounding away at the edges; a cool sheen of the night sky on the left
-  g.beginPath(); g.moveTo(cx - R, rimY); g.lineTo(cx - R, gy); g.ellipse(cx, gy, R, R * e, 0, Math.PI, 0, true); g.lineTo(cx + R, rimY); g.ellipse(cx, rimY, R, R * e, 0, 0, Math.PI, false); g.closePath();
-  g.fillStyle = linear(g, cx - R, 0, cx + R, 0, [[0, '#08070b'], [0.1, '#1b1a21'], [0.22, '#18171c'], [0.5, '#111014'], [0.85, '#0d0c10'], [1, '#060509']]); g.fill();
-  if (lit) { // the lit ground around it bounces a little warmth back onto the lower tin
-    g.save(); g.clip(); g.fillStyle = linear(g, 0, gy + R * e, 0, gy - R * 0.7, [[0, 'rgba(255,150,80,0.16)'], [0.5, 'rgba(255,140,70,0.05)'], [1, 'rgba(255,140,70,0)']]); g.fillRect(x0, y0, w, h); g.restore();
-  } else { // the faintest grain of the powder coat
-    g.save(); g.clip(); let s = 3; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-    for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(${rnd() < 0.5 ? '255,255,255' : '0,0,0'},0.05)`; g.fillRect(cx - R + rnd() * 2 * R, rimY - R * e + rnd() * (gy - rimY + 2 * R * e), 0.6, 0.6); }
-    g.restore();
-  }
-  // the rim, rolled: a darker lip around the top
-  g.lineWidth = R * 0.07; g.strokeStyle = lit ? '#1d1714' : '#16151a'; E(cx, rimY, R * 0.965, R * e * 0.965); g.stroke();
-  // inside: the far wall of the tin above the wax, then the wax itself
-  const ri = R * 0.93; g.save(); E(cx, rimY, ri, ri * e); g.clip();
-  g.fillStyle = lit ? linear(g, 0, rimY - ri * e, 0, waxY - ri * e, [[0, '#4a3020'], [1, '#a8683a']]) : '#16141a'; g.fillRect(x0, y0, w, h);
-  E(cx, waxY, ri, ri * e);
-  if (lit) { // warm cream, brightest by the wick and falling away towards the rim
-    g.save(); g.translate(cx, waxY); g.scale(1, e); const r = g.createRadialGradient(0, 0, 0, 0, 0, ri);
-    r.addColorStop(0, '#fff7e8'); r.addColorStop(0.3, '#fcebd0'); r.addColorStop(0.6, '#f3dab4'); r.addColorStop(0.85, '#e2c299'); r.addColorStop(1, '#c9a47c'); g.restore();
-    g.fillStyle = r; g.fill();
-    // the melt pool: clear, deeper and more golden, its edge a faint bright line where liquid meets solid wax
-    g.save(); g.translate(cx, waxY); g.scale(1, e); const p = g.createRadialGradient(0, 0, 0, 0, 0, R * 0.56);
-    p.addColorStop(0, 'rgba(255,214,140,0.55)'); p.addColorStop(0.7, 'rgba(236,170,92,0.5)'); p.addColorStop(0.93, 'rgba(226,150,80,0.38)'); p.addColorStop(1, 'rgba(255,236,200,0)'); g.restore();
-    g.fillStyle = p; E(cx, waxY, R * 0.56, R * 0.56 * e); g.fill();
-    g.strokeStyle = 'rgba(255,224,176,0.3)'; g.lineWidth = R * 0.025; E(cx, waxY, R * 0.55, R * 0.55 * e); g.stroke();
-  } else { g.fillStyle = '#58534f'; g.fill(); }
-  // the wax meets the wall in a thin shadow
-  g.strokeStyle = lit ? 'rgba(90,50,30,0.5)' : 'rgba(0,0,0,0.4)'; g.lineWidth = R * 0.04; E(cx, waxY, ri, ri * e); g.stroke();
-  g.restore();
-  if (lit) { // the inner lip of the rim catches the flame: a thin warm line, brightest at the back where it faces the light
-    g.lineCap = 'round'; g.strokeStyle = 'rgba(255,196,128,0.85)'; g.lineWidth = R * 0.03;
-    g.beginPath(); g.ellipse(cx, rimY, R * 0.935, R * e * 0.935, 0, Math.PI * 1.08, Math.PI * 1.92); g.stroke();
-    g.strokeStyle = 'rgba(255,170,100,0.45)'; g.lineWidth = R * 0.022;
-    g.beginPath(); g.ellipse(cx, rimY, R * 0.99, R * e * 0.99, 0, Math.PI * 0.12, Math.PI * 0.88); g.stroke();
-  } else { // the sky's faint sheen on the outer lip
-    g.strokeStyle = 'rgba(170,170,200,0.14)'; g.lineWidth = R * 0.02; g.beginPath(); g.ellipse(cx, rimY, R, R * e, 0, Math.PI * 0.55, Math.PI * 0.95); g.stroke();
-  }
-  return { c, x0, y0, w, h };
 }
+
+/** The stars that twinkle: each on its own slow cycle (CSS), deterministic so screenshots compare. */
+function twinkles(count: number) {
+  const rnd = seeded(29); let s = '';
+  for (let i = 0; i < count; i++) {
+    const y = Math.pow(rnd(), 1.25) * 68, x = rnd() * 100, big = rnd() < 0.14, size = big ? 2.2 + rnd() * 1.2 : 1.1 + rnd() * 1.1;
+    s += `<i${big ? ' class="b"' : ''} style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--s:${size.toFixed(1)}px;--d:${(4.5 + rnd() * 9).toFixed(1)}s;--l:-${(rnd() * 12).toFixed(1)}s;--a:${(0.55 + rnd() * 0.45).toFixed(2)}"></i>`;
+  }
+  return s;
+}
+
+const FLAME_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M12 2.5c.6 3.2 4.8 5.6 4.8 10.2A4.8 4.8 0 0 1 12 17.5a4.8 4.8 0 0 1-4.8-4.8c0-2.2 1.3-3.7 2.3-4.9.3 1.6 1 2.5 1.9 2.9-.4-3 .1-5.6.6-8.2z" fill="currentColor"/><path d="M11 18.5h2v3h-2z" fill="currentColor" opacity=".55"/></svg>';
+const SOUND_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
+
+type Flame = { wick: Wick; cv: HTMLCanvasElement; g: CanvasRenderingContext2D; halo: HTMLElement; href: number; bx: number; by: number; seed: number };
 
 export function openBreathe(opener: HTMLElement) {
   document.querySelectorAll('.jbreathe').forEach(n => n.remove());
   const q = new URLSearchParams(location.search + (location.hash.includes('?') ? '&' + location.hash.split('?')[1] : ''));
-  const speed = q.has('breath') && q.get('breath') === 'fast' ? 10 : 1;
-  const m = momentNow(q), reduce = reduceMotion();
+  const speed = q.get('breath') === 'fast' ? 10 : 1, reduce = reduceMotion();
+  const candles = PICKER_CANDLES, N = candles.length;
+  let sel = Math.max(0, candles.findIndex(c => c.slug === lastCandle()));
+  const live = new Map<string, LiveCandle>(), size = new Map<string, string>(), variantPrice = new Map<string, Map<string, number>>();
 
   const el = document.createElement('div');
-  el.className = 'jbreathe fb'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'A moment to breathe');
-  // the sky of the hour fades down into a candlelit dusk, so the flame always has a dark place to glow in
-  el.style.setProperty('--s0', m.sky[0]); el.style.setProperty('--s1', m.sky[1]); el.style.setProperty('--s2', m.sky[2]);
-  el.innerHTML = `<div class="fb-sky" aria-hidden="true"></div>${stars(m.dark)}<div class="fb-glow" aria-hidden="true"></div>
-    <div class="jb-tree fb-tree" aria-hidden="true"><canvas class="fb-bodhi"></canvas></div>
-    <div class="fb-stage" aria-hidden="true"><canvas class="fb-flame"></canvas></div>
-    <p class="jb-word" id="jbWord" aria-live="polite">Take a moment</p><p class="jb-sub">Breathe in, hold, breathe out. Stay as long as you like.</p>
-    <button class="btn jb-close" type="button">Done</button>`;
+  el.className = 'jbreathe fb'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'A moment to breathe: choose your candle');
+  el.dataset.stage = 'pick';
+  const slide = (c: PickerCandle, i: number) => `<button class="fb-c" type="button" data-i="${i}" data-slug="${c.slug}" aria-pressed="${i === sel}" aria-label="${esc(c.name)}, candle ${i + 1} of ${N}" style="--ar:${c.w} / ${c.h}">
+      <span class="fb-ph"><span class="fb-pic"><img class="fb-unlit" src="${pickerSrc(c, 'unlit')}" srcset="${pickerSrc(c, 'unlit', 480)} 480w, ${pickerSrc(c, 'unlit')} 900w" sizes="(max-width: 700px) 80vw, 560px" alt="${esc(c.alt)}" width="${c.w}" height="${c.h}" decoding="async" draggable="false"><img class="fb-glow" src="${pickerSrc(c, 'glow')}" srcset="${pickerSrc(c, 'glow', 480)} 480w, ${pickerSrc(c, 'glow')} 900w" sizes="(max-width: 700px) 80vw, 560px" alt="" width="${c.w}" height="${c.h}" decoding="async" draggable="false"></span></span></button>`;
+  el.innerHTML = `<div class="fb-sky" aria-hidden="true"><div class="fb-drift"><canvas class="fb-stars"></canvas><div class="fb-tw">${twinkles(window.innerWidth < 700 ? 44 : 84)}</div></div></div>
+    <div class="fb-horizon" aria-hidden="true"></div><div class="fb-cool" aria-hidden="true"></div><div class="fb-ground" aria-hidden="true"></div>
+    <div class="fb-bar">${reduce ? '' : `<button class="fb-sound" type="button" aria-pressed="false">${SOUND_ICON}<span>Sound off</span></button>`}<button class="btn jb-close" type="button">Done</button></div>
+    <header class="fb-head"><p class="fb-eyebrow">Choose your candle</p><p class="jb-word" id="jbWord">Take a moment</p></header>
+    <div class="fb-stage">
+      <div class="fb-table" aria-hidden="true"></div><div class="fb-pool" aria-hidden="true"></div>
+      <div class="fb-track" role="group" aria-roledescription="carousel" aria-label="Candles: swipe, or use the arrow keys">${candles.map(slide).join('')}</div>
+    </div>
+    <div class="fb-low">
+      <div class="fb-info">
+        <p class="fb-mood"></p>
+        <div class="fb-namerow"><button class="fb-nav prev" type="button" aria-label="Previous candle"><span aria-hidden="true">‹</span></button><h2 class="fb-name"></h2><button class="fb-nav next" type="button" aria-label="Next candle"><span aria-hidden="true">›</span></button></div>
+        <div class="fb-dots" aria-hidden="true">${candles.map(() => '<i></i>').join('')}</div>
+        <p class="fb-line"></p>
+        <div class="fb-buy"><div class="fb-sizes" role="group" aria-label="Size"></div><p class="fb-price"></p></div>
+        <div class="fb-actions"><button class="btn fb-light" type="button">${FLAME_ICON}<span>Light it &amp; breathe</span></button><button class="btn fb-add" type="button">Add to cart</button></div>
+        <p class="fb-status" role="status"></p>
+      </div>
+      <div class="fb-breath">
+        <p class="jb-sub">Breathe in, hold, breathe out. Stay as long as you like.</p>
+        <div class="fb-offer" hidden><p class="fb-offer-t"></p><div class="fb-offer-a"><button class="btn fb-home" type="button"></button><a class="btn fb-pair" href="#/shop?f=roller">Pair it with its roller</a></div></div>
+        <button class="fb-back" type="button">‹ Choose another candle</button>
+      </div>
+    </div>
+    <p class="fb-sr" aria-live="polite"></p>`;
   document.body.append(el); requestAnimationFrame(() => el.classList.add('open'));
 
-  const word = el.querySelector<HTMLElement>('#jbWord')!, glow = el.querySelector<HTMLElement>('.fb-glow')!;
-  const cv = el.querySelector<HTMLCanvasElement>('.fb-flame')!, ctx = cv.getContext('2d')!;
-  const stage = el.querySelector<HTMLElement>('.fb-stage')!;
-  let G = geometry(1, 1, 0), d = 1, drawn = false;
-  let flame: ReturnType<typeof flameSprite> | null = null, bloom: HTMLCanvasElement | null = null, dark: ReturnType<typeof candleSprite> | null = null, lit: ReturnType<typeof candleSprite> | null = null;
-  const size = () => {
-    const r = cv.getBoundingClientRect(); d = Math.min(2, window.devicePixelRatio || 1); if (!r.width || !r.height) return;
-    cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); G = geometry(r.width, r.height, r.top);
-    flame = flameSprite(Math.ceil(G.href * 1.3 * d)); bloom ??= bloomSprite(); dark = candleSprite(G, d, false); lit = candleSprite(G, d, true); drawn = false;
-    // for the tests: where the wick and the tin are, in CSS px of the canvas
-    cv.dataset.wick = `${G.cx.toFixed(1)},${G.wickY.toFixed(1)}`; cv.dataset.candle = `${G.cx.toFixed(1)},${G.rimY.toFixed(1)},${G.gy.toFixed(1)},${G.R.toFixed(1)}`;
-    // the light the flame throws into the air sits on the flame
-    glow.style.left = `${(r.left + G.cx).toFixed(1)}px`; glow.style.top = `${(r.top + G.lightY).toFixed(1)}px`;
+  const $ = <T extends HTMLElement = HTMLElement>(s: string) => el.querySelector<T>(s)!;
+  const word = $('#jbWord'), stage = $('.fb-stage'), sr = $('.fb-sr'), status = $('.fb-status');
+  const drift = $('.fb-drift'), horizon = $('.fb-horizon'), cool = $('.fb-cool'), pool = $('.fb-pool');
+  const slides = [...el.querySelectorAll<HTMLButtonElement>('.fb-c')];
+  const starCv = $<HTMLCanvasElement>('.fb-stars'), soundBtn = el.querySelector<HTMLButtonElement>('.fb-sound');
+  const offer = $('.fb-offer'), addBtn = $<HTMLButtonElement>('.fb-add'), sizesEl = $('.fb-sizes'), priceEl = $('.fb-price');
+  const d = Math.min(2, window.devicePixelRatio || 1);
+  if (speed !== 1) word.style.animationDuration = `${(0.9 / speed).toFixed(2)}s`; // ?breath=fast: the words keep up
+
+  // ---------- the candle on show and what the shop says about it ----------
+  const cur = () => candles[sel];
+  const itemOf = (c: PickerCandle) => live.get(c.slug)?.item;
+  const choiceOf = (c: PickerCandle) => { const it = itemOf(c); if (!it || !it.choices.length) return undefined; return size.get(c.slug) ?? (it.choices.find(x => x.inStock) ?? it.choices[0]).name; };
+  /** the price of a size, from the product's variants once they are loaded; until then (or for one size) the catalogue's lowest price */
+  const priceOf = (c: PickerCandle, choice?: string): { n: number; exact: boolean } | null => {
+    const it = itemOf(c); if (!it) return null;
+    const v = choice ? variantPrice.get(c.slug)?.get(choice) : undefined;
+    if (v != null) return { n: v, exact: true };
+    return { n: it.priceMin, exact: it.priceMax === it.priceMin };
   };
-  size(); const ro = new ResizeObserver(size); ro.observe(cv); window.addEventListener('resize', size); // the window too: the candle's size follows the tree's
-  // the tree is laid out from the stage: its trunk rises behind the candle, and it is lit from the flame
-  const tree = createBodhi({ canvas: el.querySelector<HTMLCanvasElement>('.fb-bodhi')!, sky: m.sky, reduce, lightMax: LIGHT_MAX,
-    anchor: () => { const r = stage.getBoundingClientRect(), g = geometry(r.width, r.height, r.top);
-      return { x: r.left + g.cx, y: r.top + g.oy, light: { x: r.left + g.cx, y: r.top + g.lightY, gx: r.left + g.cx, gy: r.top + g.gy, r: g.R, rimH: g.gy - g.rimY, e: g.e } }; } });
+  const renderInfo = () => {
+    const c = cur(), it = itemOf(c), lv = live.get(c.slug);
+    $('.fb-name').textContent = c.name;
+    $('.fb-mood').textContent = it?.mood ? `${MOODS[it.mood].label} · candle` : 'Candle';
+    $('.fb-line').innerHTML = c.draft ? `<span class="d">${esc(c.line)}</span>` : esc(c.line);
+    el.querySelectorAll('.fb-dots i').forEach((n, i) => n.classList.toggle('on', i === sel));
+    const choice = choiceOf(c), p = priceOf(c, choice);
+    // sizes and price only for a product the shop has: otherwise nothing is shown rather than something invented
+    if (it && it.choices.length > 1) {
+      sizesEl.innerHTML = it.choices.map(ch => `<button class="fb-size" type="button" data-size="${esc(ch.name)}" aria-pressed="${ch.name === choice}" ${ch.inStock ? '' : 'disabled'}>${esc(ch.name)}${ch.inStock ? '' : ' · sold out'}</button>`).join('');
+      sizesEl.hidden = false;
+    } else { sizesEl.innerHTML = ''; sizesEl.hidden = true; }
+    priceEl.textContent = p ? (p.exact ? money(p.n) : `From ${money(p.n)}`) : '';
+    priceEl.hidden = !p;
+    const inStock = !!it && (choice ? it.choices.find(x => x.name === choice)?.inStock !== false : it.inStock);
+    addBtn.hidden = !it; addBtn.disabled = !inStock;
+    addBtn.textContent = !it ? '' : !inStock ? 'Sold out' : p?.exact ? `Add to cart · ${money(p.n)}` : 'Add to cart';
+    // the offer after the breaths
+    const home = $<HTMLButtonElement>('.fb-home'); home.hidden = !it || !inStock;
+    home.textContent = p?.exact ? `Bring this candle home · ${money(p.n)}` : 'Bring this candle home';
+    $('.fb-offer-t').textContent = `Three slow breaths with ${c.name}.`;
+    const pair = $<HTMLAnchorElement>('.fb-pair'); pair.href = lv?.roller ? `#/product/${lv.roller.slug}` : '#/shop?f=roller';
+    pair.textContent = lv?.roller ? `Pair it with its roller · ${money(lv.roller.priceMin)}` : 'Pair it with a roller';
+    status.textContent = '';
+  };
+  const loadVariants = (c: PickerCandle) => {
+    if (variantPrice.has(c.slug) || !itemOf(c)) return;
+    variantPrice.set(c.slug, new Map());
+    loadProduct(c.slug).then((p: any) => {
+      const m = variantPrice.get(c.slug)!;
+      for (const v of p?.variantsInfo?.variants ?? []) { const name = (v.choices ?? [])[0]?.optionChoiceNames?.choiceName, amt = Number(v?.price?.actualPrice?.amount); if (name && amt > 0) m.set(name, amt); }
+      if (cur() === c && el.isConnected) renderInfo();
+    }).catch(() => { /* the catalogue's lowest price stays */ });
+  };
+  renderInfo();
+  matchLive(candles).then(m => { m.forEach((v, k) => live.set(k, v)); if (!el.isConnected) return; renderInfo(); loadVariants(cur()); });
+  sizesEl.addEventListener('click', e => {
+    const b = (e.target as Element).closest<HTMLButtonElement>('[data-size]'); if (!b || b.disabled) return;
+    size.set(cur().slug, b.dataset.size!); renderInfo(); el.querySelector<HTMLElement>(`[data-size="${CSS.escape(b.dataset.size!)}"]`)?.focus();
+  });
+  const addToCart = async (from: HTMLElement) => {
+    const c = cur(), it = itemOf(c); if (!it) return;
+    const choice = choiceOf(c), p = priceOf(c, choice)!;
+    await add({ productId: it.id, slug: it.slug, name: it.name, price: p.n, image: it.thumb, choice, optionName: it.optionName });
+    const label = `${it.name}${choice && it.choices.length > 1 ? ` (${choice})` : ''}`;
+    const msg = `${label} is in your cart.`;
+    if (from.closest('.fb-offer')) { from.textContent = 'In your cart'; (from as HTMLButtonElement).disabled = true; sr.textContent = msg; }
+    else { status.innerHTML = `${esc(msg)} <button class="fb-viewcart" type="button">View cart</button>`; }
+  };
+  addBtn.addEventListener('click', () => addToCart(addBtn));
+  $('.fb-home').addEventListener('click', e => addToCart(e.currentTarget as HTMLElement));
+  status.addEventListener('click', e => { if ((e.target as Element).closest('.fb-viewcart')) { close(false); window.setTimeout(() => document.getElementById('cartBtn')?.click(), reduce ? 0 : 420); } });
+  $('.fb-pair').addEventListener('click', () => close(false));
 
-  type Spark = { x: number; y: number; vx: number; vy: number; life: number; age: number };
-  const sparks: Spark[] = [];
+  // ---------- the carousel ----------
+  let pos = sel, pw = 300, spacing = 300, dragging = false, moved = false, lastLayout = '';
+  const go = (i: number, announce = true) => {
+    i = clamp(i, 0, N - 1); if (i === sel && Math.round(pos) === i) return;
+    sel = i; rememberCandle(cur().slug); if (reduce) pos = sel;
+    slides.forEach((s, j) => s.setAttribute('aria-pressed', String(j === sel)));
+    renderInfo(); loadVariants(cur());
+    if (announce) { const p = priceOf(cur(), choiceOf(cur())); sr.textContent = `${cur().name}${p ? `, ${p.exact ? '' : 'from '}${money(p.n)}` : ''}. Candle ${sel + 1} of ${N}.`; }
+    el.querySelectorAll<HTMLButtonElement>('.fb-nav').forEach(b => { b.disabled = b.classList.contains('prev') ? sel === 0 : sel === N - 1; });
+  };
+  el.querySelectorAll<HTMLButtonElement>('.fb-nav').forEach(b => { b.addEventListener('click', () => go(sel + (b.classList.contains('prev') ? -1 : 1))); b.disabled = b.classList.contains('prev') ? sel === 0 : sel === N - 1; });
+  if (N < 2) el.querySelectorAll<HTMLElement>('.fb-nav, .fb-dots').forEach(n => (n.hidden = true));
+  slides.forEach((s, i) => s.addEventListener('click', () => { if (moved) return; if (stageName === 'pick' && i !== sel) go(i); }));
+  /** place every candle for the carousel's position: the chosen one large in the middle, the others smaller, dimmer and further back */
+  const layout = () => {
+    const key = `${pos.toFixed(3)}|${pw}|${stageName}`; if (key === lastLayout) return; lastLayout = key;
+    slides.forEach((s, i) => {
+      const o = i - pos, a = Math.min(Math.abs(o), 2), sg = Math.sign(o);
+      const x = sg * a * spacing * (1 - 0.08 * Math.min(a, 1)), y = -Math.min(a, 1.5) * pw * 0.075, sc = 1 - 0.38 * Math.min(a, 1.2);
+      const away = stageName === 'pick' ? 0 : i === sel ? 0 : 1;
+      s.style.transform = `translate3d(calc(-50% + ${x.toFixed(1)}px), ${y.toFixed(1)}px, 0) scale(${sc.toFixed(3)})`;
+      s.style.opacity = (away ? 0 : Math.max(0, 1 - 0.32 * a)).toFixed(3);
+      s.style.zIndex = String(10 - Math.round(a * 3));
+      s.style.setProperty('--dim', (1 - 0.5 * Math.min(a, 1)).toFixed(3));
+      s.style.pointerEvents = away || a > 1.6 ? 'none' : '';
+      s.tabIndex = i === sel ? 0 : -1;
+    });
+  };
+  // drag or swipe: the candles follow the finger, then settle on the nearest (or the next, after a flick)
+  let px0 = 0, pos0 = 0, vx = 0, lastX = 0, lastT = 0, pid = -1;
+  stage.addEventListener('pointerdown', e => {
+    if (stageName !== 'pick' || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    pid = e.pointerId; px0 = lastX = e.clientX; lastT = performance.now(); pos0 = pos; vx = 0; dragging = true; moved = false;
+  });
+  stage.addEventListener('pointermove', e => {
+    if (!dragging || e.pointerId !== pid) return;
+    const dx = e.clientX - px0; if (!moved && Math.abs(dx) > 6) { moved = true; try { stage.setPointerCapture(pid); } catch { /* gone */ } el.classList.add('fb-dragging'); }
+    if (!moved) return;
+    const now = performance.now(); vx = 0.8 * ((e.clientX - lastX) / Math.max(1, now - lastT)) + 0.2 * vx; lastX = e.clientX; lastT = now;
+    let p = pos0 - dx / spacing; if (p < 0) p *= 0.35; if (p > N - 1) p = N - 1 + (p - N + 1) * 0.35; pos = p;
+  });
+  const endDrag = (e: PointerEvent) => {
+    if (!dragging || e.pointerId !== pid) return; dragging = false; el.classList.remove('fb-dragging');
+    if (moved) { const flick = Math.abs(vx) > 0.35 ? -Math.sign(vx) : 0; go(Math.abs(pos - sel) > 0.25 || flick ? Math.round(pos + flick * 0.5) : sel); window.setTimeout(() => (moved = false), 0); }
+  };
+  stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+  // a sideways trackpad swipe moves one candle
+  let wheelAcc = 0, wheelT = 0;
+  stage.addEventListener('wheel', e => {
+    if (stageName !== 'pick' || Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; e.preventDefault();
+    const now = performance.now(); if (now - wheelT > 400) wheelAcc = 0; wheelT = now; wheelAcc += e.deltaX;
+    if (Math.abs(wheelAcc) > 60) { go(sel + Math.sign(wheelAcc)); wheelAcc = -Math.sign(wheelAcc) * 400; }
+  }, { passive: false });
 
-  /** k is how full the breath is (0 resting, 1 full), sway the push of the out-breath, f the flicker shared with the light. */
-  const draw = (t: number, k: number, sway: number, dt: number, f: number, gut: number) => {
-    if (!flame || !bloom || !dark || !lit) return;
-    const { cx, R, e, waxY, wickY, href } = G, L = clamp((0.52 + 0.48 * k) * f / LIGHT_MAX, 0, 1);
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.setTransform(d, 0, 0, d, 0, 0);
-    // the flame: its height follows the breath and the flicker; it narrows as it stretches and leans on the air
-    const n2 = reduce ? 0 : noise1(t * 6.1, 2), n3 = reduce ? 0 : noise1(t * 0.9, 3), n4 = reduce ? 0 : noise1(t * 2.7, 4);
-    const h = href * (0.68 + 0.36 * k) * f, sy = h / flame.hpx, sx = sy * Math.pow(href / h, 0.3) * (1 + 0.05 * n2 + 0.25 * gut);
-    const lean = h * (0.07 * n3 + 0.035 * n4) + sway * h * 0.16, base = wickY + R * 0.05;
-    // the candle in the night, then as its flame lights it now
-    ctx.drawImage(dark.c, dark.x0, dark.y0, dark.w, dark.h);
-    ctx.globalAlpha = L; ctx.drawImage(lit.c, lit.x0, lit.y0, lit.w, lit.h);
-    const fw = flame.c.width * sx, fh = flame.c.height * sy;
-    // the flame mirrored in the glossy pool of melted wax, squashed by the angle we see it at
-    ctx.save(); ctx.beginPath(); ctx.ellipse(cx, waxY, R * 0.55, R * 0.55 * e, 0, 0, Math.PI * 2); ctx.clip();
-    ctx.globalAlpha = 0.5 * L; ctx.translate(cx + lean * 0.15, waxY + R * 0.02); ctx.scale(1, -e * 0.55);
-    ctx.drawImage(flame.c, -fw / 2, -flame.by * sy, fw, fh); ctx.restore();
-    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'lighter';
-    // the glow of the flame in the air, wide and faint, then close and warm
-    const gx = cx + lean * 0.35, gy = base - h * 0.42, B1 = href * 4.6 * (0.85 + 0.15 * L), B2 = href * 1.15;
-    ctx.globalAlpha = 0.3 * L; ctx.drawImage(bloom, gx - B1, gy - B1, B1 * 2, B1 * 2);
-    ctx.globalAlpha = 0.36 * L; ctx.drawImage(bloom, gx - B2, gy - B2 * 1.1, B2 * 2, B2 * 2.2);
-    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-    // the flame itself, in strips: each one shifted by the lean (more towards the tip) and by a ripple running up it. The
-    // strips meet on whole device pixels, so no seam shows between them
-    const N = 22, sd = sy * d, top = Math.round((base - flame.by * sy) * d), Hd = flame.c.height * sd, ripple = reduce ? 0 : h * (0.012 + 0.02 * sway + 0.05 * gut);
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    for (let j = 0; j < N; j++) {
-      const y0 = top + Math.round((j * Hd) / N), y1 = top + Math.round(((j + 1) * Hd) / N); if (y1 <= y0) continue;
-      const s0 = (y0 - top) / sd, s1 = Math.min(flame.c.height, (y1 - top) / sd), u = Math.max(0, (flame.by - (s0 + s1) / 2) / flame.hpx);
+  // ---------- sizes ----------
+  const resize = () => {
+    const r = stage.getBoundingClientRect(); if (!r.width) return;
+    const ar = Math.max(...candles.map(c => c.h / c.w)), phone = r.width < 700;
+    // the candles stand on the floor line, a little above the bottom of the stage; the tallest fits under the heading
+    const floor = Math.round(clamp(r.height * 0.13, 34, 96));
+    pw = Math.round(Math.min(phone ? r.width * 0.9 : Math.min(560, r.width * 0.4), (r.height - floor - 10) / ar));
+    spacing = phone ? Math.min(r.width * 0.66, pw * 0.86) : pw * 0.98;
+    el.style.setProperty('--pw', `${pw}px`); el.style.setProperty('--floor', `${floor}px`); el.style.setProperty('--floorY', `${Math.round(r.bottom - floor)}px`); lastLayout = ''; layout();
+    paintStars(starCv, d);
+    if (flames.length) buildFlames();
+    // paint the flame for this size while nothing else is happening, so lighting the candle does not stall a frame
+    const idle = (window as any).requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 200));
+    idle(() => { if (!closing) { spriteFor(flameHpx()); bloom ??= bloomSprite(); } });
+  };
+
+  // ---------- the flames ----------
+  let flames: Flame[] = [], sprite: ReturnType<typeof flameSprite> | null = null, bloom: HTMLCanvasElement | null = null, drawnStatic = false;
+  const spriteFor = (hpx: number) => (sprite?.hpx === hpx ? sprite : (sprite = flameSprite(hpx)));
+  const flameHpx = () => Math.ceil(Math.max(...cur().wicks.map(w => w.h)) * pw * 1.22 * 1.3 * d);
+  const buildFlames = () => {
+    flames.forEach(f => { f.cv.remove(); f.halo.remove(); }); flames = [];
+    const c = cur(), ph = slides[sel].querySelector<HTMLElement>('.fb-ph')!, phH = pw * c.h / c.w;
+    const maxH = Math.max(...c.wicks.map(w => w.h)) * pw * 1.22;
+    spriteFor(Math.ceil(maxH * 1.3 * d)); bloom ??= bloomSprite(); drawnStatic = false;
+    c.wicks.forEach((w, i) => {
+      const href = w.h * pw * 1.22, cw = href * 2.6, ch = href * 2.5, bx = cw / 2, by = ch * 0.84;
+      const cv = document.createElement('canvas'); cv.className = 'fb-flame'; cv.width = Math.round(cw * d); cv.height = Math.round(ch * d);
+      Object.assign(cv.style, { left: `${(w.x * pw - bx).toFixed(1)}px`, top: `${(w.y * phH - by).toFixed(1)}px`, width: `${cw.toFixed(1)}px`, height: `${ch.toFixed(1)}px` });
+      cv.dataset.base = `${bx.toFixed(1)},${by.toFixed(1)}`; cv.setAttribute('aria-hidden', 'true');
+      const halo = document.createElement('span'); halo.className = 'fb-halo'; halo.setAttribute('aria-hidden', 'true');
+      Object.assign(halo.style, { left: `${(w.x * pw).toFixed(1)}px`, top: `${(w.y * phH - href * 0.45).toFixed(1)}px`, width: `${(href * 9).toFixed(1)}px`, height: `${(href * 9).toFixed(1)}px` });
+      ph.append(halo, cv); flames.push({ wick: w, cv, g: cv.getContext('2d')!, halo, href, bx, by, seed: i * 7 + 3 });
+    });
+  };
+  /** one flame: grow is how far it has caught (0 to 1), k the breath, f and gut the flicker */
+  const drawFlame = (fl: Flame, t: number, k: number, f: number, gut: number, grow: number, sway: number) => {
+    const { g, cv, href, bx, by, seed } = fl; if (!sprite || !bloom) return;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); if (grow <= 0.001) return;
+    g.setTransform(d, 0, 0, d, 0, 0);
+    const n2 = reduce ? 0 : noise1(t * 6.1, seed), n3 = reduce ? 0 : noise1(t * 0.9, seed + 1), n4 = reduce ? 0 : noise1(t * 2.7, seed + 2);
+    const catching = grow < 1, h = href * (0.8 + 0.26 * k) * f * (catching ? 0.25 + 0.75 * grow : 1);
+    const sy = h / sprite.hpx, sx = sy * Math.pow(href / h, 0.3) * 1.7 * (1 + 0.05 * n2 + 0.25 * gut) * (catching ? 0.7 + 0.3 * grow : 1);
+    const lean = h * (0.06 * n3 + 0.03 * n4) + sway * h * 0.1, L = clamp((0.55 + 0.45 * k) * f, 0, 1.1) * grow;
+    // the warm air close around the flame
+    g.globalCompositeOperation = 'lighter';
+    const B = href * 1.05; g.globalAlpha = 0.34 * L; g.drawImage(bloom, bx + lean * 0.3 - B, by - h * 0.42 - B * 1.1, B * 2, B * 2.2);
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    // the flame in strips, each shifted by the lean (more towards the tip) and by a ripple running up it; behind a glass rim
+    // nothing below the flame's base is drawn
+    const fw = sprite.c.width * sx, Nst = 18, sd = sy * d, top = Math.round((by - sprite.by * sy) * d), Hd = sprite.c.height * sd;
+    const ripple = reduce ? 0 : h * (0.012 + 0.02 * sway + 0.05 * gut), cut = fl.wick.rim ? Math.round(by * d) : Infinity;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    for (let j = 0; j < Nst; j++) {
+      const y0 = top + Math.round((j * Hd) / Nst); let y1 = top + Math.round(((j + 1) * Hd) / Nst); if (y0 >= cut) break; y1 = Math.min(y1, cut); if (y1 <= y0) continue;
+      const s0 = (y0 - top) / sd, s1 = Math.min(sprite.c.height, (y1 - top) / sd), u = Math.max(0, (sprite.by - (s0 + s1) / 2) / sprite.hpx);
       const off = lean * Math.pow(u, 1.7) + ripple * Math.pow(u, 1.3) * Math.sin(u * 7.5 - t * 8.5);
-      ctx.drawImage(flame.c, 0, s0, flame.c.width, s1 - s0, (cx - fw / 2 + off) * d, y0, fw * d, y1 - y0);
+      g.drawImage(sprite.c, 0, s0, sprite.c.width, s1 - s0, (bx - fw / 2 + off) * d, y0, fw * d, y1 - y0);
     }
-    ctx.setTransform(d, 0, 0, d, 0, 0);
-    // the wooden wick in the clear heart of the flame: a thin flat strip of wood standing in the wax, charred black at the
-    // top, its burning edge glowing
-    const ww = R * 0.26, wb = waxY + R * 0.03, wt = wickY;
-    ctx.fillStyle = linear(ctx, 0, wb, 0, wt, [[0, '#8a6442'], [0.3, '#5a3e28'], [0.5, '#1d1511'], [1, '#0d0a09']]);
-    ctx.beginPath(); ctx.moveTo(cx - ww / 2, wb + R * 0.015); ctx.lineTo(cx - ww / 2 + R * 0.01, wt + R * 0.025); ctx.lineTo(cx + ww / 2 - R * 0.01, wt); ctx.lineTo(cx + ww / 2, wb - R * 0.01); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#0a0807'; ctx.fillRect(cx + ww / 2 - R * 0.012, wt + R * 0.002, R * 0.03, wb - wt - R * 0.012); // its edge, turned a little away
-    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
-    ctx.strokeStyle = `rgba(255,${(96 + 50 * L) | 0},36,${(0.5 + 0.45 * L).toFixed(3)})`; ctx.lineWidth = Math.max(0.7, R * 0.032);
-    ctx.beginPath(); ctx.moveTo(cx - ww / 2 + R * 0.02, wt + R * 0.03); ctx.lineTo(cx + ww / 2 - R * 0.02, wt + R * 0.006); ctx.stroke();
-    ctx.globalCompositeOperation = 'source-over';
-    // now and then on the out-breath a tiny ember lifts off the wooden wick and goes out
-    if (!reduce && sway > 0.3 && Math.random() < dt * 0.3 * sway) sparks.push({ x: cx + lean * 0.3 + (Math.random() - 0.5) * R * 0.2, y: base - h * 0.5, vx: (Math.random() - 0.5) * 10 + lean * 0.4, vy: -26 - Math.random() * 22, life: 0.5 + Math.random() * 0.6, age: 0 });
-    for (let i = sparks.length - 1; i >= 0; i--) {
-      const s = sparks[i]; s.age += dt; if (s.age > s.life) { sparks.splice(i, 1); continue; }
-      s.vx += noise1(t * 3 + i, 9) * 30 * dt; s.x += s.vx * dt; s.y += s.vy * dt; const a = (1 - s.age / s.life) ** 2;
-      ctx.fillStyle = `rgba(255,${(200 - 60 * s.age / s.life) | 0},120,${(0.8 * a).toFixed(3)})`; ctx.fillRect(s.x - 0.6, s.y - 0.6, 1.2, 1.2);
+    if (catching) { // the wood catching: a bright ember at the wick
+      g.setTransform(d, 0, 0, d, 0, 0); g.globalCompositeOperation = 'lighter'; const e = (1 - grow) * 0.9;
+      g.globalAlpha = e; g.drawImage(bloom, bx - href * 0.3, by - href * 0.3, href * 0.6, href * 0.5); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     }
+    fl.halo.style.opacity = clamp(L, 0, 1).toFixed(2);
   };
 
-  // the flicker, shared by the flame and its light: slow and quick noise, and now and then a short gutter, when the wooden
-  // wick crackles and the flame ducks and wavers for a moment
-  let gutAt = -10, nextGut = 5 + Math.random() * 6;
-  const flicker = (t: number) => {
+  // ---------- the flicker, shared by the flames and their light; a pop of the wood makes it duck for a moment ----------
+  let gutAt = -10, nextGut = 5 + Math.random() * 6, gutS = 1;
+  const flicker = (t: number): [number, number] => {
     if (reduce) return [1, 0];
-    if (t > nextGut) { gutAt = t; nextGut = t + 6 + Math.random() * 10; }
-    const a = t - gutAt, gut = a >= 0 && a < 0.55 ? Math.sin((Math.PI * a) / 0.55) * (0.75 + 0.25 * Math.sin(a * 47)) : 0;
-    return [1 + 0.05 * noise1(t * 1.7, 5) + 0.03 * noise1(t * 4.9, 6) + 0.015 * noise1(t * 12.5, 7) - 0.16 * gut, gut];
+    if (!crackle && t > nextGut) { gutAt = t; gutS = 0.7; nextGut = t + 6 + Math.random() * 10; }
+    const a = t - gutAt, gut = a >= 0 && a < 0.5 ? gutS * Math.sin((Math.PI * a) / 0.5) * (0.75 + 0.25 * Math.sin(a * 47)) : 0;
+    return [1 + 0.05 * noise1(t * 1.7, 5) + 0.03 * noise1(t * 4.9, 6) + 0.015 * noise1(t * 12.5, 7) - 0.14 * gut, gut];
   };
 
-  const t0 = performance.now(); let raf = 0, last = '', prev = t0, hidden = 0, hiddenAt = 0, lastGlow = '';
+  // ---------- sound: off until the toggle is tapped ----------
+  let crackle: Crackle | null = null, soundOn = false;
+  soundBtn?.addEventListener('click', () => {
+    soundOn = !soundOn;
+    if (soundOn && !crackle) { crackle = createCrackle(); if (crackle) crackle.onPop = s => { gutAt = (performance.now() - t0) / 1000; gutS = s; }; }
+    if (crackle) { if (soundOn) crackle.resume(); else crackle.set(false, 0); }
+    soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.querySelector('span')!.textContent = soundOn ? 'Sound on' : 'Sound off';
+    el.dataset.sound = soundOn ? 'on' : 'off';
+  });
+  el.dataset.sound = 'off';
+
+  // ---------- the two stages ----------
+  let stageName: 'pick' | 'lit' = 'pick', litAt = 0, offered = false;
+  const t0 = performance.now(); let breathAt = t0, hidden = 0, hiddenAt = 0;
+  const light = () => {
+    if (stageName === 'lit') return;
+    stageName = 'lit'; el.dataset.stage = 'lit'; el.setAttribute('aria-label', `A moment to breathe with ${cur().name}`);
+    pos = sel; lastLayout = ''; buildFlames(); slides[sel].classList.add('lit');
+    litAt = performance.now(); breathAt = litAt; hidden = 0; offered = false; offer.hidden = true;
+    last = 'Take a moment'; word.textContent = last; el.dataset.phase = last;
+    word.setAttribute('aria-live', 'polite'); sr.textContent = `${cur().name} is lit. Breathe with it.`; $('.fb-eyebrow').textContent = cur().name;
+    $('.jb-close').focus();
+  };
+  const unlight = () => {
+    if (stageName !== 'lit') return;
+    stageName = 'pick'; el.dataset.stage = 'pick'; el.setAttribute('aria-label', 'A moment to breathe: choose your candle');
+    slides.forEach(s => s.classList.remove('lit')); flames.forEach(f => { f.cv.remove(); f.halo.remove(); }); flames = []; lastLayout = '';
+    word.removeAttribute('aria-live'); crackle?.set(false, 0); offer.hidden = true; $('.fb-eyebrow').textContent = 'Choose your candle';
+    $<HTMLButtonElement>('.fb-light').focus();
+  };
+  $('.fb-light').addEventListener('click', light);
+  $('.fb-back').addEventListener('click', unlight);
+
+  // ---------- the frame ----------
+  let raf = 0, last = '', prev = t0; const styleCache = new Map<HTMLElement, string>();
+  const setOp = (n: HTMLElement, v: number, tf?: string) => { const s = v.toFixed(2) + (tf ?? ''); if (styleCache.get(n) === s) return; styleCache.set(n, s); n.style.opacity = v.toFixed(2); if (tf) n.style.transform = tf; };
+  let costN = 0, costSum = 0, costMax = 0;
   const loop = (now: number) => {
-    const el2 = (now - t0 - hidden) * speed, dt = Math.min(0.05, (now - prev) / 1000 * speed); prev = now;
-    let k = 0.15, sway = 0, outp = -1, w = 'Take a moment';
+    const c0 = performance.now();
+    const el2 = (now - breathAt - hidden) * speed, dt = Math.min(0.05, (now - prev) / 1000 * speed); prev = now;
+    let k = 0.15, sway = 0, w = 'Take a moment';
     if (el2 >= LEAD) {
       const c = (el2 - LEAD) % CYCLE;
       if (c < IN) { w = 'Breathe in'; k = 0.15 + 0.85 * sineInOut(c / IN); }
       else if (c < IN + HOLD) { w = 'Hold'; k = 1; }
-      else { w = 'Breathe out'; outp = (c - IN - HOLD) / OUT; k = 1 - 0.85 * sineInOut(outp); sway = Math.sin(Math.PI * Math.min(1, outp * 1.4)) * 0.9; }
-    } else k = 0.15 * (el2 / LEAD) + 0.05;
+      else { w = 'Breathe out'; const outp = (c - IN - HOLD) / OUT; k = 1 - 0.85 * sineInOut(outp); sway = Math.sin(Math.PI * Math.min(1, outp * 1.4)) * 0.9; }
+    } else k = 0.15 * (el2 / LEAD);
     if (reduce) { k = 0.75; sway = 0; }
     if (w !== last) { word.textContent = w; word.classList.remove('fb-in'); void word.offsetWidth; word.classList.add('fb-in'); last = w; el.dataset.phase = w; }
-    const t = (now - t0) / 1000, [f, gut] = flicker(t), light = (0.52 + 0.48 * k) * f;
-    const go = (0.35 + 0.6 * Math.min(1, light / LIGHT_MAX)).toFixed(2); if (go !== lastGlow) { glow.style.opacity = go; lastGlow = go; }
-    el.style.setProperty('--k', (Math.round(k * 50) / 50).toFixed(2));
-    tree.update(t, k, sway, outp, dt, light);
-    if (!(reduce && drawn)) { draw(t, k, sway, dt, f, gut); drawn = true; }
+    const t = (now - t0) / 1000, [f, gut] = flicker(t), lit = stageName === 'lit';
+    // the carousel eases to the chosen candle
+    if (!dragging) pos = reduce ? sel : Math.abs(sel - pos) < 0.001 ? sel : pos + (sel - pos) * (1 - Math.exp(-dt / speed * 10));
+    layout();
+    // how alive the scene is: on the in-breath it wakes, on the out-breath it cools (gently, while choosing)
+    const sinceLit = lit ? (now - litAt - hidden) / 1000 * speed : 0, catchK = lit ? (reduce ? 1 : clamp(sinceLit / 1.6, 0, 1)) : 0;
+    const life = lit ? (0.12 + 0.88 * k) * (0.92 + 0.08 * f) : 0.35 + 0.25 * k;
+    setOp(drift, 0.3 + 0.7 * life);
+    setOp(horizon, 0.3 + 0.7 * life, ` scale(${(0.86 + 0.26 * life).toFixed(3)})`);
+    setOp(cool, lit ? 0.8 * (1 - life) : 0.3 - 0.14 * k);
+    setOp(pool, catchK * (0.25 + 0.75 * life) * f);
+    if (lit) {
+      const g = slides[sel].querySelector<HTMLElement>('.fb-glow')!; setOp(g, catchK * (0.5 + 0.5 * life));
+      // the wooden wicks catch one after the other, then burn with the breath
+      if (!(reduce && drawnStatic)) {
+        flames.forEach((fl, i) => drawFlame(fl, t + i * 3.1, k, f, gut, reduce ? 1 : clamp((sinceLit - 0.15 - i * 0.45) / 0.9, 0, 1), sway));
+        drawnStatic = true;
+      }
+      if (crackle && soundOn) crackle.set(sinceLit > 0.2, k);
+      // after three full breaths, a quiet offer (it never takes focus)
+      if (!offered && el2 >= LEAD + BREATHS_BEFORE_OFFER * CYCLE) { offered = true; offer.hidden = false; requestAnimationFrame(() => offer.classList.add('in')); el.dataset.offer = 'shown'; }
+    }
+    const cost = performance.now() - c0; costN++; costSum += cost; costMax = Math.max(costMax, cost);
+    if (costN % 30 === 0) { el.dataset.frameMs = (costSum / costN).toFixed(2); el.dataset.frameMaxMs = costMax.toFixed(2); }
     raf = requestAnimationFrame(loop);
   };
-  raf = requestAnimationFrame(loop);
-  const onVis = () => { if (document.hidden) { cancelAnimationFrame(raf); hiddenAt = performance.now(); } else { hidden += performance.now() - hiddenAt; prev = performance.now(); raf = requestAnimationFrame(loop); } };
+  const onVis = () => {
+    if (document.hidden) { cancelAnimationFrame(raf); hiddenAt = performance.now(); crackle?.suspend(); }
+    else { hidden += performance.now() - hiddenAt; prev = performance.now(); if (soundOn) crackle?.resume(); raf = requestAnimationFrame(loop); }
+  };
   document.addEventListener('visibilitychange', onVis);
+  const ro = new ResizeObserver(() => resize()); ro.observe(stage);
+  resize(); go(sel, false); pos = sel; layout(); raf = requestAnimationFrame(loop);
 
-  const close = () => {
-    cancelAnimationFrame(raf); ro.disconnect(); window.removeEventListener('resize', size); tree.destroy(); document.removeEventListener('keydown', onKey); document.removeEventListener('visibilitychange', onVis);
-    el.classList.remove('open'); window.setTimeout(() => { el.remove(); opener.focus(); }, reduce ? 0 : 400);
-  };
+  // ---------- leaving ----------
+  let closing = false;
+  function close(returnFocus = true) {
+    if (closing) return; closing = true;
+    cancelAnimationFrame(raf); ro.disconnect(); crackle?.close(); crackle = null;
+    document.removeEventListener('keydown', onKey); document.removeEventListener('visibilitychange', onVis);
+    el.classList.remove('open'); window.setTimeout(() => { el.remove(); if (returnFocus) opener.focus(); }, reduce ? 0 : 400);
+  }
+  const focusables = () => [...el.querySelectorAll<HTMLElement>('button, a[href]')].filter(n => !(n as HTMLButtonElement).disabled && n.tabIndex >= 0 && n.offsetParent !== null && getComputedStyle(n).visibility !== 'hidden');
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') close();
-    if (e.key === 'Tab') { e.preventDefault(); el.querySelector<HTMLElement>('.jb-close')!.focus(); } // the only control: focus stays on it
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Tab') { // focus stays inside the pause
+      const f = focusables(); if (!f.length) return; const i = f.indexOf(document.activeElement as HTMLElement);
+      e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus(); return;
+    }
+    if (stageName === 'pick' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End')) {
+      if ((e.target as Element)?.closest?.('.fb-sizes')) return;
+      e.preventDefault(); go(e.key === 'Home' ? 0 : e.key === 'End' ? N - 1 : sel + (e.key === 'ArrowLeft' ? -1 : 1));
+    }
   };
-  document.addEventListener('keydown', onKey); el.querySelector('.jb-close')!.addEventListener('click', close);
-  el.querySelector<HTMLElement>('.jb-close')!.focus();
+  document.addEventListener('keydown', onKey); $('.jb-close').addEventListener('click', () => close());
+  $<HTMLButtonElement>('.fb-light').focus();
 }
