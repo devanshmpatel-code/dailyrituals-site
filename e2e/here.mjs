@@ -9,11 +9,13 @@ for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false],
   await p.goto((process.env.BASE ?? 'http://localhost:4173/#') + '/'); await p.waitForSelector('.jhere', { state: 'attached' }); await p.waitForTimeout(600);
   ok(`${label}: no "you are here" card on the opening`, !(await p.locator('.jhere.on').count()));
   const goCh = async k => { await p.evaluate(k => { const c = [...document.querySelectorAll('main .chapter')].find(x => new RegExp('Chapter ' + k + ' ').test(x.textContent)); window.scrollTo(0, window.scrollY + c.closest('section').getBoundingClientRect().top - 60); }, k); await settle(p); };
-  for (const k of [2, 5, 8]) {
+  for (const k of [2, 4, 5]) {
     await goCh(k);
     const num = Number(await p.locator('.jh-n').innerText());
     ok(`${label}: the card shows chapter ${k}`, num === k, `${num}`);
     ok(`${label}: card is visible at chapter ${k}`, await p.locator('.jhere.on').count() === 1);
+    if (label === 'mobile') ok(`mobile: at chapter ${k} the card is either away or over no words`, await p.evaluate(() => { const c = document.querySelector('.jhere'); if (c.classList.contains('jh-off')) return true;
+      const l = c.offsetLeft, t = c.offsetTop, w = c.offsetWidth, h = c.offsetHeight; return [[l + 6, t + 6], [l + w / 2, t + h / 2], [l + w - 6, t + h - 6], [l + 6, t + h - 6]].every(([x, y]) => { const e = document.elementsFromPoint(x, y).find(e => !c.contains(e)); return !e || !(e.matches('p, h2, h3, li, a, button, .btn') || [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())); }); }));
   }
   await goCh(2);
   const txt = await p.locator('.jhere').innerText();

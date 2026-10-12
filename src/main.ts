@@ -168,7 +168,7 @@ updateCount();
 const PAGE_TITLES: Record<string, string> = {
   shop: 'Shop', coaching: 'Coaching', book: 'Book a session', subscribe: 'Ritual on Repeat',
   drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
-  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Our story', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset',
+  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Meet the maker', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset',
 };
 
 async function route() {

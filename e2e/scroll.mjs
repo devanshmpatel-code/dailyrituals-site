@@ -11,7 +11,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: no side rail or map button (the "you are here" card does that job)`, (await p.locator('.jrail, [data-jmap]').count()) === 0);
   ok(`${label}: the breathing orb is on the home page`, (await p.locator('.breathorb').count()) === 1);
   ok(`${label}: no flags under the opening`, (await p.locator('.flags, .jflag').count()) === 0);
-  ok(`${label}: chapter headings carry a mandala`, (await p.locator('.jhead .jorn').count()) >= 8, `${await p.locator('.jhead .jorn').count()}`);
+  ok(`${label}: chapter headings carry a mandala`, (await p.locator('.jhead .jorn').count()) >= 5, `${await p.locator('.jhead .jorn').count()}`);
   // the "you are here" card follows the chapters as you scroll
   await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight * 0.55)); await p.waitForTimeout(700);
   ok(`${label}: the page remembers the chapter you are in`, Number(await p.locator('.jh-n').innerText()) >= 3, await p.locator('.jh-n').innerText());
@@ -28,7 +28,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const par = await p.evaluate(() => Number(document.getElementById('day').style.getPropertyValue('--p'))); ok(`${label}: the opening's landscape drifts as you scroll away`, par > 0.15 && par <= 1, `--p ${par}`);
   // breathe
   ok(`${label}: the orb breathes (it is animated)`, await p.locator('.breathorb .bo-core').evaluate(e => getComputedStyle(e).animationName !== 'none'));
-  await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.waitForTimeout(300);
+  // (on a phone the orb steps aside when a link sits under it, which depends on the hour the opening shows: focus brings it back)
+  await p.locator('.breathorb').focus(); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.waitForTimeout(300);
   // the guide waits while you choose; lighting the candle starts the breathing
   await p.locator('.jbreathe .fb-light').click(); await p.waitForTimeout(1300); const seen = new Set();
   for (let i = 0; i < 14; i++) { seen.add(await p.locator('#jbWord').innerText()); await p.waitForTimeout(700); }

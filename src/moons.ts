@@ -125,9 +125,9 @@ export const resetHero = () => { arc?.destroy(); arc = null; };
 // Every one is a cut-out (public/img/studio/tins): whole tins, no table or paper behind them.
 const tinFigure = (file: string, w: number, h: number, altText: string, sizes: string, cls: string, cap: string) =>
   `<figure class="studio-cut ${cls}"><img src="/img/studio/tins/${file}-900.webp" srcset="/img/studio/tins/${file}-480.webp 480w, /img/studio/tins/${file}-900.webp ${w}w" sizes="${sizes}" alt="${esc(altText)}" width="${w}" height="${h}" loading="lazy" decoding="async"><figcaption><span class="d">${cap}</span></figcaption></figure>`;
-/** Chapter 4, Ritual on Repeat: a batch of tins, under the chapter's words. */
+/** Ritual on Repeat (its own page): a batch of tins. */
 export const repeatPhotoHTML = () => tinFigure('jarrah-top', 900, 745, 'A batch of candles in black tins seen from above, each topped by hand with wood chips beside its wooden wick', '(max-width: 900px) 90vw, 36vw', 'ph-repeat', 'Poured, topped and lidded by hand in White Rock, BC');
-/** Chapter 5, Send a Sunrise: a petal-topped pour tucked behind the gift card. */
+/** Chapter 3, Send a Sunrise: a petal-topped pour tucked behind the gift card. */
 export const giftPhotoHTML = () => tinFigure('sweet-romance', 532, 535, 'A candle seen from above, topped by hand with dried rose petals and small purple flowers', '(max-width: 820px) 50vw, 20vw', 'ph-gift', 'Finished by hand with dried petals');
 /** Product page (candles): tins from the bench beside the candle information. */
 export const productStudioHTML = () => tinFigure('mothers-day-florals', 900, 754, 'Candles in black tins seen from above, each topped by hand with a dried flower beside its wooden wick', '(max-width: 820px) 90vw, 40vw', 'ph-product', 'From the studio · wooden wicks, and every tin finished by hand');
@@ -135,24 +135,30 @@ export const productStudioHTML = () => tinFigure('mothers-day-florals', 900, 754
 // ---------- home: From the studio ----------
 // Real cut-outs (backgrounds removed from Claire's own photographs, /img/studio/cut/): Verdant and Cabana, both in the
 // current catalogue, stand on a lit shelf and link to their pages; Westcoast deodorant sits in front. Beside them, a pour seen
-// from above with its toppings labelled. Below, a row of whole-tin cut-outs from the bench.
+// from above with its toppings labelled. Below, a strip of single candle tops, one for each kind of topping.
 // Every sentence of copy here is a DRAFT FOR CLAIRE (wrapped in .d); the facts are from studio-facts.md.
 const cut = (k: string, w: number, h: number, alt: string, two = true) => two
   ? `<img src="/img/studio/cut/${k}-900.webp" srcset="/img/studio/cut/${k}-480.webp 480w, /img/studio/cut/${k}-900.webp 900w" sizes="(max-width: 820px) 60vw, 26vw" alt="${esc(alt)}" width="${w}" height="${h}" loading="lazy" decoding="async">`
   : `<img src="/img/studio/cut/${k}.webp" alt="${esc(alt)}" width="${w}" height="${h}" loading="lazy" decoding="async">`;
-interface Shot { file: string; w: number; h: number; alt: string; cap: string }
-// the row under the showcase: whole-tin cut-outs, each captioned with what it is topped with (draft for Claire)
-const SHOTS: Shot[] = [
-  { file: 'mothers-garden', w: 900, h: 865, alt: 'Candles in black tins seen from above, each topped with a single dried flower', cap: 'Dried flowers' },
-  { file: 'hello-cupcake', w: 900, h: 697, alt: 'Candles in black tins seen from above, scattered with rainbow sprinkles', cap: 'Sprinkles' },
-  { file: 'irish-coffee', w: 900, h: 802, alt: 'Candles in black tins seen from above, each topped with coffee beans', cap: 'Coffee beans' },
-  { file: 'lavender-haze', w: 900, h: 864, alt: 'Candles in black tins seen from above, topped with dried lavender buds', cap: 'Lavender buds' },
-  { file: 'black-crescent', w: 900, h: 960, alt: 'Candles in black tins seen from above, each with a curve of small black stones along the rim', cap: 'Small stones' },
+// the strip under the showcase: one candle top per topping, each a clean round crop of Claire's own top-down photograph
+// (the moons in /img/studio/moons, the same faces the opening uses) set in a black tin rim. They are placed like objects set
+// down with care on the bench: each at its own height and turned its own way (the toppings all sit along the right of the
+// photographs, so the turn is what keeps the row from looking stamped), a soft shadow under it. The caption names the topping,
+// never the scent (they are past pours, so nothing here reads as buyable). Captions are drafts for Claire.
+interface Top { slug: string; cap: string; alt: string; y: number; r: number; s: number }
+const TOPS: Top[] = [
+  { slug: 'sweet-romance', cap: 'Dried flowers', alt: 'A candle seen from above, topped by hand with dried rose petals and a sprig of small purple flowers', y: 30, r: -24, s: 1 },
+  { slug: 'hello-cupcake', cap: 'Sprinkles', alt: 'A candle seen from above, scattered along one side with rainbow sprinkles', y: -8, r: 38, s: 0.88 },
+  { slug: 'irish-coffee', cap: 'Coffee beans', alt: 'A candle seen from above, with a curve of whole coffee beans along the rim', y: 44, r: -52, s: 1.04 },
+  { slug: 'mulled-wine', cap: 'Citrus and spice', alt: 'A candle seen from above, topped with a dried orange slice, a star anise and pink peppercorns', y: 4, r: 12, s: 1.12 },
+  { slug: 'lavender-haze', cap: 'Lavender buds', alt: 'A candle seen from above, with a crescent of dried lavender buds along the rim', y: 38, r: 74, s: 0.94 },
+  { slug: 'black-crescent', cap: 'Small stones', alt: 'A candle seen from above, with a curve of small black stones along the rim', y: -10, r: -36, s: 0.86 },
+  { slug: 'jarrah', cap: 'Wood chips', alt: 'A candle seen from above, with a crescent of small wood chips along the rim', y: 24, r: 128, s: 1.02 },
 ];
 export function studioHTML(): string {
-  const strip = SHOTS.map((s, i) => `<figure class="sx" style="--r:${(s.w / s.h).toFixed(3)};--i:${i}">
-      <span class="sx-ph"><img src="/img/studio/tins/${s.file}-900.webp" srcset="/img/studio/tins/${s.file}-480.webp 480w, /img/studio/tins/${s.file}-900.webp 900w" sizes="(max-width: 820px) 50vw, 18vw" alt="${esc(s.alt)}" width="${s.w}" height="${s.h}" loading="lazy" decoding="async"></span>
-      <figcaption><span class="d">${esc(s.cap)}</span></figcaption>
+  const tops = TOPS.map((t, i) => `<figure class="tp" role="listitem" style="--i:${i};--y:${t.y}px;--r:${t.r}deg;--s:${t.s}">
+      <span class="tp-c"><span class="tp-sh" aria-hidden="true"></span><span class="tp-tin"><img src="${moonSrc(t.slug)}" alt="${esc(t.alt)}" width="520" height="520" loading="lazy" decoding="async"></span></span>
+      <figcaption><span class="d">${esc(t.cap)}</span></figcaption>
     </figure>`).join('');
   return `<section class="wrap studio" aria-labelledby="studioH">
     <div class="st-head">
@@ -182,7 +188,7 @@ export function studioHTML(): string {
         <figcaption><span class="eyebrow">Seen from above</span><span class="d">Every tin is finished by hand with what its scent calls for.</span></figcaption>
       </figure>
     </div>
-    <div class="st-strip" role="list" aria-label="More from Claire's bench">${strip.replace(/<figure class="sx"/g, '<figure role="listitem" class="sx"')}</div>
+    <div class="st-tops" role="list" aria-label="What Claire tops her candles with">${tops}</div>
     <div class="st-cta"><a class="btn" href="#/shop?f=candle">Shop candles</a></div>
   </section>`;
 }
@@ -193,7 +199,20 @@ export const claireCutHTML = () => `<div class="claire-cut"><span class="cc-ring
 
 /** Ease the studio pieces in as they scroll into view. Visible by default; only hidden once an observer is in place. */
 export function wireStudio(app: HTMLElement) {
-  const figs = [...app.querySelectorAll<HTMLElement>('.studio .sh-item, .studio .above, .studio .sx')];
+  // desktop: the candle under the pointer leans towards it (a small 3D tilt; the CSS lifts it and moves its shadow)
+  const tops = app.querySelector<HTMLElement>('.studio .st-tops');
+  if (tops && window.matchMedia('(hover: hover)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    tops.addEventListener('pointermove', e => {
+      const tin = (e.target as Element).closest?.('.tp')?.querySelector<HTMLElement>('.tp-tin'); if (!tin) return;
+      const r = tin.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      tin.style.setProperty('--rx', `${(-y * 22).toFixed(1)}deg`); tin.style.setProperty('--ry', `${(x * 22).toFixed(1)}deg`);
+    });
+    tops.addEventListener('pointerout', e => {
+      const tp = (e.target as Element).closest?.('.tp'); if (!tp || tp.contains(e.relatedTarget as Node)) return;
+      const tin = tp.querySelector<HTMLElement>('.tp-tin'); tin?.style.removeProperty('--rx'); tin?.style.removeProperty('--ry');
+    });
+  }
+  const figs = [...app.querySelectorAll<HTMLElement>('.studio .sh-item, .studio .above, .studio .tp')];
   if (!figs.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
   // only pieces below the fold rise in; photographs further along the phone strip (off to the side) are left as they are

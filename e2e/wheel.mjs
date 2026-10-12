@@ -31,6 +31,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   const still = (pg, sel) => pg.waitForFunction(s => { const t = document.querySelector(s).getAttribute('transform'), now = performance.now(), w = window.__still; if (w && w.t === t && now - w.at > 400) return true; if (!w || w.t !== t) window.__still = { t, at: now }; return false; }, sel, { timeout: 6000 }).then(() => true, () => false);
 
   await open();
+  ok(`${label}: the tabs read "Scent atlas" and "Take the quiz"`, (await p.locator('.findtabs [role="tab"]').allInnerTexts()).map(t => t.trim()).join('|') === 'Scent atlas|Take the quiz');
+  ok(`${label}: the quiz is offered once (the atlas panel does not repeat the tabs)`, (await p.locator('#app a[href$="tab=quiz"], #app button:has-text("Take the quiz")').count()) === 1 && (await p.locator('.wpanel [data-guide]').count()) === 1);
   ok(`${label}: five constellations on the plate`, (await p.locator('.wcon').count()) === 5);
   ok(`${label}: the plate is labelled like a star atlas`, (await svgText('.wreg')) === 'FRESH SUNNY FLORAL WOODY GROUNDING', await svgText('.wreg'));
   ok(`${label}: one ball per scent, in the mood's star colour`, (await p.locator('.wstar').count()) === 13 && (await p.locator('.wcon[data-mood="fresh"] .wstar').count()) === 3 && await p.evaluate(() => getComputedStyle(document.querySelector('.wcon[data-mood="fresh"]')).getPropertyValue('--sw').trim() === '#A3C8C0' && /url\(.*#ws-fresh/.test(getComputedStyle(document.querySelector('.wcon[data-mood="fresh"] .wcore')).fill)));
@@ -157,7 +159,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   await p.goto(base + '/explore'); await p.waitForSelector('#exp .fl-card'); ok(`${label}: full list still below`, (await p.locator('#exp .fl-card').count()) > 5);
   await p.locator('.findtabs a:has-text("Take the quiz")').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: the quiz tab still opens`, (await p.locator('[data-ans]').count()) >= 4);
   ok(`${label}: leaving the atlas tears it down`, await p.evaluate(() => !document.querySelector('.wplate')));
-  await p.goto(base + '/explore'); await p.waitForSelector('.wheel svg'); await p.locator('.wpanel .btn.line[href*="quiz"]').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: the panel's quiz link opens the quiz`, true);
+  // (the panel's own quiz link is gone: the tabs above are the one way between the atlas and the quiz)
+  await p.goto(base + '/explore'); await p.waitForSelector('.wheel svg'); ok(`${label}: the atlas panel has no second quiz button`, (await p.locator('.wpanel a[href*="quiz"]').count()) === 0);
   ok(`${label}: no sideways scroll`, await overflow());
   ok(`${label}: no JS errors`, errs.length === 0, errs.join('|'));
   await ctx.close();

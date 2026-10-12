@@ -64,7 +64,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: the old moons panel is gone from home`, (await p.locator('#moons, .moons-arc').count()) === 0);
   ok(`${label}: no moon-phase rows on the home seams`, (await p.locator('.cel-div .cel-moonrow').count()) === 0 && (await p.locator('.cel-div').count()) > 0);
   ok(`${label}: footer and cart carry a star, not a moon`, (await p.locator('.foot-moon .cel-glyph, .dh-moon .cel-glyph').count()) === 2 && (await p.locator('.foot-moon [aria-label*="moon" i], .dh-moon [aria-label*="moon" i]').count()) === 0);
-  for (const [sel, name] of [['.rep-grid .ph-repeat', 'Ritual on Repeat'], ['.gift-grid .ph-gift', 'Send a Sunrise']]) {
+  for (const [sel, name] of [['.gift-grid .ph-gift', 'Send a Sunrise']]) {
     await p.evaluate(s => document.querySelector(s).scrollIntoView({ block: 'center' }), sel); await p.waitForTimeout(900);
     const f = await p.evaluate(s => { const f = document.querySelector(s); const i = f.querySelector('img'); const r = f.getBoundingClientRect(); return { ok: i.complete && i.naturalWidth > 0 && i.alt.length > 15 && !!f.querySelector('figcaption .d'), w: r.width }; }, sel);
     ok(`${label}: ${name} carries a studio photograph with a draft caption`, f.ok && f.w > 150, JSON.stringify(f));
@@ -73,22 +73,52 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   // ---- home: Claire's cut-out and From the studio
   await p.evaluate(() => document.querySelector('.claire-cut').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
   ok(`${label}: Meet Claire shows her own photograph, cut out in an arch (not a render)`, await p.evaluate(() => { const i = document.querySelector('.claire-in .claire-cut .cc-arch img'); return !!i && /studio\/cut\/claire/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0 && /Claire/.test(i.alt) && !document.querySelector('.claire-in img.dimg'); }));
+  ok(`${label}: Meet Claire is ${label === 'phone' ? 'stacked: her photograph centred above comfortable lines of text' : 'two columns: photograph beside the words'}`, await p.evaluate(phone => {
+    const ph = document.querySelector('.claire-in .claire-cut').getBoundingClientRect(), tx = document.querySelector('.claire-in .tx').getBoundingClientRect();
+    return phone ? ph.bottom <= tx.top + 1 && ph.width >= innerWidth * 0.6 && Math.abs((ph.left + ph.right) / 2 - innerWidth / 2) < 12 && tx.width >= innerWidth * 0.75 : ph.right < tx.left;
+  }, label === 'phone'));
   await p.evaluate(() => document.querySelector('.studio .shelf').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500);
   ok(`${label}: the shelf stands three real cut-outs that link to their products`, await p.evaluate(() => { const a = [...document.querySelectorAll('.studio .shelf a.sh-item')]; return a.length === 3 && a.every(x => { const i = x.querySelector('img'); return /studio\/cut\//.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0 && i.alt.length > 15 && /\/product\//.test(x.getAttribute('href')) && x.querySelector('.sh-tag').textContent.trim(); }); }));
   ok(`${label}: the shelf names only scents in the catalogue (Verdant, Cabana, Westcoast)`, await p.evaluate(() => [...document.querySelectorAll('.studio .sh-tag')].map(t => t.textContent).join(' ')).then(t => /Verdant/.test(t) && /Cabana/.test(t) && /Westcoast/.test(t)));
   await p.evaluate(() => document.querySelector('.studio .above').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
   ok(`${label}: seen from above, four toppings are labelled, none cut off by the panel`, await p.evaluate(() => { const box = document.querySelector('.studio .above').getBoundingClientRect(); const ls = [...document.querySelectorAll('.studio .ab-l > span')]; return ls.length === 4 && ls.every(l => { const r = l.getBoundingClientRect(); return r.left >= box.left - 1 && r.right <= box.right + 1 && r.width > 30; }); }));
-  await p.evaluate(() => document.querySelector('.studio .st-strip').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500);
-  const sx = await loaded(p, '.st-strip .sx img');
-  ok(`${label}: the row of five bench photographs loads`, sx.length === 5 && sx.slice(0, label === 'phone' ? 1 : 5).every(Boolean), sx.join(','));
-  ok(`${label}: bench photographs are lazy, sized and captioned`, await p.evaluate(() => [...document.querySelectorAll('.st-strip .sx')].every(f => { const i = f.querySelector('img'); return i.getAttribute('loading') === 'lazy' && i.getAttribute('width') && i.getAttribute('height') && i.alt.length > 10 && f.querySelector('figcaption').textContent.trim(); })));
-  if (label === 'desktop') ok('desktop: the bench photographs sit in one even row', await p.evaluate(() => { const r = [...document.querySelectorAll('.st-strip .sx-ph')].map(e => e.getBoundingClientRect()); return r.every(x => Math.abs(x.height - r[0].height) < 3 && Math.abs(x.top - r[0].top) < 2); }));
-  else ok('phone: the bench photographs are a swipeable row', await p.evaluate(() => { const s = document.querySelector('.st-strip'); return s.scrollWidth > s.clientWidth; }));
-  const revealed = await p.waitForFunction(() => [...document.querySelectorAll('.studio .sh-item, .studio .above, .studio .sx')].every(f => Number(getComputedStyle(f).opacity) > .9), null, { timeout: 5000 }).then(() => true, () => false);
+  // the strip under "Seen from above": single candle tops (the clean round crops), one per topping, set down at different
+  // heights and angles, each captioned with its topping (a draft), never its scent; the old clusters of tins are gone
+  await p.evaluate(() => document.querySelector('.studio .st-tops').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500);
+  ok(`${label}: the clusters of tins are gone from From the studio`, (await p.locator('.studio .st-strip, .studio .sx, .studio img[src*="/tins/"]:not(.ab-tins img)').count()) === 0);
+  const tops = await p.evaluate(() => [...document.querySelectorAll('.st-tops .tp')].map(f => { const i = f.querySelector('img'), r = f.querySelector('.tp-c').getBoundingClientRect();
+    return { src: i.getAttribute('src'), done: i.complete && i.naturalWidth > 0, alt: i.alt, cap: f.querySelector('figcaption .d')?.textContent.trim() ?? '', rot: getComputedStyle(i).rotate, top: Math.round(r.top + scrollY), w: Math.round(r.width), lazy: i.getAttribute('loading') === 'lazy' }; }));
+  ok(`${label}: seven single candle tops, each a clean round crop of Claire's own photograph`, tops.length === 7 && new Set(tops.map(t => t.src)).size === 7 && tops.every(t => /^\/img\/studio\/moons\/[a-z-]+\.webp$/.test(t.src) && t.lazy), tops.map(t => t.src).join(' '));
+  ok(`${label}: the tops in view load`, tops.slice(0, label === 'phone' ? 2 : 7).every(t => t.done), tops.map(t => t.done).join(','));
+  ok(`${label}: each top is captioned (a draft) with its topping, and described`, tops.every(t => t.cap.length > 3 && t.alt.length > 30) && ['Dried flowers', 'Sprinkles', 'Coffee beans', 'Lavender buds', 'Small stones', 'Citrus and spice', 'Wood chips'].every(c => tops.some(t => t.cap === c)), tops.map(t => t.cap).join(', '));
+  ok(`${label}: the tops sit at different heights and angles, like things set down by hand`, new Set(tops.map(t => t.top)).size >= 5 && new Set(tops.map(t => t.rot)).size === 7 && new Set(tops.map(t => t.w)).size >= 4, JSON.stringify(tops.map(t => [t.top, t.rot, t.w])));
+  ok(`${label}: every top has its contact shadow`, (await p.locator('.st-tops .tp .tp-sh').count()) === 7);
+  if (label === 'desktop') {
+    ok('desktop: all seven tops fit in one row inside the strip', await p.evaluate(() => { const s = document.querySelector('.st-tops').getBoundingClientRect(); return [...document.querySelectorAll('.st-tops .tp-c')].every(e => { const r = e.getBoundingClientRect(); return r.left >= s.left && r.right <= s.right; }); }));
+    const tin = p.locator('.st-tops .tp').nth(3); const bb = await tin.boundingBox(); await p.mouse.move(bb.x + bb.width * 0.5, bb.y + bb.width * 0.5); await p.mouse.move(bb.x + bb.width * 0.8, bb.y + bb.width * 0.3, { steps: 4 });
+    // (waits for the lean to settle: on a busy machine the .6s transition can take longer)
+    ok('desktop: a top leans towards the pointer (3D tilt)', await p.waitForFunction(() => { const t = document.querySelectorAll('.st-tops .tp-tin')[3]; return /matrix3d/.test(getComputedStyle(t).transform) && t.style.getPropertyValue('--ry') !== ''; }, null, { timeout: 5000 }).then(() => true, () => false));
+    await p.mouse.move(5, 5);
+  } else ok('phone: the tops are a swipeable row', await p.evaluate(() => { const s = document.querySelector('.st-tops'); return s.scrollWidth > s.clientWidth + 40 && getComputedStyle(s).overflowX === 'auto'; }));
+  const revealed = await p.waitForFunction(() => [...document.querySelectorAll('.studio .sh-item, .studio .above, .studio .tp')].every(f => Number(getComputedStyle(f).opacity) > .9), null, { timeout: 5000 }).then(() => true, () => false);
   ok(`${label}: the studio pieces are in view, not hidden by their reveal`, revealed);
-  ok(`${label}: no past scent is named on the home page outside Moon Drops`, !/midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt/i.test(await p.evaluate(() => document.querySelector('.studio').innerText + document.querySelector('.claire').innerText)));
-  ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.studio').innerText + document.querySelector('.claire').innerText + document.querySelector('.rep-grid').innerText + document.querySelector('.gift-grid').innerText))));
+  ok(`${label}: no past scent is named on the home page outside Moon Drops`, !/midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|hello cupcake|irish coffee|mulled wine/i.test(await p.evaluate(() => document.querySelector('.studio').innerText + document.querySelector('.claire').innerText)));
+  ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.studio').innerText + document.querySelector('.claire').innerText + document.querySelector('.soonflow').innerText + document.querySelector('.gift-grid').innerText))));
   ok(`${label}: home has no sideways scroll`, (await noScroll(p)) <= 1);
+
+  // ---- the Ritualists (chapter 6): a membership card with Claire's logo in place of the mood constellation; it promises nothing
+  await p.evaluate(() => document.querySelector('.club').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
+  const card = await p.evaluate(() => { const w = document.querySelector('.club .rit-card-wrap'), i = w?.querySelector('.rc-logo'); return w && { label: w.getAttribute('role') + ':' + w.getAttribute('aria-label'), logo: i.complete && i.naturalWidth > 0 && /\/img\/brand\/logo-(600|1200)\.webp/.test(i.currentSrc || i.src), text: w.innerText, seal: !!w.querySelector('.rc-seal svg'), wd: w.getBoundingClientRect().width }; });
+  ok(`${label}: the Ritualists show a membership card with the logo and a wax seal`, !!card && card.logo && card.seal && /^img:.*coming soon/i.test(card.label) && card.wd > 220, JSON.stringify(card));
+  ok(`${label}: the mood constellation is gone from the Ritualists`, (await p.locator('.club .cs-const, .club .cel-const').count()) === 0);
+  ok(`${label}: the card promises no points, tiers or rewards`, !!card && /coming soon/i.test(card.text) && !/\d|points?|reward|tier|member no/i.test(card.text), card?.text);
+
+  // ---- the footer: Claire's logo, cut out clean and lit, in place of the star chart and the constellation
+  await p.evaluate(() => document.querySelector('footer .foot-sign').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1000);
+  const flogo = await p.evaluate(() => { const a = document.querySelector('footer .foot-logo'), i = a?.querySelector('img'), r = i?.getBoundingClientRect(); return a && { href: a.getAttribute('href'), src: i.currentSrc || i.src, done: i.complete && i.naturalWidth > 0, alt: i.alt, w: r.width, inView: r.left >= 0 && r.right <= innerWidth }; });
+  ok(`${label}: the footer is signed with the logo (transparent cut-out), linking home`, !!flogo && flogo.done && /\/img\/brand\/logo-(600|1200)\.webp$/.test(flogo.src) && /(#\/|\/)$/.test(flogo.href) && /Daily Rituals Co/.test(flogo.alt) && flogo.w > 250 && flogo.inView, JSON.stringify(flogo));
+  ok(`${label}: the footer's star chart and constellation are gone`, (await p.locator('footer .foot-chart, footer .foot-const, footer .cel-const, footer [data-cel="astrolabe"]').count()) === 0);
+  ok(`${label}: the logo really is see-through round the letters`, await p.evaluate(async () => { const i = document.querySelector('footer .foot-logo img'); const c = document.createElement('canvas'); c.width = i.naturalWidth; c.height = i.naturalHeight; const x = c.getContext('2d'); x.drawImage(i, 0, 0); const d = x.getImageData(0, 0, c.width, c.height).data; let clear = 0, solid = 0; for (let k = 3; k < d.length; k += 4) { if (d[k] === 0) clear++; else if (d[k] === 255) solid++; } return clear / (d.length / 4) > 0.6 && solid > 1000; }));
 
   // ---- coaching: Claire's portrait
   await p.goto(base + '/coaching'); await p.waitForSelector('.cel-portrait img', { state: 'attached' }); await p.waitForTimeout(800);

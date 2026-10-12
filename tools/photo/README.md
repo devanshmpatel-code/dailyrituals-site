@@ -72,3 +72,13 @@ for the glass candles' missing bottom-left glass to be put back everywhere (Caba
 - `frame_shots.mjs` (Node, with the preview running): screenshots of every frame that shows the portrait or a tumbler
   (home, coaching opener, Meet your coach, story, the home shelf, the shop's candle heading, the coaching cue kit, the
   breathing pause) at 1440, 1024, 390 and 360 px.
+
+## The logo (October 2026)
+- `logo_cut.py public/img/studio/logo.jpg public/img/brand`: lifts Claire's logo (white "Daily Rituals", cream "Co.",
+  tagline and "Made in White Rock, BC" arc on black) off its black square. Because the ground is black, each pixel is ink
+  times coverage, so the alpha is read back exactly (the pixel's projection on its ink colour) instead of cut with a mask.
+  Each letter is assigned to the white or the cream ink as a whole shape (JPEG blurs colour at the edges of thin letters),
+  faint edge pixels take the ink of the nearest letter, JPEG speckle and ringing are clipped, and the colour is set to the
+  exact ink everywhere, so there is no grey fringe or dark halo. Writes `logo.png`, `logo-1200.webp` and `logo-600.webp`
+  (used by the footer's signature and the Ritualists' membership card, `src/brand.ts`). It is made for dark grounds: the
+  cream lettering is too pale to read on the light pages.

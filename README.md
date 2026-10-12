@@ -23,7 +23,7 @@ The client id is the public OAuth id of the "Daily Rituals coded preview" headle
 | Shop grid, product pages, prices, sizes, stock, photos, product information text | Live Wix Stores (Catalog V3) |
 | Homepage hero products and Chapter 1 product rows | Live Wix Stores |
 | Coaching service cards, booking page, open times | Live Wix Bookings |
-| Hero, moods, lifestyle, Moon Drops, Ritual Wall, Solstice Box, Discovery Kit imagery | Canvas renders (outlined when "Show drafts" is on) |
+| Hero, moods, lifestyle, Moon Drops, Ritual Wall, Solstice Box imagery | Canvas renders (outlined when "Show drafts" is on) |
 | Ritualists, Moon Drops, Ritual on Repeat, Send a Sunrise, Ritual Wall, Pass the Light | Canvas markup, not connected (no backend set up yet) |
 
 `src/canvas/` holds the canvas CSS and markup extracted verbatim. Overrides live in `src/site.css`.
