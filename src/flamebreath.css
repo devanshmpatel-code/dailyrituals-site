@@ -1,31 +1,133 @@
-/* The breathing pause: the sky of the hour above a dark night ground, a Bodhi tree lit by the candle at its foot, and a flame that breathes with you. */
-.jbreathe.fb { position: fixed; inset: 0; z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px;
-  text-align: center; color: #F3ECE2; background: #120E1A; opacity: 0; transition: opacity .4s ease; overflow: hidden; isolation: isolate; --k: .5; }
+/* The breathing pause: choose your candle under a night sky, light it, breathe with it. */
+.jbreathe.fb { position: fixed; inset: 0; z-index: 95; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); padding: 0; gap: 0;
+  align-items: stretch; justify-items: stretch; align-content: stretch; justify-content: stretch;
+  text-align: center; color: #F3ECE2; background: #0E0B1A; opacity: 0; transition: opacity .45s ease; overflow: hidden; isolation: isolate;
+  --pw: 420px; --floor: 15%; --gold: #E9D4A1; --cream: #FBF3E6; }
 .jbreathe.fb.open { opacity: 1; }
-/* the hour's sky in the top of the window, deepening to the dark ground the candle stands on; the lower part stays dark
-   whatever the hour, so the words below it are always readable */
-.fb-sky { position: absolute; inset: 0; z-index: -3;
-  background: linear-gradient(180deg, rgba(14, 10, 20, 0) 54%, rgba(14, 10, 20, .5) 75%, rgba(14, 10, 20, .8) 100%),
-    linear-gradient(180deg, color-mix(in srgb, var(--s0) 70%, #120E1A) 0%, color-mix(in srgb, var(--s1) 45%, #1A1426) 34%, #1A1322 62%, #0E0A14 100%); }
-.fb-stars { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; fill: #F3ECE2; opacity: .9; }
-/* the faintest warmth in the night air around the flame (its place is set from the flame); the candle's real light is on
-   the tree and the ground */
-.fb-glow { position: absolute; left: 50%; top: 50%; width: min(120vmin, 900px); aspect-ratio: 1; transform: translate(-50%, -50%); z-index: -2; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255, 170, 100, .1) 0%, rgba(255, 160, 96, .06) 20%, rgba(255, 150, 90, .032) 40%, rgba(255, 140, 90, .014) 60%, rgba(255, 140, 90, .004) 80%, rgba(255, 140, 90, 0) 100%); will-change: opacity; }
-/* the Bodhi tree, painted on a canvas that covers the whole pause; the trunk rises behind the candle, the crown fills the top */
-.jbreathe.fb .jb-tree { position: absolute; inset: 0; z-index: -1; display: block; overflow: hidden; pointer-events: none; opacity: 1; mix-blend-mode: normal; }
-/* its layers: the still tree, the candle's light on the tree and the ground (its opacity follows the flame) and the leaves that move */
-.jbreathe.fb .jb-tree canvas { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 100%; }
-.jbreathe.fb .jb-tree .fb-bodhi-lit { will-change: opacity; }
-.fb-stage { position: relative; width: min(70vw, 360px); aspect-ratio: 3 / 4; margin-bottom: -6px; }
-.fb-flame { width: 100%; height: 100%; display: block; }
-.jbreathe.fb .jb-word { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 6.4vw, 66px); line-height: 1; margin: 0; letter-spacing: -.01em; color: #FBF3E6;
-  text-shadow: 0 0 calc(10px + var(--k) * 26px) rgba(255, 190, 110, calc(.14 + var(--k) * .22)); }
+
+/* the night: deep indigo above, plum lower down, a warm glow low in the middle where the candles stand */
+.fb-sky { position: absolute; inset: 0; z-index: -4; overflow: hidden; pointer-events: none;
+  background: linear-gradient(180deg, #0A0817 0%, #120E26 24%, #1D1532 46%, #2C1E3C 64%, #392640 76%, #24182C 88%, #140E1C 100%); }
+.fb-drift { position: absolute; inset: -3%; will-change: transform, opacity; animation: fbDrift 96s ease-in-out infinite alternate; }
+@keyframes fbDrift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-1.6%, .9%, 0) scale(1.035); } }
+.fb-stars { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.fb-tw i { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); border-radius: 50%; background: #FFF8EE; opacity: .3;
+  animation: fbTw var(--d) ease-in-out var(--l) infinite alternate; }
+.fb-tw i.b { box-shadow: 0 0 5px 1px rgba(255, 236, 214, .55), 0 0 14px 3px rgba(200, 190, 255, .16); }
+@keyframes fbTw { 0% { opacity: .06; transform: scale(.65); } 55% { opacity: calc(var(--a) * .7); } 100% { opacity: var(--a); transform: scale(1); } }
+.fb-horizon { position: absolute; z-index: -3; left: calc(50% - min(760px, 90vw)); width: min(1520px, 180vw); bottom: -6vh; height: 82vh; pointer-events: none; transform-origin: 50% 72%;
+  background: radial-gradient(ellipse 50% 50% at 50% 72%, rgba(214, 138, 112, .5) 0%, rgba(176, 100, 112, .3) 26%, rgba(112, 64, 104, .16) 50%, rgba(70, 40, 90, 0) 74%); will-change: opacity, transform; }
+/* the cool of the out-breath: the night deepens and turns blue, then warms again as you breathe in */
+.fb-cool { position: absolute; inset: 0; z-index: -2; pointer-events: none; opacity: .3; will-change: opacity;
+  background: linear-gradient(180deg, rgba(6, 8, 30, .62) 0%, rgba(10, 16, 48, .42) 48%, rgba(8, 10, 34, .66) 100%); }
+
+/* top: sound and Done */
+.fb-bar { position: absolute; z-index: 30; top: max(14px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); display: flex; gap: 8px; }
+.jbreathe.fb .fb-sound, .jbreathe.fb .jb-close { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; font: 600 14px var(--body, system-ui);
+  color: var(--cream); background: rgba(16, 11, 28, .45); border: 1px solid rgba(233, 212, 161, .38); cursor: pointer; box-shadow: none; }
+.jbreathe.fb .fb-sound:hover, .jbreathe.fb .jb-close:hover { border-color: var(--gold); background: rgba(233, 212, 161, .1); }
+.fb-sound .on { display: none; } .fb-sound[aria-pressed="true"] .on { display: inline; } .fb-sound[aria-pressed="true"] .off { display: none; }
+.fb-sound[aria-pressed="true"] { border-color: var(--gold); }
+
+/* the heading and the breath word */
+.fb-head { padding: clamp(62px, 9vh, 80px) 16px 0; min-height: 0; }
+.fb-eyebrow { margin: 0 0 10px; font: 600 12px/1.2 var(--body, system-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--gold); transition: opacity .5s; }
+.jbreathe.fb .jb-word { font-family: var(--display); font-weight: 400; font-size: 25px; line-height: 1.05; margin: 0; letter-spacing: -.005em; color: rgba(251, 243, 230, .82);
+  transition: font-size .9s ease, color .9s ease; height: clamp(48px, 5.6vw, 68px); display: flex; align-items: center; justify-content: center; }
+.jbreathe.fb[data-stage="lit"] .jb-word { font-size: clamp(40px, 5.4vw, 62px); color: var(--cream); text-shadow: 0 0 28px rgba(255, 190, 110, .32); }
 .jbreathe.fb .jb-word.fb-in { animation: fbWord .9s ease both; }
-@keyframes fbWord { from { opacity: 0; transform: translateY(6px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
-.jbreathe.fb .jb-sub { margin: 4px 0 6px; max-width: 40ch; color: rgba(243, 236, 226, .72); font-size: 15px; }
-.jbreathe.fb .jb-close { background: transparent; color: #F3ECE2; border: 1px solid rgba(233, 212, 161, .45); }
-.jbreathe.fb .jb-close:hover { border-color: #E9D4A1; background: rgba(233, 212, 161, .08); }
-.jbreathe.fb .jb-close:focus-visible { outline: 2px solid #E9D4A1; outline-offset: 3px; }
-@media (max-height: 640px) { .fb-stage { width: min(56vw, 240px); } }
-@media (prefers-reduced-motion: reduce) { .jbreathe.fb, .jbreathe.fb .jb-word.fb-in { transition: none; animation: none; } }
+@keyframes fbWord { from { opacity: 0; transform: translateY(5px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+
+/* the surface the candles stand on, and the carousel */
+.fb-stage { position: relative; min-height: 0; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
+.fb-dragging .fb-stage { cursor: grabbing; }
+.jbreathe.fb[data-stage="lit"] .fb-stage { cursor: default; }
+.fb-table { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .3); width: min(1500px, 175vw); height: calc(var(--pw) * .78); transform: translateX(-50%); pointer-events: none;
+  background: radial-gradient(ellipse 50% 50% at 50% 54%, rgba(142, 94, 98, .5) 0%, rgba(100, 62, 86, .34) 28%, rgba(52, 33, 60, .15) 54%, rgba(30, 20, 40, 0) 72%); }
+/* the ground the candles stand on: lit softly near them, falling away into shadow towards you, so their feet (cut off at the
+   bottom of the original photographs) sink into the dark; its top edge sits just behind their feet */
+.fb-ground { position: absolute; z-index: -1; left: 0; right: 0; top: calc(var(--floorY, 70vh) - var(--pw) * .12); bottom: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(24, 15, 34, .55) 0%, rgba(17, 11, 26, .78) calc(var(--pw) * .3), rgba(12, 8, 19, .9) 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--pw) * .16)); mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--pw) * .16)); }
+.fb-pool { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .13); width: calc(var(--pw) * 2.1); height: calc(var(--pw) * .48); transform: translateX(-50%); pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse 50% 50% at 50% 46%, rgba(255, 176, 110, .34) 0%, rgba(255, 150, 90, .14) 40%, rgba(255, 140, 80, 0) 72%); mix-blend-mode: screen; will-change: opacity; }
+.fb-track { position: absolute; inset: 0; }
+.fb-c { position: absolute; left: 50%; bottom: var(--floor); width: var(--pw); aspect-ratio: var(--ar); padding: 0; margin: 0; border: 0; background: none; color: inherit; cursor: pointer;
+  transform-origin: 50% 100%; transition: opacity .6s ease; -webkit-tap-highlight-color: transparent; }
+.fb-c[aria-pressed="true"] { cursor: inherit; }
+.fb-c:focus { outline: none; }
+.fb-c:focus-visible .fb-ph::after { content: ""; position: absolute; inset: -10px -10px 0; border-radius: 18px; border: 2px solid var(--gold); }
+.fb-ph { position: absolute; inset: 0; display: block; -webkit-box-reflect: below 0 linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(0, 0, 0, .075)); }
+/* the contact shadow: the photo's lowest edge (where the original photograph cut off the tin and lid) fades into it */
+.fb-ph::before { content: ""; position: absolute; left: -10%; right: -4%; bottom: -9%; height: 24%; pointer-events: none;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(4, 2, 9, .97) 0%, rgba(5, 3, 10, .9) 38%, rgba(8, 4, 14, .45) 66%, rgba(8, 4, 14, 0) 100%); }
+.fb-pic { position: absolute; inset: 0; display: block; filter: brightness(var(--dim, 1)) saturate(calc(.6 + var(--dim, 1) * .4));
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, .25) 4%, rgba(0, 0, 0, .8) 11%, #000 16%); mask-image: linear-gradient(to top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, .25) 4%, rgba(0, 0, 0, .8) 11%, #000 16%); }
+.fb-pic img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.fb-pic .fb-glow { opacity: 0; will-change: opacity; }
+.fb-flame { position: absolute; z-index: 3; pointer-events: none; }
+.fb-halo { position: absolute; z-index: 2; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0; will-change: opacity; mix-blend-mode: screen;
+  background: radial-gradient(closest-side, rgba(255, 198, 130, .42) 0%, rgba(255, 168, 98, .17) 32%, rgba(255, 150, 90, .05) 62%, rgba(255, 150, 90, 0) 100%); }
+
+/* below: the candle's name, price and buttons; while it burns, the breath's words and the offer */
+.fb-low { display: grid; padding: 0 16px max(22px, env(safe-area-inset-bottom)); }
+.fb-info, .fb-breath { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; transition: opacity .6s ease, visibility .6s; }
+.jbreathe.fb[data-stage="pick"] .fb-breath, .jbreathe.fb[data-stage="lit"] .fb-info { opacity: 0; visibility: hidden; pointer-events: none; }
+.fb-mood { margin: 0; font: 600 11px/1.2 var(--body, system-ui); letter-spacing: .2em; text-transform: uppercase; color: rgba(233, 212, 161, .82); }
+.fb-namerow { display: flex; align-items: center; gap: clamp(14px, 3vw, 26px); }
+.jbreathe.fb .fb-name { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 4.2vw, 52px); line-height: 1.02; margin: 0; color: var(--cream); min-width: 5ch; letter-spacing: -.01em; }
+.fb-nav { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; padding: 0 0 3px; font: 400 28px/1 var(--display, serif); color: var(--cream); cursor: pointer;
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(233, 212, 161, .42); transition: background .2s, border-color .2s, opacity .2s; }
+.fb-nav:hover:not(:disabled) { background: rgba(233, 212, 161, .12); border-color: var(--gold); }
+.fb-nav:disabled { opacity: .28; cursor: default; }
+.fb-dots { display: flex; gap: 8px; margin: 2px 0 0; }
+.fb-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(243, 236, 226, .26); transition: background .3s, transform .3s; }
+.fb-dots i.on { background: var(--gold); transform: scale(1.2); }
+.fb-line { margin: 2px 0 0; font-size: 16px; line-height: 1.45; color: rgba(243, 236, 226, .8); max-width: 36ch; }
+.fb-buy { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; min-height: 34px; margin-top: 4px; }
+.fb-sizes { display: flex; gap: 6px; }
+.fb-size { min-height: 34px; padding: 0 14px; border-radius: 999px; font: 600 13px var(--body, system-ui); color: var(--cream); background: transparent; border: 1px solid rgba(233, 212, 161, .32); cursor: pointer; }
+.fb-size[aria-pressed="true"] { background: rgba(233, 212, 161, .16); border-color: var(--gold); }
+.fb-size:disabled { opacity: .4; cursor: default; }
+.fb-price { margin: 0; font: 600 16px var(--body, system-ui); color: #F3D29A; letter-spacing: .01em; }
+.fb-actions, .fb-offer-a { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+.jbreathe.fb .fb-light, .jbreathe.fb .fb-home { min-height: 52px; padding: 0 26px; border-radius: 999px; border: 0; background: var(--cream); color: #231A2B; font: 700 15px var(--body, system-ui); gap: 8px;
+  box-shadow: 0 14px 40px -14px rgba(255, 190, 120, .7); }
+.jbreathe.fb .fb-light svg { color: #D9873A; }
+.jbreathe.fb .fb-light:hover, .jbreathe.fb .fb-home:hover { background: #fff; box-shadow: 0 16px 46px -12px rgba(255, 190, 120, .85); }
+.jbreathe.fb .fb-add, .jbreathe.fb .fb-pair { min-height: 52px; padding: 0 24px; border-radius: 999px; background: rgba(16, 11, 28, .3); color: var(--cream); border: 1px solid rgba(233, 212, 161, .62); font: 700 15px var(--body, system-ui); box-shadow: none; }
+.jbreathe.fb .fb-add:hover, .jbreathe.fb .fb-pair:hover { border-color: var(--gold); background: rgba(233, 212, 161, .1); }
+.jbreathe.fb .fb-add:disabled, .jbreathe.fb .fb-home:disabled { opacity: .6; cursor: default; }
+.jbreathe.fb [hidden] { display: none !important; }
+.fb-status { margin: 4px 0 0; min-height: 1.4em; font-size: 14px; color: rgba(243, 236, 226, .86); }
+.fb-viewcart, .fb-back { background: none; border: 0; padding: 0 4px; min-height: 36px; font: 600 14px var(--body, system-ui); color: var(--gold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.fb-back { color: rgba(243, 236, 226, .7); text-decoration: none; }
+.fb-back:hover { color: var(--cream); text-decoration: underline; }
+.jbreathe.fb .jb-sub { margin: 0 0 2px; max-width: 40ch; color: rgba(243, 236, 226, .74); font-size: 15px; }
+.fb-offer { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; transform: translateY(8px); transition: opacity 1.2s ease, transform 1.2s ease; }
+.fb-offer.in { opacity: 1; transform: none; }
+.fb-offer-t { margin: 0; font-family: var(--display); font-size: 20px; color: var(--cream); }
+.jbreathe.fb :is(button, a):focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.fb-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 700px) {
+  .jbreathe.fb { --floor: 13%; }
+  .fb-head { padding-top: 66px; }
+  .fb-eyebrow { margin-bottom: 6px; }
+  .jbreathe.fb .jb-word { font-size: 22px; height: 46px; }
+  .jbreathe.fb[data-stage="lit"] .jb-word { font-size: 40px; }
+  .jbreathe.fb .fb-name { font-size: 36px; }
+  .fb-line { font-size: 15px; }
+  .fb-actions, .fb-offer-a { gap: 10px; width: 100%; }
+  .jbreathe.fb .fb-light, .jbreathe.fb .fb-add, .jbreathe.fb .fb-home, .jbreathe.fb .fb-pair { min-height: 48px; padding: 0 18px; font-size: 14px; flex: 1 1 150px; }
+  .fb-offer { width: 100%; }
+  .fb-offer-a { flex-direction: column; align-items: stretch; max-width: 360px; }
+  .jbreathe.fb .fb-home, .jbreathe.fb .fb-pair { flex: 0 0 auto; }
+  .fb-breath:has(.fb-offer:not([hidden])) .jb-sub { display: none; }
+}
+@media (max-height: 700px) and (min-width: 701px) { .fb-head { padding-top: 54px; } .fb-line { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .jbreathe.fb, .jbreathe.fb .jb-word, .jbreathe.fb .jb-word.fb-in, .fb-c, .fb-info, .fb-breath, .fb-offer { transition: none; animation: none; }
+  .fb-drift, .fb-tw i { animation: none; }
+  .fb-tw i { opacity: calc(var(--a) * .7); }
+}

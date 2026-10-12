@@ -21,7 +21,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: chapters use different symbols (not only the mandala)`, kinds >= 4, `${kinds} kinds`);
   ok(`${label}: a lotus divider sits above the footer`, (await p.locator('.lotusdiv').count()) === 1);
   await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open');
-  ok(`${label}: the breathing screen has the tree growing behind the flame`, (await p.locator('.jbreathe .jb-tree canvas.fb-bodhi').count()) === 1);
+  ok(`${label}: the breathing screen opens on the candles under a starry night sky`, (await p.locator('.jbreathe canvas.fb-stars').count()) === 1 && (await p.locator('.jbreathe .fb-c').count()) >= 1);
   await p.keyboard.press('Escape'); await p.waitForTimeout(700);
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
   ok(`${label}: no JS errors`, errs.length === 0, errs.join('|'));
