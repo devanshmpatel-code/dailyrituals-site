@@ -12,14 +12,16 @@ const flow = await p.evaluate(() => [...document.querySelectorAll('main section.
 ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,sage,gold,rose,euc,plum,night,night-solid', flow.map(f => f.g).join(','));
 ok('home: every chapter after the first blends from the previous colour', flow.filter(f => f.g !== 'night-solid').every(f => /linear-gradient/.test(f.bg)), flow.map(f => f.bg.slice(0, 30)).join(' | '));
 ok('home: no see-through fades or hairlines between chapters', flow.every(f => f.mask === 'none' && f.bt === '0px'));
-ok('home: chapters are numbered 1 to 8 in journey order', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '12345678');
+// the Discovery Kit chapter was removed (owner, October 2026): the chapters after it moved up one, so they still run 1, 2, 3…
+ok('home: chapters are numbered 1 to 7 in journey order, with no gap', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '1234567');
+ok('home: the Discovery Kit chapter is gone', await p.evaluate(() => !document.querySelector('main .disc') && !/Discovery Kit/.test(document.querySelector('main').innerText)));
+ok('home: the Ritualists are chapter 6 and Moon Drops chapter 7', await p.evaluate(() => /Chapter 6 · Belong/.test(document.querySelector('.club').textContent) && /Chapter 7/.test(document.querySelector('.drop-grid').textContent)));
 ok('home: the first chapter eases down from the dark opening strip', /gradient/.test(await cs('.moment-shop', 'backgroundImage')));
 ok('home: the footer rises out of a soft fade', /gradient/.test(await p.evaluate(() => getComputedStyle(document.querySelector('footer'), '::before').backgroundImage)));
 const radii = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card .ph')].map(e => getComputedStyle(e).borderTopLeftRadius));
 ok('home: product pictures alternate arch and soft-window cutouts', new Set(radii).size >= 2 && radii.some(r => parseFloat(r) > 100), radii.join(' '));
 const plans = await p.evaluate(() => [...document.querySelectorAll('.plans .plan')].map(e => getComputedStyle(e).backgroundImage.includes('gradient')));
 ok('home: plan cards are tinted, none flat white', plans.length === 3 && plans.every(Boolean), plans.join(','));
-const discMask = await cs('.disc .ph', 'maskImage'); ok('home: the Discovery photo dissolves into its card', /gradient/.test(discMask ?? ''));
 const tiles = await p.evaluate(() => new Set([...document.querySelectorAll('.wall .tile img')].map(e => getComputedStyle(e).borderTopLeftRadius)).size);
 ok('home: Ritual Wall photos use a mix of cutouts', tiles >= 3, `${tiles} shapes`);
 const f = () => p.evaluate(() => getComputedStyle(document.querySelector('#msGrid .card .ph img.main, .wall .tile img')).filter);

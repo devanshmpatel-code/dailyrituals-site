@@ -359,8 +359,6 @@ footer::before { content: ""; position: absolute; left: 0; right: 0; top: -90px;
 .badge { border-radius: 999px; }
 .path2 .p-img { position: relative; min-height: 340px; height: 100%; border-radius: 150px 16px 150px 16px; }
 .path2 .p-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.disc { border-radius: 56px 12px 56px 12px; box-shadow: var(--lift); }
-.disc .ph { -webkit-mask-image: linear-gradient(to right, #000 80%, transparent 100%); mask-image: linear-gradient(to right, #000 80%, transparent 100%); }
 .drop-img { -webkit-mask-image: linear-gradient(to bottom, #000 84%, transparent 100%); mask-image: linear-gradient(to bottom, #000 84%, transparent 100%); }
 .wall .tile:nth-child(3n+1) img { border-radius: 999px 999px 18px 18px; }
 .wall .tile:nth-child(3n+2) img { border-radius: 24px; }
@@ -567,10 +565,9 @@ body:not(.no-grade) .dayhero[data-m="dawn"] img[data-mimg] { filter: brightness(
 .df[data-ground="night"] { background: linear-gradient(180deg, #2B1B33 0, #120F1F 200px, #120F1F 100%) !important; }
 .df[data-ground="night-solid"] { background: #120F1F !important; padding-top: 0; }
 /* inner panels that used to carry their own tint sit flat on the flowing ground */
-.df[data-ground="sand"] .disc { background: #F7E4C6; box-shadow: none; }
 .df .plans .plan:not(.best) { box-shadow: none; }
 
-/* Chapter 6 on eucalyptus */
+/* Chapter 5 on eucalyptus */
 .coachflow .cf-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: center; }
 .coachflow .cf-tx { grid-column: span 6; display: flex; flex-direction: column; gap: 18px; }
 .coachflow .chapter { color: #E1EAE5; } .coachflow h2 { color: #FFFFFF; } .coachflow p { color: #E1EAE5; font-size: 18px; max-width: 52ch; margin: 0; }
@@ -924,7 +921,6 @@ body[data-page="club"] .clubsoon { padding-bottom: clamp(56px, 7vw, 96px); }
 @media (max-width: 600px) { .ms-tabs { display: flex; gap: 4px; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; } .ms-tabs::-webkit-scrollbar { display: none; } .ms-tabs button { flex: none; padding-inline: 10px; } }
 .wall-cta { border-radius: 28px 8px 28px 8px; padding: 24px 28px; }
 .steps3 div { border-radius: 16px; }
-.disc .tx .cta { margin-top: 4px; }
 .plan { transition: transform .35s cubic-bezier(.2, .7, .2, 1), box-shadow .35s; }
 .plan:hover { transform: translateY(-4px); box-shadow: 0 30px 56px -34px rgba(42, 31, 51, .55); }
 .plan.best:hover { transform: translateY(-14px); }

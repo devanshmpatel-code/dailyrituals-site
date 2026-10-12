@@ -14,9 +14,6 @@
 /* product page: the refill choice is coming soon */
 .po label.po-soon { opacity: .6; cursor: not-allowed; }
 .po label.po-soon select { pointer-events: none; }
-/* home chapter 2: the five moods stand in for the kit until there is a photograph of it */
-.disc .ph.disc-const { display: grid; place-items: center; min-height: 320px; padding: clamp(24px, 4vw, 48px); color: var(--ink, #231A2B); background: radial-gradient(circle at 50% 45%, rgba(255, 252, 247, .9), rgba(243, 226, 200, .5)); }
-.disc .ph.disc-const svg { width: min(100%, 420px); height: auto; overflow: visible; }
 
 /* ---------- the Ritual Wall ---------- */
 .wall-top { margin-bottom: clamp(36px, 5vw, 64px); }

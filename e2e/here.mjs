@@ -9,7 +9,7 @@ for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false],
   await p.goto((process.env.BASE ?? 'http://localhost:4173/#') + '/'); await p.waitForSelector('.jhere', { state: 'attached' }); await p.waitForTimeout(600);
   ok(`${label}: no "you are here" card on the opening`, !(await p.locator('.jhere.on').count()));
   const goCh = async k => { await p.evaluate(k => { const c = [...document.querySelectorAll('main .chapter')].find(x => new RegExp('Chapter ' + k + ' ').test(x.textContent)); window.scrollTo(0, window.scrollY + c.closest('section').getBoundingClientRect().top - 60); }, k); await settle(p); };
-  for (const k of [2, 5, 8]) {
+  for (const k of [2, 5, 7]) {
     await goCh(k);
     const num = Number(await p.locator('.jh-n').innerText());
     ok(`${label}: the card shows chapter ${k}`, num === k, `${num}`);

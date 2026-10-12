@@ -298,7 +298,7 @@ function wireMomentShop(app: HTMLElement, items: Item[]) {
   show('dawn');
 }
 
-// ---------- Chapter 4: refill calculator ----------
+// ---------- Chapter 3: refill calculator ----------
 // Ritual on Repeat is not open yet: the calculator illustrates the planned 10% saving on today's shop prices.
 // Every price comes from the live catalogue: the chosen scent in the chosen format, or, when that scent is not made in that
 // format, the lowest price in the format (shown as "from"). Candles come in sizes, so the candle is priced as its smallest
