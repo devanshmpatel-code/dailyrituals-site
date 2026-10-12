@@ -55,7 +55,7 @@ let menuHrefs = [];
   const stillOpen = (await anyOpen()) >= 1;
   await p.waitForTimeout(250);
   ok('desktop: moving to Find your scent switches panels without closing first', stillOpen && (await isOpen('explore')) && !(await isOpen('shop')));
-  ok('desktop: the Find your scent flyout offers the atlas, the quiz and a mood to start from', await p.evaluate(() => { const t = document.getElementById('gn-panel-explore').innerText; return ['read the atlas', 'take the quiz', 'start from a mood', 'free 20-min call'].every(s => t.toLowerCase().includes(s)); }));
+  ok('desktop: the Find your scent flyout offers the atlas, the quiz and a mood to start from', await p.evaluate(() => { const t = document.getElementById('gn-panel-explore').innerText; return ['scent atlas', 'take the quiz', 'start from a mood', 'free 20-min call'].every(s => t.toLowerCase().includes(s)); }));
   await hover('.gn-item[data-id="coaching"] .gn-link'); await p.waitForTimeout(300);
   ok('desktop: the Coaching flyout leads with the free reset and the free call', await p.evaluate(() => { const t = document.getElementById('gn-panel-coaching').innerText; return t.includes('Free 7-day reset') && t.includes('Free 20-min call with Claire') && t.includes('Neuro coaching'); }));
   await p.mouse.move(720, 820); await p.waitForTimeout(40);

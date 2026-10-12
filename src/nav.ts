@@ -40,7 +40,7 @@ const MENU: Entry[] = [
   },
   {
     id: 'explore', label: 'Find your scent', href: '#/explore', columns: [
-      { kind: 'elevated', links: [{ label: 'Read the atlas', href: '#/explore' }, { label: 'Take the quiz', href: '#/explore?tab=quiz' }] },
+      { kind: 'elevated', links: [{ label: 'Scent atlas', href: '#/explore' }, { label: 'Take the quiz', href: '#/explore?tab=quiz' }] },
       { title: 'Start from a mood', kind: 'moods', links: moodLinks(m => `#/explore?mood=${m}`) },
       { title: 'Still unsure?', links: [{ label: 'Free 20-min call with Claire', href: '#/book' }, { label: 'Help and contact', href: '#/help' }] },
     ],
@@ -48,7 +48,7 @@ const MENU: Entry[] = [
   {
     id: 'coaching', label: 'Coaching', href: '#/coaching', columns: [
       { kind: 'elevated', links: [{ label: 'Free 7-day reset', href: '#/reset' }, { label: 'Free 20-min call with Claire', href: '#/book' }, { label: 'Neuro coaching', href: '#/coaching' }] },
-      { title: 'About', links: [{ label: 'Our story', href: '#/story' }, { label: 'Help and contact', href: '#/help' }] },
+      { title: 'About', links: [{ label: 'Meet the maker', href: '#/story' }, { label: 'Help and contact', href: '#/help' }] },
     ],
   },
   { id: 'drops', label: 'Moon Drops', href: '#/drops' },
@@ -56,7 +56,7 @@ const MENU: Entry[] = [
 ];
 /** Phone-only rows and small links (all existing pages). */
 const PHONE_ROWS: Link[] = [{ label: 'Ritual on Repeat', href: '#/subscribe' }];
-const PHONE_SMALL: Link[] = [{ label: 'The Journal', href: '#/journal' }, { label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }, { label: 'Our story', href: '#/story' }, { label: 'Help', href: '#/help' }, { label: 'My account', href: '#/account' }];
+const PHONE_SMALL: Link[] = [{ label: 'The Journal', href: '#/journal' }, { label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }, { label: 'Meet the maker', href: '#/story' }, { label: 'Help', href: '#/help' }, { label: 'My account', href: '#/account' }];
 
 const fine = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;

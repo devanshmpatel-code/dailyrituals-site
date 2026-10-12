@@ -307,7 +307,7 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
     return `<span class="eyebrow">The scent atlas</span><h3>Read the sky <span class="it">for your scent.</span></h3>
       <p class="muted">Each mood is a constellation and each star in it is a scent. Tap a constellation to turn the sky towards it, then a star to see how it comes and what it costs.</p>
       ${all.length ? `<p class="small muted">${n} scents across ${moods.length} moods, from ${money(from)}.</p>` : ''}
-      <div class="cta"><button class="btn" data-guide="1">Guide me</button><a class="btn line" href="#/explore?tab=quiz">Take the quiz</a></div>`;
+      <div class="cta"><button class="btn" data-guide="1">Guide me</button></div>`; // (the quiz is the tab above: not repeated here)
   };
 
   // ---- behaviour ----

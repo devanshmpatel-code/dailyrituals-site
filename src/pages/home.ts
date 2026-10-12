@@ -1,6 +1,6 @@
 import Main from '../canvas/pages/Main.html?raw';
 import { MOMENTS, MOODS, LOYALTY_ENABLED, type Moment, type MomentKey } from '../config';
-import { constellation } from '../celestial';
+import { ritualistsCardHTML, wireRitualistsCard } from '../brand';
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
@@ -13,6 +13,7 @@ import { swapRenders } from '../photos';
 import { applyDrop, dropBarHTML } from '../drop';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd, wireNotify } from './shared';
 import { journalTeaserHTML } from './journal';
+import { mountRibbon } from '../ribbon';
 import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHero, heroLook, heroLight, repeatPhotoHTML, giftPhotoHTML } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
@@ -58,9 +59,11 @@ export async function renderHome(app: HTMLElement) {
   swapRenders(app);
   wireStudio(app);
   wireCommon(app);
+  mountRibbon(app); // the proof ribbon under the opening: a lit band turning slowly round a drum
   wireHeroStatic(app);
-  // the Ritualists head: the five moods as a constellation (gold hairlines on the night), in place of the old moon arc
-  if (!LOYALTY_ENABLED) app.querySelector('.club .head')?.insertAdjacentHTML('beforeend', `<div class="cs-const" aria-hidden="true">${constellation({ labels: true })}</div>`);
+  // the Ritualists head: an embossed membership card with Claire's logo and a wax seal (the owner preferred it to the mood
+  // constellation). The club is not open: the card says "coming soon" and promises nothing.
+  if (!LOYALTY_ENABLED) { app.querySelector('.club .head')?.insertAdjacentHTML('beforeend', ritualistsCardHTML()); wireRitualistsCard(app.querySelector('.club') ?? app); }
   wireRepeatCalc(app, null);
   wireVote(app);
   wireCountdown(app);

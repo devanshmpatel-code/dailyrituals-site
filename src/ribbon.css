@@ -1,0 +1,43 @@
+/* ======================================================================
+   The proof ribbon under the opening (src/ribbon.ts): a band of dark satin turning slowly round an unseen drum, lit by a
+   light that travels along it. Until the script has built it, the plain marquee from canvas.css shows.
+   ====================================================================== */
+.proof-strip.rb-on { position: relative; height: 112px; padding: 0; overflow: hidden; white-space: nowrap; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none;
+  /* a warm spill of light under the ribbon, on the same ink as the opening's foot and the chapter below */
+  background: radial-gradient(60% 120% at 50% 70%, rgba(226, 160, 74, .13), rgba(226, 160, 74, 0) 70%), var(--ink);
+  border-block: 0; }
+.proof-strip.rb-drag { cursor: grabbing; }
+/* the facts themselves stay in the page for screen readers, read once; the ribbon shows copies */
+.proof-strip.rb-on .rb-src { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; animation: none; padding: 0; margin: -1px; }
+.rb-stage { position: absolute; inset: 0; pointer-events: none;
+  /* the ribbon's ends melt into the dark rather than stopping at the edge of the screen */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%); }
+.rb-band { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.rb-shadow { fill: none; stroke: rgba(4, 2, 8, .55); stroke-width: 14px; filter: blur(7px); }
+.rb-gloss { fill: none; stroke: rgba(255, 228, 196, .16); stroke-width: 1px; }
+.rb-edge { fill: none; stroke: rgba(233, 212, 161, .6); stroke-width: 1px; filter: drop-shadow(0 0 3px rgba(243, 210, 154, .55)); }
+.rb-edge-lit { stroke-width: 1.4px; opacity: calc(var(--sheen, 0) * .9); transition: opacity .6s; }
+.rb-bloom { mix-blend-mode: screen; opacity: calc(var(--sheen, 0) * .8); transition: opacity .6s; }
+.rb-key { mix-blend-mode: screen; opacity: .1; }
+.rb-sheen { mix-blend-mode: screen; opacity: var(--sheen, 0); transition: opacity .6s; }
+/* the facts: placed in 3D by the script, on the drum's surface */
+.rb-track { position: absolute; inset: 0; perspective: var(--rb-p, 1500px); transform-style: preserve-3d; }
+.rb-it { --lit: 0; position: absolute; left: 0; top: 50%; margin-top: -12px; height: 24px; display: inline-flex; align-items: center; gap: 16px;
+  backface-visibility: hidden; will-change: transform; transform-origin: 50% 50%; }
+.rb-tx { font: 500 15px/24px var(--body); letter-spacing: .015em; color: rgb(243 236 245 / calc(.8 + .2 * var(--lit)));
+  text-shadow: 0 1px 0 rgba(10, 4, 14, .55), 0 0 calc(14px * var(--lit)) rgb(255 214 150 / calc(.75 * var(--lit))); }
+.rb-sep { display: inline-flex; width: 13px; height: 13px; flex: none; color: #F3D29A;
+  filter: drop-shadow(0 0 calc(3px + 7px * var(--lit)) rgb(255 190 110 / calc(.55 + .45 * var(--lit)))); opacity: calc(.8 + .2 * var(--lit)); }
+.rb-sep svg { width: 100%; height: 100%; fill: currentColor; overflow: visible; }
+.rb-sep svg .core { fill: #FFF6E2; }
+/* the opening above and Chapter 1 below keep their seams: the ribbon sits on the same ink */
+@media (max-width: 620px) {
+  .proof-strip.rb-on { height: 92px; }
+  .rb-stage { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%); }
+  .rb-it { gap: 12px; }
+  .rb-tx { font-size: 13.5px; }
+  .rb-sep { width: 11px; height: 11px; }
+}
+/* with drafts showing, an unconfirmed fact is highlighted like every other draft (outline, since the ribbon is dark) */
+body.show-drafts .rb-tx.d { background: none; box-shadow: none; color: #F7E4C6; text-decoration: underline dashed rgba(247, 228, 198, .7); text-underline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .rb-edge-lit, .rb-sheen, .rb-bloom { transition: none; } }

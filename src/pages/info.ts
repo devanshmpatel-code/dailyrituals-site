@@ -41,21 +41,22 @@ export function renderHelp(app: HTMLElement) {
 }
 
 export function renderStory(app: HTMLElement) {
-  // Everything here is taken from what the site already says (coaching page, footer). Claire to expand it.
+  // "Meet the maker": the owner asked for Claire's own voice ("My story", not "Our story"). Every fact is one the site already
+  // states (coaching page, footer); the first-person wording is new, so it is a draft for Claire (.d). Claire to expand it.
   const beats: [string, string][] = [
-    ['Years of searching', 'Claire lived with chemical sensitivities for years.'],
-    ['A new way in', "With a doctor's guidance she discovered neuroplasticity and learned to rewire her brain's response."],
-    ['Learning to teach it', 'She trained as a neuro coach to share that knowledge.'],
-    ['Daily Rituals Co.', 'Clean products made with intention, hand poured in small batches in British Columbia, with coaching alongside.'],
+    ['Years of searching', 'I lived with chemical sensitivities for years.'],
+    ['A new way in', "With a doctor's guidance I discovered neuroplasticity and learned to rewire my brain's response."],
+    ['Learning to teach it', 'I trained as a neuro coach to share that knowledge.'],
+    ['Daily Rituals Co.', 'So I began making clean products with intention, hand poured in small batches in British Columbia, with coaching alongside.'],
   ];
   app.innerHTML = `<div class="story">
     <section class="st-hero"><div class="wrap">
-      <div class="st-tx"><span class="small"><a href="#/">Home</a> <span class="muted">/ Our story</span></span><h1>Our <span class="it">story</span></h1>
-        <p class="lead">Clean products made with intention. Neuro coaching with Claire. Hand poured in small batches in British Columbia.</p></div>
+      <div class="st-tx"><span class="small"><a href="#/">Home</a> <span class="muted">/ Meet the maker</span></span><h1>Meet the <span class="it">maker</span></h1>
+        <p class="lead"><span class="d">Hi, I'm Claire. I make clean products with intention, hand poured in small batches in British Columbia, and I coach people through the habits behind their days.</span></p></div>
       <div class="st-ph"><img src="/img/studio/web/hero-verdant-1000.webp" srcset="/img/studio/web/hero-verdant-720.webp 720w, /img/studio/web/hero-verdant-1000.webp 1000w" sizes="(max-width: 820px) 90vw, 44vw" alt="Verdant: a lit candle in a glass tumbler with the black Daily Rituals label, a small lit black tin in front" width="1000" height="1000" decoding="async"></div>
     </div></section>
-    <section class="wrap st-path"><span class="eyebrow">How it began</span><h2>From one life changed <span class="it">to a daily practice.</span></h2>
-      <ol class="st-steps">${beats.map(([t, d], i) => `<li style="--i:${i}"><span class="st-dot" aria-hidden="true">${['\u2726', '\u2735', '\u2740', '\u2600'][i]}</span><b>${t}</b><p>${d}</p></li>`).join('')}</ol>
+    <section class="wrap st-path"><span class="eyebrow">My story</span><h2><span class="d">From one life changed <span class="it">to a daily practice.</span></span></h2>
+      <ol class="st-steps">${beats.map(([t, d], i) => `<li style="--i:${i}"><span class="st-dot" aria-hidden="true">${['\u2726', '\u2735', '\u2740', '\u2600'][i]}</span><b>${t}</b><p><span class="d">${d}</span></p></li>`).join('')}</ol>
       <p class="small muted d confirm">Draft from the coaching page text. Claire to add dates, detail and photos.</p></section>
     <section class="st-quote"><div class="wrap"><img class="st-claire" src="/img/studio/web/claire-round.webp" alt="Claire, founder of Daily Rituals Co." width="360" height="360" loading="lazy" decoding="async"><blockquote>&ldquo;Others deserved access to the brain-change knowledge that transformed my life.&rdquo;<cite>Claire, neuro coach</cite></blockquote></div></section>
     <section class="wrap st-vals"><div class="ways three">
@@ -78,11 +79,12 @@ export function renderAccount(app: HTMLElement) {
 
 export async function renderExplore(app: HTMLElement, params: URLSearchParams = new URLSearchParams()) {
   const tab = params.get('tab') === 'quiz' ? 'quiz' : 'wheel';
-  // draft for Claire: the lead and the tab name describe the scent atlas (wheel.ts)
+  // draft for Claire: the lead describes the scent atlas (wheel.ts). The tabs are the one place to switch between the atlas and
+  // the quiz (the owner chose "Scent atlas", a plain noun, over "Read the atlas"); the atlas panel no longer repeats them.
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px)">
     ${head('Find your scent', 'Find your <span class="it">scent</span>', 'Two ways in: read the scent atlas, where every mood is a constellation and every star a scent, or answer four quick questions.')}
     <div class="toggle findtabs" role="tablist" aria-label="How to find your scent">
-      <a role="tab" href="#/explore" aria-selected="${tab === 'wheel'}">Read the atlas</a>
+      <a role="tab" href="#/explore" aria-selected="${tab === 'wheel'}">Scent atlas</a>
       <a role="tab" href="#/explore?tab=quiz" aria-selected="${tab === 'quiz'}">Take the quiz</a></div>
     <div id="wheelMount"><div class="sk-line"></div><div class="sk-line short"></div></div>
     <div id="exp"></div></div>`;

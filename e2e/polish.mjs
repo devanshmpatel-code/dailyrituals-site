@@ -25,6 +25,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: Moon Drops no longer says "available now"`, !/available now/i.test(await visText(p)));
   await p.goto(base + '/story'); await p.waitForSelector('.st-steps');
   ok(`${label}: story has the four beats and the quote`, (await p.locator('.st-steps li').count()) === 4 && (await p.locator('.st-quote blockquote').count()) === 1);
+  ok(`${label}: the story page is "Meet the maker", with "My story" in Claire's own words (drafts)`, /^Meet the maker$/i.test((await p.locator('#app h1').innerText()).trim()) && /My story/i.test(await p.locator('.st-path > .eyebrow').innerText()) && await p.evaluate(() => [...document.querySelectorAll('.st-steps li p')].every(x => x.querySelector('.d') && /\b(I|my)\b/.test(x.textContent))) && /Meet the maker/.test(await p.title()));
+  ok(`${label}: no "Our story" left in the header, menu or footer`, await p.evaluate(() => !/our story/i.test([...document.querySelectorAll('header, footer, #mobileMenu')].map(e => e.textContent).join(' ')) && [...document.querySelectorAll('footer a[href$="/story"]')].every(a => a.textContent.trim() === 'Meet the maker')));
   await p.goto(base + '/explore'); await p.waitForSelector('.fl-card');
   ok(`${label}: the full scent list is grouped by mood`, (await p.locator('.fl-group').count()) >= 5);
   for (const r of ['/', '/shop', '/club', '/story', '/explore', '/subscribe']) { await p.goto(base + r); await p.waitForTimeout(900); const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label} ${r}: no sideways scroll`, o <= 1, `${o}`); }

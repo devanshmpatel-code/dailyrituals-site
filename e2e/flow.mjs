@@ -16,6 +16,34 @@ ok('home: no see-through fades or hairlines between chapters', flow.every(f => f
 ok('home: chapters are numbered 1 to 7 in journey order, with no gap', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '1234567');
 ok('home: the Discovery Kit chapter is gone', await p.evaluate(() => !document.querySelector('main .disc') && !/Discovery Kit/.test(document.querySelector('main').innerText)));
 ok('home: the Ritualists are chapter 6 and Moon Drops chapter 7', await p.evaluate(() => /Chapter 6 · Belong/.test(document.querySelector('.club').textContent) && /Chapter 7/.test(document.querySelector('.drop-grid').textContent)));
+// the proof ribbon under the opening: a lit band turning round a drum (src/ribbon.ts). Its unconfirmed facts ("[Confirm: …]")
+// are drafts for Claire: never shown to customers, not even as moving copies
+await p.evaluate(() => document.querySelector('.proof-strip').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
+const rib = await p.evaluate(() => { const s = document.querySelector('.proof-strip'); const vis = [...s.querySelectorAll('.rb-it')].filter(e => e.style.visibility !== 'hidden');
+  return { on: s.classList.contains('rb-on'), band: !!s.querySelector('.rb-band .rb-shape')?.getAttribute('d'), text: s.innerText, copies: [...s.querySelectorAll('.rb-tx')].map(e => e.textContent).join('|'),
+    seps: s.querySelectorAll('.rb-sep svg').length, n: vis.length, three: vis.some(e => /rotateY\((?!0\.00deg)/.test(e.style.transform) && /translate3d\([^)]*, -?[1-9]/.test(e.style.transform)), hidden: s.getAttribute('aria-label') && s.querySelector('.rb-stage').getAttribute('aria-hidden') }; });
+ok('home: the proof strip is a lit 3D ribbon, its facts on the turning band with glowing star and flame glyphs', rib.on && rib.band && rib.n >= 3 && rib.three && rib.seps >= rib.n, JSON.stringify({ ...rib, text: undefined, copies: undefined }));
+ok('home: the ribbon never shows a "[Confirm: …]" placeholder to customers', !/\[confirm/i.test(rib.text) && !/confirm/i.test(rib.copies) && (await p.locator('.proof-strip .confirm:visible').count()) === 0, rib.copies);
+ok('home: screen readers get each fact once (the moving copies are hidden from them)', rib.hidden === 'true' && (await p.locator('.proof-strip .rb-src > span').count()) === 6);
+const pos = () => p.evaluate(() => [...document.querySelectorAll('.proof-strip .rb-it')].map(e => e.style.transform).join('|'));
+const pos0 = await pos(); await p.waitForTimeout(700);
+ok('home: the ribbon turns slowly', pos0 !== await pos());
+{ // the drafts toggle: Claire sees the placeholders in the ribbon; switching it off takes them away again
+  await p.evaluate(() => document.getElementById('draftsToggle')?.click()); await p.waitForTimeout(400);
+  const on = await p.evaluate(() => [...document.querySelectorAll('.proof-strip .rb-tx')].map(e => e.textContent).join('|'));
+  await p.evaluate(() => document.getElementById('draftsToggle')?.click()); await p.waitForTimeout(400);
+  const off = await p.evaluate(() => [...document.querySelectorAll('.proof-strip .rb-tx')].map(e => e.textContent).join('|'));
+  ok('home: with "Show drafts for Claire" the ribbon shows the placeholders, and hides them again when it is off', /\[Confirm/.test(on) && !/Confirm/.test(off));
+}
+{ // reduced motion: the ribbon is still, lit and legible
+  const rc = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', deviceScaleFactor: 2, isMobile: true, hasTouch: true }); const rp = await rc.newPage(); await setupMocks(rp);
+  await rp.goto(base + '/'); await rp.waitForSelector('.proof-strip.rb-on'); await rp.evaluate(() => document.querySelector('.proof-strip').scrollIntoView({ block: 'center' })); await rp.waitForTimeout(900);
+  const a = await rp.evaluate(() => [...document.querySelectorAll('.proof-strip .rb-it')].map(e => e.style.transform).join('|')); await rp.waitForTimeout(900);
+  const r2 = await rp.evaluate(() => { const s = document.querySelector('.proof-strip'), r = s.getBoundingClientRect(); const mid = [...s.querySelectorAll('.rb-it')].find(e => { const q = e.getBoundingClientRect(); return q.left < innerWidth / 2 && q.right > innerWidth / 2; }); const q = mid?.getBoundingClientRect();
+    return { t: [...s.querySelectorAll('.rb-it')].map(e => e.style.transform).join('|'), fits: !!q && q.left >= 0 && q.right <= innerWidth, size: mid ? parseFloat(getComputedStyle(mid.querySelector('.rb-tx')).fontSize) : 0, sw: document.documentElement.scrollWidth - innerWidth }; });
+  ok('reduced motion (phone): the ribbon stands still, a whole fact readable in the middle, no sideways scroll', a === r2.t && r2.fits && r2.size >= 13 && r2.sw <= 1, JSON.stringify({ ...r2, t: undefined }));
+  await rc.close();
+}
 ok('home: the first chapter eases down from the dark opening strip', /gradient/.test(await cs('.moment-shop', 'backgroundImage')));
 ok('home: the footer rises out of a soft fade', /gradient/.test(await p.evaluate(() => getComputedStyle(document.querySelector('footer'), '::before').backgroundImage)));
 const radii = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card .ph')].map(e => getComputedStyle(e).borderTopLeftRadius));
