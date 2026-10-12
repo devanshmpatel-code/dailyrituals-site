@@ -2,6 +2,7 @@ import './canvas/canvas.css';
 import './site.css';
 import './celestial.css';
 import './studio.css';
+import './trust.css';
 import Header from './canvas/header.html?raw';
 import Footer from './canvas/footer.html?raw';
 import Drawer from './canvas/drawer.html?raw';
@@ -15,7 +16,7 @@ import { unmountJourney, openBreathe } from './pages/journey';
 import { decoratePage } from './pages/calm';
 import { cleanupMotion, mountSay, mountShapes, markMorphTarget } from './pages/motion';
 import { renderJournal } from './pages/journal';
-import { unmountDayScrub } from './pages/home';
+import { unmountDayScrub, refreshDropBar } from './pages/home';
 import { getSky } from './pages/sky';
 import { treeSVG, lotusDivider } from './pages/symbols';
 import { celestialChrome, celestialPage, shipArc } from './celestial';
@@ -51,6 +52,8 @@ document.querySelector('footer')?.insertAdjacentHTML('beforebegin', lotusDivider
 growTree();
 // the celestial layer on the chrome: the footer's star chart, constellation and tonight's moon, and the cart header
 celestialChrome(root);
+// the announcement bar: when the next new moon is (Moon Drops are a concept: it says when, never a price)
+refreshDropBar();
 
 // anything marked data-breathe opens the breathing pause
 document.addEventListener('click', e => { const sc = (e.target as Element | null)?.closest?.('[data-scrollto]') as HTMLElement | null; if (sc) { e.preventDefault(); const el = document.getElementById(sc.dataset.scrollto ?? ''); el?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }); el?.focus?.(); } });

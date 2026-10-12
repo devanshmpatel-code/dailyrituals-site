@@ -41,7 +41,7 @@ export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
     if (!live) {
       // not in the store yet: say so plainly and offer the Monthly Ritual instead of a dead "add" button
       b.textContent = 'Coming soon · get notified'; b.classList.add('soon');
-      b.addEventListener('click', () => { const f = document.getElementById('nemail'); if (f) { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); (f as HTMLInputElement).focus({ preventScroll: true }); } else previewOff('This item is not in the live store yet, so it')(); });
+      b.addEventListener('click', notifyMe);
       return;
     }
     b.textContent = `Quick add · ${money(live.priceMin)}`;
@@ -64,3 +64,19 @@ export function wireQuickAdd(root: HTMLElement, items: Item[]) {
 
 export const previewOff = (what: string) => () =>
   toast(`${what} is switched off in this private preview.`);
+
+/**
+ * "Coming soon · get notified": the only action a concept (Discovery Kit, Moon Drops, Solstice Box, Ritual on Repeat, gift
+ * cards) offers. It leads to the email sign-up on the page (the Monthly Ritual, or the club's "Tell me first"); pages without
+ * one say plainly that sign-ups are not open in the preview. Nothing is reserved and no price is shown.
+ */
+export function notifyMe() {
+  const f = document.querySelector<HTMLInputElement>('#nemail, #csEmail');
+  if (f) { f.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }); f.focus({ preventScroll: true }); return; }
+  toast('Not in the shop yet. Sign-ups for news are switched off in this private preview.');
+}
+
+/** Wire every [data-notify] button inside root (once). */
+export function wireNotify(root: ParentNode) {
+  root.querySelectorAll<HTMLElement>('[data-notify]:not([data-notify-wired])').forEach(b => { b.dataset.notifyWired = '1'; b.addEventListener('click', notifyMe); });
+}

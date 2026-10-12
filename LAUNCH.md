@@ -19,6 +19,10 @@ Only step 5 changes the live site. Everything before it is safe to do while the 
 - [ ] The return window is settled: the scrolling strip says "10 days to start a return", but the store policy text says something else.
 - [ ] Auto-picked photos are reviewed.
 - [ ] Mood assignments are set for Amber + Rose, Licorice Sweets and Fleur de Lilac.
+- [ ] **Question for Claire: are Amber + Rose, Licorice Sweets and Fleur de Lilac still for sale?** In Wix their addresses end in `-need-pics` (`amber-rose-need-pics`, `licorice-sweets-need-pics`, `fleur-de-lilac-need-pics`), they have no photos, and they come in Mini / Medium / Large rather than 2 oz / 8 oz. They may be past seasonal scents. Today they are visible and buyable in the store, so the site shows them in the shop and on Find your scent. If they are past scents, hide them in Wix (the site follows) so they never look buyable; if they are current, add photos and set their mood.
+- [ ] Moon Drops: the site counts down to the next new moon (computed) and offers only "get notified". To announce a real release date, set `VITE_DROP_DATE` (or `DROP_DATE_OVERRIDE` in `src/config.ts`).
+- [ ] Concepts shown as "Coming soon" with no price: Discovery Kit, Moon Drops, Solstice Box, Ritual on Repeat (refills), digital gift cards. Claire to confirm which, if any, should launch, and their prices.
+- [ ] The Send a Sunrise sets (The Morning Ritual $34, The Midday Reset $36, The Evening Wind Down $46) are not products in Wix; their contents and prices are drafts to confirm.
 
 ## 1. Vercel (owner: Devansh)
 - [ ] Move the project to a paid plan. The free (Hobby) plan is for non-commercial use, so check Vercel's current terms.

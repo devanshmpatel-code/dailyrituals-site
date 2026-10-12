@@ -14,6 +14,7 @@ import { esc } from './ui';
 import { glyph, moonRow, tonightName } from './celestial';
 import { currentRoute } from './router';
 import { MOMENTS } from './config';
+import { dropState } from './drop';
 import { mountTins, type Tin, type TinSize, type TinSpot, type TinsHero } from './pages/tins3d';
 
 export type Season = 'winter' | 'love' | 'spring' | 'autumn' | 'any';
@@ -221,7 +222,7 @@ export function pastMoonsHTML(): string {
   const card = (m: Moon) => `<li class="pm-card${m.slug === 'midnight-forest' ? ' feature' : ''}" data-moon="${m.slug}" id="pm-${m.slug}">
       <img src="${moonSrc(m.slug)}" alt="${esc(alt(m.slug))}" width="520" height="520" loading="lazy" decoding="async">
       <div class="pm-tx"><h4>${esc(m.name)}</h4>
-        ${m.quote ? `<q>${esc(m.quote)}</q>` : '<span class="pm-noq">No caption yet</span>'}${m.quote2 ? `<q>${esc(m.quote2)}</q>` : ''}
+        ${m.quote ? `<q>${esc(m.quote)}</q>` : ''}${m.quote2 ? `<q>${esc(m.quote2)}</q>` : ''}
         <small>${esc(SEASONS.find(s => s.key === m.season)!.label)}${m.when ? ` · ${esc(m.when)}` : ''}</small></div>
       ${m.slug === 'midnight-forest' ? `<img class="pm-photo" src="/img/studio/tins/midnight-forest-moons-900.webp" srcset="/img/studio/tins/midnight-forest-moons-480.webp 480w, /img/studio/tins/midnight-forest-moons-900.webp 900w" sizes="(max-width: 820px) 90vw, 360px" alt="Midnight Forest candles in black tins seen from above, each topped with small moon- and star-shaped stones" width="900" height="795" loading="lazy" decoding="async">` : ''}
     </li>`;
@@ -231,7 +232,7 @@ export function pastMoonsHTML(): string {
     return `<div class="pm-group" style="--n:${Math.min(3, list.length)};--n2:${Math.min(2, list.length)}"><h3 class="pm-season"><span>${esc(s.label)}</span><i></i></h3><ul class="pm-grid">${list.map(card).join('')}</ul></div>`;
   }).join('') +
     // the spare cell beside Love and Autumn: tonight's real moon (the site's phase row) and where new pours are announced. Draft for Claire.
-    `<aside class="pm-aside" aria-label="Tonight's moon"><span class="eyebrow">Tonight</span>${moonRow()}<p class="d">A ${esc(tonightName())} tonight. New pours are announced in the Monthly Ritual first.</p><a class="tlink" href="#/club">Join the Monthly Ritual</a></aside>`;
+    `<aside class="pm-aside" aria-label="Tonight's moon"><span class="eyebrow">Tonight</span>${moonRow()}<p class="d">${tonightName() === 'new moon' ? 'A new moon tonight.' : `Tonight's moon is a ${esc(tonightName())}; the next new moon is ${esc(dropState().dateText)}.`} New pours are announced in the Monthly Ritual first.</p><a class="tlink" href="#/club">Join the Monthly Ritual</a></aside>`;
   // draft for Claire: the heading, the lead and the "bring one back" idea (the idea stays a review note until she decides)
   return `<section class="pm" id="pastMoons" aria-labelledby="pmH">
     <div class="pm-head">

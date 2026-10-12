@@ -1,5 +1,5 @@
 import Main from '../canvas/pages/Main.html?raw';
-import { MOMENTS, MOODS, NEXT_DROP_ISO, LOYALTY_ENABLED, type Moment, type MomentKey } from '../config';
+import { MOMENTS, MOODS, LOYALTY_ENABLED, type Moment, type MomentKey } from '../config';
 import { constellation } from '../celestial';
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
@@ -10,7 +10,8 @@ import { mountSky, getSky } from './sky';
 import { mountJourney } from './journey';
 import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
-import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
+import { applyDrop, dropBarHTML } from '../drop';
+import { bindCanvasProductLinks, previewOff, wireQuickAdd, wireNotify } from './shared';
 import { journalTeaserHTML } from './journal';
 import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHeroTilt, repeatPhotoHTML, giftPhotoHTML } from '../moons';
 
@@ -296,32 +297,55 @@ function wireMomentShop(app: HTMLElement, items: Item[]) {
 }
 
 // ---------- Chapter 4: refill calculator ----------
-export function wireRepeatCalc(app: HTMLElement, items: Item[] | null) {
+// Ritual on Repeat is not open yet: the calculator illustrates the planned 10% saving on today's shop prices.
+// Every price comes from the live catalogue: the chosen scent in the chosen format, or, when that scent is not made in that
+// format, the lowest price in the format (shown as "from"). Candles come in sizes, so the candle is priced as its smallest
+// size and the button says which size that is. (The canvas once showed a hard-coded $36 candle: no candle in the shop costs
+// that; the sizes are 2 oz and 8 oz.) Until the catalogue has loaded, no price is shown rather than a guess.
+const sizeNum = (s: string) => parseFloat(s) || Number.POSITIVE_INFINITY;
+export function refillPrice(items: Item[], format: string, scent: string): { price: number; size: string; exact: boolean } | null {
+  // (the three candles whose Wix addresses end in -need-pics may be past seasonals: never offered as a refill, see LAUNCH.md)
+  const pool = items.filter(i => i.format === format && i.priceMin > 0 && !/-need-pics$/.test(i.slug));
+  if (!pool.length) return null;
+  const own = findLive(pool, scent, format as Item['format']);
+  const pick = own ?? pool.reduce((a, b) => (b.priceMin < a.priceMin ? b : a));
+  // the smallest size is the one priced at priceMin (sizes like "2 oz" sort by number; otherwise the first choice)
+  const size = format === 'candle' && pick.choices.length > 1 ? [...pick.choices].sort((a, b) => sizeNum(a.name) - sizeNum(b.name))[0].name : '';
+  return { price: pick.priceMin, size, exact: !!own };
+}
+
+// the catalogue each calculator was last given: the click handlers wired on the first call read the latest one from here
+const calcItems = new WeakMap<HTMLElement, Item[]>();
+export function wireRepeatCalc(app: HTMLElement, fresh: Item[] | null) {
   const calc = app.querySelector<HTMLElement>('#calc');
   if (!calc) return;
-  const price: Record<string, number> = { diffuser: 15, deodorant: 12, roller: 25, candle: 36 };
-  if (items) {
-    const min = (f: string) => Math.min(...items.filter(i => i.format === f).map(i => i.priceMin));
-    if (items.some(i => i.format === 'diffuser')) price.diffuser = min('diffuser');
-    if (items.some(i => i.format === 'roller')) price.roller = min('roller');
-    if (items.some(i => i.format === 'deodorant')) price.deodorant = min('deodorant');
-    calc.querySelectorAll<HTMLButtonElement>('[data-ci]').forEach(b => {
-      const k = b.dataset.ci!;
-      if (k !== 'candle') b.querySelector('small')!.textContent = money(price[k]);
-    });
-  }
+  if (fresh) calcItems.set(calc, fresh);
+  const scentSel = calc.querySelector<HTMLSelectElement>('#cScent');
   let item = calc.querySelector<HTMLButtonElement>('[data-ci][aria-pressed="true"]')?.dataset.ci ?? 'diffuser';
   let freq = Number(calc.querySelector<HTMLButtonElement>('[data-cf][aria-pressed="true"]')?.dataset.cf ?? 2);
+  const labels: Record<string, string> = { diffuser: 'Mini diffuser', deodorant: 'Deodorant', roller: 'Roller', candle: 'Candle' };
   const update = () => {
-    const p = price[item];
-    const saved = Math.round(p * 0.1 * 100) / 100;
-    const per = p - saved;
-    const deliveries = 12 / freq;
-    const year = saved * deliveries;
-    calc.querySelector('#cPer')!.textContent = money(per);
-    calc.querySelector('#cPerLbl')!.textContent = `per delivery, ${freq === 1 ? 'every month' : `every ${freq} months`}`;
-    calc.querySelector('#cSave')!.textContent = `You save ${money(year)} a year`;
-    calc.querySelector('#cMath')!.textContent = `${money(p)} × 10% = ${money(saved)} saved per delivery · 12 ÷ ${freq} = ${deliveries} deliveries a year · ${deliveries} × ${money(saved)} = ${money(year)}`;
+    const items = calcItems.get(calc) ?? null;
+    const scent = scentSel?.value ?? '';
+    calc.querySelectorAll<HTMLButtonElement>('[data-ci]').forEach(b => {
+      const k = b.dataset.ci!, r = items ? refillPrice(items, k, scent) : null;
+      b.innerHTML = `${esc(labels[k] ?? k)}${r?.size ? ` · ${esc(r.size)}` : ''}<small>${r ? `${r.exact ? '' : 'from '}${money(r.price)}` : ''}</small>`;
+      b.hidden = !!items && !r;
+    });
+    const r = items ? refillPrice(items, item, scent) : null;
+    if (!r) {
+      calc.querySelector('#cPer')!.textContent = '—';
+      calc.querySelector('#cPerLbl')!.textContent = items ? 'not in the shop right now' : 'prices load from the shop';
+      calc.querySelector('#cSave')!.textContent = '';
+      calc.querySelector('#cMath')!.textContent = '';
+      return;
+    }
+    const p = r.price, saved = Math.round(p * 0.1 * 100) / 100, per = p - saved, deliveries = 12 / freq, year = saved * deliveries;
+    const what = `${r.exact ? '' : 'from '}${money(p)}${r.size ? ` (${r.size})` : ''}`;
+    calc.querySelector('#cPer')!.textContent = `${r.exact ? '' : 'from '}${money(per)}`;
+    calc.querySelector('#cPerLbl')!.textContent = `per delivery${r.size ? ` for the ${r.size} size` : ''}, ${freq === 1 ? 'every month' : `every ${freq} months`}`;
+    calc.querySelector('#cSave')!.textContent = `You would save ${money(year)} a year`;
+    calc.querySelector('#cMath')!.textContent = `${what} × 10% = ${money(saved)} saved per delivery · 12 ÷ ${freq} = ${deliveries} deliveries a year · ${deliveries} × ${money(saved)} = ${money(year)}`;
   };
   if (calc.dataset.wired) { update(); return; }
   calc.dataset.wired = '1';
@@ -331,7 +355,7 @@ export function wireRepeatCalc(app: HTMLElement, items: Item[] | null) {
   calc.querySelectorAll<HTMLButtonElement>('[data-cf]').forEach(b => b.addEventListener('click', () => {
     freq = Number(b.dataset.cf); calc.querySelectorAll('[data-cf]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); update();
   }));
-  calc.querySelector('#cAdd')?.addEventListener('click', previewOff('Refill subscriptions'));
+  scentSel?.addEventListener('change', update);
   update();
 }
 
@@ -348,21 +372,23 @@ export function wireVote(app: HTMLElement) {
     });
     toast('Voting opens with The Ritualists at launch. Shares shown are sample figures.');
   }));
-  app.querySelectorAll<HTMLButtonElement>('[data-notify]').forEach(b => b.addEventListener('click', previewOff('Drop notifications')));
+  // "notify me" is the only action a concept offers (src/pages/shared.ts)
+  wireNotify(app);
 }
 
 export function wireCountdown(app: HTMLElement) {
+  // one state (src/drop.ts): the next new moon, or the date Claire pinned, drives the date text, the countdown, the notify
+  // button and the announcement bar together, so none of them can show a date that has passed
+  applyDrop(app); refreshDropBar();
   const cd = app.querySelector<HTMLElement>('#cd');
   if (!cd) return;
-  const target = new Date(NEXT_DROP_ISO).getTime();
-  const tick = () => {
-    const ms = Math.max(0, target - Date.now());
-    const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5), m = Math.floor((ms % 36e5) / 6e4);
-    const b = cd.querySelectorAll('b');
-    if (b.length >= 3) { b[0].textContent = String(d); b[1].textContent = String(h).padStart(2, '0'); b[2].textContent = String(m).padStart(2, '0'); }
-  };
-  tick();
-  const id = window.setInterval(() => { if (!document.body.contains(cd)) clearInterval(id); else tick(); }, 30000);
+  const id = window.setInterval(() => { if (!document.body.contains(cd)) clearInterval(id); else { applyDrop(app); refreshDropBar(); } }, 30000);
+}
+
+/** The announcement bar's Moon Drop line. */
+export function refreshDropBar() {
+  const el = document.getElementById('announceDrop');
+  if (el) el.innerHTML = dropBarHTML();
 }
 
 // ---------- Send a Sunrise ----------
@@ -370,6 +396,12 @@ export function wireSunrise(app: HTMLElement) {
   const note = app.querySelector<HTMLTextAreaElement>('#gNote');
   const out = app.querySelector<HTMLElement>('#gCardNote');
   if (note && out) note.addEventListener('input', () => { out.textContent = note.value || ' '; });
+  // the card names the recipient once one is typed; until then a neutral line (draft for Claire), never an invented name
+  const to = app.querySelector<HTMLInputElement>('#gTo'), toOut = app.querySelector<HTMLElement>('#gCardTo');
+  if (to && toOut) {
+    const blank = toOut.innerHTML;
+    to.addEventListener('input', () => { const n = to.value.trim(); if (n) toOut.textContent = `For ${n}`; else toOut.innerHTML = blank; });
+  }
   const card = app.querySelector<HTMLElement>('#gCard');
   app.querySelectorAll<HTMLButtonElement>('[data-sky]').forEach(b => b.addEventListener('click', () => {
     b.parentElement!.querySelectorAll('[data-sky]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));

@@ -129,7 +129,7 @@ export function renderJournal(app: HTMLElement, slug?: string) {
     <header class="jr-ahead"><div><span class="jr-tag">${esc(a.tag)} · ${a.minutes} min read</span><h1><span class="d">${esc(a.title)}</span></h1><p class="jr-lede d">${esc(a.dek)}</p></div><figure class="jr-apic">${pic(a, '(max-width: 820px) 80vw, 36vw', true)}</figure></header>
     <div class="jr-body d">${a.body}</div>
     <aside class="jr-shop" aria-label="Shop"><span class="eyebrow">From the studio</span><p class="d">Hand-poured in White Rock, BC, on wooden wicks.</p><div class="cta">${a.shop.map((s, k) => `<a class="btn${k ? ' line' : ''}" href="${s.href}">${esc(s.label)}</a>`).join('')}</div></aside>
-    ${a.sources.length ? `<footer class="jr-sources"><span class="eyebrow">Sources</span><ul>${a.sources.map(s => `<li><a href="${s.url}" target="_blank" rel="noopener">${esc(s.label)}</a></li>`).join('')}</ul><p class="small muted">General guidance. Always follow the care card that comes with your candle.</p></footer>` : ''}
+    ${a.sources.length ? `<div class="jr-sources"><span class="eyebrow">Sources</span><ul>${a.sources.map(s => `<li><a href="${s.url}" target="_blank" rel="noopener">${esc(s.label)}</a></li>`).join('')}</ul><p class="small muted">General guidance. Always follow the care card that comes with your candle.</p></div>` : ''}
     <a class="jr-next" href="#/journal/${next.slug}"><span class="eyebrow">Next</span><b>${esc(next.title)}</b></a>
   </article>`;
   document.title = `${a.title} · Daily Rituals Co.`;

@@ -99,5 +99,10 @@ export const MOMENTS: Moment[] = [
   { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, mood: 'floral', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2B2145', '#4A2D4F'], land: ['#4A3F73', '#33295A', '#1E1838'], orb: '#F5EBD3', dark: true },
 ];
 
-/** Moon Drop release date shown on the canvas ("Sunday, October 11"). Unconfirmed. */
-export const NEXT_DROP_ISO = '2026-10-11T00:00:00-07:00';
+/**
+ * Moon Drop date. By default the site shows the next new moon, computed in src/drop.ts, so it never counts down to a
+ * date that has passed. To pin a real release date, set it here (or as VITE_DROP_DATE at build time) as an ISO date
+ * such as '2026-11-08T19:00:00-08:00'. A pinned date is used while it is today or later; after it, the computed new
+ * moon takes over again. Moon Drops are still a concept: the site shows no price and only offers "notify me".
+ */
+export const DROP_DATE_OVERRIDE: string = import.meta.env.VITE_DROP_DATE || '';

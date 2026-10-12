@@ -38,6 +38,9 @@ export async function renderStatic(app: HTMLElement, route: string) {
   try {
     const items = await loadCatalogue();
     bindCanvasProductLinks(app, items);
+    // the wall's "product in the photo" lists what the shop really sells (the canvas list named products that do not exist)
+    const upP = app.querySelector<HTMLSelectElement>('#upP');
+    if (upP && items.length) upP.innerHTML = [...items].sort((a, b) => a.name.localeCompare(b.name)).map(i => `<option value="${esc(i.slug)}">${esc(i.name)}</option>`).join('') + '<option value="other">Something else</option>';
     if (route === 'subscribe') wireRepeatCalc(app, items);
   } catch { /* static page still renders without live data */ }
 }
@@ -72,8 +75,6 @@ function clubSoon(app: HTMLElement) {
 /** Until the Loyalty and referral apps exist, take points and referral promises out of the customer-facing pages. */
 function noPoints(html: string): string {
   return html
-    .replace(' Share yours for 50 points, and every month one featured photo wins the next Moon Drop.', ' Share yours and we may feature it here.')
-    .replace('Submit for the wall · +50 points', 'Submit for the wall')
     .replace('Post a photo to the Ritual Wall for 50 points.', 'Post a photo to the Ritual Wall and we may feature it.')
     .replace(/ You earned <b><span class="d">125 Ritualist points<\/span><\/b> on this order\./, '')
     .replace('<div class="refer" style="grid-template-columns:1fr;padding:28px">', '<div class="refer confirm" style="grid-template-columns:1fr;padding:28px">')
