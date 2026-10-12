@@ -1,11 +1,8 @@
-// One of Claire's candles, photographed, that can be lit a little at a time (the coaching page's calm-cue loop and its last
-// call to action). The unlit photograph, the lit one (the glass and wax glowing, its own flames painted out) fading in over it,
+// One of Claire's candles, photographed, that can be lit a little at a time (the candle in the coaching page's cue kit). The unlit photograph, the lit one (the glass and wax glowing, its own flames painted out) fading in over it,
 // and on each wooden wick a flame drawn to match the photographed ones (candleflame.ts): it catches, then grows as the light
 // level rises, and flickers while it is on screen. With reduced motion it is drawn once, steady, at its level.
-import { PICKER_CANDLES, pickerSrc, type PickerCandle } from './picker';
+import { pickerSrc, type PickerCandle } from './picker';
 import { PhotoFlames, createFlicker } from './candleflame';
-
-export const cueCandle = (): PickerCandle => PICKER_CANDLES.find(c => c.slug === 'verdant') ?? PICKER_CANDLES[0];
 
 /** The markup: a box the photographs fill (size it with CSS: a width, the height follows the photo). */
 export function candlePhotoHTML(c: PickerCandle, cls: string, sizes: string): string {

@@ -33,7 +33,11 @@ function reveal(app: HTMLElement) {
   els.forEach(e => { if (e.getBoundingClientRect().top < innerHeight * 0.92) e.classList.add('in'); else io.observe(e); });
 }
 
-/** Phones: a small bar with both free offers whenever the opening's buttons are out of sight (below the fold at first, or scrolled past), hidden at the last call to action. */
+/** Phones: a small bar with both free offers once the opening's buttons have been scrolled past (not before: on the first
+ * screen it would sit over the opening's own words), hidden again at the last call to action. It also steps aside while the
+ * foot of the screen holds something to work (the two loops and their controls, the cue kit, the reset's and the call's own
+ * buttons), so it never sits over a control. While it shows, the page keeps room for it: anything scrolled to or focused
+ * stops above it rather than under it. */
 function dock(app: HTMLElement) {
   const bar = app.querySelector<HTMLElement>('#coDock');
   const heroCta = app.querySelector<HTMLElement>('#coHeroCta');
@@ -43,25 +47,35 @@ function dock(app: HTMLElement) {
   // the page wrapper keeps a transform from its entrance, which would pin a fixed bar to the page instead of the screen
   document.body.appendChild(bar);
   bar.hidden = false;
-  let heroOut = false, atEnd = false;
+  let heroOut = false, atEnd = false, busy = false;
+  const work = [...app.querySelectorAll<HTMLElement>('.loopcard, .lp3-stage, .cue-stage, .cue-panel, .cue-flat, .co-kit-stage, .co-reset-card, .co-call-in')];
   const sync = () => {
     if (!heroCta.isConnected) { gone(); return; }
-    const show = heroOut && !atEnd;
+    const show = heroOut && !atEnd && !busy;
     bar.classList.toggle('show', show);
     bar.toggleAttribute('inert', !show);
     document.body.classList.toggle('co-docked', show && matchMedia('(max-width: 820px)').matches);
   };
   const io = new IntersectionObserver(es => es.forEach(e => {
-    if (e.target === heroCta) heroOut = !e.isIntersecting;
     if (e.target === final) atEnd = e.isIntersecting;
     sync();
   }), { threshold: 0 });
-  io.observe(heroCta); io.observe(final);
+  io.observe(final);
+  // whether the opening's buttons are above the screen: measured on scroll, since a jump down the page carries them from
+  // below the screen to above it without ever crossing it (which is all an intersection observer would report)
+  let raf = 0;
+  const onScroll = () => { if (raf) return; raf = requestAnimationFrame(() => {
+    raf = 0; if (!heroCta.isConnected) return;
+    const out = heroCta.getBoundingClientRect().bottom < 0, foot = innerHeight - 96;
+    const b = out && work.some(e => { const r = e.getBoundingClientRect(); return r.bottom > foot && r.top < innerHeight; });
+    if (out !== heroOut || b !== busy) { heroOut = out; busy = b; sync(); }
+  }); };
+  addEventListener('scroll', onScroll, { passive: true });
   // leaving the page: the bar goes with it, and the breathing orb drops back down
-  const gone = () => { io.disconnect(); mo.disconnect(); bar.remove(); document.body.classList.remove('co-docked'); };
+  const gone = () => { io.disconnect(); mo.disconnect(); removeEventListener('scroll', onScroll); bar.remove(); document.body.classList.remove('co-docked'); };
   const mo = new MutationObserver(() => { if (!heroCta.isConnected) gone(); });
   mo.observe(app, { childList: true });
-  sync();
+  sync(); onScroll();
 }
 
 // the blocks of words a star must never land in (the outermost of them: a paragraph, not each of its links)
@@ -105,8 +119,21 @@ function starsClearOfWords(app: HTMLElement) {
   later();
 }
 
+/** The sections' never-ending motion (the stars, the loops' paths, the pause light's breath, the cue kit's drift) rests while
+ * a section is off screen, so a page this long costs nothing for what nobody is looking at (the breathing screen opened over
+ * it keeps its frames to itself). */
+function restOffscreen(app: HTMLElement) {
+  if (!('IntersectionObserver' in window)) return;
+  const secs = [...app.querySelectorAll<HTMLElement>('.co > section')];
+  const io = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('co-idle', !e.isIntersecting)), { rootMargin: '120px 0px' });
+  secs.forEach(s => io.observe(s));
+  const mo = new MutationObserver(() => { if (!secs[0]?.isConnected) { io.disconnect(); mo.disconnect(); } });
+  mo.observe(app, { childList: true });
+}
+
 export function mountCoachingFx(app: HTMLElement) {
   document.body.classList.remove('co-docked');
+  restOffscreen(app);
   tiltPortal(app);
   reveal(app);
   dock(app);

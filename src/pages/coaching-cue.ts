@@ -1,10 +1,10 @@
 // "Turn a scent into a calm cue": the coaching page's centrepiece.
-// The four steps of the new loop orbit Claire's candle (her photograph) in real 3D (CSS 3D transforms, no library).
-// Drag or swipe the ring, use the arrow keys, the arrows or the step buttons; each step you reach lights a quarter of the
-// ring under the candle, and the candle comes alight a little more: the wicks catch, the lit glass and wax glow in and the
-// flames grow, until the loop is complete and it burns as photographed.
-// With reduced motion the same four steps are shown flat, all at once, around the candle, lit and still.
-import { candlePhotoHTML, cueCandle, LitCandle } from './litcandle';
+// The four steps of the calm-cue practice orbit a pause light, a luminous glass sphere, in real 3D (CSS 3D transforms, no
+// library). Drag or swipe the ring, use the arrow keys, the arrows or the step buttons; each step you reach lights a quarter
+// of the ring, and the light inside the sphere grows a little brighter (it breathes slowly all the while, four seconds in and
+// six out), until the loop is complete and it glows in full. Through the glass the ring shows upside down, as it would
+// through a real glass ball, its lit quarters included. With reduced motion the same four steps are shown flat, all at once,
+// around a still, fully lit sphere.
 // The step names and most lines come from the page's habit loop (loop.ts) and Day 3 of the reset; every line is a draft for Claire.
 
 type Icon = 'scent' | 'pause' | 'lotus' | 'sprout';
@@ -12,7 +12,7 @@ type Step = { label: string; title: string; text: string; icon: Icon; hue: strin
 
 export const CUE_STEPS: Step[] = [
   { label: 'Cue', title: 'A familiar scent', icon: 'scent', hue: '#B9A3E0',
-    text: 'You light your candle or roll on a familiar scent. The same scent shows up, and noticing it is the first step.' },
+    text: 'A familiar scent shows up: your tea, a hand cream, a candle. The same scent each time, and noticing it is the first step.' },
   { label: 'Pause', title: 'One slow breath', icon: 'pause', hue: '#8FC9B5',
     text: 'A small, practised pause. This is where coaching focuses.' },
   { label: 'Chosen response', title: 'A different response', icon: 'lotus', hue: '#EDB462',
@@ -29,13 +29,13 @@ const ICONS: Record<Icon, string> = {
 };
 const icon = (k: Icon, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
 
-/** Claire's candle, photographed (Verdant: the white glass tumbler with the black Daily Rituals label, a small black tin and
- * its lid), unlit until the loop begins; it is lit a little more at every step (litcandle.ts). */
-export const candlePhoto = (cls: string, sizes: string) => candlePhotoHTML(cueCandle(), cls, sizes);
-/** light a candle photo made by candlePhoto */
-export const lightCandle = (box: HTMLElement | null, reduce = reduceMotion()) => (box ? new LitCandle(box, cueCandle(), reduce) : null);
+/** The pause light: a glass sphere with a soft light inside it, standing over a contact shadow and the bright, focused
+ * patch of light (a caustic) that a glass ball throws on the floor. Its brightness follows --lit (0 to 1) and its colour
+ * --hue, both set on an ancestor. `refr` is drawn inside the glass, upside down (the ring, in the loop). Not a product. */
+export const pauseLight = (cls: string, refr = '') => `<div class="pl ${cls}" aria-hidden="true"><span class="pl-pool"></span><span class="pl-shadow"></span><span class="pl-caustic"></span>
+  <span class="pl-ball"><span class="pl-core"></span>${refr ? `<span class="pl-refr">${refr}</span>` : ''}<span class="pl-glass"></span><span class="pl-spec"></span></span></div>`;
 
-// The step being read sits front right, the one before it front left, so the candle between them is never hidden
+// The step being read sits front right, the one before it front left, so the sphere between them is never hidden
 // (--slot on the stage: how far round from the front, in degrees; narrower on a phone, so both fit either side of it).
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mod = (n: number, m: number) => ((n % m) + m) % m;
@@ -45,14 +45,12 @@ function staticView(root: HTMLElement) {
   root.classList.add('is-static');
   root.style.setProperty('--lit', '1');
   root.innerHTML = `<div class="cue-flat">
-    <div class="cue-flat-candle"><span class="cue-glow" aria-hidden="true"></span>${candlePhoto('cue-photo', '(max-width: 820px) 300px, 340px')}</div>
+    <div class="cue-flat-orb">${pauseLight('cue-pl')}</div>
     <ol class="cue-list" aria-label="The calm cue loop, four steps">${CUE_STEPS.map((s, i) => `<li style="--hue:${s.hue}">
       <span class="cue-n">${String(i + 1).padStart(2, '0')}</span>${icon(s.icon, 'cue-ic')}
       <h3>${s.label}<small>${s.title}</small></h3><p><span class="d">${s.text}</span></p></li>`).join('')}</ol></div>
     <div class="cue-done cue-done-static"><p><span class="d">Practised daily, the scent becomes the start of a calm pause. Day 3 of the free reset walks you through it.</span></p>
       <a class="btn co-gold" href="#/reset">Try it in the free 7-day reset</a></div>`;
-  // all four steps are read at once, so the loop is complete: the candle burns, steady
-  lightCandle(root.querySelector<HTMLElement>('.cue-photo'), true)?.set(1);
 }
 
 export function mountCue(root: HTMLElement | null) {
@@ -61,7 +59,7 @@ export function mountCue(root: HTMLElement | null) {
   const N = CUE_STEPS.length;
   root.innerHTML = `<div class="cue-grid">
     <div class="cue-stage" tabindex="0" role="group" aria-roledescription="3D loop" aria-label="The calm cue loop. Drag, or use the left and right arrow keys, to turn it." aria-describedby="cuePanelText">
-      <span class="cue-glow cue-halo" aria-hidden="true"></span>
+      <span class="cue-halo" aria-hidden="true"></span>
       <div class="cue-tilt">
         <div class="cue-floor" aria-hidden="true"><svg viewBox="-210 -210 420 420">
           <circle r="196" fill="none" class="cue-floor-glow"/><circle r="176" fill="none" class="cue-floor-dash"/>
@@ -70,7 +68,10 @@ export function mountCue(root: HTMLElement | null) {
             const p = (t: number) => `${(r * Math.sin(t)).toFixed(1)} ${(r * Math.cos(t)).toFixed(1)}`;
             return `<path class="cue-arc" data-arc="${i}" d="M${p(a0)} A${r} ${r} 0 0 0 ${p(a1)}" style="--hue:${s.hue}"/><circle class="cue-dot" data-dot="${i}" cx="${(r * Math.sin(i * Math.PI / 2)).toFixed(1)}" cy="${(r * Math.cos(i * Math.PI / 2)).toFixed(1)}" r="5" style="--hue:${s.hue}"/>`;
           }).join('')}</svg></div>
-        <div class="cue-candle" aria-hidden="true"><span class="cue-shadow"></span>${candlePhoto('cue-photo', '(max-width: 820px) 240px, 360px')}</div>
+        <div class="cue-orb" aria-hidden="true">${pauseLight('cue-pl', `<svg viewBox="-210 -210 420 420">${CUE_STEPS.map((st, i) => {
+            const a0 = (i * 90 - 38) * Math.PI / 180, a1 = (i * 90 + 38) * Math.PI / 180, r = 176;
+            const p = (t: number) => `${(r * Math.sin(t)).toFixed(1)} ${(r * Math.cos(t)).toFixed(1)}`;
+            return `<path class="cue-arc" data-arc="${i}" d="M${p(a0)} A${r} ${r} 0 0 0 ${p(a1)}" style="--hue:${st.hue}"/>`; }).join('')}</svg>`)}</div>
         ${CUE_STEPS.map((s, i) => `<button class="cue-card" type="button" data-i="${i}" tabindex="-1" aria-hidden="true" style="--hue:${s.hue}">
           <span class="cue-n">${String(i + 1).padStart(2, '0')}</span>${icon(s.icon, 'cue-ic')}<b>${s.label}</b><span class="cue-t">${s.title}</span></button>`).join('')}
       </div>
@@ -86,7 +87,7 @@ export function mountCue(root: HTMLElement | null) {
         <div class="cue-pills" role="group" aria-label="Steps">${CUE_STEPS.map((s, i) => `<button class="cue-pill" type="button" data-pick="${i}" aria-pressed="${i === 0}" style="--hue:${s.hue}"><i></i>${s.label}</button>`).join('')}</div>
         <button class="cue-arrow" type="button" data-go="1" aria-label="Next step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
-      <div class="cue-meter"><span class="cue-bar"><i></i></span><span class="cue-mtx" aria-live="polite">The flame: <b>1</b> of ${N} steps lit</span></div>
+      <div class="cue-meter"><span class="cue-bar"><i></i></span><span class="cue-mtx" aria-live="polite"><span class="d">The pause light:</span> <b>1</b> of ${N} steps lit</span></div>
       <div class="cue-done" hidden><p><span class="d">That is one full loop. Practised daily, the scent becomes the start of a calm pause. Day 3 of the free reset walks you through it.</span></p>
         <a class="btn co-gold" href="#/reset" data-cta="cue-reset">Try it in the free 7-day reset</a></div>
     </div></div>`;
@@ -99,10 +100,9 @@ export function mountCue(root: HTMLElement | null) {
   let rot = 0, target = 0, active = 0, raf = 0, last = 0, R = 300, tilt = -22, frontY = 0, SLOT = 58;
   let dragging = false, moved = 0, startX = 0, startRot = 0, vel = 0, lastX = 0, lastT = 0;
   let auto = 0, touched = false, inView = false;
-  // the candle stays unlit until the loop is first on screen; then step 1 (the cue: "you light your candle") lights it
-  const candle = lightCandle(root.querySelector<HTMLElement>('.cue-candle .cue-photo'));
+  // the sphere stays dark until the loop is first on screen; then step 1 wakes its light
   let lit = !('IntersectionObserver' in window);
-  const lightUp = () => { if (lit) candle?.set(visited.size / N); };
+  const refr = root.querySelector<SVGElement>('.pl-refr svg');
 
   const layout = () => {
     const w = stage.clientWidth;
@@ -114,7 +114,7 @@ export function mountCue(root: HTMLElement | null) {
     const d = R * 420 / 176; // the floor's svg ring (r 176 in a 420 viewBox) sits at radius R
     floor.style.width = floor.style.height = `${d}px`;
     root.querySelector<HTMLElement>('.cue-tilt')!.style.transform = `rotateX(${tilt}deg)`;
-    root.style.setProperty('--untilt', `${-tilt}deg`); // the photograph faces the visitor, as the cards do
+    root.style.setProperty('--untilt', `${-tilt}deg`); // the sphere faces the visitor, as the cards do
     paint();
   };
 
@@ -123,8 +123,8 @@ export function mountCue(root: HTMLElement | null) {
       const a = (i * 90 + rot + SLOT) * Math.PI / 180;
       const x = R * Math.sin(a), z = R * Math.cos(a);
       // the two front steps stay solid and readable; going round the back a step recedes: it shrinks and dims to a half-lit
-      // arch peeking past the jar, its icon still showing (so the ring reads as four steps), its words faded out before it
-      // gets there, so no words ever sit behind other words or behind the candle
+      // arch peeking past the sphere, its icon still showing (so the ring reads as four steps), its words faded out before it
+      // gets there, so no words ever sit behind other words or behind the sphere
       const front = smooth(-0.35, 0.3, Math.cos(a)), face = smooth(0.15, 0.45, Math.cos(a));
       c.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, ${frontY}px, ${z.toFixed(1)}px) rotateX(${-tilt}deg) scale(${(0.85 + 0.15 * front).toFixed(3)})`;
       c.style.opacity = (0.5 + 0.5 * front).toFixed(3);
@@ -133,6 +133,8 @@ export function mountCue(root: HTMLElement | null) {
       c.classList.toggle('on', i === active);
     });
     floor.style.transform = `translate(-50%, -50%) translateY(var(--floory)) rotateX(90deg) rotateZ(${(-(rot + SLOT)).toFixed(2)}deg)`;
+    // through the glass the ring turns the other way round, seen from beneath
+    if (refr) refr.style.transform = `scale(-1, -0.36) rotate(${(-(rot + SLOT)).toFixed(2)}deg)`;
   };
 
   const setActive = (i: number, fromUser: boolean) => {
@@ -143,7 +145,6 @@ export function mountCue(root: HTMLElement | null) {
     const s = CUE_STEPS[i];
     root.style.setProperty('--hue', s.hue);
     root.style.setProperty('--lit', String(lit ? visited.size / N : 0));
-    lightUp();
     root.querySelector('.cue-step b')!.textContent = String(i + 1);
     root.querySelector('.cue-hl')!.textContent = s.label;
     root.querySelector('.cue-ht')!.textContent = s.title;
@@ -236,7 +237,7 @@ export function mountCue(root: HTMLElement | null) {
 
   const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => {
     inView = e.isIntersecting;
-    if (inView && !lit) { lit = true; root.style.setProperty('--lit', String(visited.size / N)); window.setTimeout(lightUp, 350); }
+    if (inView && !lit) { lit = true; window.setTimeout(() => root.style.setProperty('--lit', String(visited.size / N)), 350); }
     root.classList.toggle('inview', inView);
     if (inView) window.setTimeout(startAuto, 1400); else pauseAuto();
   }), { threshold: 0.35 }) : null;
@@ -244,7 +245,7 @@ export function mountCue(root: HTMLElement | null) {
 
   const ro = 'ResizeObserver' in window ? new ResizeObserver(layout) : null;
   ro?.observe(stage);
-  function cleanup() { io?.disconnect(); ro?.disconnect(); pauseAuto(); candle?.destroy(); if (raf) cancelAnimationFrame(raf); raf = 0; }
+  function cleanup() { io?.disconnect(); ro?.disconnect(); pauseAuto(); if (raf) cancelAnimationFrame(raf); raf = 0; }
   // the router replaces the page: the frame loop and the slow turn both stop themselves once the ring is gone
 
   setActive(0, false);

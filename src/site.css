@@ -251,32 +251,10 @@ body:not(.show-drafts) .confirm { display: none !important; }
 .dayhero[data-m="night"] .moments button { border-color: rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .1); color: #F3ECF5; }
 .dayhero[data-m="night"] .moments button[aria-current="true"] { background: rgba(255, 255, 255, .88); color: #2A1F33; }
 
-/* Coaching loop v3: mandala ring */
-#loopWrap { align-items: center; }
-.loop.lp { max-width: 560px; aspect-ratio: auto; }
-.loop.lp svg { width: 100%; height: auto; overflow: visible; display: block; }
-.lp-in svg { animation: lpin .7s ease both; }
-@keyframes lpin { from { opacity: 0; transform: scale(.94) rotate(-4deg); } to { opacity: 1; transform: none; } }
-.lp-mandala { transform-origin: 280px 250px; animation: lpspin 160s linear infinite; }
-@keyframes lpspin { to { transform: rotate(360deg); } }
-.lp-arc { fill: none; stroke-width: 3; stroke-dasharray: 7 9; opacity: .5; animation: dash 1.4s linear infinite; }
-.lp-arc.on { opacity: 1; stroke-width: 3.6; }
-.lp-node { cursor: pointer; outline: none; }
-.lp-disc { transition: r .3s, fill .3s; filter: drop-shadow(0 8px 14px rgba(42, 31, 51, .14)); }
-.lp-node:hover .lp-disc { filter: drop-shadow(0 10px 18px rgba(42, 31, 51, .26)); }
-.lp-node:focus-visible .lp-disc { stroke-width: 5; }
-.lp-node text { font-family: var(--body); font-weight: 600; font-size: 14px; fill: var(--ink); pointer-events: none; }
-.lp-node.on text { fill: #fff; }
-.lp-node .lp-num { font: 500 12px var(--mono, "DM Mono", monospace); fill: var(--ink-2); }
-.lp-node.on .lp-num { fill: var(--ink-2); }
-.lp-halo { animation: lphalo 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-@keyframes lphalo { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.1); opacity: .25; } }
-.lp-title { font-family: var(--display); font-size: 26px; fill: var(--ink); }
-.lp-note { font-size: 13px; fill: var(--ink-2); }
+/* the habit loop's buttons (the loop itself is in coaching.css) */
 .loopnav { display: flex; gap: 10px; flex-wrap: wrap; }
 .loopnav .btn { min-height: 44px; }
 .loopnav .btn[disabled] { opacity: .45; cursor: default; }
-@media (prefers-reduced-motion: reduce) { .lp-mandala, .lp-arc, .lp-halo, .lp-in svg { animation: none; } }
 
 /* ============ Mindful journey: rail, map, breathe, reveals, ornaments, flags ============ */
 body::before { content: ""; position: fixed; inset: 0; z-index: 60; pointer-events: none; opacity: .05; mix-blend-mode: multiply;

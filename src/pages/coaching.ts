@@ -1,6 +1,7 @@
 import Coaching from '../canvas/pages/Coaching.html?raw';
 import { wireLoop } from './loop';
-import { mountCue, candlePhoto, lightCandle } from './coaching-cue';
+import { mountCue, pauseLight } from './coaching-cue';
+import { mountKit } from './coaching-kit';
 import { mountCoachingFx } from './coaching-fx';
 import '../coaching.css';
 import { loadServices, imgSrc, money, wix, saveTokens } from '../wix';
@@ -22,12 +23,10 @@ export async function renderCoaching(app: HTMLElement) {
   wireLoop(app);
   mountCue(app.querySelector<HTMLElement>('#cue'));
   mountCoachingFx(app);
-  const lastFlame = app.querySelector<HTMLElement>('.co-final-flame');
-  if (lastFlame) { // the same candle, fully lit, under the last call to action: it catches as it comes into view
-    lastFlame.innerHTML = candlePhoto('co-final-photo', '260px');
-    const c = lightCandle(lastFlame.querySelector<HTMLElement>('.co-final-photo'));
-    if (c) { const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io?.disconnect(); window.setTimeout(() => c.set(1), 250); } }, { threshold: 0.4 }) : null; if (io) io.observe(lastFlame); else c.set(1); }
-  }
+  // the same pause light as the calm-cue loop, glowing in full under the last call to action
+  const last = app.querySelector<HTMLElement>('.co-final-light');
+  if (last) last.innerHTML = pauseLight('co-final-pl');
+  void mountKit(app);
 
   const ways = [...app.querySelectorAll<HTMLAnchorElement>('.ways .way')];
   let list: any[] = [];
