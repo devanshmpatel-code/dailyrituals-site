@@ -1,4 +1,4 @@
-// The studio photographs: the hero arch, Claire's cut-out, From the studio (cut-outs, tins from above, a row of photographs), Ritual on
+// The studio photographs: the opening's still life of tins on a knoll, Claire's cut-out, From the studio (cut-outs, tins from above, a row of photographs), Ritual on
 // Repeat and Send a Sunrise on the home page (no moons
 // outside Moon Drops), a bench photograph on candle pages, Claire's portrait on the coaching page,
 // the past-moons archive on Moon Drops (never buyable), and the real format photographs on the shop group heads.
@@ -13,23 +13,42 @@ const loaded = (p, sel) => p.evaluate(s => [...document.querySelectorAll(s)].map
 for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(10000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-
-  // ---- home: the opening shows Claire's real candles, and moons live only on Moon Drops
-  await p.goto(base + '/'); await p.waitForSelector('#dStack img[data-mimg]'); await p.waitForTimeout(800);
-  const stack = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].map(i => ({ k: i.dataset.mimg, src: i.getAttribute('src') || i.dataset.src, alt: i.alt })));
+  // ---- home: the opening sets three of Claire's real candles on a knoll in front of the hills (3D tins topped with her photographs); moons live only on Moon Drops
+  await p.goto(base + '/'); await p.waitForSelector('#dStack img[data-mimg]', { state: 'attached' }); await p.waitForTimeout(800);
+  const stack = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].map(i => ({ k: i.dataset.mimg, src: i.getAttribute('src') || i.dataset.src })));
   const per = stack.reduce((o, x) => (o[x.k] = (o[x.k] || 0) + 1, o), {});
-  ok(`${label}: the opening holds two of Claire's pours per moment, cut out as whole tins`, Object.keys(per).length === 5 && Object.values(per).every(n => n === 2) && new Set(stack.map(x => x.src)).size === stack.length && stack.every(x => /^\/img\/studio\/tins\//.test(x.src) && x.alt.length > 15), JSON.stringify(per));
-  ok(`${label}: no past scent is named in the opening's alt text`, !stack.some(x => /midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|christmas eve|mulled wine|candy cane|hello cupcake|easter bread|apple cider|mother/i.test(x.alt)));
-  ok(`${label}: exactly one pair is showing`, (await p.locator('#dStack .tset.on').count()) === 1);
+  ok(`${label}: the opening's tins are topped with Claire's real photographs, several per moment`, Object.keys(per).length === 5 && Object.values(per).every(n => n >= 3) && stack.every(x => /^\/img\/studio\/moons\/[a-z-]+\.webp$/.test(x.src) && !/midnight-forest/.test(x.src)), JSON.stringify(per));
+  const scentNames = /midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|christmas eve|mulled wine|candy cane|hello cupcake|easter bread|apple cider|mother|tuscan|irish coffee/i;
+  const pic = () => p.evaluate(() => { const s = document.querySelector('#dStack'); return { role: s.getAttribute('role'), label: s.getAttribute('aria-label') || '', alts: [...s.querySelectorAll('img')].map(i => i.alt) }; });
+  const pic0 = await pic();
+  ok(`${label}: the opening is one described picture that names no past scent and no moon`, pic0.role === 'img' && pic0.label.length > 30 && /tins/i.test(pic0.label) && !scentNames.test(pic0.label) && !/moon/i.test(pic0.label) && pic0.alts.every(a => a === ''), pic0.label);
+  ok(`${label}: exactly one arrangement is chosen`, (await p.locator('#dStack .tset.on').count()) === 1);
+  // the tins are drawn: a canvas that really has tins painted on it, three of them on the knoll
+  const drawn = () => p.evaluate(() => { const c = document.querySelector('canvas.tins3d'); if (!c || !c.width) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 16) if (d[i] > 200) n++; return n; });
   for (const k of ['dawn', 'night']) {
     await p.evaluate(k => document.querySelector(`.moments [data-jump="${k}"]`).click(), k);
-    await p.waitForFunction(k => document.querySelector('.dayhero')?.dataset.m === k, k, { timeout: 20000 }); await p.waitForTimeout(1800);
-    const shown = await p.evaluate(() => [...document.querySelectorAll('#dStack .tset')].filter(f => Number(getComputedStyle(f).opacity) > .9).map(f => [f.dataset.mset, [...f.querySelectorAll('img')].every(i => i.complete && i.naturalWidth > 0)]));
-    ok(`${label}: at ${k} the opening shows the ${k} pair, loaded`, shown.length === 1 && shown[0][0] === k && shown[0][1], JSON.stringify(shown));
+    await p.waitForFunction(k => document.querySelector('.dayhero')?.dataset.m === k, k, { timeout: 20000 });
+    const ready = await p.waitForFunction(k => document.querySelector('#dStack')?.dataset.shown === k, k, { timeout: 10000 }).then(() => true, () => false);
+    await p.waitForTimeout(1600);
+    const st = await p.evaluate(() => { const s = document.querySelector('#dStack'); const on = [...s.querySelectorAll('.tset.on')]; return { on: on.map(f => f.dataset.mset), loaded: on.every(f => [...f.querySelectorAll('img')].every(i => i.complete && i.naturalWidth > 0)), tins: Number(s.dataset.tins), mode: s.dataset.mode }; });
+    const px = await drawn(); const lab = (await pic()).label;
+    ok(`${label}: at ${k} the opening shows the ${k} tins, their photographs loaded and drawn`, ready && st.on.length === 1 && st.on[0] === k && st.loaded && st.tins === 3 && px > 300 && !scentNames.test(lab), JSON.stringify({ ...st, px, lab }));
   }
-  const before = await p.evaluate(() => document.querySelector('.dayhero').dataset.m);
+  // in proportion: one group at one scale, clear of the words, the offers and the sun dial, inside the screen
+  const lay = await p.evaluate(() => {
+    const c = document.querySelector('canvas.tins3d'), [l, t, r, b, big] = (c.dataset.group || '').split(',').map(Number), cr = c.getBoundingClientRect();
+    const g = { l: cr.left + l, t: cr.top + t, r: cr.left + r, b: cr.top + b };
+    const box = s => { const e = document.querySelector(s); return e ? e.getBoundingClientRect() : null; };
+    const hero = box('#day'), copy = box('.day-copy'), offers = box('#dProducts'), arc = box('#arc'), h1 = box('#dTitle');
+    return { g, big, vis: Math.min(hero.height, innerHeight - Math.max(0, hero.top)), w: innerWidth, copyR: copy.right, offersB: offers.bottom, offersT: offers.top, arcB: arc.bottom, h1T: h1.top, knoll: !!document.querySelector('canvas.tins-knoll.on') };
+  });
+  if (label === 'desktop') ok(`${label}: the group stands on the knoll beside the words, under the offers and above the sun dial, the large tin about a quarter of the opening's height`,
+    lay.knoll && lay.g.l > lay.copyR + 20 && lay.g.t > lay.offersB && lay.g.b < lay.arcB && lay.g.r < lay.w - 100 && lay.big > lay.vis * 0.17 && lay.big < lay.vis * 0.32, JSON.stringify(lay));
+  else ok(`${label}: the group fits the phone's width in the band above the headline, the offers below the words`,
+    lay.knoll && lay.g.l >= 0 && lay.g.r <= lay.w && lay.g.b < lay.h1T && lay.offersT > lay.h1T && lay.big > 70, JSON.stringify(lay));
+  const before = await p.evaluate(() => document.querySelector('.dayhero').dataset.m + '/' + document.querySelector('#dStack').dataset.shown);
   await p.evaluate(() => window.scrollTo(0, 700)); await p.waitForTimeout(700);
-  ok(`${label}: scrolling does not change the time of day (it is the visitor's to change)`, (await p.evaluate(() => document.querySelector('.dayhero').dataset.m)) === before && (await p.locator('.daypin').count()) === 0);
+  ok(`${label}: scrolling does not change the time of day or its tins (they are the visitor's to change)`, (await p.evaluate(() => document.querySelector('.dayhero').dataset.m + '/' + document.querySelector('#dStack').dataset.shown)) === before && (await p.locator('.daypin').count()) === 0);
   await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(400);
   ok(`${label}: the moons panel is gone from home`, (await p.locator('#moons, .moons-arc').count()) === 0);
   ok(`${label}: no moon-phase rows on the home seams`, (await p.locator('.cel-div .cel-moonrow').count()) === 0 && (await p.locator('.cel-div').count()) > 0);
