@@ -40,6 +40,9 @@ export const pauseLight = (cls: string, refr = '') => `<div class="pl ${cls}" ar
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mod = (n: number, m: number) => ((n % m) + m) % m;
 const smooth = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+/** the cards are laid out this many times larger and scaled back down (--k in coaching.css): under a perspective Chrome draws
+ * them at the screen's resolution however near they come, so the near ones' words would blur; laid out larger they stay crisp */
+const SS = 1.5;
 
 function staticView(root: HTMLElement) {
   root.classList.add('is-static');
@@ -62,7 +65,9 @@ export function mountCue(root: HTMLElement | null) {
       <span class="cue-halo" aria-hidden="true"></span>
       <div class="cue-tilt">
         <div class="cue-floor" aria-hidden="true"><svg viewBox="-210 -210 420 420">
+          <defs><filter id="cueSoft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>
           <circle r="196" fill="none" class="cue-floor-glow"/><circle r="176" fill="none" class="cue-floor-dash"/>
+          <g class="cue-shadows" filter="url(#cueSoft)">${CUE_STEPS.map((_, i) => `<ellipse data-sh="${i}" rx="60" ry="8" transform="rotate(${-i * 90}) translate(0 188)"/>`).join('')}</g>
           ${CUE_STEPS.map((s, i) => {
             const a0 = (i * 90 - 38) * Math.PI / 180, a1 = (i * 90 + 38) * Math.PI / 180, r = 176;
             const p = (t: number) => `${(r * Math.sin(t)).toFixed(1)} ${(r * Math.cos(t)).toFixed(1)}`;
@@ -113,6 +118,10 @@ export function mountCue(root: HTMLElement | null) {
     SLOT = parseFloat(cs.getPropertyValue('--slot')) || 58;
     const d = R * 420 / 176; // the floor's svg ring (r 176 in a 420 viewBox) sits at radius R
     floor.style.width = floor.style.height = `${d}px`;
+    // each card's shadow on the floor, as long as the card is wide (in the floor's own units), thrown a little outward, away
+    // from the pause light in the middle
+    const cw = parseFloat(cs.getPropertyValue('--cardw')) || 160;
+    root.querySelectorAll<SVGEllipseElement>('[data-sh]').forEach(e => e.setAttribute('rx', (cw * 176 / R * 0.46).toFixed(1)));
     root.querySelector<HTMLElement>('.cue-tilt')!.style.transform = `rotateX(${tilt}deg)`;
     root.style.setProperty('--untilt', `${-tilt}deg`); // the sphere faces the visitor, as the cards do
     paint();
@@ -126,7 +135,7 @@ export function mountCue(root: HTMLElement | null) {
       // arch peeking past the sphere, its icon still showing (so the ring reads as four steps), its words faded out before it
       // gets there, so no words ever sit behind other words or behind the sphere
       const front = smooth(-0.35, 0.3, Math.cos(a)), face = smooth(0.15, 0.45, Math.cos(a));
-      c.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, ${frontY}px, ${z.toFixed(1)}px) rotateX(${-tilt}deg) scale(${(0.85 + 0.15 * front).toFixed(3)})`;
+      c.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, ${frontY}px, ${z.toFixed(1)}px) rotateX(${-tilt}deg) scale(${((0.85 + 0.15 * front) / SS).toFixed(4)})`;
       c.style.opacity = (0.5 + 0.5 * front).toFixed(3);
       c.style.setProperty('--face', face.toFixed(3));
       c.classList.toggle('back', face < 0.02);

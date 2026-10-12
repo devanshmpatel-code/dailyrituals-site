@@ -504,17 +504,23 @@ button.soon { background: transparent !important; color: inherit !important; bor
 
 /* gift page: one of Claire's candles, seen from above in its black tin, tucked into the card's bottom corner where the sun
    used to rise. Each sky has its own topping (florals at dawn, citrus and spice at golden hour, lavender at night): the new
-   one turns in as the old one fades, the sky behind cross-fades with it, and the candle takes the sky's light (a soft rose
-   at dawn, a warm rim at golden hour, moonlight and a lit wick at night). The note keeps clear of it: it always ends above
-   the candle's top, and the recipient line stops short of it. With reduced motion the change is a plain swap. */
-@property --gcg { syntax: '<color>'; inherits: true; initial-value: rgba(176, 186, 255, .5); }
-@property --gcr { syntax: '<color>'; inherits: true; initial-value: rgba(200, 208, 255, .75); }
-@property --gct { syntax: '<color>'; inherits: true; initial-value: #BDBBE2; }
+   one turns in as the old one fades, the sky behind cross-fades with it, and the candle takes the sky's light. One light for
+   every sky: the bright low sky in that corner, behind and below the tin (bottom right), so the tin's outer lip catches it on
+   that side, the inside of its wall is lit on the far side (top left), its own wall shades the wax nearest the light, and it
+   throws a soft shadow up and to the left over the card, over a tight contact shadow where it sits. At night the lit wick is
+   the light: a small flame over the wooden wick, a pool of melted wax round it, the wax glowing warm from the middle, and a
+   little of its light spilling over the rim. The note keeps clear of it: it always ends above the candle's top, and the
+   recipient line stops short of it. With reduced motion the change is a plain swap and the flame holds still. */
+@property --gcg { syntax: '<color>'; inherits: true; initial-value: rgba(255, 176, 104, .3); }
+@property --gcr { syntax: '<color>'; inherits: true; initial-value: rgba(200, 208, 255, .7); }
+@property --gct { syntax: '<color>'; inherits: true; initial-value: #C9C3E4; }
 .gcard[data-candle] { --cd: clamp(112px, 34cqw, 216px); --gpad: clamp(20px, 3vw, 34px); container-type: inline-size; isolation: isolate;
   transition: --gcg 1s ease, --gcr 1s ease, --gct 1s ease; }
-.gcard[data-candle][data-t="dawn"] { --gcg: rgba(255, 190, 160, .8); --gcr: rgba(255, 222, 200, .85); --gct: #FFEDE4; }
-.gcard[data-candle][data-t="golden"] { --gcg: rgba(255, 172, 80, .9); --gcr: rgba(255, 196, 112, 1); --gct: #FFDDB0; }
-.gcard[data-candle][data-t="night"] { --gcg: rgba(176, 186, 255, .5); --gcr: rgba(200, 208, 255, .75); --gct: #BDBBE2; }
+/* --gcg: the light the candle itself spills on the card (only at night, when it is lit); --gcr: the sky's light on the metal;
+   --gct: the sky's tint on the wax */
+.gcard[data-candle][data-t="dawn"] { --gcg: rgba(255, 196, 160, 0); --gcr: rgba(255, 226, 206, .85); --gct: #FFEFE6; }
+.gcard[data-candle][data-t="golden"] { --gcg: rgba(255, 176, 96, 0); --gcr: rgba(255, 204, 128, .95); --gct: #FFE2BC; }
+.gcard[data-candle][data-t="night"] { --gcg: rgba(255, 176, 104, .3); --gcr: rgba(200, 208, 255, .7); --gct: #C9C3E4; }
 .gcard[data-candle] .sunarc { display: none; }
 .gcard[data-candle] .note { margin-bottom: max(0px, calc(var(--cd) * .87 - var(--gpad) - 4px)); }
 .gcard[data-candle] #gCardTo { max-width: calc(100% + var(--gpad) - var(--cd) * .9 - 12px); }
@@ -526,13 +532,19 @@ button.soon { background: transparent !important; color: inherit !important; bor
 .gc-sky i[data-layer="night"] { background: linear-gradient(160deg, #0F0D1C 0%, #2A1F3D 60%, #4A2D4F 100%); }
 .gcard[data-t="dawn"] .gc-sky i[data-layer="dawn"], .gcard[data-t="golden"] .gc-sky i[data-layer="golden"], .gcard[data-t="night"] .gc-sky i[data-layer="night"] { opacity: 1; }
 .gc-candle { position: absolute; z-index: 1; width: var(--cd); aspect-ratio: 1; right: calc(var(--cd) * -.1); bottom: calc(var(--cd) * -.13); pointer-events: none; }
-.gc-halo { position: absolute; inset: -42%; border-radius: 50%; background: radial-gradient(closest-side, var(--gcg), transparent 72%); }
-.gc-shadow { position: absolute; inset: 3%; border-radius: 50%; background: rgba(12, 6, 22, .62); filter: blur(12px); translate: -9% 9%; }
-.gcard[data-t="night"] .gc-shadow { background: rgba(4, 2, 12, .8); }
-/* the tin: brushed black metal, its lip lit from the sky's side */
+/* the candle's own light on the card round it, at night only: warm, faint, and falling away fast (no ring of colour) */
+.gc-halo { position: absolute; inset: -38%; border-radius: 50%; background: radial-gradient(closest-side, var(--gcg) 0%, color-mix(in srgb, var(--gcg) 40%, transparent) 38%, transparent 70%); }
+/* its shadows on the card: a soft one thrown up and to the left, away from the bright sky, and a tight one where it sits */
+.gc-shadow { position: absolute; inset: 2%; border-radius: 50%; background: rgba(28, 14, 30, .4); filter: blur(10px); translate: -9% -7%; }
+.gc-shadow::after { content: ""; position: absolute; inset: 1%; border-radius: 50%; translate: 8% 6%; background: rgba(12, 6, 16, .7); filter: blur(2px); }
+.gcard[data-t="night"] .gc-shadow { background: rgba(4, 2, 12, .62); }
+/* the tin: black metal, the inside of its wall lit on the far side from the light (top left) and in shade on the near side */
 .gc-tin { position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
-  background: conic-gradient(from 200deg, #18161C, #4D4853 10%, #141217 26%, #2C2930 46%, #0F0E12 66%, #5A5561 82%, #18161C);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, .45), 0 0 26px -4px var(--gcr), inset 0 0 0 1px rgba(255, 255, 255, .14); }
+  background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0, 0, 0, .25) 72%),
+    linear-gradient(135deg, color-mix(in srgb, var(--gcr) 45%, #4A4550) 0%, #2E2B33 30%, #16141A 62%, #0C0B0E 100%),
+    conic-gradient(from 200deg, #18161C, #3A3640 10%, #141217 26%, #26232A 46%, #0F0E12 66%, #3E3A44 82%, #18161C);
+  background-blend-mode: normal, soft-light, normal;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .1); }
 .gc-tin img { position: absolute; inset: 6%; width: 88%; height: 88%; max-width: none; border-radius: 50%; opacity: 0; transform: rotate(calc(var(--r, 0deg) - 16deg)) scale(.96);
   transition: opacity .9s ease, transform 1.2s cubic-bezier(.2, .8, .2, 1), filter 1s ease; }
 .gcard[data-t="dawn"] .gc-tin img[data-layer="dawn"], .gcard[data-t="golden"] .gc-tin img[data-layer="golden"], .gcard[data-t="night"] .gc-tin img[data-layer="night"] { opacity: 1; transform: rotate(var(--r, 0deg)); }
@@ -540,22 +552,50 @@ button.soon { background: transparent !important; color: inherit !important; bor
 .gc-tin img[data-layer="dawn"] { --r: -95deg; } .gc-tin img[data-layer="golden"] { --r: -40deg; } .gc-tin img[data-layer="night"] { --r: -125deg; }
 .gcard[data-t="dawn"] .gc-tin img { filter: saturate(1.04) brightness(1.02); }
 .gcard[data-t="golden"] .gc-tin img { filter: sepia(.12) saturate(1.15); }
-.gcard[data-t="night"] .gc-tin img { filter: brightness(.86) saturate(.85); }
-/* the light on the wax: the sky's tint, the shade under the tin's lip, a highlight from the sky's side */
+.gcard[data-t="night"] .gc-tin img { filter: brightness(.78) saturate(.85); }
+/* the light on the wax: the sky's tint, a soft occlusion all round under the lip, the wall's shade on the side nearest the
+   light (bottom right) and the light itself reaching the far side (top left) */
 .gc-light { position: absolute; inset: 6%; border-radius: 50%; background: var(--gct); mix-blend-mode: multiply;
-  box-shadow: inset 0 5px 12px rgba(20, 12, 30, .45), inset -6px -8px 18px -6px rgba(20, 12, 30, .3), inset 7px 9px 16px -8px var(--gcr); }
-.gc-tin::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 2px 3px 3px -1px var(--gcr), inset -2px -3px 4px -2px rgba(0, 0, 0, .6); pointer-events: none; }
-/* the wick: dark at dawn, glowing a little at golden hour, lit at night */
-.gc-wick { position: absolute; left: 50%; top: 49%; width: 46%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; z-index: 1; mix-blend-mode: screen; opacity: 0;
-  background: radial-gradient(closest-side, #FFF6DC 0 7%, rgba(255, 200, 110, .85) 18%, rgba(255, 160, 70, .3) 50%, transparent 100%); transition: opacity 1s ease; }
-.gcard[data-t="golden"] .gc-wick { opacity: .35; }
-.gcard[data-t="night"] .gc-wick { opacity: .95; animation: gcFlicker 3.2s ease-in-out infinite; }
-@keyframes gcFlicker { 0%, 100% { scale: 1; opacity: .95; } 30% { scale: .94; opacity: .82; } 55% { scale: 1.04; opacity: 1; } 80% { scale: .97; opacity: .88; } }
+  box-shadow: inset 0 0 8px rgba(20, 12, 30, .3), inset -7px -9px 16px -6px rgba(20, 12, 30, .42), inset 8px 10px 16px -8px var(--gcr); }
+/* the outer lip: a thin bright line where the low sky catches it (bottom right), dark where it turns away (top left) */
+.gc-tin::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; z-index: 3;
+  box-shadow: inset -2px -2.5px 2px -1px var(--gcr), inset 2px 2.5px 3px -1.5px rgba(0, 0, 0, .65); }
+/* night: the wax lit from the middle by its flame, falling off towards the wall (light added over the tinted wax) */
+.gc-warm { position: absolute; inset: 6%; border-radius: 50%; z-index: 1; mix-blend-mode: screen; opacity: 0; transition: opacity 1s ease;
+  background: radial-gradient(circle at 48.3% 52.7%, rgba(255, 200, 126, .8) 0%, rgba(255, 170, 92, .46) 22%, rgba(226, 128, 72, .18) 52%, rgba(200, 110, 70, .05) 78%, transparent 92%); }
+/* the pool of melted wax round the wick: a little glossier and more see-through than the set wax, with a fine edge */
+.gc-pool { position: absolute; left: 48.5%; top: 52.4%; width: 46%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; z-index: 1; opacity: 0; transition: opacity 1.2s ease;
+  background: radial-gradient(closest-side, rgba(255, 210, 140, .2) 0 70%, rgba(255, 210, 140, .12) 86%, rgba(150, 90, 40, .1) 94%, transparent 100%); filter: blur(1.5px); }
+/* the glow round the flame */
+.gc-wick { position: absolute; left: 48.5%; top: 52.4%; width: 40%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; z-index: 2; mix-blend-mode: screen; opacity: 0;
+  background: radial-gradient(closest-side, rgba(255, 236, 190, .9) 0 6%, rgba(255, 196, 110, .5) 18%, rgba(255, 150, 70, .16) 48%, transparent 100%); transition: opacity 1s ease; }
+/* the flame over the wooden wick, seen from above: a broad bright blade along the wick (turned with the night's top), a white
+   heart and an orange edge */
+.gc-flame { position: absolute; left: 48.5%; top: 52.4%; width: 25%; height: 8.5%; margin: -4.25% 0 0 -12.5%; border-radius: 50%; z-index: 2; opacity: 0;
+  transform: rotate(-125deg); transition: opacity 1s ease;
+  background: radial-gradient(closest-side, #FFFDF4 0 34%, #FFE7A8 56%, rgba(255, 170, 70, .85) 78%, rgba(255, 120, 40, 0) 100%); filter: blur(.6px); }
+/* the charred wick, just seen through the foot of the flame */
+.gc-flame::before { content: ""; position: absolute; left: 14%; right: 14%; top: 46%; height: 8%; border-radius: 2px; background: rgba(70, 34, 14, .32); }
+
+.gcard[data-t="night"] .gc-wick { opacity: .9; animation: gcFlicker 3.2s ease-in-out infinite; }
+.gcard[data-t="night"] :is(.gc-warm, .gc-pool) { opacity: 1; }
+.gcard[data-t="night"] .gc-flame { opacity: 1; animation: gcFlame 3.2s ease-in-out infinite; }
+.gcard[data-t="night"] .gc-warm { animation: gcFlicker 3.2s ease-in-out infinite; }
+@keyframes gcFlicker { 0%, 100% { scale: 1; opacity: .9; } 30% { scale: .96; opacity: .8; } 55% { scale: 1.03; opacity: 1; } 80% { scale: .98; opacity: .86; } }
+@keyframes gcFlame { 0%, 100% { scale: 1 1; } 30% { scale: .94 .9; } 55% { scale: 1.04 1.08; } 80% { scale: .98 .95; } }
 .gc-cap { margin: 0; }
+/* the one way to send a gift today, ahead of the gift sets that are coming soon: a candle from the shop */
+.fmt-pick a.gr-live { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 60px; padding: 8px 14px; border-radius: 16px; text-decoration: none; color: inherit;
+  background: linear-gradient(120deg, #FFF8EC, #FBEBD3); border: 1px solid rgba(201, 163, 90, .7); box-shadow: 0 10px 26px -18px rgba(122, 84, 16, .55); transition: border-color .2s, box-shadow .2s, transform .2s; }
+.fmt-pick a.gr-live:hover { border-color: #A8792E; transform: translateY(-1px); box-shadow: 0 14px 30px -18px rgba(122, 84, 16, .65); }
+.fmt-pick .gr-ic-live { background: radial-gradient(circle at 50% 60%, #FFE9C4, #F6D9A8); color: #C9762E; }
+.gr-go { font: 600 13px var(--body); color: #7A5410; white-space: nowrap; }
+.gr-live-note { margin: -4px 0 0; color: var(--ink-2, #5E5361); }
+#gAdd:disabled { opacity: .55; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) {
-  .gcard[data-candle], .gc-sky i, .gc-tin img, .gc-wick { transition: none !important; }
+  .gcard[data-candle], .gc-sky i, .gc-tin img, .gc-wick, .gc-warm, .gc-pool, .gc-flame { transition: none !important; }
   .gc-tin img { transform: rotate(var(--r, 0deg)); }
-  .gcard[data-t="night"] .gc-wick { animation: none; }
+  .gcard[data-t="night"] :is(.gc-wick, .gc-flame, .gc-warm) { animation: none; }
 }
 
 /* Find your scent: the full list, grouped by mood with the mood colour carried into each card */

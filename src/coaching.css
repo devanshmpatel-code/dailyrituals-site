@@ -82,41 +82,53 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 /* a soft dark bed under the near half, so the gold line still reads where it crosses the light of her photograph */
 .co-rg-shade { fill: none; stroke: rgba(27, 20, 48, .42); stroke-width: 8; filter: blur(1.5px); }
 .co-rg-trail { fill: none; stroke: #FFF4DE; stroke-width: 2.4; stroke-linecap: round; }
-.co-rg-glow { fill: none; stroke: var(--bead, #F3D29A); stroke-width: 7; stroke-linecap: round; opacity: .75; transition: stroke 1s ease; }
+.co-rg-glow { fill: none; stroke: var(--bead, #F3D29A); stroke-width: 11; stroke-linecap: round; opacity: .16; transition: stroke 1s ease; }
+.co-rg-glow.g2 { stroke-width: 5.5; opacity: .38; }
 .co-rg-arrows path { fill: none; stroke: #FFF1D8; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .co-orbit.back .co-rg-arrows { opacity: .7; }
-.co-bead-halo { fill: var(--bead, #F3D29A); opacity: .85; transition: fill 1s ease; }
-.co-bead-ball { fill: #FFF8EC; stroke: var(--bead, #F3D29A); stroke-width: 1.6; transition: stroke 1s ease; }
-.co-bead-spec { fill: #fff; }
+/* the bead: a small lit pearl (lit from above left, like everything on the page) in a soft halo of its step's colour; an element
+   of its own, moved by the compositor (coaching-fx.ts), sized in the portal's units (30 and 11 of its 500) */
+.co-bead { position: absolute; left: 0; top: 0; width: 6%; aspect-ratio: 1; margin: -3% 0 0 -3%; border-radius: 50%; pointer-events: none; will-change: transform;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--bead, #F3D29A) 70%, transparent) 0%, color-mix(in srgb, var(--bead, #F3D29A) 30%, transparent) 45%, transparent 100%); transition: background 1s ease; }
+.co-bead i { position: absolute; left: 31.6%; top: 31.6%; width: 36.8%; height: 36.8%; border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #fff 0 16%, #FFF8EC 40%, color-mix(in srgb, var(--bead, #F3D29A) 45%, #FFF4E2) 78%, color-mix(in srgb, var(--bead, #F3D29A) 80%, #6B4A3A) 100%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bead, #F3D29A) 70%, transparent), 0 1px 2px rgba(20, 10, 30, .45); }
 .co-orbit.back .co-bead { opacity: .8; }
 /* the loop's name, in the corner the arch leaves free */
-.co-loop-cap { position: absolute; left: -1%; top: 6%; transform: translateZ(70px); display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--co-gold-2); white-space: nowrap; text-shadow: 0 1px 8px rgba(16, 10, 34, .9); }
-.co-loop-cap i { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 1.5px solid currentColor; border-right-color: transparent; position: relative; rotate: -30deg; }
-.co-loop-cap i::after { content: ""; position: absolute; right: -4px; top: 3px; border: 4px solid transparent; border-top-color: currentColor; rotate: 20deg; }
+/* The words floating in front of the arch are laid out --k times larger and scaled back down in their transform: under a
+   perspective Chrome draws a layer at the screen's resolution however near it comes, so anything brought forward with
+   translateZ is enlarged from too few pixels and its words blur. Laid out larger, they stay crisp. (--u: one px, times --k) */
+.co-loop-cap, .co-chip, .co-name { --k: 1.5; --u: calc(1px * var(--k)); }
+.co-loop-cap { position: absolute; left: -1%; top: 6%; transform: translateZ(70px) scale(calc(1 / var(--k))); transform-origin: 0 0; display: inline-flex; align-items: center; gap: calc(8 * var(--u)); font-family: var(--mono); font-size: calc(11.5 * var(--u)); letter-spacing: .16em; text-transform: uppercase; color: var(--co-gold-2); white-space: nowrap; text-shadow: 0 var(--u) calc(8 * var(--u)) rgba(16, 10, 34, .9); }
+.co-loop-cap i { width: calc(18 * var(--u)); height: calc(18 * var(--u)); flex: none; border-radius: 50%; border: calc(1.5 * var(--u)) solid currentColor; border-right-color: transparent; position: relative; rotate: -30deg; }
+.co-loop-cap i::after { content: ""; position: absolute; right: calc(-4 * var(--u)); top: calc(3 * var(--u)); border: calc(4 * var(--u)) solid transparent; border-top-color: currentColor; rotate: 20deg; }
 .co-loop { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; transform-style: preserve-3d; pointer-events: none; }
 /* a step: a numbered glass coin on the ring and its name beside it, reaching in towards Claire (--x, --y: the coin's centre) */
-.co-chip { --c: 20px; position: absolute; left: calc(var(--x, 0) * 1%); top: calc(var(--y, 0) * 1%); margin: calc(var(--c) * -1) 0 0 calc(var(--c) * -1);
-  display: inline-flex; align-items: center; gap: 9px; padding: 6px 16px 6px 6px; border-radius: 999px; font-size: 14.5px; font-weight: 600; letter-spacing: .01em; color: var(--co-cream); white-space: nowrap;
-  background: linear-gradient(160deg, rgba(88, 56, 98, .86), rgba(34, 25, 58, .84)); border: 1px solid rgba(243, 210, 154, .5);
-  box-shadow: inset 0 1px 0 rgba(255, 244, 222, .22), inset 0 -8px 14px -10px rgba(0, 0, 0, .5), 0 18px 30px -16px rgba(8, 4, 20, .95), 0 0 0 0 transparent;
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: coFloat 7s ease-in-out infinite;
+.co-chip { --c: 20; --z: 90px; position: absolute; left: calc(var(--x, 0) * 1%); top: calc(var(--y, 0) * 1%); margin: calc(var(--c) * var(--u) * -1) 0 0 calc(var(--c) * var(--u) * -1);
+  transform: translateZ(var(--z)) scale(calc(1 / var(--k))); transform-origin: calc(var(--c) * var(--u)) calc(var(--c) * var(--u));
+  display: inline-flex; align-items: center; gap: calc(9 * var(--u)); padding: calc(6 * var(--u)) calc(16 * var(--u)) calc(6 * var(--u)) calc(6 * var(--u)); border-radius: 999px; font-size: calc(14.5 * var(--u)); font-weight: 600; letter-spacing: .01em; color: var(--co-cream); white-space: nowrap;
+  background: linear-gradient(160deg, rgba(88, 56, 98, .88), rgba(34, 25, 58, .86)); border: var(--u) solid rgba(243, 210, 154, .5);
+  box-shadow: inset 0 var(--u) 0 rgba(255, 244, 222, .22), inset 0 calc(-8 * var(--u)) calc(14 * var(--u)) calc(-10 * var(--u)) rgba(0, 0, 0, .5), 0 calc(18 * var(--u)) calc(30 * var(--u)) calc(-16 * var(--u)) rgba(8, 4, 20, .95), 0 0 0 0 transparent;
+  animation: coFloat 7s ease-in-out infinite;
   transition: border-color .6s ease, box-shadow .6s ease, color .6s ease; }
-.co-chip.c2, .co-chip.c3 { flex-direction: row-reverse; padding: 6px 6px 6px 16px; left: auto; right: calc((100 - var(--x, 100)) * 1%); margin: calc(var(--c) * -1) calc(var(--c) * -1) 0 0; }
-.co-chip i { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 50%; font: 700 12.5px/1 var(--body); font-style: normal; color: #231A2B;
+/* (a glass blur behind the chips only with a fine pointer: on a phone it would be worked out again every frame the ring moves) */
+@media (pointer: fine) { .co-chip { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); } }
+.co-chip.c2, .co-chip.c3 { flex-direction: row-reverse; padding: calc(6 * var(--u)) calc(6 * var(--u)) calc(6 * var(--u)) calc(16 * var(--u)); left: auto; right: calc((100 - var(--x, 100)) * 1%); margin: calc(var(--c) * var(--u) * -1) calc(var(--c) * var(--u) * -1) 0 0;
+  transform-origin: calc(100% - var(--c) * var(--u)) calc(var(--c) * var(--u)); }
+.co-chip i { width: calc(28 * var(--u)); height: calc(28 * var(--u)); flex: none; display: grid; place-items: center; border-radius: 50%; font: 700 calc(12.5 * var(--u))/1 var(--body); font-style: normal; color: #231A2B;
   background: radial-gradient(circle at 34% 28%, #fff 0 7%, color-mix(in srgb, var(--hue) 55%, #fff) 26%, var(--hue) 62%, color-mix(in srgb, var(--hue) 62%, #2A1F33) 100%);
-  box-shadow: 0 0 12px -2px var(--hue), inset 0 -2px 4px rgba(42, 31, 51, .3); transition: box-shadow .6s ease, scale .6s ease; }
-.co-chip.c1 { transform: translateZ(90px); }
-.co-chip.c2 { transform: translateZ(70px); animation-delay: -2.4s; }
-.co-chip.c3 { transform: translateZ(130px); animation-delay: -4.6s; }
-.co-chip.c4 { transform: translateZ(110px); animation-delay: -1.2s; }
+  box-shadow: 0 0 calc(12 * var(--u)) calc(-2 * var(--u)) var(--hue), inset 0 calc(-2 * var(--u)) calc(4 * var(--u)) rgba(42, 31, 51, .3); transition: box-shadow .6s ease, scale .6s ease; }
+.co-chip.c2 { --z: 70px; animation-delay: -2.4s; }
+.co-chip.c3 { --z: 130px; animation-delay: -4.6s; }
+.co-chip.c4 { --z: 110px; animation-delay: -1.2s; }
 /* the step the bead has reached glows in its own colour */
 .co-chip.on { border-color: var(--hue); color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 244, 222, .3), inset 0 -8px 14px -10px rgba(0, 0, 0, .5), 0 18px 30px -16px rgba(8, 4, 20, .95), 0 0 26px -4px var(--hue); }
-.co-chip.on i { box-shadow: 0 0 22px 2px var(--hue), inset 0 -2px 4px rgba(42, 31, 51, .3); scale: 1.08; }
+  box-shadow: inset 0 var(--u) 0 rgba(255, 244, 222, .3), inset 0 calc(-8 * var(--u)) calc(14 * var(--u)) calc(-10 * var(--u)) rgba(0, 0, 0, .5), 0 calc(18 * var(--u)) calc(30 * var(--u)) calc(-16 * var(--u)) rgba(8, 4, 20, .95), 0 0 calc(26 * var(--u)) calc(-4 * var(--u)) var(--hue); }
+.co-chip.on i { box-shadow: 0 0 calc(22 * var(--u)) calc(2 * var(--u)) var(--hue), inset 0 calc(-2 * var(--u)) calc(4 * var(--u)) rgba(42, 31, 51, .3); scale: 1.08; }
 @keyframes coFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -8px; } }
-.co-name { position: absolute; left: 50%; bottom: 1%; transform: translateX(-50%) translateZ(110px); display: flex; flex-direction: column; align-items: center; gap: 0; padding: 10px 26px 11px; border-radius: 999px; background: var(--co-cream); color: #2A1F33; box-shadow: 0 22px 40px -20px rgba(8, 4, 20, .9), inset 0 0 0 1px rgba(201, 163, 90, .5); white-space: nowrap; }
-.co-name b { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.1; }
-.co-name span { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #6F6676; font-weight: 600; }
+.co-name { position: absolute; left: 50%; bottom: 1%; transform: translateX(-50%) translateZ(110px) scale(calc(1 / var(--k))); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: 0; padding: calc(10 * var(--u)) calc(26 * var(--u)) calc(11 * var(--u)); border-radius: 999px; background: var(--co-cream); color: #2A1F33; box-shadow: 0 calc(22 * var(--u)) calc(40 * var(--u)) calc(-20 * var(--u)) rgba(8, 4, 20, .9), inset 0 0 0 var(--u) rgba(201, 163, 90, .5); white-space: nowrap; }
+.co-name b { font-family: var(--display); font-weight: 400; font-size: calc(22 * var(--u)); line-height: 1.1; }
+.co-name span { font-size: calc(11 * var(--u)); letter-spacing: .14em; text-transform: uppercase; color: #6F6676; font-weight: 600; }
 
 /* ---------------- 2 · at a glance ---------------- */
 .co-facts { position: relative; z-index: 2; margin-top: -34px; }
@@ -169,7 +181,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 .co .loop-wrap { align-items: center; }
 .loop.lp3 { max-width: 640px; aspect-ratio: auto; --lc: #8A5A3B; --lg: #D9953A; transition: --lc 1.1s ease, --lg 1.1s ease; }
 .lp3[data-loop="new"] { --lc: #2F5249; --lg: #6FAE98; }
-.lp3-stage { --coin: 118px; --thick: 13px; position: relative; height: 440px; perspective: 1100px; perspective-origin: 50% 26%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; outline: none; border-radius: 32px; }
+.lp3-stage { --coin: 177px; --thick: 20px; --k: 1.5; position: relative; height: 440px; perspective: 1100px; perspective-origin: 50% 26%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; outline: none; border-radius: 32px; }
 .lp3-stage.grab { cursor: grabbing; }
 .lp3-stage:focus-visible { box-shadow: 0 0 0 2px var(--lc); }
 /* (the tilted plane itself takes no taps: in 3D it would lie in front of the coins round the back) */
@@ -198,27 +210,32 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 .lp-coin { pointer-events: auto; width: var(--coin); height: var(--coin); margin: 0; padding: 0; border: 0; background: none; border-radius: 50%; transform-style: preserve-3d; cursor: pointer; font: inherit; color: var(--ink); -webkit-tap-highlight-color: transparent; }
 .lp-coin:focus { outline: none; }
 .lp-rim { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
-.lp-rim i { --sw: calc(3.1416 * var(--coin) / 28 + 1px); position: absolute; left: 50%; top: 50%; width: var(--sw); height: var(--thick); margin: calc(var(--thick) / -2) 0 0 calc(var(--sw) / -2);
+.lp-rim i { --sw: calc(3.1416 * var(--coin) / 28 + 1.5px); position: absolute; left: 50%; top: 50%; width: var(--sw); height: var(--thick); margin: calc(var(--thick) / -2) 0 0 calc(var(--sw) / -2);
   background: hsl(30 24% var(--l)); transform: rotateZ(var(--a)) translateY(calc(var(--coin) / -2 + .5px)) rotateX(90deg); }
-.lp-face { position: absolute; inset: 0; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px; text-align: center;
+/* (the coin is laid out --k times larger and scaled back down, loop.ts, so its words are drawn from enough pixels: lengths
+   inside it are multiplied by --k) */
+.lp-face { position: absolute; inset: 0; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(3px * var(--k)); padding: calc(10px * var(--k)); text-align: center;
   backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(calc(var(--thick) / 2));
   background: radial-gradient(115% 115% at 32% 24%, #FFFFFF 0%, #FBF6EF 34%, #F1E6D8 72%, #E1D0BC 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .85), inset 0 -9px 16px -8px rgba(120, 84, 60, .3), inset 0 0 calc(var(--hit, 0) * 30px) color-mix(in srgb, var(--lg) calc(var(--hit, 0) * 70%), transparent);
+  /* glaze: a bright Fresnel edge all round, the lit bevel along the top, the turned-away bevel underneath in warm shade */
+  box-shadow: inset 0 0 0 calc(1px * var(--k)) rgba(255, 255, 255, .85), inset 0 calc(2px * var(--k)) calc(3px * var(--k)) calc(-1px * var(--k)) #fff,
+    inset 0 calc(-9px * var(--k)) calc(16px * var(--k)) calc(-8px * var(--k)) rgba(120, 84, 60, .3), inset 0 0 calc(var(--hit, 0) * 30px * var(--k)) color-mix(in srgb, var(--lg) calc(var(--hit, 0) * 70%), transparent);
   transition: background .5s ease, color .5s ease; }
 .lp-face.f-new { transform: rotateY(180deg) translateZ(calc(var(--thick) / 2)); }
 /* a fine raised bevel just inside the edge, and the glint of the light on the glaze */
-.lp-face::before { content: ""; position: absolute; inset: 6%; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--lc) 30%, rgba(201, 163, 90, .5)); box-shadow: inset 0 1px 2px rgba(120, 84, 60, .14), 0 1px 0 rgba(255, 255, 255, .9); pointer-events: none; }
+.lp-face::before { content: ""; position: absolute; inset: 6%; border-radius: 50%; border: calc(1px * var(--k)) solid color-mix(in srgb, var(--lc) 30%, rgba(201, 163, 90, .5)); box-shadow: inset 0 calc(1px * var(--k)) calc(2px * var(--k)) rgba(120, 84, 60, .14), 0 calc(1px * var(--k)) 0 rgba(255, 255, 255, .9); pointer-events: none; }
 .lp-face::after { content: ""; position: absolute; left: 15%; top: 8%; width: 42%; height: 22%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, .95), rgba(255, 255, 255, 0)); transform: rotate(-26deg); opacity: .75; pointer-events: none; }
-.lp-n { font: 700 max(9px, calc(var(--coin) * .075))/1 var(--body); letter-spacing: .2em; color: color-mix(in srgb, var(--lc) 70%, #9C8A7E); margin-left: .2em; }
+.lp-n { font: 700 max(calc(9px * var(--k)), calc(var(--coin) * .075))/1 var(--body); letter-spacing: .2em; color: color-mix(in srgb, var(--lc) 70%, #9C8A7E); margin-left: .2em; }
 .lp-coin svg.lp-ic { width: calc(var(--coin) * .25); height: calc(var(--coin) * .25); flex: none; overflow: visible; color: var(--lc); } /* (not the loop's old full-size svg rule) */
-.lp-face b { font-family: var(--body); font-weight: 600; font-size: max(11px, calc(var(--coin) * .112)); line-height: 1.12; color: var(--ink, #2A1F33); letter-spacing: .005em; }
+.lp-face b { font-family: var(--body); font-weight: 600; font-size: max(calc(11px * var(--k)), calc(var(--coin) * .112)); line-height: 1.12; color: var(--ink, #2A1F33); letter-spacing: .005em; }
 /* the step being read is glazed in the loop's colour */
 .lp-coin.on .lp-face { background: radial-gradient(115% 115% at 32% 24%, color-mix(in srgb, var(--lg) 55%, #fff) 0%, color-mix(in srgb, var(--lc) 82%, var(--lg)) 46%, color-mix(in srgb, var(--lc) 78%, #000) 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35), inset 0 -10px 18px -8px rgba(0, 0, 0, .35), inset 0 0 calc(var(--hit, 0) * 30px) color-mix(in srgb, var(--lg) calc(var(--hit, 0) * 70%), transparent); }
-.lp-coin.on .lp-face::before { border-color: rgba(255, 255, 255, .35); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .2); }
+  box-shadow: inset 0 0 0 calc(1px * var(--k)) rgba(255, 255, 255, .35), inset 0 calc(2px * var(--k)) calc(3px * var(--k)) calc(-1px * var(--k)) rgba(255, 255, 255, .45),
+    inset 0 calc(-10px * var(--k)) calc(18px * var(--k)) calc(-8px * var(--k)) rgba(0, 0, 0, .35), inset 0 0 calc(var(--hit, 0) * 30px * var(--k)) color-mix(in srgb, var(--lg) calc(var(--hit, 0) * 70%), transparent); }
+.lp-coin.on .lp-face::before { border-color: rgba(255, 255, 255, .35); box-shadow: inset 0 calc(1px * var(--k)) calc(2px * var(--k)) rgba(0, 0, 0, .2); }
 .lp-coin.on .lp-face b, .lp-coin.on .lp-ic { color: #fff; }
 .lp-coin.on .lp-n { color: rgba(255, 255, 255, .8); }
-.lp-coin:focus-visible .lp-face { box-shadow: 0 0 0 3px var(--lg), inset 0 -9px 16px -8px rgba(120, 84, 60, .3); }
+.lp-coin:focus-visible .lp-face { box-shadow: 0 0 0 calc(3px * var(--k)) var(--lg), inset 0 calc(-9px * var(--k)) calc(16px * var(--k)) calc(-8px * var(--k)) rgba(120, 84, 60, .3); }
 .lp-coin.gone { pointer-events: none; }
 /* the bead: a small glowing sphere riding on the hoop */
 .lp3-bead { width: 14px; height: 14px; margin: 0; border-radius: 50%; pointer-events: none;
@@ -269,7 +286,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 
 .cue { --hue: #B9A3E0; --lit: .4; position: relative; }
 .cue-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .8fr); gap: clamp(20px, 3vw, 48px); align-items: center; }
-.cue-stage { --cardw: 164px; --cardh: 200px; --cardy: -40px; --floory: 74px; --orbsize: 196px; --orblift: 34px; --slot: 45; position: relative; height: 560px; perspective: 1300px; perspective-origin: 50% 34%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; border-radius: 36px; outline: none; overflow-x: clip; overflow-y: visible; }
+.cue-stage { --k: 1.5; --cardw: 164px; --cardh: 200px; --cardy: -40px; --floory: 74px; --orbsize: 196px; --orblift: 34px; --slot: 45; position: relative; height: 560px; perspective: 1300px; perspective-origin: 50% 34%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; border-radius: 36px; outline: none; overflow-x: clip; overflow-y: visible; }
 .cue-stage.grab { cursor: grabbing; }
 .cue-stage:focus-visible { box-shadow: 0 0 0 2px var(--co-gold); }
 .cue-tilt { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; } /* (taps go to the cards, not the tilted plane in front of those round the back) */
@@ -281,6 +298,9 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 .cue-arc.lit { stroke: var(--hue); filter: drop-shadow(0 0 6px var(--hue)); }
 .cue-dot { fill: #2A2147; stroke: rgba(233, 212, 161, .6); stroke-width: 1.5; transition: fill .6s; }
 .cue-dot.lit { fill: var(--hue); }
+/* the cards' shadows on the floor: thrown outward by the pause light, deeper as it brightens */
+.cue-shadows ellipse { fill: rgba(4, 2, 14, .85); }
+.cue-shadows { opacity: calc(.3 + var(--lit) * .45); transition: opacity 1.6s ease; }
 /* the pause light stands on the floor of the ring, hovering a little, facing the visitor (--untilt undoes the ring's tilt,
    as the cards do) */
 .cue-orb { position: absolute; left: 50%; top: 50%; pointer-events: none; transform-origin: 50% 100%;
@@ -313,7 +333,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 @keyframes plFloat { 0%, 100% { translate: 0 0; } 40% { translate: 0 -5px; } }
 @keyframes plGlow { 0%, 100% { scale: .9; } 40% { scale: 1.04; } }
 /* the ring through the glass: squashed to an ellipse and upside down (its near side at the top), high in the sphere */
-.pl-refr { position: absolute; inset: 0; opacity: .85; filter: blur(.6px); }
+.pl-refr { position: absolute; inset: 0; opacity: .72; filter: blur(1.1px); }
 .pl-refr svg { position: absolute; left: 10%; top: 12%; width: 80%; height: 80%; overflow: visible; }
 .pl-refr .cue-arc { stroke-width: 16; }
 .pl-glass { position: absolute; inset: 0; border-radius: 50%;
@@ -344,26 +364,29 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 
 /* the steps: panes of smoked glass, a hairline border catching the light along the top, the step's colour only as a quiet
    wash and a fine line when it is the one being read */
-.cue-card { pointer-events: auto; width: var(--cardw); height: var(--cardh); margin: 0; padding: 28px 14px 16px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 7px; text-align: center; color: var(--co-cream); font: inherit; cursor: pointer;
-  position: absolute; overflow: hidden; border-radius: 999px 999px 20px 20px; border: 1px solid rgba(255, 255, 255, .14);
+.cue-card { --k: 1.5; --u: calc(1px * var(--k)); pointer-events: auto; width: calc(var(--cardw) * var(--k)); height: calc(var(--cardh) * var(--k)); margin: 0; padding: calc(28 * var(--u)) calc(14 * var(--u)) calc(16 * var(--u)); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: calc(7 * var(--u)); text-align: center; color: var(--co-cream); font: inherit; cursor: pointer;
+  position: absolute; overflow: hidden; border-radius: 999px 999px calc(20 * var(--u)) calc(20 * var(--u)); border: var(--u) solid rgba(255, 255, 255, .14);
+  /* smoked glass: lit along its top edge, a Fresnel brightening at its rim, and the pause light's colour faintly on its foot */
   background: linear-gradient(180deg, rgba(255, 255, 255, .11) 0%, rgba(255, 255, 255, .035) 46%, rgba(255, 255, 255, .02) 100%), #1E1836;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 0 0 1px rgba(255, 255, 255, .03), 0 24px 40px -26px rgba(4, 2, 12, .9);
+  box-shadow: inset 0 var(--u) 0 rgba(255, 255, 255, .22), inset 0 0 0 var(--u) rgba(255, 255, 255, .03), inset 0 0 calc(14 * var(--u)) calc(-6 * var(--u)) rgba(255, 255, 255, .1),
+    inset 0 calc(-18 * var(--u)) calc(24 * var(--u)) calc(-18 * var(--u)) color-mix(in srgb, var(--hue) calc(var(--lit) * 30%), transparent), 0 calc(24 * var(--u)) calc(40 * var(--u)) calc(-26 * var(--u)) rgba(4, 2, 12, .9);
   transition: background .6s, box-shadow .6s, border-color .6s; }
-.cue-card::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 0; height: 2px; border-radius: 2px; background: var(--hue); opacity: 0; transition: opacity .6s; }
+.cue-card::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 0; height: calc(2 * var(--u)); border-radius: calc(2 * var(--u)); background: var(--hue); opacity: 0; transition: opacity .6s; }
 .cue-card.on { border-color: color-mix(in srgb, var(--hue) 55%, rgba(255, 255, 255, .2));
   background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--hue) 26%, transparent), transparent 70%), linear-gradient(180deg, rgba(255, 255, 255, .13), rgba(255, 255, 255, .03) 60%), #221B3C;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 0 0 1px color-mix(in srgb, var(--hue) 18%, transparent), 0 26px 44px -24px color-mix(in srgb, var(--hue) 45%, rgba(4, 2, 12, .9)); }
+  box-shadow: inset 0 var(--u) 0 rgba(255, 255, 255, .3), inset 0 0 calc(14 * var(--u)) calc(-6 * var(--u)) rgba(255, 255, 255, .12), 0 0 0 var(--u) color-mix(in srgb, var(--hue) 18%, transparent), 0 calc(26 * var(--u)) calc(44 * var(--u)) calc(-24 * var(--u)) color-mix(in srgb, var(--hue) 45%, rgba(4, 2, 12, .9)); }
 .cue-card.on::after { opacity: .9; }
 /* its words, only while it faces the visitor (--face, from coaching-cue.ts): round the back it is a dimmer arch with only
    its icon (the cards themselves are solid, so nothing behind a front card shows through it) */
 .cue-card > * { opacity: var(--face, 1); }
 .cue-card.back { box-shadow: none; }
 .cue-card.back::after { opacity: 0; }
-.cue-card .cue-n { font-family: var(--body); font-size: 10.5px; font-weight: 700; letter-spacing: .24em; color: rgba(233, 212, 161, .78); line-height: 1; }
+.cue-card .cue-n { font-family: var(--body); font-size: calc(10.5 * var(--u)); font-weight: 700; letter-spacing: .24em; color: rgba(233, 212, 161, .78); line-height: 1; }
 .cue-ic { width: 34px; height: 34px; color: color-mix(in srgb, var(--hue) 82%, #fff); stroke-width: 1.3; opacity: .9; }
+.cue-card .cue-ic { flex: none; width: calc(34 * var(--u)); height: calc(34 * var(--u)); }
 .cue-card.on .cue-ic { color: color-mix(in srgb, var(--hue) 60%, #fff); opacity: 1; }
-.cue-card b { font-family: var(--display); font-weight: 400; font-size: 23px; line-height: 1.05; letter-spacing: -.005em; margin-top: 2px; }
-.cue-t { font-size: 12.5px; color: rgba(251, 243, 234, .72); line-height: 1.35; letter-spacing: .01em; }
+.cue-card b { font-family: var(--display); font-weight: 400; font-size: calc(23 * var(--u)); line-height: 1.05; letter-spacing: -.005em; margin-top: calc(2 * var(--u)); }
+.cue-t { font-size: calc(12.5 * var(--u)); color: rgba(251, 243, 234, .72); line-height: 1.35; letter-spacing: .01em; }
 .cue-card.on .cue-t { color: rgba(251, 243, 234, .9); }
 .cue-hint { position: absolute; left: 50%; bottom: 14px; translate: -50% 0; margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: .04em; color: rgba(251, 243, 234, .72); padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(233, 212, 161, .25); transition: opacity .6s; pointer-events: none; }
 .cue-stage.turned .cue-hint { opacity: 0; }
@@ -415,6 +438,9 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 /* ---------------- 6 · ways to begin, the first 90 days ---------------- */
 .co-work { background: linear-gradient(180deg, #251A38 0, var(--ground, #F7F2EA) 2px); }
 .co-work .ways .way { min-height: 230px; }
+/* the next step on a way in that has no booking of its own yet: the free discovery call */
+.co-work .way-next { margin-top: auto; padding-top: 12px; font-size: 14px; font-weight: 600; color: var(--co-plum); text-decoration: underline; text-decoration-color: rgba(74, 44, 82, .35); text-underline-offset: 4px; }
+.co-work .way:hover .way-next { text-decoration-color: currentColor; }
 .co-path { margin-top: clamp(48px, 6vw, 80px); display: grid; grid-template-columns: minmax(0, .5fr) minmax(0, 1.5fr); gap: clamp(20px, 3vw, 48px); align-items: start; }
 .co-path-head { display: flex; flex-direction: column; gap: 10px; }
 .co-path-head h3 { font-size: clamp(32px, 3.6vw, 48px); }
@@ -489,12 +515,15 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 .kit-scent > span:last-child { font-size: 14px; color: var(--ink-2); }
 .kit-row { display: flex; align-items: flex-end; justify-content: center; gap: clamp(10px, 2vw, 28px); width: 100%; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
 .kit-item { container-type: inline-size; flex: 1 1 0; min-width: 0; max-width: 220px; display: flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; transform-style: preserve-3d; }
-.kit-item.k-candle { flex-grow: 1.22; max-width: 260px; transform: translateZ(26px); }
+.kit-item.k-candle { flex-grow: 1.22; max-width: 260px; }
+/* the candle stands a little nearer: its picture and plinth, not its words (words brought forward under a perspective are
+   drawn at the screen's resolution and then enlarged, and blur) */
+.k-candle .kit-float, .k-candle .kit-plinth { transform: translateZ(26px); }
 .kit-float { display: block; width: 78%; animation: kitFloat 6.5s ease-in-out infinite; animation-delay: calc(var(--i) * -2.1s); }
 @keyframes kitFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
 .kit-obj { position: relative; display: block; }
 /* the arch has a thickness: a darker copy just behind and below it, like the edge of a porcelain tile */
-.kit-obj::before { content: ""; position: absolute; inset: 0; translate: 3px 5px; border-radius: 999px 999px 18px 18px; background: linear-gradient(180deg, #CDB4A8, #A98C86); }
+.kit-obj::before { content: ""; position: absolute; inset: 0; translate: 2px 3.5px; border-radius: 999px 999px 18px 18px; background: linear-gradient(160deg, #E4D2C8 0%, #C9AFA4 55%, #B0948C 100%); box-shadow: 0 0 1px rgba(90, 60, 60, .35); }
 .kit-arch { position: relative; display: block; aspect-ratio: 4 / 5; border-radius: 999px 999px 18px 18px; overflow: hidden; background: linear-gradient(180deg, #F7EADF, #E8D3C6);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .45), 0 26px 30px -22px rgba(60, 30, 44, .6); transition: transform .5s cubic-bezier(.2, .7, .2, 1); }
 .kit-arch img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -555,6 +584,9 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
   .co-dock .btn { flex: 1; min-height: 46px; padding: 0 14px; font-size: 14.5px; }
   .co-dock .co-dock-call { flex: .8; background: transparent; border: 1px solid rgba(251, 243, 234, .45); color: var(--co-cream); }
   body.co-docked .breathorb { bottom: calc(max(18px, env(safe-area-inset-bottom)) + 74px); }
+  /* while the bar shows, the orb steps aside by fading where it stands: sliding down out of sight and back up, it would
+     pass over the bar's buttons */
+  body.co-docked .breathorb.bo-tucked { translate: 0 0; }
   html:has(> body.co-docked) { scroll-padding-bottom: 96px; }
   /* room at the very end of the page, so the last of it can scroll clear of the bar */
   body:has(> .co-dock) footer.cel-night::after { content: ""; display: block; height: calc(84px + env(safe-area-inset-bottom)); }
@@ -571,8 +603,8 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 @media (min-width: 821px) and (max-width: 1100px) {
   /* the new loop's right-hand chips keep inside the screen: a slightly smaller portal, the nearest chip a little less near */
   .co-portal { width: min(440px, 90%); }
-  .co-chip { font-size: 13.5px; }
-  .co-chip.c3 { transform: translateZ(80px); }
+  .co-chip { font-size: calc(13.5 * var(--u)); }
+  .co-chip.c3 { --z: 80px; }
 }
 @media (max-width: 1100px) {
   .cue-grid { grid-template-columns: minmax(0, 1fr); }
@@ -597,12 +629,12 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
   .co-portal { order: 1; width: min(300px, 76%); align-self: center; margin-block: 4px 6px; }
   .co-hero .crumbs { display: none; }
   .co-hero h1 { font-size: clamp(46px, 13vw, 64px); }
-  .co-chip { --c: 15px; font-size: 12.5px; gap: 7px; padding: 4px 11px 4px 4px; }
-  .co-chip.c2, .co-chip.c3 { padding: 4px 4px 4px 11px; }
-  .co-chip i { width: 22px; height: 22px; font-size: 11px; }
-  .co-loop-cap { font-size: 10px; letter-spacing: .14em; gap: 6px; left: -4%; top: 3%; }
-  .co-loop-cap i { width: 14px; height: 14px; }
-  .co-name b { font-size: 19px; } .co-name { padding: 8px 20px 9px; }
+  .co-chip { --c: 15; font-size: calc(12.5 * var(--u)); gap: calc(7 * var(--u)); padding: calc(4 * var(--u)) calc(11 * var(--u)) calc(4 * var(--u)) calc(4 * var(--u)); }
+  .co-chip.c2, .co-chip.c3 { padding: calc(4 * var(--u)) calc(4 * var(--u)) calc(4 * var(--u)) calc(11 * var(--u)); }
+  .co-chip i { width: calc(22 * var(--u)); height: calc(22 * var(--u)); font-size: calc(11 * var(--u)); }
+  .co-loop-cap { font-size: calc(10 * var(--u)); letter-spacing: .14em; gap: calc(6 * var(--u)); left: -4%; top: 3%; }
+  .co-loop-cap i { width: calc(14 * var(--u)); height: calc(14 * var(--u)); }
+  .co-name b { font-size: calc(19 * var(--u)); } .co-name { padding: calc(8 * var(--u)) calc(20 * var(--u)) calc(9 * var(--u)); }
   .co-facts { margin-top: -28px; }
   .co-facts-in { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: rgba(201, 163, 90, .25); border-radius: 22px; overflow: hidden; padding: 0; margin-inline: 16px; filter: drop-shadow(0 14px 24px rgba(74, 48, 80, .14)); }
   .co-facts-in span, .co-facts-in span:first-child, .co-facts-in span:last-child { border-radius: 0; padding: 14px 12px; justify-content: center; text-align: center; font-size: 13.5px; flex-wrap: wrap; gap: 4px; }
@@ -623,15 +655,16 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
   .lp3-hub b { font-size: 19px; }
   .lp3-hub span { display: none; }
   /* the sphere stands on the floor of the ring like the steps, and the two front steps sit either side of it */
-  .cue-stage { --cardw: 104px; --cardh: 136px; --cardy: 12px; --floory: 80px; --orbsize: 118px; --orblift: 22px; --slot: 46; height: 380px; perspective: 800px; perspective-origin: 50% 40%; }
-  .cue-hint { white-space: nowrap; bottom: 10px; font-size: 12px; }
+  .cue-stage { --cardw: 104px; --cardh: 146px; --cardy: 6px; --floory: 80px; --orbsize: 118px; --orblift: 22px; --slot: 46; height: 380px; perspective: 800px; perspective-origin: 50% 40%; }
+  .cue-hint { white-space: nowrap; bottom: -2px; font-size: 12px; }
   .cue-pills { display: grid; grid-template-columns: 1fr 1fr; }
   .cue-pill { justify-content: center; }
-  .cue-card { padding: 20px 8px 10px; gap: 4px; }
-  .cue-card b { font-size: 17px; }
+  .cue-card { padding: calc(18 * var(--u)) calc(7 * var(--u)) calc(10 * var(--u)); gap: calc(3 * var(--u)); }
+  .cue-card b { font-size: calc(16.5 * var(--u)); }
   .cue-ic { width: 28px; height: 28px; }
-  .cue-t { font-size: 11.5px; }
-  .cue-card .cue-n { font-size: 14px; }
+  .cue-card .cue-ic { width: calc(26 * var(--u)); height: calc(26 * var(--u)); }
+  .cue-t { font-size: calc(11 * var(--u)); line-height: 1.25; }
+  .cue-card .cue-n { font-size: calc(13 * var(--u)); letter-spacing: .16em; }
   .cue-pill { padding: 0 10px; font-size: 12.5px; }
   .cue.is-static .cue-flat { grid-template-columns: minmax(0, 1fr); }
   .cue-flat-orb { grid-column: 1; grid-row: auto; height: 240px; margin-bottom: 10px; }

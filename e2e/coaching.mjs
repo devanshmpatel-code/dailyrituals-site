@@ -215,7 +215,7 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
     const drafts = [...k.querySelectorAll('.co-kit-tx p, .co-kit-tx h2, .co-kit-tx .eyebrow, .kit-scent .eyebrow, .kit-scent > span:last-child, .kit-use')].every(e => { const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT); let n, okk = true; while ((n = w.nextNode())) if (n.textContent.trim() && !n.parentElement.closest('.d')) okk = false; return okk; });
     return { sections: document.querySelectorAll('.co section#coKit').length, afterWays: after(k, document.querySelector('.co-work')), beforeFinal: after(document.querySelector('#coFinal'), k), text: k.innerText, drafts,
       items: [...k.querySelectorAll('.kit-item')].map(a => ({ slug: decodeURIComponent(a.getAttribute('href').split('/product/')[1]), kind: a.className.match(/k-(\w+)/)[1], price: a.querySelector('.kit-price').textContent, plinth: !!a.querySelector('.kit-plinth .kit-top') && !!a.querySelector('.kit-plinth .kit-side') })),
-      depth: !new DOMMatrix(getComputedStyle(k.querySelector('.kit-item.k-candle')).transform).is2D, persp: getComputedStyle(k.querySelector('.co-kit-stage')).perspective,
+      depth: !new DOMMatrix(getComputedStyle(k.querySelector('.kit-item.k-candle .kit-float')).transform).is2D, persp: getComputedStyle(k.querySelector('.co-kit-stage')).perspective,
       candle: k.querySelectorAll('.k-candle .lc canvas.lc-flame').length, prices: [...document.querySelectorAll('.co *')].filter(e => e.children.length === 0 && /\$\s?\d/.test(e.textContent)).map(e => !!e.closest('#coKitStage')) }; });
   ok(`${label}: one cue-kit section, after the ways to begin and before the last call to action`, kit.sections === 1 && kit.afterWays && kit.beforeFinal, JSON.stringify({ a: kit.afterWays, b: kit.beforeFinal }));
   ok(`${label}: it links the two honestly: a familiar scent as the cue for a pause, and nothing to buy to begin`, /familiar scent as the cue for a calm pause/i.test(kit.text) && /nothing to buy/i.test(kit.text) && /any scent you already have/i.test(kit.text) && /optional/i.test(kit.text));
@@ -275,7 +275,7 @@ for (const w of [1440, 1024, 768, 390, 360]) {
       layers: [...document.querySelectorAll('#coPortal .co-orbit')].map(l => ({ front: l.classList.contains('front'), svg: !!l.querySelector('svg .co-rg-line'), clip: !!l.querySelector('g[clip-path]'), arrows: l.querySelectorAll('.co-rg-arrows path').length })),
       order: (() => { const a = document.querySelector('#coPortal .co-orbit.back'), arch = document.querySelector('#coPortal .co-arch'), f = document.querySelector('#coPortal .co-orbit.front');
         return !!(a.compareDocumentPosition(arch) & 4) && !!(arch.compareDocumentPosition(f) & 4); })(),
-      bead: document.querySelector('#coPortal .co-orbit.front .co-bead').getAttribute('transform') };
+      bead: document.querySelector('#coPortal .co-orbit.front .co-bead').style.transform };
   });
   ok(`${label}: the orbit round Claire is the new loop, in order: cue, pause, chosen response, repeat`, JSON.stringify(hero.words) === JSON.stringify(['Cue', 'Pause', 'Chosen response', 'Repeat']) && hero.name === 'A new loop' && !hero.old, JSON.stringify(hero.words));
   const clash = hero.rs.some((a, i) => hero.rs.some((c, j) => j > i && overlap(a, c)));
@@ -286,7 +286,7 @@ for (const w of [1440, 1024, 768, 390, 360]) {
     // a lit bead travels the ring clockwise and each step lights as it arrives, in the loop's order
     const seen = [];
     for (let i = 0; i < 64; i++) { const k = await p.evaluate(() => [...document.querySelectorAll('#coPortal .co-chip')].findIndex(c => c.classList.contains('on'))); if (k >= 0 && seen.at(-1) !== k) seen.push(k); await p.waitForTimeout(250); }
-    const bead2 = await p.evaluate(() => document.querySelector('#coPortal .co-orbit.front .co-bead').getAttribute('transform'));
+    const bead2 = await p.evaluate(() => document.querySelector('#coPortal .co-orbit.front .co-bead').style.transform);
     ok(`${label}: a lit bead travels the ring and lights the steps in order`, bead2 !== hero.bead && seen.slice(0, 3).join() === '0,1,2', JSON.stringify(seen));
   }
   // the cards: a deeper fill than the page, a rim and a layered shadow; words and numbers well above 4.5:1; numbers large
@@ -312,7 +312,7 @@ for (const w of [1440, 1024, 768, 390, 360]) {
     const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.goto(base + '/coaching'); await p.waitForSelector('.cue'); await p.waitForTimeout(800);
     // the opening's new loop holds still: the bead rests at the pause, which is lit
-    const hb = () => p.evaluate(() => ({ t: document.querySelector('#coPortal .co-bead').getAttribute('transform'), on: [...document.querySelectorAll('#coPortal .co-chip')].map(c => c.classList.contains('on')) }));
+    const hb = () => p.evaluate(() => ({ t: document.querySelector('#coPortal .co-bead').style.transform, on: [...document.querySelectorAll('#coPortal .co-chip')].map(c => c.classList.contains('on')) }));
     const hb0 = await hb(); await p.waitForTimeout(500); const hb1 = await hb();
     ok(`reduced motion ${label}: the opening's loop holds still, resting at the pause`, hb0.t === hb1.t && hb1.on.join() === 'false,true,false,false', JSON.stringify(hb1));
     await p.evaluate(() => document.querySelector('.cue').scrollIntoView({ block: 'center' })); await p.waitForTimeout(300);
