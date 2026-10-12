@@ -12,7 +12,7 @@ import { mountOpening, unmountOpening } from './opening';
 import { swapRenders } from '../photos';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd } from './shared';
 import { journalTeaserHTML } from './journal';
-import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHeroTilt, repeatPhotoHTML, giftPhotoHTML } from '../moons';
+import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHero, heroLook, heroLight, repeatPhotoHTML, giftPhotoHTML } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -47,8 +47,8 @@ export async function renderHome(app: HTMLElement) {
   // the studio photographs: the hero arch shows Claire's past candle work for the hour (set here, before swapRenders, so the
   // canvas renders it replaces are never swapped for Wix photos); Claire's cut-out in "Meet Claire", then From the studio; one
   // photograph each sits with Ritual on Repeat and Send a Sunrise
-  const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) { stack.innerHTML = heroStackHTML(momentForHour(hourNow()).key); stack.classList.add('tins'); }
-  resetHeroTilt();
+  const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) { stack.innerHTML = heroStackHTML(momentForHour(hourNow()).key); stack.classList.add('moons'); }
+  resetHero();
   app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
   app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
   app.querySelector('section.newsflow')?.insertAdjacentHTML('beforebegin', journalTeaserHTML());
@@ -178,6 +178,7 @@ function applyLook(app: HTMLElement, hour: number) {
   const L = look(hour); liveHour = hour;
   sky.style.background = `linear-gradient(160deg, ${L.sky[0]} 0%, ${L.sky[1]} 60%, ${L.sky[2]} 100%)`;
   setLook(app, L);
+  heroLook(L.sky, L.orbRgb, L.night);
   const stars = app.querySelector<HTMLElement>('#stars'); if (stars) stars.style.opacity = String(L.night);
   const glsky = getSky();
   glsky?.set({ hour, night: L.night, pal: L.sky, orb: L.orbRgb as [number, number, number] });
@@ -192,6 +193,7 @@ function moveSun(app: HTMLElement, hour: number) {
   const pt = svgPoint(tFor(hour >= 22 || hour < 6 ? (hour < 6 ? 0 : 1) : hour));
   app.querySelector('#sunG')?.setAttribute('transform', `translate(${pt.x},${pt.y})`);
   placeOrb(app, pt.x, pt.y);
+  heroLight(); // the moons are lit from where the sun or moon now is
 }
 function setClockLive(app: HTMLElement, hour: number) {
   const h = Math.floor(hour) % 24, mins = Math.floor((hour % 1) * 60), ap = h >= 12 ? 'pm' : 'am', h12 = ((h + 11) % 12) + 1;

@@ -17,7 +17,6 @@ import sys
 import numpy as np
 from PIL import Image
 
-D = sys.argv[1]
 
 # per candle: the lid's centre (x, y) as found by HoughCircles on the inner rim, the tin's rim ellipse (centre x, centre y,
 # semi-axes a, b) measured on the cut-out's edge, and the tin's height as a fraction of its diameter (a 2 oz tin)
@@ -105,13 +104,15 @@ def extend(im, cfg, R):
     return out
 
 
-for name, cfg in CANDLES.items():
-    unlit = np.asarray(Image.open(f'{D}/{name}-unlit-900.webp').convert('RGBA')).astype(np.float32)
-    lcx, R = lid_circle(unlit[..., 3], *cfg['lid'], unlit.shape[0])
-    cfg['lid_fit'] = (lcx, cfg['lid'][1])
-    for kind in ('unlit', 'glow'):
-        im = np.asarray(Image.open(f'{D}/{name}-{kind}-900.webp').convert('RGBA')).astype(np.float32)
-        out = Image.fromarray(np.clip(extend(im, cfg, R), 0, 255).astype(np.uint8), 'RGBA')
-        out.save(f'{D}/{name}-{kind}-900.webp', 'WEBP', quality=88, method=6)
-        out.resize((480, round(out.height * 480 / out.width)), Image.LANCZOS).save(f'{D}/{name}-{kind}-480.webp', 'WEBP', quality=86, method=6)
-    print(f'{name}: lid centre x {lcx:.1f}, radius {R:.1f}, height {im.shape[0]} -> {out.height} (900 wide)')
+if __name__ == '__main__':
+    D = sys.argv[1]
+    for name, cfg in CANDLES.items():
+        unlit = np.asarray(Image.open(f'{D}/{name}-unlit-900.webp').convert('RGBA')).astype(np.float32)
+        lcx, R = lid_circle(unlit[..., 3], *cfg['lid'], unlit.shape[0])
+        cfg['lid_fit'] = (lcx, cfg['lid'][1])
+        for kind in ('unlit', 'glow'):
+            im = np.asarray(Image.open(f'{D}/{name}-{kind}-900.webp').convert('RGBA')).astype(np.float32)
+            out = Image.fromarray(np.clip(extend(im, cfg, R), 0, 255).astype(np.uint8), 'RGBA')
+            out.save(f'{D}/{name}-{kind}-900.webp', 'WEBP', quality=88, method=6)
+            out.resize((480, round(out.height * 480 / out.width)), Image.LANCZOS).save(f'{D}/{name}-{kind}-480.webp', 'WEBP', quality=86, method=6)
+        print(f'{name}: lid centre x {lcx:.1f}, radius {R:.1f}, height {im.shape[0]} -> {out.height} (900 wide)')

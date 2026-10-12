@@ -9,25 +9,46 @@
    Tokens come from site.css (celestial block) and canvas.css. Loaded after celestial.css.
    ====================================================================== */
 
-/* ---- home: the opening. A still life of three of Claire's tins on a knoll in front of the hills, drawn in 3D
-   (pages/tins3d.ts). #dStack is the described picture; the photographs inside it are hidden: they are the textures of the
-   tin tops. The knoll is two canvases that cross-fade when the time of day changes ---- */
-.stack.tins { overflow: visible; border-radius: 0; box-shadow: none; background: none; pointer-events: none; }
-.stack.tins::after, .stack.tins .tset::after { display: none !important; }
-.stack.tins .tset { display: contents; }
-.stack.tins img[hidden] { display: none !important; }
-/* desktop: the tins share the landscape's box and its movement (parallax, scroll, the slow breathing, the opening), so they
-   stay standing on its ridges */
-/* z-index 3: above the lake's surface line and ripples (.scene::after, z-index 2), which belong to the water behind the knoll;
-   the opening's veil (also 3, later) still covers them */
-.scene :is(.tins3d, .tins-knoll) { position: absolute; left: 0; bottom: 0; width: 100%; height: 58%; display: block; z-index: 3; pointer-events: none;
-  transform-origin: 50% 100%; animation: landbreathe 90s ease-in-out infinite alternate; }
-/* the knoll is the nearest thing in the picture: it runs down over the lake to the foot of the opening */
-.scene:not(.has-photo) :is(.tins3d, .tins-knoll) { height: calc(58% + var(--lake, 0px)); }
-.scene.has-photo :is(.tins3d, .tins-knoll) { display: none; }
-.dayhero .scene :is(.tins3d, .tins-knoll) { translate: calc(var(--px, 0) * -12px) calc(var(--p, 0) * -46px + var(--py, 0) * -6px); }
-.tins-knoll { opacity: 0; transition: opacity 1.1s ease; }
-.tins-knoll.on { opacity: 1; }
+/* ---- home: the opening. Five of Claire's candles, seen from above, as moons on one ring across the sky (pages/moonarc.ts).
+   #dStack is the described picture; the photographs inside it are hidden: the moons are shaded from them on canvases that
+   live in the scene, behind the hills, so the furthest moons set behind the far ridges ---- */
+.stack.moons { overflow: visible; border-radius: 0; box-shadow: none; background: none; pointer-events: none; }
+.stack.moons::after, .stack.moons .tset::after { display: none !important; }
+.stack.moons .tset { display: contents; }
+.stack.moons img[hidden] { display: none !important; }
+/* the ring's layer: in front of the sky, its clouds and the shade behind the words, behind the hills (z-index 2). It drifts
+   a little less than the hills with the pointer and the scroll (it is further away) */
+.moonarc { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.dayhero .moonarc { translate: calc(var(--px, 0) * -6px) calc(var(--p, 0) * -22px + var(--py, 0) * -3px); }
+.moonarc .cm { position: absolute; left: 0; top: 0; width: var(--d, 140px); height: var(--d, 140px); transform-origin: 50% 50%;
+  will-change: transform;
+  /* nearer moons lean a little further with the pointer: parallax between them */
+  translate: calc(var(--px, 0) * var(--dz, 1) * -10px) calc(var(--py, 0) * var(--dz, 1) * -6px); }
+.moonarc .cm-in { position: absolute; inset: 0; animation: moondrift 9s ease-in-out infinite alternate; }
+.moonarc .cm[data-k="morning"] .cm-in { animation-delay: -2s; animation-duration: 10s; }
+.moonarc .cm[data-k="midday"] .cm-in { animation-delay: -4s; animation-duration: 8.5s; }
+.moonarc .cm[data-k="golden"] .cm-in { animation-delay: -6s; animation-duration: 11s; }
+.moonarc .cm[data-k="night"] .cm-in { animation-delay: -1s; animation-duration: 9.5s; }
+@keyframes moondrift { from { transform: translateY(-2.5px); } to { transform: translateY(2.5px); } }
+.moonarc canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border-radius: 50%; }
+/* the full moon's glow: a warm halo in the colour of the sun or moon, stronger at night */
+.moonarc .cm-glow { position: absolute; inset: -38%; border-radius: 50%; opacity: calc(var(--glow, 0) * .75); pointer-events: none;
+  background: radial-gradient(circle closest-side, rgba(var(--orb-rgb, 255, 241, 198), .55) 34%, rgba(var(--orb-rgb, 255, 241, 198), .18) 62%, rgba(var(--orb-rgb, 255, 241, 198), 0) 100%); }
+.dayhero.sky-dark .moonarc .cm-glow { opacity: calc(var(--glow, 0) * 1); }
+/* its soft shadow on the sky's haze, away from the light */
+.moonarc .cm-sh { position: absolute; inset: 4%; border-radius: 50%; pointer-events: none; filter: blur(calc(var(--d, 140px) * .07));
+  transform: translate(calc(var(--shx, 0) * var(--d, 140px)), calc(var(--shy, .05) * var(--d, 140px)));
+  background: radial-gradient(circle closest-side, rgba(36, 24, 52, .34), rgba(36, 24, 52, .12) 70%, rgba(36, 24, 52, 0)); }
+.dayhero.sky-dark .moonarc .cm-sh { background: radial-gradient(circle closest-side, rgba(4, 2, 12, .5), rgba(4, 2, 12, 0)); }
+/* the time and the phase under each moon (not round the back); counter-scaled so they stay one readable size */
+.moonarc .cm-cap { position: absolute; left: 50%; top: 100%; display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 10px;
+  translate: -50% 0; scale: var(--inv, 1); transform-origin: 50% 0; white-space: nowrap; pointer-events: none; opacity: calc(var(--cap, 0) * .92); transition: opacity .4s;
+  font: 500 10px/1 var(--mono, "DM Mono", monospace); letter-spacing: .16em; text-transform: uppercase; color: currentColor; }
+.moonarc .cm-cap small { font-size: 9px; letter-spacing: .14em; opacity: .7; }
+.moonarc .cm-cap b { font-weight: 500; }
+.dayhero:not(.sky-dark) .moonarc .cm-cap { color: rgba(35, 26, 43, .86); text-shadow: 0 0 10px rgba(255, 248, 240, .8); }
+.dayhero.sky-dark .moonarc .cm-cap { color: rgba(238, 232, 246, .9); text-shadow: 0 0 10px rgba(10, 6, 20, .8); }
+.dayhero.opening .moonarc { animation: openfade calc(1.6s * var(--os)) ease calc(1.1s * var(--os)) backwards; }
 /* overflow: clip, not just hidden: focusing a time-of-day button must never scroll the picture sideways (a strip of page
    background showed at the edge) */
 .dayhero { overflow: clip; }
@@ -37,31 +58,24 @@
 .dayhero.sky-dark .hint { text-shadow: 0 0 10px rgba(16, 10, 26, .9), 0 0 3px rgba(16, 10, 26, .9); }
 /* phone: smaller, lighter birds in the picture band; a smaller glow round the sun or moon, so it fades out before the top of
    the picture rather than being cut off there */
-@media (max-width: 820px) { .dayhero .bird svg { width: 17px; height: 8px; } .dayhero .bird { filter: opacity(.7); } .dayhero:has(.stack.tins) .sunorb { width: 250px; height: 250px; }
+@media (max-width: 820px) { .dayhero .bird svg { width: 17px; height: 8px; } .dayhero .bird { filter: opacity(.7); } .dayhero:has(.stack.moons) .sunorb { width: 250px; height: 250px; }
   /* (only the tight glow round the disc: the wide blurred one was cut off square at high pixel density) */
-  .dayhero:has(.stack.tins) .sunorb::after { box-shadow: 0 0 30px 8px rgba(var(--orb-rgb, 255, 241, 198), .9); } }
-/* the time-of-day pills stay legible where they sit over the dark knoll */
-.dayhero:has(.stack.tins):not(.sky-dark) .moments button:not([aria-current="true"]) { background: rgba(255, 255, 255, .58); }
-.dayhero:has(.stack.tins).sky-dark .moments button:not([aria-current="true"]) { background: rgba(20, 14, 32, .5); }
-/* the sun dial runs under the words, so its sun never passes through the grass in front of the tins */
-@media (min-width: 821px) { .dayhero:has(.stack.tins) .arcwrap { width: 56%; } }
-/* the two offers rise to the top of the picture column, so the hills below are the tins' stage */
-@media (min-width: 821px) { .day-visual .stack.tins ~ .stack-products { top: 2%; bottom: auto; left: auto; right: 0; align-items: flex-end; } }
-.dayhero.opening .scene :is(.tins3d, .tins-knoll) { animation: openland calc(2.3s * var(--os)) cubic-bezier(.2, .7, .2, 1) calc(.3s * var(--os)) backwards, landbreathe 90s ease-in-out infinite alternate; }
-/* phone: the picture is a band above the words (the tins on their knoll, hills of their own behind), then the words, then
-   the offers */
+  .dayhero:has(.stack.moons) .sunorb::after { box-shadow: 0 0 30px 8px rgba(var(--orb-rgb, 255, 241, 198), .9); }
+  .moonarc .cm-cap { font-size: 9px; margin-top: 6px; } .moonarc .cm-cap small { display: none; } }
+/* the time-of-day pills stay legible where they sit over the hills */
+.dayhero:has(.stack.moons):not(.sky-dark) .moments button:not([aria-current="true"]) { background: rgba(255, 255, 255, .58); }
+.dayhero:has(.stack.moons).sky-dark .moments button:not([aria-current="true"]) { background: rgba(20, 14, 32, .5); }
+/* the sun dial runs under the words */
+@media (min-width: 821px) { .dayhero:has(.stack.moons) .arcwrap { width: 56%; } }
+/* the two offers stand at the foot of the picture column, over the hills, so the sky above is the moons' */
+@media (min-width: 821px) { .day-visual .stack.moons ~ .stack-products { top: auto; bottom: 0; left: auto; right: 0; align-items: flex-end; } }
+/* phone: the picture is a band above the words (the ring of moons in its sky), then the words, then the offers */
 @media (max-width: 820px) {
-  .day-visual:has(> .stack.tins) { display: contents; }
-  .day-visual > .stack.tins { position: relative; inset: auto; order: -1; height: clamp(230px, 64vw, 300px); margin-bottom: -6px; }
-  .day-visual > .stack.tins ~ .stack-products { position: relative; inset: auto; order: 1; margin-top: 4px; }
-  /* the knoll melts into the sky at the foot of the band, so it has no hard lower edge */
-  .stack.tins .tins-knoll { -webkit-mask-image: linear-gradient(to bottom, #000 80%, rgba(0, 0, 0, 0)); mask-image: linear-gradient(to bottom, #000 80%, rgba(0, 0, 0, 0)); }
+  .day-visual:has(> .stack.moons) { display: contents; }
+  .day-visual > .stack.moons { position: relative; inset: auto; order: -1; height: clamp(230px, 64vw, 300px); margin-bottom: -6px; }
+  .day-visual > .stack.moons ~ .stack-products { position: relative; inset: auto; order: 1; margin-top: 4px; }
 }
-.stack.tins :is(.tins3d, .tins-ground, .tins-knoll) { position: absolute; display: block; pointer-events: none; max-width: none; }
-.stack.tins .tins-ground { opacity: 0; transition: opacity 1.1s ease;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 46%, rgba(0, 0, 0, 0) 84%); mask-image: linear-gradient(to bottom, #000 0, #000 46%, rgba(0, 0, 0, 0) 84%); }
-.stack.tins .tins-ground.on { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .scene :is(.tins3d, .tins-knoll) { animation: none !important; translate: none !important; } .stack.tins .tins-ground, .tins-knoll { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .moonarc .cm-in { animation: none !important; } .dayhero .moonarc, .moonarc .cm { translate: none !important; } }
 
 /* ---- the extra photographs: a soft frame, the caption in small caps on a dark gradient ---- */
 /* cut-outs (whole tins, no background): they sit on the page with a soft shadow, the caption underneath */
@@ -146,7 +160,7 @@
 .ab-l > span::before { content: ""; position: absolute; top: 50%; width: 16px; height: 1px; background: rgba(42, 31, 51, .6); }
 .ab-l.r > span { left: 18px; } .ab-l.r > span::before { right: 100%; }
 .ab-l.lf > span { right: 18px; } .ab-l.lf > span::before { left: 100%; }
-.l1 { left: 40%; top: 24%; } .l2 { left: 63%; top: 14%; } .l3 { left: 22%; top: 81%; } .l4 { left: 82%; top: 31%; }
+.l1 { left: 36%; top: 22%; } .l2 { left: 63%; top: 13%; } .l3 { left: 22%; top: 80%; } .l4 { left: 84%; top: 28%; }
 .above figcaption { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted, #6B5F6E); max-width: 40ch; }
 
 /* more from the bench: one neat justified row; a swipeable strip on phones */

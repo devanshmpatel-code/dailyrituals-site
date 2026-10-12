@@ -1,6 +1,6 @@
-// The studio photographs: the opening's still life of tins on a knoll, Claire's cut-out, From the studio (cut-outs, tins from above, a row of photographs), Ritual on
-// Repeat and Send a Sunrise on the home page (no moons
-// outside Moon Drops), a bench photograph on candle pages, Claire's portrait on the coaching page,
+// The studio photographs: the opening's candle moons (five of Claire's candles seen from above, on one ring across the sky),
+// Claire's cut-out, From the studio (cut-outs, tins from above, a row of photographs), Ritual on Repeat and Send a Sunrise on
+// the home page, a bench photograph on candle pages, Claire's portrait on the coaching page,
 // the past-moons archive on Moon Drops (never buyable), and the real format photographs on the shop group heads.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
@@ -13,44 +13,55 @@ const loaded = (p, sel) => p.evaluate(s => [...document.querySelectorAll(s)].map
 for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(10000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  // ---- home: the opening sets three of Claire's real candles on a knoll in front of the hills (3D tins topped with her photographs); moons live only on Moon Drops
+  // ---- home: the opening shows five of Claire's real candles, seen from above, as moons on one ring across the sky (the
+  // moment's candle is the full moon); past pours, so no scent is named and nothing links to a purchase
   await p.goto(base + '/'); await p.waitForSelector('#dStack img[data-mimg]', { state: 'attached' }); await p.waitForTimeout(800);
   const stack = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].map(i => ({ k: i.dataset.mimg, src: i.getAttribute('src') || i.dataset.src })));
   const per = stack.reduce((o, x) => (o[x.k] = (o[x.k] || 0) + 1, o), {});
-  ok(`${label}: the opening's tins are topped with Claire's real photographs, several per moment`, Object.keys(per).length === 5 && Object.values(per).every(n => n >= 3) && stack.every(x => /^\/img\/studio\/moons\/[a-z-]+\.webp$/.test(x.src) && !/midnight-forest/.test(x.src)), JSON.stringify(per));
+  ok(`${label}: the opening's five moons are Claire's real photographs, one per moment`, stack.length === 5 && Object.keys(per).length === 5 && Object.values(per).every(n => n === 1) && new Set(stack.map(x => x.src)).size === 5 && stack.every(x => /^\/img\/studio\/moons\/[a-z-]+\.webp$/.test(x.src) && !/midnight-forest/.test(x.src)), JSON.stringify(per));
   const scentNames = /midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|christmas eve|mulled wine|candy cane|hello cupcake|easter bread|apple cider|mother|tuscan|irish coffee/i;
   const pic = () => p.evaluate(() => { const s = document.querySelector('#dStack'); return { role: s.getAttribute('role'), label: s.getAttribute('aria-label') || '', alts: [...s.querySelectorAll('img')].map(i => i.alt) }; });
   const pic0 = await pic();
-  ok(`${label}: the opening is one described picture that names no past scent and no moon`, pic0.role === 'img' && pic0.label.length > 30 && /tins/i.test(pic0.label) && !scentNames.test(pic0.label) && !/moon/i.test(pic0.label) && pic0.alts.every(a => a === ''), pic0.label);
-  ok(`${label}: exactly one arrangement is chosen`, (await p.locator('#dStack .tset.on').count()) === 1);
-  // the tins are drawn: a canvas that really has tins painted on it, three of them on the knoll
-  const drawn = () => p.evaluate(() => { const c = document.querySelector('canvas.tins3d'); if (!c || !c.width) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 16) if (d[i] > 200) n++; return n; });
+  ok(`${label}: the opening is one described picture of candles that names no past scent`, pic0.role === 'img' && pic0.label.length > 30 && /candles/i.test(pic0.label) && !scentNames.test(pic0.label) && pic0.alts.every(a => a === ''), pic0.label);
+  ok(`${label}: exactly one moment's candle is chosen`, (await p.locator('#dStack .tset.on').count()) === 1);
+  ok(`${label}: no tins and no knoll are drawn any more`, (await p.locator('canvas.tins3d, canvas.tins-knoll, canvas.tins-ground').count()) === 0);
+  // the moons, as drawn: each canvas really painted (opaque in the middle, clear in the corner), where it is on screen
+  const moons = () => p.evaluate(() => [...document.querySelectorAll('.moonarc .cm')].map(el => {
+    const c = el.querySelector('canvas'), x = c.getContext('2d'), n = c.width, r = c.getBoundingClientRect();
+    const mid = x.getImageData(n >> 1, n >> 1, 1, 1).data, corner = x.getImageData(1, 1, 1, 1).data;
+    return { k: el.dataset.k, off: Number(el.dataset.off), full: el.classList.contains('full'), glow: Number(getComputedStyle(el).getPropertyValue('--glow')), painted: mid[3] > 250 && corner[3] < 5, cap: el.querySelector('.cm-cap').textContent, l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width };
+  }));
   for (const k of ['dawn', 'night']) {
     await p.evaluate(k => document.querySelector(`.moments [data-jump="${k}"]`).click(), k);
     await p.waitForFunction(k => document.querySelector('.dayhero')?.dataset.m === k, k, { timeout: 20000 });
     const ready = await p.waitForFunction(k => document.querySelector('#dStack')?.dataset.shown === k, k, { timeout: 10000 }).then(() => true, () => false);
-    await p.waitForTimeout(1600);
-    const st = await p.evaluate(() => { const s = document.querySelector('#dStack'); const on = [...s.querySelectorAll('.tset.on')]; return { on: on.map(f => f.dataset.mset), loaded: on.every(f => [...f.querySelectorAll('img')].every(i => i.complete && i.naturalWidth > 0)), tins: Number(s.dataset.tins), mode: s.dataset.mode }; });
-    const px = await drawn(); const lab = (await pic()).label;
-    ok(`${label}: at ${k} the opening shows the ${k} tins, their photographs loaded and drawn`, ready && st.on.length === 1 && st.on[0] === k && st.loaded && st.tins === 3 && px > 300 && !scentNames.test(lab), JSON.stringify({ ...st, px, lab }));
+    await p.waitForTimeout(600);
+    const st = await p.evaluate(() => { const s = document.querySelector('#dStack'); const on = [...s.querySelectorAll('.tset.on')]; return { on: on.map(f => f.dataset.mset), loaded: [...s.querySelectorAll('img')].every(i => i.complete && i.naturalWidth > 0), moons: Number(s.dataset.moons) }; });
+    const ms = await moons(); const lab = (await pic()).label;
+    const full = ms.filter(m => m.full), others = ms.filter(m => !m.full);
+    ok(`${label}: at ${k} five moons are drawn from the photographs and the ${k} candle is the full moon`, ready && st.on.length === 1 && st.on[0] === k && st.loaded && st.moons === 5 && ms.length === 5 && ms.every(m => m.painted) && full.length === 1 && full[0].k === k && !scentNames.test(lab), JSON.stringify({ ...st, ms: ms.map(m => [m.k, m.off, m.painted]) }));
+    ok(`${label}: at ${k} the full moon is the largest and glows; the others wax and wane round it, smaller`, full[0].glow > 0.9 && others.every(m => m.w < full[0].w * 0.85 && m.glow < 0.5) && others.filter(m => m.off < 0).length === 2 && others.filter(m => m.off > 0).length === 2 && /full moon/i.test(full[0].cap) && others.filter(m => Math.abs(m.off) === 1).every(m => /(waxing|waning) gibbous/i.test(m.cap)), JSON.stringify(ms.map(m => [m.k, m.off, Math.round(m.w), m.glow, m.cap])));
+    ok(`${label}: at ${k} the moons' captions name times and phases, never a scent`, ms.every(m => !scentNames.test(m.cap)) && ms.some(m => /dawn|morning|midday|golden|night/i.test(m.cap)));
   }
-  // in proportion: one group at one scale, clear of the words, the offers and the sun dial, inside the screen
+  // clear of the words and the offers, inside the screen; on phones, in the picture band above the headline
   const lay = await p.evaluate(() => {
-    const c = document.querySelector('canvas.tins3d'), [l, t, r, b, big] = (c.dataset.group || '').split(',').map(Number), cr = c.getBoundingClientRect();
-    const g = { l: cr.left + l, t: cr.top + t, r: cr.left + r, b: cr.top + b };
     const box = s => { const e = document.querySelector(s); return e ? e.getBoundingClientRect() : null; };
-    const hero = box('#day'), copy = box('.day-copy'), offers = box('#dProducts'), arc = box('#arc'), h1 = box('#dTitle');
-    return { g, big, vis: Math.min(hero.height, innerHeight - Math.max(0, hero.top)), w: innerWidth, copyR: copy.right, offersB: offers.bottom, offersT: offers.top, arcB: arc.bottom, h1T: h1.top, knoll: !!document.querySelector('canvas.tins-knoll.on') };
+    const hero = box('#day'), copy = box('.day-copy'), offers = box('#dProducts'), h1 = box('#dTitle'), band = box('#dStack');
+    return { vis: Math.min(hero.height, innerHeight - Math.max(0, hero.top)), w: innerWidth, heroT: hero.top, copy: { l: copy.left, t: copy.top, r: copy.right, b: copy.bottom }, offers: { l: offers.left, t: offers.top, r: offers.right, b: offers.bottom }, h1T: h1.top, bandT: band.top, bandB: band.bottom };
   });
-  if (label === 'desktop') ok(`${label}: the group stands on the knoll beside the words, under the offers and above the sun dial, the large tin about a quarter of the opening's height`,
-    lay.knoll && lay.g.l > lay.copyR + 20 && lay.g.t > lay.offersB && lay.g.b < lay.arcB && lay.g.r < lay.w - 100 && lay.big > lay.vis * 0.17 && lay.big < lay.vis * 0.32, JSON.stringify(lay));
-  else ok(`${label}: the group fits the phone's width in the band above the headline, the offers below the words`,
-    lay.knoll && lay.g.l >= 0 && lay.g.r <= lay.w && lay.g.b < lay.h1T && lay.offersT > lay.h1T && lay.big > 70, JSON.stringify(lay));
+  const ms = await moons();
+  const hit = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+  const full = ms.find(m => m.full);
+  ok(`${label}: no moon touches the words or the offers`, ms.every(m => !hit(m, lay.copy) && !hit(m, lay.offers)), JSON.stringify({ ms: ms.map(m => [m.k, Math.round(m.l), Math.round(m.t), Math.round(m.r), Math.round(m.b)]), lay }));
+  if (label === 'desktop') ok(`${label}: the ring stands in the sky beside the words, inside the screen, the full moon a real size`,
+    ms.every(m => m.l > lay.copy.r + 20 && m.r < lay.w - 8 && m.t > lay.heroT) && full.w > lay.vis * 0.15 && full.w < lay.vis * 0.32, JSON.stringify({ full: full.w, vis: lay.vis }));
+  else ok(`${label}: the ring fits the phone's width in the picture band above the headline, the offers below the words`,
+    ms.every(m => m.l >= 0 && m.r <= lay.w && m.t >= lay.bandT - 1 && m.b < lay.h1T) && full.w > 70 && lay.offers.t > lay.h1T, JSON.stringify({ ms: ms.map(m => [m.k, Math.round(m.l), Math.round(m.t), Math.round(m.r), Math.round(m.b)]), lay }));
   const before = await p.evaluate(() => document.querySelector('.dayhero').dataset.m + '/' + document.querySelector('#dStack').dataset.shown);
   await p.evaluate(() => window.scrollTo(0, 700)); await p.waitForTimeout(700);
-  ok(`${label}: scrolling does not change the time of day or its tins (they are the visitor's to change)`, (await p.evaluate(() => document.querySelector('.dayhero').dataset.m + '/' + document.querySelector('#dStack').dataset.shown)) === before && (await p.locator('.daypin').count()) === 0);
+  ok(`${label}: scrolling does not change the time of day or its moon (they are the visitor's to change)`, (await p.evaluate(() => document.querySelector('.dayhero').dataset.m + '/' + document.querySelector('#dStack').dataset.shown)) === before && (await p.locator('.daypin').count()) === 0);
   await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(400);
-  ok(`${label}: the moons panel is gone from home`, (await p.locator('#moons, .moons-arc').count()) === 0);
+  ok(`${label}: the old moons panel is gone from home`, (await p.locator('#moons, .moons-arc').count()) === 0);
   ok(`${label}: no moon-phase rows on the home seams`, (await p.locator('.cel-div .cel-moonrow').count()) === 0 && (await p.locator('.cel-div').count()) > 0);
   ok(`${label}: footer and cart carry a star, not a moon`, (await p.locator('.foot-moon .cel-glyph, .dh-moon .cel-glyph').count()) === 2 && (await p.locator('.foot-moon [aria-label*="moon" i], .dh-moon [aria-label*="moon" i]').count()) === 0);
   for (const [sel, name] of [['.rep-grid .ph-repeat', 'Ritual on Repeat'], ['.gift-grid .ph-gift', 'Send a Sunrise']]) {

@@ -59,7 +59,7 @@ export function placeOrb(app: HTMLElement, x: number, y: number) {
   if (!orb) return;
   let top = 70 - ((140 - y) / 100) * 45;
   // phone: the picture is a band above the words, so the sun rises and sets within that band's sky, never behind the words
-  const hero = orb.closest<HTMLElement>('.dayhero'), band = hero?.querySelector<HTMLElement>('#dStack.tins');
+  const hero = orb.closest<HTMLElement>('.dayhero'), band = hero?.querySelector<HTMLElement>('#dStack.moons');
   if (hero && band && window.matchMedia('(max-width: 820px)').matches && hero.clientHeight) {
     top = ((band.offsetTop + band.offsetHeight * (0.34 + 0.3 * Math.min(1, Math.max(0, (y - 40) / 100)))) / hero.clientHeight) * 100;
   }
