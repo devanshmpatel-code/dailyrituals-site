@@ -14,7 +14,7 @@
 /* ---- the night panel: gradient sky, grain, a faint star-chart grid, moonstone ink ---- */
 .night, .cel-night { background: var(--cel-grain), var(--cel-grid), var(--night-sky); color: var(--moonstone); }
 .night .eyebrow, .night .chapter, .cel-night .eyebrow { color: var(--gold-leaf); }
-.night .crumbs, .night .crumbs a { color: rgba(237, 230, 218, .72) !important; }
+.night .crumbs, .night .crumbs a, .clubsoon .crumbs, .clubsoon .crumbs a { color: rgba(237, 230, 218, .72) !important; }
 .night a:focus-visible, .cel-night a:focus-visible, .cel-night button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
 
 /* ---- section dividers (home chapters) ---- */
