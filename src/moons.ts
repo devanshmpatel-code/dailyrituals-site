@@ -1,10 +1,10 @@
 // The studio photographs: Claire's real past candle work, placed across the site.
 //
-// - home: the opening sets three of Claire's tins on a knoll in front of the hills, drawn in 3D with her real top-down photographs as their tops (HERO below, pages/tins3d.ts);
+// - home: the opening shows five of Claire's candles, seen from above, as moons across the sky (HERO below, pages/moonarc.ts);
 // - home: the studio collage after "Meet Claire", one photograph with Ritual on Repeat and one with Send a Sunrise;
 // - product pages: a "From the studio" photograph with the candle information;
 // - Moon Drops (/drops): the past moons archive. The circular "moons" in /img/studio/moons/ are cut from her own top-down
-//   photographs (the toppings are laid in a crescent along the rim). The moon idea lives only on that page now.
+//   photographs (the toppings are laid in a crescent along the rim). The opening's candle moons use the same faces.
 //
 // Facts and quotations come only from the owner's Instagram captions (scratchpad/studio-facts.md). Every other sentence
 // here is copy and is a DRAFT FOR CLAIRE: in the markup it is wrapped in <span class="d"> so "Show drafts for Claire"
@@ -15,7 +15,7 @@ import { glyph, moonRow, tonightName } from './celestial';
 import { currentRoute } from './router';
 import { MOMENTS } from './config';
 import { dropState } from './drop';
-import { mountTins, type Tin, type TinSize, type TinSpot, type TinsHero } from './pages/tins3d';
+import { mountMoonArc, type MoonArc } from './pages/moonarc';
 
 export type Season = 'winter' | 'love' | 'spring' | 'autumn' | 'any';
 export interface Moon {
@@ -73,79 +73,64 @@ const ALT: Record<string, string> = {
 const alt = (slug: string) => ALT[slug] ?? `${byId[slug].name}: a candle seen from above`;
 
 // ---------- home: the opening ----------
-// A still life in the opening: three of Claire's candle tins on a grassy knoll in the foreground, close to us, with the hills
-// of the landscape far behind (pages/tins3d.ts draws them as our own 3D art). Being near, they are seen from a little above,
-// the way a table-top is, and one group at one scale keeps the sizes believable. Black tins, each top textured with one of
-// her real top-down photographs (public/img/studio/moons), so the real toppings show: a large tin at the back, a medium one in
-// front on the left with its lid leaning against it, a small one in front on the right. Florals at dawn, sprinkles, salt and
-// green stones in the morning, single flowers and candy at midday, citrus and spice at golden hour (the large one lit), and
-// lit tins at night. They rise into place when the visitor changes the time of day (it never changes on its own or on
-// scroll). The picture is described in general words; it never names a past scent.
-const T = (top: string, size: TinSize, at: TinSpot, extra: Partial<Tin> = {}): Tin => ({ top, size, at, ...extra });
-const HERO: Record<string, { alt: string; tins: Tin[] }> = {
-  dawn: {
-    alt: 'Three candles in black tins, topped by hand with dried flowers, on a grassy knoll at dawn with hills behind',
-    tins: [T('spring-blooms', 'l', 'back'), T('mothers-garden', 'm', 'left', { lid: -1 }), T('sweet-romance', 's', 'right')],
-  },
-  morning: {
-    alt: 'Three candles in black tins, topped by hand with sprinkles and green stones, on a grassy knoll in the morning',
-    tins: [T('easter-bread', 'l', 'back'), T('hello-cupcake', 'm', 'left', { lid: -1 }), T('sea-salt-sage', 's', 'right')],
-  },
-  midday: {
-    alt: 'Three candles in black tins, topped by hand with a dried flower and crushed candy, on a grassy knoll at midday',
-    tins: [T('mothers-garden', 'l', 'back'), T('candy-cane-lane', 'm', 'left', { lid: -1 }), T('jarrah', 's', 'right')],
-  },
-  golden: {
-    alt: 'Three candles in black tins, topped by hand with dried orange, star anise and cinnamon, one of them lit, on a grassy knoll at golden hour',
-    tins: [T('christmas-eve', 'l', 'back', { lit: true }), T('apple-cider', 'm', 'left', { lid: -1 }), T('mulled-wine', 's', 'right')],
-  },
-  night: {
-    alt: 'Candles in black tins, topped by hand with lavender and petals, two of them lit, on a knoll at night',
-    tins: [T('lavender-haze', 'l', 'back', { lit: true }), T('sweet-romance', 'm', 'left', { lit: true, lid: -1 }), T('black-crescent', 's', 'right')],
-  },
+// Candle moons across the sky of the opening (pages/moonarc.ts draws them): seen from above, each of Claire's candles is a
+// small moon, so the opening shows five of her past pours as moons on one ring, one for each time of day. The moment being
+// shown is the full moon at the front of the ring, the largest, glowing; the others wax and wane round it, and choosing
+// another time of day turns the ring until its candle is full. Florals at dawn, salt and green stones in the morning, a
+// single dried flower at midday, dried orange and cinnamon at golden hour, lavender at night. The faces are clean round
+// crops of her top-down photographs (public/img/studio/moons, made by tools/photo/moon_faces.py). They are past pours:
+// the picture is described in general words, never names a scent and never links to a purchase.
+const HERO: Record<string, { top: string; alt: string }> = {
+  dawn: { top: 'spring-blooms', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the dawn sky. The full moon is a candle topped with dried flowers and petals" },
+  morning: { top: 'sea-salt-sage', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the morning sky. The full moon is a candle topped with salt crystals and green stones" },
+  midday: { top: 'mothers-garden', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the midday sky. The full moon is a candle topped with a single dried flower" },
+  golden: { top: 'apple-cider', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the golden-hour sky. The full moon is a candle topped with dried orange and cinnamon" },
+  night: { top: 'lavender-haze', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the night sky. The full moon is a candle topped with dried lavender buds" },
 };
-/** The opening's picture: #dStack becomes one described picture (role img). It holds, hidden, the photographs that texture the
- *  tin tops, one figure per moment; only the starting moment's load at once, the rest carry data-src and load when the page is
- *  idle or their moment is chosen. The tins themselves are drawn by pages/tins3d.ts. */
+/** The opening's picture: #dStack becomes one described picture (role img). It holds, hidden, the five photographs the moons
+ *  are shaded from, one figure per moment; only the starting moment's loads at once, the rest carry data-src and load as soon
+ *  as the ring is built (they are all in view). The moons themselves are drawn by pages/moonarc.ts. */
 export function heroStackHTML(first: string = MOMENTS[0].key): string {
   return MOMENTS.map(m => {
     const set = HERO[m.key]; if (!set) return '';
     const eager = m.key === first;
-    const tops = [...new Set(set.tins.map(t => t.top))];
-    return `<figure class="tset" data-mset="${m.key}">${tops.map(t => `<img data-mimg="${m.key}" data-top="${t}" ${eager ? `src="${moonSrc(t)}"` : `data-src="${moonSrc(t)}"`} alt="" width="520" height="520" decoding="async" hidden>`).join('')}</figure>`;
+    return `<figure class="tset" data-mset="${m.key}"><img data-mimg="${m.key}" data-top="${set.top}" ${eager ? `src="${moonSrc(set.top)}"` : `data-src="${moonSrc(set.top)}"`} alt="" width="520" height="520" decoding="async" hidden></figure>`;
   }).join('');
 }
-let tins: TinsHero | null = null;
-/** Show a moment's tins: they rise into place as the previous ones fade. */
+let arc: MoonArc | null = null, lastLook: Parameters<MoonArc['look']> | null = null;
+/** Show a moment: its candle turns to the front of the ring as the full moon. */
 export function showHero(app: HTMLElement, key: string) {
-  const stack = app.querySelector<HTMLElement>('#dStack');
-  if (!stack) return;
-  stack.querySelectorAll<HTMLElement>('.tset').forEach(f => {
-    const on = f.dataset.mset === key;
-    f.classList.toggle('on', on);
-    // the chosen moment's photographs load now if they have not yet
-    if (on) f.querySelectorAll<HTMLImageElement>('img[data-src]').forEach(i => { i.src = i.dataset.src!; delete i.dataset.src; });
-  });
+  const stack = app.querySelector<HTMLElement>('#dStack'), hero = app.querySelector<HTMLElement>('#day');
+  if (!stack || !hero) return;
+  stack.querySelectorAll<HTMLElement>('.tset').forEach(f => f.classList.toggle('on', f.dataset.mset === key));
   stack.setAttribute('role', 'img');
-  stack.setAttribute('aria-label', HERO[key]?.alt ?? 'Candles in black tins, topped by hand, on a knoll in front of the hills');
-  if (!tins) tins = mountTins(app, stack, Object.fromEntries(Object.entries(HERO).map(([k, v]) => [k, v.tins])));
-  tins.show(key);
+  stack.setAttribute('aria-label', HERO[key]?.alt ?? "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon");
+  if (!arc) arc = mountMoonArc(hero, stack, k => {
+    const el = stack.querySelector<HTMLImageElement>(`img[data-mimg="${k}"]`);
+    if (el?.dataset.src) { el.src = el.dataset.src; delete el.dataset.src; }
+    return el;
+  });
+  if (lastLook) arc.look(...lastLook);
+  arc.show(key);
 }
-/** Leaving or re-rendering the home page: take the tins down so a fresh hero mounts its own. */
-export const resetHeroTilt = () => { tins?.destroy(); tins = null; };
+/** The hour's colours, and the sun's (or moon's) new place, for the moons' light. */
+export const heroLook = (sky: [string, string, string], orb: [number, number, number], night: number) => { lastLook = [sky, orb, night]; arc?.look(sky, orb, night); };
+export const heroLight = () => arc?.light();
+/** Leaving or re-rendering the home page: take the ring down so a fresh hero mounts its own. */
+export const resetHero = () => { arc?.destroy(); arc = null; };
 
 // ---------- the extra photographs: Ritual on Repeat, Send a Sunrise, the product page ----------
 // Each is a past pour shown as Claire's craft. The captions use only verified facts (topped by hand with real botanicals,
 // wooden wicks, White Rock, BC) and never name the scent, so nothing reads as buyable. The lines are drafts for Claire.
 // Every one is a cut-out (public/img/studio/tins): whole tins, no table or paper behind them.
 const tinFigure = (file: string, w: number, h: number, altText: string, sizes: string, cls: string, cap: string) =>
-  `<figure class="studio-cut ${cls}"><img src="/img/studio/tins/${file}-900.webp" srcset="/img/studio/tins/${file}-480.webp 480w, /img/studio/tins/${file}-900.webp 900w" sizes="${sizes}" alt="${esc(altText)}" width="${w}" height="${h}" loading="lazy" decoding="async"><figcaption><span class="d">${cap}</span></figcaption></figure>`;
+  `<figure class="studio-cut ${cls}"><img src="/img/studio/tins/${file}-900.webp" srcset="/img/studio/tins/${file}-480.webp 480w, /img/studio/tins/${file}-900.webp ${w}w" sizes="${sizes}" alt="${esc(altText)}" width="${w}" height="${h}" loading="lazy" decoding="async"><figcaption><span class="d">${cap}</span></figcaption></figure>`;
 /** Chapter 4, Ritual on Repeat: a batch of tins, under the chapter's words. */
-export const repeatPhotoHTML = () => tinFigure('jarrah-top', 900, 743, 'A batch of candles in black tins seen from above, each topped by hand with wood chips beside its wooden wick', '(max-width: 900px) 90vw, 36vw', 'ph-repeat', 'Poured, topped and lidded by hand in White Rock, BC');
+export const repeatPhotoHTML = () => tinFigure('jarrah-top', 900, 745, 'A batch of candles in black tins seen from above, each topped by hand with wood chips beside its wooden wick', '(max-width: 900px) 90vw, 36vw', 'ph-repeat', 'Poured, topped and lidded by hand in White Rock, BC');
 /** Chapter 5, Send a Sunrise: a petal-topped pour tucked behind the gift card. */
-export const giftPhotoHTML = () => tinFigure('sweet-romance', 545, 541, 'A candle seen from above, topped by hand with dried rose petals and small purple flowers', '(max-width: 820px) 50vw, 20vw', 'ph-gift', 'Finished by hand with dried petals');
+export const giftPhotoHTML = () => tinFigure('sweet-romance', 532, 535, 'A candle seen from above, topped by hand with dried rose petals and small purple flowers', '(max-width: 820px) 50vw, 20vw', 'ph-gift', 'Finished by hand with dried petals');
 /** Product page (candles): tins from the bench beside the candle information. */
-export const productStudioHTML = () => tinFigure('mothers-day-florals', 900, 780, 'Candles in black tins seen from above, each topped by hand with a dried flower beside its wooden wick', '(max-width: 820px) 90vw, 40vw', 'ph-product', 'From the studio · wooden wicks, and every tin finished by hand');
+export const productStudioHTML = () => tinFigure('mothers-day-florals', 900, 754, 'Candles in black tins seen from above, each topped by hand with a dried flower beside its wooden wick', '(max-width: 820px) 90vw, 40vw', 'ph-product', 'From the studio · wooden wicks, and every tin finished by hand');
 
 // ---------- home: From the studio ----------
 // Real cut-outs (backgrounds removed from Claire's own photographs, /img/studio/cut/): Verdant and Cabana, both in the
@@ -158,11 +143,11 @@ const cut = (k: string, w: number, h: number, alt: string, two = true) => two
 interface Shot { file: string; w: number; h: number; alt: string; cap: string }
 // the row under the showcase: whole-tin cut-outs, each captioned with what it is topped with (draft for Claire)
 const SHOTS: Shot[] = [
-  { file: 'mothers-garden', w: 900, h: 850, alt: 'Candles in black tins seen from above, each topped with a single dried flower', cap: 'Dried flowers' },
-  { file: 'hello-cupcake', w: 644, h: 983, alt: 'Candles in black tins seen from above, scattered with rainbow sprinkles', cap: 'Sprinkles' },
-  { file: 'irish-coffee', w: 900, h: 892, alt: 'Candles in black tins seen from above, each topped with coffee beans', cap: 'Coffee beans' },
-  { file: 'lavender-haze', w: 892, h: 1097, alt: 'Candles in black tins seen from above, topped with dried lavender buds', cap: 'Lavender buds' },
-  { file: 'black-crescent', w: 900, h: 990, alt: 'Candles in black tins seen from above, each with a curve of small black stones along the rim', cap: 'Small stones' },
+  { file: 'mothers-garden', w: 900, h: 865, alt: 'Candles in black tins seen from above, each topped with a single dried flower', cap: 'Dried flowers' },
+  { file: 'hello-cupcake', w: 900, h: 697, alt: 'Candles in black tins seen from above, scattered with rainbow sprinkles', cap: 'Sprinkles' },
+  { file: 'irish-coffee', w: 900, h: 802, alt: 'Candles in black tins seen from above, each topped with coffee beans', cap: 'Coffee beans' },
+  { file: 'lavender-haze', w: 900, h: 864, alt: 'Candles in black tins seen from above, topped with dried lavender buds', cap: 'Lavender buds' },
+  { file: 'black-crescent', w: 900, h: 960, alt: 'Candles in black tins seen from above, each with a curve of small black stones along the rim', cap: 'Small stones' },
 ];
 export function studioHTML(): string {
   const strip = SHOTS.map((s, i) => `<figure class="sx" style="--r:${(s.w / s.h).toFixed(3)};--i:${i}">
@@ -183,12 +168,12 @@ export function studioHTML(): string {
     <div class="st-show">
       <div class="shelf" role="group" aria-label="Verdant and Cabana candles and Westcoast natural deodorant">
         <span class="sh-glow" aria-hidden="true"></span><span class="sh-top" aria-hidden="true"></span>
-        <a class="sh-item sh-verdant" href="#/product/verdant">${cut('verdant', 1057, 797, 'Verdant: a lit candle in a white glass tumbler with a black Daily Rituals label, a small lit black tin in front')}<span class="sh-flame f1" aria-hidden="true"></span><span class="sh-flame f2" aria-hidden="true"></span><span class="sh-tag">Verdant <small>candle</small></span></a>
-        <a class="sh-item sh-cabana" href="#/product/cabana">${cut('cabana', 986, 878, 'Cabana: a lit candle in a white glass tumbler with a black Daily Rituals label, a small lit black tin and its labelled lid in front')}<span class="sh-flame f1" aria-hidden="true"></span><span class="sh-flame f2" aria-hidden="true"></span><span class="sh-tag">Cabana <small>candle</small></span></a>
-        <a class="sh-item sh-west" href="#/product/natural-deodorant">${cut('westcoast', 238, 454, 'Westcoast natural deodorant: an open jar on top of its black-labelled tin', false)}<span class="sh-tag">Westcoast <small>deodorant</small></span></a>
+        <a class="sh-item sh-verdant" href="#/product/verdant">${cut('verdant', 900, 841, 'Verdant: a lit candle in a white glass tumbler with a black Daily Rituals label, a small lit black tin in front')}<span class="sh-flame f1" aria-hidden="true"></span><span class="sh-flame f2" aria-hidden="true"></span><span class="sh-tag">Verdant <small>candle</small></span></a>
+        <a class="sh-item sh-cabana" href="#/product/cabana">${cut('cabana', 900, 900, 'Cabana: a lit candle in a white glass tumbler with a black Daily Rituals label, a small lit black tin and its labelled lid in front')}<span class="sh-flame f1" aria-hidden="true"></span><span class="sh-flame f2" aria-hidden="true"></span><span class="sh-tag">Cabana <small>candle</small></span></a>
+        <a class="sh-item sh-west" href="#/product/natural-deodorant">${cut('westcoast', 242, 462, 'Westcoast natural deodorant: an open jar on top of its black-labelled tin', false)}<span class="sh-tag">Westcoast <small>deodorant</small></span></a>
       </div>
       <figure class="above">
-        <div class="ab-tins"><img src="/img/studio/tins/christmas-eve-900.webp" srcset="/img/studio/tins/christmas-eve-480.webp 480w, /img/studio/tins/christmas-eve-900.webp 900w" sizes="(max-width: 960px) 80vw, 28vw" alt="Two candles in black tins seen from above, topped by hand with a dried orange slice, star anise and pink peppercorns" width="774" height="914" loading="lazy" decoding="async">
+        <div class="ab-tins"><img src="/img/studio/tins/christmas-eve-900.webp" srcset="/img/studio/tins/christmas-eve-480.webp 480w, /img/studio/tins/christmas-eve-900.webp 766w" sizes="(max-width: 960px) 80vw, 28vw" alt="Two candles in black tins seen from above, topped by hand with a dried orange slice, star anise and pink peppercorns" width="766" height="890" loading="lazy" decoding="async">
           <span class="ab-l l1 lf"><i></i><span class="d">Dried orange</span></span>
           <span class="ab-l l2 r"><i></i><span class="d">Star anise</span></span>
           <span class="ab-l l3 r"><i></i><span class="d">Wooden wick</span></span>
@@ -224,7 +209,7 @@ export function pastMoonsHTML(): string {
       <div class="pm-tx"><h4>${esc(m.name)}</h4>
         ${m.quote ? `<q>${esc(m.quote)}</q>` : ''}${m.quote2 ? `<q>${esc(m.quote2)}</q>` : ''}
         <small>${esc(SEASONS.find(s => s.key === m.season)!.label)}${m.when ? ` · ${esc(m.when)}` : ''}</small></div>
-      ${m.slug === 'midnight-forest' ? `<img class="pm-photo" src="/img/studio/tins/midnight-forest-moons-900.webp" srcset="/img/studio/tins/midnight-forest-moons-480.webp 480w, /img/studio/tins/midnight-forest-moons-900.webp 900w" sizes="(max-width: 820px) 90vw, 360px" alt="Midnight Forest candles in black tins seen from above, each topped with small moon- and star-shaped stones" width="900" height="795" loading="lazy" decoding="async">` : ''}
+      ${m.slug === 'midnight-forest' ? `<img class="pm-photo" src="/img/studio/tins/midnight-forest-moons-900.webp" srcset="/img/studio/tins/midnight-forest-moons-480.webp 480w, /img/studio/tins/midnight-forest-moons-900.webp 900w" sizes="(max-width: 820px) 90vw, 360px" alt="Midnight Forest candles in black tins seen from above, each topped with small moon- and star-shaped stones" width="900" height="821" loading="lazy" decoding="async">` : ''}
     </li>`;
   // the groups pack into three columns (two on tablets): a season with one candle takes one column, so Love and Autumn share a row
   const groups = SEASONS.map(s => {

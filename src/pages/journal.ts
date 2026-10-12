@@ -25,7 +25,7 @@ export const ARTICLES: Article[] = [
     slug: 'wooden-wick', tag: 'Candle care', minutes: 3,
     title: 'How to burn a wooden-wick candle',
     dek: 'Every Daily Rituals candle burns on a wooden wick. A few small habits give you an even burn and a steady flame.',
-    pic: { file: 'jarrah-top', w: 900, h: 743, alt: 'Candles in black tins seen from above, each with a flat wooden wick' },
+    pic: { file: 'jarrah-top', w: 900, h: 745, alt: 'Candles in black tins seen from above, each with a flat wooden wick' },
     body: `
       <p>A wooden wick is a flat strip of wood rather than a braided cotton string. It lights a little differently and asks for slightly different care, but the habits are simple.</p>
       <h2>Light it along its length</h2>
@@ -43,7 +43,7 @@ export const ARTICLES: Article[] = [
     slug: 'first-burn', tag: 'Candle care', minutes: 3,
     title: 'Your first burn, and the memory ring',
     dek: 'The first time you light a candle decides how it burns for the rest of its life. Here is how to get it right.',
-    pic: { file: 'mothers-garden', w: 900, h: 850, alt: 'Candles in black tins seen from above, each topped with a dried flower' },
+    pic: { file: 'mothers-garden', w: 900, h: 865, alt: 'Candles in black tins seen from above, each topped with a dried flower' },
     body: `
       <p>Wax has a memory. If the first burn stops before the melted wax reaches the edge of the tin, the next burn tends to stop at the same place, and the candle starts to "tunnel" down the middle, leaving wax unused around the sides.</p>
       <h2>A simple rule of thumb</h2>
@@ -59,7 +59,7 @@ export const ARTICLES: Article[] = [
     slug: 'candle-safety', tag: 'Candle care', minutes: 2,
     title: 'Candle safety, the short version',
     dek: 'Six habits that keep a calm candle calm.',
-    pic: { file: 'black-crescent', w: 900, h: 990, alt: 'Candles in black tins seen from above, each with a curve of small black stones' },
+    pic: { file: 'black-crescent', w: 900, h: 960, alt: 'Candles in black tins seen from above, each with a curve of small black stones' },
     body: `
       <ol class="jr-list">
         <li><b>Never leave it alone.</b> Blow out every candle before you leave the room or go to sleep.</li>
@@ -76,7 +76,7 @@ export const ARTICLES: Article[] = [
     slug: 'wax-guide', tag: 'Candle making', minutes: 4,
     title: 'Soy, coconut and paraffin: an honest guide',
     dek: 'What the common candle waxes are, and what actually changes how a candle smells and burns.',
-    pic: { file: 'tuscan-sandalwood', w: 900, h: 622, alt: 'Candles in black tins seen from above, freshly poured' },
+    pic: { file: 'tuscan-sandalwood', w: 900, h: 635, alt: 'Candles in black tins seen from above, freshly poured' },
     body: `
       <p><b>Our candles are poured with soy wax</b>, on wooden wicks, and topped by hand in White Rock, BC. Here is how soy compares with the other common waxes.</p>
       <h2>Soy</h2>
@@ -94,7 +94,7 @@ export const ARTICLES: Article[] = [
     slug: 'candle-and-roller', tag: 'Rituals', minutes: 2,
     title: 'Pair a candle with a roller',
     dek: 'Light it at home, wear it when you leave. One scent, two ways, a cue you can carry.',
-    pic: { file: 'spring-blooms', w: 900, h: 734, alt: 'Candles in black tins seen from above, topped with dried flowers' },
+    pic: { file: 'spring-blooms', w: 900, h: 860, alt: 'Candles in black tins seen from above, topped with dried flowers' },
     body: `
       <p>A scent becomes a cue when you meet it again and again at the same moment. A candle sets that moment at home. A roller in the same scent family lets you bring it with you: to your desk, the school run, a hard conversation.</p>
       <h2>How to start</h2>

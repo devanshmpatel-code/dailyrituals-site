@@ -9,7 +9,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.goto(base + '/'); await p.waitForSelector('.breathorb'); await p.waitForTimeout(800);
   ok(`${label}: home has one breathing orb and no side rail`, (await p.locator('.breathorb').count()) === 1 && (await p.locator('.jrail').count()) === 0);
   const hero = await p.locator('#dStack img[data-mimg]').evaluateAll(a => a.map(i => i.getAttribute('src') || i.dataset.src || ''));
-  ok(`${label}: the opening's tins are topped with Claire's real photographs, not renders`, hero.length >= 10 && hero.every(u => /\/img\/studio\/moons\//.test(u)), `${hero.filter(u => /studio\/moons\//.test(u)).length} of ${hero.length}`);
+  ok(`${label}: the opening's five candle moons are Claire's real photographs, not renders`, hero.length === 5 && new Set(hero).size === 5 && hero.every(u => /\/img\/studio\/moons\//.test(u)), `${hero.filter(u => /studio\/moons\//.test(u)).length} of ${hero.length}`);
   for (const r of ['/shop', '/coaching', '/help', '/explore', '/subscribe']) {
     await p.goto(base + r); await p.waitForTimeout(900);
     ok(`${label}: ${r} has the breath button`, (await p.locator('.breathorb').count()) === 1 && (await p.locator('.jrail').count()) === 0);

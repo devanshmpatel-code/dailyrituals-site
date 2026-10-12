@@ -41,7 +41,7 @@ const VS = `attribute vec2 p; varying vec2 v; void main(){ v = p * 0.5 + 0.5; gl
 const FS = `precision highp float;
 varying vec2 v;
 uniform vec2 uRes, uSun, uMoon;
-uniform float uTime, uElev, uNight, uCloud, uPhase, uLake, uWake, uMoonUp;
+uniform float uTime, uElev, uNight, uCloud, uPhase, uLake, uWake, uMoonUp, uDiscs;
 uniform vec3 uP0, uP1, uP2, uOrb;
 float hash(vec2 q){ q = fract(q * vec2(123.34, 456.21)); q += dot(q, q + 45.32); return fract(q.x * q.y); }
 float noise(vec2 q){ vec2 i = floor(q), f = fract(q); f = f * f * (3.0 - 2.0 * f);
@@ -109,7 +109,7 @@ vec3 sky(vec2 uv, out float cloudOut){
   col += sunCol * exp(-dx * dx * 28.0 - dy * dy * 160.0) * low * 0.35 * (1.0 - c);
   float sd = d / (0.026 + 0.012 * lowSun);
   float limb = sqrt(max(0.0, 1.0 - sd * sd));
-  float disc = (1.0 - smoothstep(0.86, 1.02, sd)) * sunUp * (1.0 - c * 0.85);
+  float disc = (1.0 - smoothstep(0.86, 1.02, sd)) * sunUp * (1.0 - c * 0.85) * uDiscs;
   col = mix(col, mix(sunCol * 0.86, vec3(1.0, 0.99, 0.95), limb), disc);
   float ang = atan(a.y - s.y, a.x - s.x);
   float rays = pow(noise(vec2(ang * 11.0, uTime * 0.035)), 2.5) * exp(-d * 1.8) * low * lowSun * (1.0 - c) * sunUp;
@@ -140,7 +140,7 @@ vec3 sky(vec2 uv, out float cloudOut){
     float litm = smoothstep(-0.05, 0.08, dot(nrm, L));
     float crater = 0.84 + 0.16 * fbm(pq * 3.5 + 7.0);
     vec3 mc = mix(col * 0.75 + vec3(0.02, 0.02, 0.03), vec3(0.97, 0.95, 0.89) * crater, litm);
-    col = mix(col, mc, smoothstep(1.0, 0.95, md) * moonV * (1.0 - c * 0.7));
+    col = mix(col, mc, smoothstep(1.0, 0.95, md) * moonV * (1.0 - c * 0.7) * uDiscs);
   }
   col += vec3(0.8, 0.83, 0.98) * exp(-distance(a, mn) * 7.0) * 0.26 * (0.3 + 0.7 * bright) * moonV;
   return col;
@@ -171,7 +171,9 @@ void main(){
   gl_FragColor = vec4(col, 1.0);
 }`;
 
-export interface SkyState { hour: number; night: number; pal: [string, string, string]; orb: [number, number, number]; sunX: number; sunY: number }
+export interface SkyState { hour: number; night: number; pal: [string, string, string]; orb: [number, number, number]; sunX: number; sunY: number;
+  /** 1: draw the sun's and the moon's discs; 0: only their glow (the opening's candle moons stand in for them) */
+  discs: number }
 
 interface Sky {
   set(s: Partial<SkyState>): void;
@@ -232,13 +234,13 @@ export function mountSky(scene: HTMLElement, lakeFraction: number): Sky | null {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
   const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const U = (n: string) => gl.getUniformLocation(prog, n);
-  const u = { res: U('uRes'), sun: U('uSun'), moon: U('uMoon'), time: U('uTime'), elev: U('uElev'), night: U('uNight'), cloud: U('uCloud'), phase: U('uPhase'), lake: U('uLake'), wake: U('uWake'), moonUp: U('uMoonUp'), p0: U('uP0'), p1: U('uP1'), p2: U('uP2'), orb: U('uOrb') };
+  const u = { res: U('uRes'), sun: U('uSun'), moon: U('uMoon'), time: U('uTime'), elev: U('uElev'), night: U('uNight'), cloud: U('uCloud'), phase: U('uPhase'), lake: U('uLake'), wake: U('uWake'), moonUp: U('uMoonUp'), discs: U('uDiscs'), p0: U('uP0'), p1: U('uP1'), p2: U('uP2'), orb: U('uOrb') };
 
   scene.prepend(canvas);
   scene.classList.add('gl');
   scene.style.setProperty('--lake', `${(lakeFraction * 100).toFixed(1)}%`);
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const st: SkyState = { hour: 18, night: 0, pal: ['#7A4F78', '#E9955B', '#F7CF94'], orb: [255, 182, 110], sunX: 0.7, sunY: 0.5 };
+  const st: SkyState = { hour: 18, night: 0, pal: ['#7A4F78', '#E9955B', '#F7CF94'], orb: [255, 182, 110], sunX: 0.7, sunY: 0.5, discs: 1 };
   const phase = moonPhase();
   const dayOfYear = Math.floor((Date.now() - Date.UTC(new Date().getFullYear(), 0, 0)) / 86400000);
   let raf = 0, visible = true, last = 0, t0 = performance.now(), dirty = true, wakeT0 = -1, wakeMs = 0;
@@ -269,6 +271,7 @@ export function mountSky(scene: HTMLElement, lakeFraction: number): Sky | null {
     gl.uniform2f(u.moon, moon.x, (lakeFraction + 0.05) + (moonY - (lakeFraction + 0.05)) * w);
     gl.uniform1f(u.moonUp, moon.up * (0.2 + 0.8 * w));
     gl.uniform1f(u.time, time);
+    gl.uniform1f(u.discs, st.discs);
     gl.uniform1f(u.elev, e);
     gl.uniform1f(u.night, st.night);
     gl.uniform1f(u.cloud, 0.4 + 0.09 * Math.sin(st.hour * 0.7 + dayOfYear * 0.37));
