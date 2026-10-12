@@ -9,13 +9,25 @@ await p.goto(base + '/'); await p.waitForSelector('.jhere', { state: 'attached' 
 const cs = (sel, prop) => p.evaluate(([s, pr]) => { const e = document.querySelector(s); return e ? getComputedStyle(e)[pr] || getComputedStyle(e).getPropertyValue(pr) : null; }, [sel, prop]);
 // the home page is a day: each chapter's ground blends out of the colour of the one before it, with no hard edge and no see-through fade
 const flow = await p.evaluate(() => [...document.querySelectorAll('main section.df')].map(el => ({ g: el.dataset.ground, bg: getComputedStyle(el).backgroundImage, mask: getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage || 'none', bt: getComputedStyle(el).borderTopWidth })));
-ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,sage,gold,rose,euc,plum,night,night-solid', flow.map(f => f.g).join(','));
+ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,sage,rose,euc,plum,night,night-solid', flow.map(f => f.g).join(','));
 ok('home: every chapter after the first blends from the previous colour', flow.filter(f => f.g !== 'night-solid').every(f => /linear-gradient/.test(f.bg)), flow.map(f => f.bg.slice(0, 30)).join(' | '));
 ok('home: no see-through fades or hairlines between chapters', flow.every(f => f.mask === 'none' && f.bt === '0px'));
-// the Discovery Kit chapter was removed (owner, October 2026): the chapters after it moved up one, so they still run 1, 2, 3…
-ok('home: chapters are numbered 1 to 7 in journey order, with no gap', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '1234567');
+// the Discovery Kit chapter was removed (owner, October 2026), and Ritual on Repeat and Moon Drops (not open yet) became one
+// "Opening soon" strip after the live chapters: the chapters left run 1 to 5 without a gap
+ok('home: chapters are numbered 1 to 5 in journey order, with no gap', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '12345');
 ok('home: the Discovery Kit chapter is gone', await p.evaluate(() => !document.querySelector('main .disc') && !/Discovery Kit/.test(document.querySelector('main').innerText)));
-ok('home: the Ritualists are chapter 6 and Moon Drops chapter 7', await p.evaluate(() => /Chapter 6 · Belong/.test(document.querySelector('.club').textContent) && /Chapter 7/.test(document.querySelector('.drop-grid').textContent)));
+ok('home: the Ritualists are chapter 5', await p.evaluate(() => /Chapter 5 · Belong/.test(document.querySelector('.club').textContent)));
+const soon = await p.evaluate(() => { const s = document.querySelector('main .soonflow');
+  const ch = [...document.querySelectorAll('main .chapter')];
+  return s && { after: ch.filter(c => s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_PRECEDING).length, before: ch.filter(c => s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING).length, notify: s.querySelectorAll('[data-notify]').length,
+    names: s.innerText, links: [...s.querySelectorAll('a')].map(a => a.getAttribute('href')).join(' '), price: /\$\d/.test(s.innerText), h: s.getBoundingClientRect().height,
+    gone: !document.querySelector('main .rep-grid, main .plans, main #calc, main .drop-grid, main #voteBox, main #cd') }; });
+ok('home: Ritual on Repeat and Moon Drops share one short "Opening soon" strip after every live chapter, with one notify button', !!soon && soon.after === 5 && soon.before === 0 && soon.notify === 1 && /Ritual on Repeat/.test(soon.names) && /Moon Drops/.test(soon.names) && /subscribe/.test(soon.links) && /drops/.test(soon.links) && !soon.price && soon.h < 900 && soon.gone, JSON.stringify({ ...soon, names: undefined }));
+ok('home: the strip gives the next new moon from the one drop state', await p.evaluate(() => /\w+ \d{1,2}/.test(document.querySelector('.soonflow [data-drop-date]')?.textContent ?? '')));
+ok('home: no link to the missing /discovery page', (await p.locator('main a[href*="discovery"]').count()) === 0);
+// chapter 1 leads with candles: a clear "Shop candles" action, and a candle first in the row
+ok('home: chapter 1 offers "Shop candles" up front', (await p.locator('.moment-shop .head a.btn[href*="f=candle"]').count()) === 1);
+await p.waitForSelector('#msGrid .card'); ok('home: the first product in chapter 1 is a candle from the catalogue, with its real price', await p.evaluate(() => { const c = document.querySelector('#msGrid .card'); return /Candle/i.test(c.querySelector('.sub')?.textContent ?? '') && /\$\d+\.\d\d/.test(c.querySelector('.meta')?.textContent ?? ''); }));
 // the proof ribbon under the opening: a lit band turning round a drum (src/ribbon.ts). Its unconfirmed facts ("[Confirm: …]")
 // are drafts for Claire: never shown to customers, not even as moving copies
 await p.evaluate(() => document.querySelector('.proof-strip').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
@@ -48,8 +60,6 @@ ok('home: the first chapter eases down from the dark opening strip', /gradient/.
 ok('home: the footer rises out of a soft fade', /gradient/.test(await p.evaluate(() => getComputedStyle(document.querySelector('footer'), '::before').backgroundImage)));
 const radii = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card .ph')].map(e => getComputedStyle(e).borderTopLeftRadius));
 ok('home: product pictures alternate arch and soft-window cutouts', new Set(radii).size >= 2 && radii.some(r => parseFloat(r) > 100), radii.join(' '));
-const plans = await p.evaluate(() => [...document.querySelectorAll('.plans .plan')].map(e => getComputedStyle(e).backgroundImage.includes('gradient')));
-ok('home: plan cards are tinted, none flat white', plans.length === 3 && plans.every(Boolean), plans.join(','));
 const tiles = await p.evaluate(() => new Set([...document.querySelectorAll('.wall .tile img')].map(e => getComputedStyle(e).borderTopLeftRadius)).size);
 ok('home: Ritual Wall photos use a mix of cutouts', tiles >= 3, `${tiles} shapes`);
 const f = () => p.evaluate(() => getComputedStyle(document.querySelector('#msGrid .card .ph img.main, .wall .tile img')).filter);

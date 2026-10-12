@@ -1,0 +1,41 @@
+/* ======================================================================
+   The home page's running order (src/canvas/pages/Main.html): the live, buyable chapters first; then one short
+   "Opening soon" strip for the two ideas that are not open yet (Ritual on Repeat, Moon Drops), with one way to hear first.
+   ====================================================================== */
+
+/* Chapter 1 leads with candles: a clear "Shop candles" beside "Shop all products" */
+.moment-shop .head .ms-acts { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+@media (max-width: 820px) { .moment-shop .head .ms-acts { gap: 18px; margin-top: 4px; } }
+
+/* ---- Opening soon: one short strip on the night, after the live chapters ---- */
+.soonflow { position: relative; overflow: hidden; color: var(--moonstone, #EDE6DA); padding-block: clamp(96px, 11vw, 150px) clamp(56px, 7vw, 96px); }
+.soonflow > .stars { position: absolute; inset: 0; pointer-events: none; }
+.soon-in { position: relative; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(28px, 5vw, 80px); align-items: center; }
+.soon-head { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.soon-head .eyebrow { color: var(--gold-leaf, #C9A35A); }
+.soon-head h2 { margin: 0; font-size: clamp(34px, 4.2vw, 58px); line-height: 1.04; color: var(--moonstone, #EDE6DA); }
+.soon-head .btn { margin-top: 6px; }
+.soon-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.soon-list li + li { border-top: 1px solid rgba(201, 163, 90, .3); }
+.soon-list a { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 22px 6px; color: inherit; text-decoration: none; border-radius: 14px;
+  transition: background .4s; }
+.soon-list a:hover { background: rgba(237, 230, 218, .05); }
+.soon-list a:focus-visible { outline: 2px solid var(--gold-light, #E9D4A1); outline-offset: 2px; }
+/* each idea's mark in a soft gold ring: the orbit for a refill that comes round again, tonight's moon for Moon Drops */
+.soon-ic { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--gold-light, #E9D4A1);
+  box-shadow: inset 0 0 0 1px rgba(201, 163, 90, .45), 0 0 26px -6px rgba(243, 210, 154, .35); }
+.soon-ic .cel { width: 30px; height: 30px; }
+.soon-tx { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.soon-tx b { font: 500 clamp(21px, 2vw, 26px)/1.15 var(--display); color: var(--moonstone, #EDE6DA); }
+.soon-tx > span { font-size: 15.5px; line-height: 1.55; color: rgba(237, 230, 218, .78); }
+.soon-go { color: var(--gold-light, #E9D4A1); font-size: 20px; transition: translate .4s; }
+.soon-list a:hover .soon-go { translate: 4px 0; }
+@media (max-width: 820px) {
+  .soon-in { grid-template-columns: 1fr; }
+  .soon-list a { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; padding: 18px 2px; }
+  .soon-ic { width: 44px; height: 44px; } .soon-ic .cel { width: 26px; height: 26px; }
+  /* on a phone the button follows the two ideas, at the end of the strip */
+  .soon-head { display: contents; }
+  .soon-head .eyebrow { order: 0; } .soon-head h2 { order: 1; } .soon-list { order: 2; } .soon-head .btn { order: 3; justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) { .soon-list a, .soon-go { transition: none; } }

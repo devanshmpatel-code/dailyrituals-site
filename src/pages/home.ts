@@ -14,7 +14,8 @@ import { applyDrop, dropBarHTML } from '../drop';
 import { bindCanvasProductLinks, previewOff, wireQuickAdd, wireNotify } from './shared';
 import { journalTeaserHTML } from './journal';
 import { mountRibbon } from '../ribbon';
-import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHero, heroLook, heroLight, repeatPhotoHTML, giftPhotoHTML } from '../moons';
+import '../homeflow.css';
+import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHero, heroLook, heroLight, giftPhotoHTML } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -54,7 +55,6 @@ export async function renderHome(app: HTMLElement) {
   app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
   app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
   app.querySelector('section.newsflow')?.insertAdjacentHTML('beforebegin', journalTeaserHTML());
-  app.querySelector('.rep-grid .stick')?.insertAdjacentHTML('beforeend', repeatPhotoHTML());
   app.querySelector('.gift-grid > div:has(.gcard)')?.insertAdjacentHTML('beforeend', giftPhotoHTML());
   swapRenders(app);
   wireStudio(app);
@@ -64,8 +64,9 @@ export async function renderHome(app: HTMLElement) {
   // the Ritualists head: an embossed membership card with Claire's logo and a wax seal (the owner preferred it to the mood
   // constellation). The club is not open: the card says "coming soon" and promises nothing.
   if (!LOYALTY_ENABLED) { app.querySelector('.club .head')?.insertAdjacentHTML('beforeend', ritualistsCardHTML()); wireRitualistsCard(app.querySelector('.club') ?? app); }
-  wireRepeatCalc(app, null);
-  wireVote(app);
+  // Ritual on Repeat and Moon Drops are not open: they share the "Opening soon" strip near the end (one notify button, and
+  // the next new moon's date from the one drop state)
+  wireNotify(app);
   wireCountdown(app);
   wireSunrise(app);
   wireClub(app);
@@ -85,7 +86,6 @@ export async function renderHome(app: HTMLElement) {
   }
   wireHero(app, items);
   wireMomentShop(app, items);
-  wireRepeatCalc(app, items);
   bindCanvasProductLinks(app, items);
 }
 
@@ -103,9 +103,9 @@ function pairFor(m: Moment) {
 // about 10 minutes" and "Free · 20 min Discovery call"); the wording per moment is a draft for Claire.
 const PRACTICE: Record<MomentKey, { title: string; sub: string; href: string }> = {
   dawn: { title: 'Free 7-day reset', sub: 'Self-paced, about 10 minutes a day', href: '#/reset' },
-  morning: { title: 'Free 20-min call with Claire', sub: 'Talk about what you want to change', href: '#/book' },
+  morning: { title: 'Free 20-minute discovery call', sub: 'Talk about what you want to change', href: '#/book' },
   midday: { title: 'Free 7-day reset', sub: 'Turn a scent into a calm cue', href: '#/reset' },
-  golden: { title: 'Free 20-min call with Claire', sub: 'See if coaching is a fit for you', href: '#/book' },
+  golden: { title: 'Free 20-minute discovery call', sub: 'See if coaching is a fit for you', href: '#/book' },
   night: { title: 'Free 7-day reset', sub: 'Short daily practices, about 10 minutes', href: '#/reset' },
 };
 
@@ -287,9 +287,9 @@ function wireMomentShop(app: HTMLElement, items: Item[]) {
   const show = (key: MomentKey) => {
     const m = MOMENTS.find(x => x.key === key)!;
     const pool = items.filter(i => i.mood === m.mood && i.inStock);
-    // one of each format first, then fill
+    // one of each format first (a candle leads: Claire's candles are what most people come for), then fill
     const picked: Item[] = [];
-    for (const f of ['roller', 'diffuser', 'candle', 'deodorant'] as const) { const x = pool.find(i => i.format === f); if (x) picked.push(x); }
+    for (const f of ['candle', 'roller', 'diffuser', 'deodorant'] as const) { const x = pool.find(i => i.format === f); if (x) picked.push(x); }
     for (const x of pool) if (picked.length < 4 && !picked.includes(x)) picked.push(x);
     grid.innerHTML = picked.slice(0, 4).map(i => cardHTML(i)).join('') || `<p class="muted">No ${MOODS[m.mood].label.toLowerCase()} scents in stock right now.</p>`;
     wireQuickAdd(grid, items);
@@ -301,7 +301,7 @@ function wireMomentShop(app: HTMLElement, items: Item[]) {
   show('dawn');
 }
 
-// ---------- Chapter 3: refill calculator ----------
+// ---------- the refill calculator (Ritual on Repeat's page uses it) ----------
 // Ritual on Repeat is not open yet: the calculator illustrates the planned 10% saving on today's shop prices.
 // Every price comes from the live catalogue: the chosen scent in the chosen format, or, when that scent is not made in that
 // format, the lowest price in the format (shown as "from"). Candles come in sizes, so the candle is priced as its smallest

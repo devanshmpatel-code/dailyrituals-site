@@ -42,12 +42,12 @@ const MENU: Entry[] = [
     id: 'explore', label: 'Find your scent', href: '#/explore', columns: [
       { kind: 'elevated', links: [{ label: 'Scent atlas', href: '#/explore' }, { label: 'Take the quiz', href: '#/explore?tab=quiz' }] },
       { title: 'Start from a mood', kind: 'moods', links: moodLinks(m => `#/explore?mood=${m}`) },
-      { title: 'Still unsure?', links: [{ label: 'Free 20-min call with Claire', href: '#/book' }, { label: 'Help and contact', href: '#/help' }] },
+      { title: 'Still unsure?', links: [{ label: 'Free 20-minute discovery call', href: '#/book' }, { label: 'Help and contact', href: '#/help' }] },
     ],
   },
   {
     id: 'coaching', label: 'Coaching', href: '#/coaching', columns: [
-      { kind: 'elevated', links: [{ label: 'Free 7-day reset', href: '#/reset' }, { label: 'Free 20-min call with Claire', href: '#/book' }, { label: 'Neuro coaching', href: '#/coaching' }] },
+      { kind: 'elevated', links: [{ label: 'Free 7-day reset', href: '#/reset' }, { label: 'Free 20-minute discovery call', href: '#/book' }, { label: 'Neuro coaching', href: '#/coaching' }] },
       { title: 'About', links: [{ label: 'Meet the maker', href: '#/story' }, { label: 'Help and contact', href: '#/help' }] },
     ],
   },
@@ -193,7 +193,7 @@ function mountPhone(header: HTMLElement) {
       <nav aria-label="Menu"><ul class="mm-rows">${phoneRows()}</ul></nav>
       <div class="mm-coach mm-row" style="--i:7"><span class="mm-eyebrow">Coaching with Claire</span>
         <a href="#/reset"><b>Free 7-day reset</b><span>Self-paced, about 10 minutes a day</span></a>
-        <a href="#/book"><b>Free 20-min call with Claire</b><span>See if coaching is a fit for you</span></a></div>
+        <a href="#/book"><b>Free 20-minute discovery call</b><span>See if coaching is a fit for you</span></a></div>
       <div class="mm-row" style="--i:8">${constellationHTML('mm-cst')}</div>
       <div class="mm-small mm-row" style="--i:9">${PHONE_SMALL.map(l => `<a href="${l.href}">${esc(l.label)}</a>`).join('')}</div>
     </div>

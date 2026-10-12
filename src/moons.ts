@@ -125,9 +125,9 @@ export const resetHero = () => { arc?.destroy(); arc = null; };
 // Every one is a cut-out (public/img/studio/tins): whole tins, no table or paper behind them.
 const tinFigure = (file: string, w: number, h: number, altText: string, sizes: string, cls: string, cap: string) =>
   `<figure class="studio-cut ${cls}"><img src="/img/studio/tins/${file}-900.webp" srcset="/img/studio/tins/${file}-480.webp 480w, /img/studio/tins/${file}-900.webp ${w}w" sizes="${sizes}" alt="${esc(altText)}" width="${w}" height="${h}" loading="lazy" decoding="async"><figcaption><span class="d">${cap}</span></figcaption></figure>`;
-/** Chapter 3, Ritual on Repeat: a batch of tins, under the chapter's words. */
+/** Ritual on Repeat (its own page): a batch of tins. */
 export const repeatPhotoHTML = () => tinFigure('jarrah-top', 900, 745, 'A batch of candles in black tins seen from above, each topped by hand with wood chips beside its wooden wick', '(max-width: 900px) 90vw, 36vw', 'ph-repeat', 'Poured, topped and lidded by hand in White Rock, BC');
-/** Chapter 4, Send a Sunrise: a petal-topped pour tucked behind the gift card. */
+/** Chapter 3, Send a Sunrise: a petal-topped pour tucked behind the gift card. */
 export const giftPhotoHTML = () => tinFigure('sweet-romance', 532, 535, 'A candle seen from above, topped by hand with dried rose petals and small purple flowers', '(max-width: 820px) 50vw, 20vw', 'ph-gift', 'Finished by hand with dried petals');
 /** Product page (candles): tins from the bench beside the candle information. */
 export const productStudioHTML = () => tinFigure('mothers-day-florals', 900, 754, 'Candles in black tins seen from above, each topped by hand with a dried flower beside its wooden wick', '(max-width: 820px) 90vw, 40vw', 'ph-product', 'From the studio · wooden wicks, and every tin finished by hand');

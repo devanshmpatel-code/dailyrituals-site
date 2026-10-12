@@ -17,6 +17,19 @@ const P = (r: number, deg: number, c = 260) => `${(c + r * Math.cos(rad(deg))).t
 const sector = (r0: number, r1: number, a0: number, a1: number) => `M${P(r1, a0)} A${r1},${r1} 0 0 1 ${P(r1, a1)} L${P(r0, a1)} A${r0},${r0} 0 0 0 ${P(r0, a0)} Z`;
 
 
+// On a phone the "you are here" card floats over the foot of the page, where the words run edge to edge. Whenever any
+// words (or a link or a button) lie under it, it steps aside, and comes back over a picture or an empty stretch of ground.
+const phone = window.matchMedia('(max-width: 820px)');
+const WORDY = 'p, h1, h2, h3, h4, h5, li, a, button, label, input, select, textarea, figcaption, blockquote, q, small, b, strong, em, .btn, .price';
+const hasWords = (el: Element) => el.matches(WORDY) || [...el.childNodes].some(n => n.nodeType === 3 && !!n.textContent?.trim());
+/** True when words lie under the card's resting place (offset* ignore its slide; a fixed element's offsets are the viewport's). */
+export function overText(card: HTMLElement): boolean {
+  const l = card.offsetLeft, t = card.offsetTop, w = card.offsetWidth, h = card.offsetHeight;
+  if (!w || !h) return false;
+  const pts: [number, number][] = [[l + 6, t + 6], [l + w / 2, t + 6], [l + w - 6, t + 6], [l + 6, t + h - 6], [l + w / 2, t + h - 6], [l + w - 6, t + h - 6], [l + w / 2, t + h / 2]];
+  return pts.some(([x, y]) => { const el = document.elementsFromPoint(x, y).find(e => !card.contains(e) && !e.closest('.breathorb')); return !!el && hasWords(el); });
+}
+
 // The breathing pause (the flame) lives in ./flamebreath; it is re-exported here so the orb and [data-breathe] keep one import.
 import { openBreathe } from './flamebreath';
 export { openBreathe };
@@ -86,6 +99,7 @@ export function mountJourney(app: HTMLElement) {
     const seg = Math.min(1, Math.max(0, (line - aTop) / Math.max(1, nTop - aTop)));
     mark.style.top = `${((at + (at < n - 1 ? seg * 0.8 : 0)) / (n - 1)) * 100}%`;
     here.style.setProperty('--seg', String(seg)); here.classList.toggle('on', at >= 1);
+    here.classList.toggle('jh-off', at >= 1 && phone.matches && overText(here)); // on a phone it never sits over words
     const nxt = stops[at + 1]; here.querySelector<HTMLElement>('.jh-n')!.textContent = String(at); here.querySelector<HTMLElement>('.jh-t')!.textContent = stops[at].short || stops[at].label;
     here.querySelector<HTMLElement>('.jh-x')!.textContent = nxt ? `Next: ${nxt.short || nxt.label} \u2192` : 'Back to the top \u2191';
     here.querySelector<HTMLElement>('.jh-k')!.textContent = `You are here \u00b7 ${at} of ${n - 1}`; here.dataset.next = nxt ? String(at + 1) : '';

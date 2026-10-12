@@ -25,7 +25,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: Moon Drops no longer says "available now"`, !/available now/i.test(await visText(p)));
   await p.goto(base + '/story'); await p.waitForSelector('.st-steps');
   ok(`${label}: story has the four beats and the quote`, (await p.locator('.st-steps li').count()) === 4 && (await p.locator('.st-quote blockquote').count()) === 1);
-  ok(`${label}: the story page is "Meet the maker", with "My story" in Claire's own words (drafts)`, /^Meet the maker$/i.test((await p.locator('#app h1').innerText()).trim()) && /My story/i.test(await p.locator('.st-path > .eyebrow').innerText()) && await p.evaluate(() => [...document.querySelectorAll('.st-steps li p')].every(x => x.querySelector('.d') && /\b(I|my)\b/.test(x.textContent))) && /Meet the maker/.test(await p.title()));
+  ok(`${label}: the story page is "Meet the maker", headed "My story", in Claire's own words (drafts)`, /^My story$/i.test((await p.locator('#app h1').innerText()).trim()) && /Meet the maker/i.test(await p.locator('.st-tx > .eyebrow').innerText()) && await p.evaluate(() => [...document.querySelectorAll('.st-steps li p')].every(x => x.querySelector('.d') && /\b(I|my)\b/.test(x.textContent))) && /Meet the maker/.test(await p.title()));
   ok(`${label}: no "Our story" left in the header, menu or footer`, await p.evaluate(() => !/our story/i.test([...document.querySelectorAll('header, footer, #mobileMenu')].map(e => e.textContent).join(' ')) && [...document.querySelectorAll('footer a[href$="/story"]')].every(a => a.textContent.trim() === 'Meet the maker')));
   await p.goto(base + '/explore'); await p.waitForSelector('.fl-card');
   ok(`${label}: the full scent list is grouped by mood`, (await p.locator('.fl-group').count()) >= 5);
@@ -77,8 +77,12 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
     const y = new Date().getFullYear(), today = new Date(); today.setHours(0, 0, 0, 0);
     const when = [y, y + 1].map(yy => new Date(`${d.date.replace(/^Tonight · /, '').replace(/^\w+, /, '')} ${yy}`)).find(x => !isNaN(x) && x >= today);
     ok(`${label} ${r}: the drop date is the next new moon, not a date that has passed`, !!when && (when - today) / 864e5 <= 31 && !/October 11/.test(d.date), d.date);
-    ok(`${label} ${r}: date, countdown, bar and button tell the same story`, d.bar.includes(d.date.replace(/^Tonight · /, '')) || /tonight/i.test(d.bar) ? (d.hidden || d.days >= 0) && /get notified/i.test(d.btn) : false, JSON.stringify(d));
-    ok(`${label} ${r}: the drop shows no price and cannot be bought`, !/\$28|Add to cart/i.test(await p.locator('.drop-grid').innerText()));
+    // (home: Moon Drops is one line of the "Opening soon" strip now, with the date and no countdown; /drops keeps the countdown)
+    if (r === '/') ok(`${label} /: the strip's date and the bar tell the same story, and the drop cannot be bought`, (d.bar.includes(d.date.replace(/^Tonight · /, '')) || /tonight/i.test(d.bar)) && !/\$28|Add to cart/i.test(await p.locator('.soonflow').innerText()), JSON.stringify(d));
+    else {
+      ok(`${label} ${r}: date, countdown, bar and button tell the same story`, d.bar.includes(d.date.replace(/^Tonight · /, '')) || /tonight/i.test(d.bar) ? (d.hidden || d.days >= 0) && /get notified/i.test(d.btn) : false, JSON.stringify(d));
+      ok(`${label} ${r}: the drop shows no price and cannot be bought`, !/\$28|Add to cart/i.test(await p.locator('.drop-grid').innerText()));
+    }
   }
   await p.goto(base + '/drops'); await p.waitForTimeout(1300);
   const dt = await visText(p);
