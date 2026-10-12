@@ -62,6 +62,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
     const t = await visText(p);
     ok(`${label} ${r}: no price or "value" on a concept (Discovery Kit, Moon Drop, Solstice Box, gift card)`, !CONCEPT_PRICE.test(t), (t.match(/.{0,40}(\$(18|28|79|88)|\bvalue\b).{0,20}/i) || [''])[0]);
     ok(`${label} ${r}: no add-to-cart for a concept`, (await p.locator('[data-add="discovery-kit"], [data-add="moon-drop-01"], [data-add="solstice-box"], [data-gr="giftcard"], [data-gr="discovery-kit"]').count()) === 0);
+    // the gift sets have no contents or prices from the shop yet, so they are coming soon, never priced or selectable
+    if (r === '/gift') ok(`${label} ${r}: the gift sets show no invented price and cannot be chosen`, (await p.locator('[data-gr^="set-"]').count()) === 0 && (await p.locator('[data-gr-soon^="set-"][disabled]').count()) === 3 && !/\$(34|36|46)\.00/.test(await p.locator('main, #app').first().innerText()));
   }
   await p.goto(base + '/shop'); await p.waitForSelector('[data-concept]');
   ok(`${label} /shop: every concept card says Coming soon and offers only "get notified"`, await p.evaluate(() => [...document.querySelectorAll('[data-concept]')].every(c => /Coming soon/i.test(c.textContent) && !/\$\d/.test(c.textContent) && !!c.querySelector('[data-notify]'))) && (await p.locator('[data-concept]').count()) === 3);
