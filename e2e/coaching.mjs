@@ -1,4 +1,6 @@
-// The coaching page: Claire's opening (on a phone, the headline before her photograph), the two free ways in, the 3D habit
+// The coaching page: Claire's opening (on a phone, the headline before her photograph) with the new loop orbiting her (cue,
+// pause, chosen response, repeat, lit in turn by a travelling bead), the "Why patterns repeat" cards standing off the page
+// with strong contrast at five widths, the two free ways in, the 3D habit
 // loop (porcelain coins over a hoop, a travelling bead, the old loop turning into the new one, drag, touch, keys, buttons),
 // the 3D calm-cue loop round its pause light (no product in it; the light brightening as the loop completes), no selling in
 // the middle of the story, one honest cue-kit section near the end (nothing to buy to begin, then real products at their
@@ -255,11 +257,64 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
   await ctx.close();
 }
 
+// ---- the opening's orbit shows the new loop, and the "Why patterns repeat" cards stand off the page, at every width
+const lum = c => { const [r, g, bl] = c.map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * r + .7152 * g + .0722 * bl; };
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+const rgbs = s => [...s.matchAll(/rgba?\(([^)]+)\)/g)].map(m => m[1].split(/[ ,/]+/).filter(Boolean).map(Number)).filter(v => v.length === 3 || v[3] === 1).map(v => v.slice(0, 3));
+for (const w of [1440, 1024, 768, 390, 360]) {
+  const phone = w < 500, label = `${w}px`;
+  const ctx = await b.newContext({ viewport: { width: w, height: phone ? 844 : 900 }, hasTouch: phone, isMobile: phone }); const p = await ctx.newPage(); p.setDefaultTimeout(10000); await setupMocks(p);
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.goto(base + '/coaching'); await p.waitForSelector('.co-hero .co-claire'); await p.waitForTimeout(900);
+  const hero = await p.evaluate(() => {
+    const ol = document.querySelector('#coPortal .co-loop'), chips = [...ol.querySelectorAll('li.co-chip')];
+    const rs = chips.map(c => c.getBoundingClientRect().toJSON());
+    return { words: chips.map(c => c.textContent.replace(/^\d/, '').trim()), name: document.getElementById(ol.getAttribute('aria-labelledby'))?.textContent.trim(),
+      inside: rs.every(r => r.left >= 0 && r.right <= innerWidth), rs, depths: chips.map(c => new DOMMatrix(getComputedStyle(c).transform).m43),
+      old: /Automatic response|Short-term relief/.test(document.querySelector('.co-hero').textContent),
+      layers: [...document.querySelectorAll('#coPortal .co-orbit')].map(l => ({ front: l.classList.contains('front'), svg: !!l.querySelector('svg .co-rg-line'), clip: !!l.querySelector('g[clip-path]'), arrows: l.querySelectorAll('.co-rg-arrows path').length })),
+      order: (() => { const a = document.querySelector('#coPortal .co-orbit.back'), arch = document.querySelector('#coPortal .co-arch'), f = document.querySelector('#coPortal .co-orbit.front');
+        return !!(a.compareDocumentPosition(arch) & 4) && !!(arch.compareDocumentPosition(f) & 4); })(),
+      bead: document.querySelector('#coPortal .co-orbit.front .co-bead').getAttribute('transform') };
+  });
+  ok(`${label}: the orbit round Claire is the new loop, in order: cue, pause, chosen response, repeat`, JSON.stringify(hero.words) === JSON.stringify(['Cue', 'Pause', 'Chosen response', 'Repeat']) && hero.name === 'A new loop' && !hero.old, JSON.stringify(hero.words));
+  const clash = hero.rs.some((a, i) => hero.rs.some((c, j) => j > i && overlap(a, c)));
+  ok(`${label}: its four steps are on screen and clear of one another`, hero.inside && !clash, JSON.stringify(hero.rs.map(r => [Math.round(r.left), Math.round(r.right)])));
+  ok(`${label}: it is 3D: a ring behind the arch and over it (the near half clipped), the steps at different depths, arrows showing the way round`,
+    hero.layers.length === 2 && hero.layers.every(l => l.svg && l.arrows === 3) && hero.layers.find(l => l.front)?.clip && hero.order && new Set(hero.depths).size === 4 && Math.min(...hero.depths) >= 60, JSON.stringify({ layers: hero.layers, depths: hero.depths }));
+  if (w === 1440) {
+    // a lit bead travels the ring clockwise and each step lights as it arrives, in the loop's order
+    const seen = [];
+    for (let i = 0; i < 64; i++) { const k = await p.evaluate(() => [...document.querySelectorAll('#coPortal .co-chip')].findIndex(c => c.classList.contains('on'))); if (k >= 0 && seen.at(-1) !== k) seen.push(k); await p.waitForTimeout(250); }
+    const bead2 = await p.evaluate(() => document.querySelector('#coPortal .co-orbit.front .co-bead').getAttribute('transform'));
+    ok(`${label}: a lit bead travels the ring and lights the steps in order`, bead2 !== hero.bead && seen.slice(0, 3).join() === '0,1,2', JSON.stringify(seen));
+  }
+  // the cards: a deeper fill than the page, a rim and a layered shadow; words and numbers well above 4.5:1; numbers large
+  await p.evaluate(() => document.querySelector('.co-pains').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
+  const cards = await p.evaluate(() => [...document.querySelectorAll('.co-pain')].map(c => { const cs = getComputedStyle(c), n = c.querySelector('.co-num'), r = c.getBoundingClientRect();
+    return { bg: cs.backgroundImage, ink: getComputedStyle(c.querySelector('p')).color, num: getComputedStyle(n).color, size: parseFloat(getComputedStyle(n).fontSize), weight: Number(getComputedStyle(n).fontWeight),
+      border: cs.borderTopColor, bw: parseFloat(cs.borderTopWidth), shadows: cs.boxShadow.split(/,(?![^(]*\))/).length, inside: r.left >= 0 && r.right <= innerWidth, o: cs.opacity }; }));
+  const page = [247, 242, 234]; // the cream ground, --ground
+  const rep = cards.map(c => { const stops = rgbs(c.bg), ink = rgbs(c.ink)[0], num = rgbs(c.num)[0];
+    const mean = stops.reduce((a, s) => a + lum(s), 0) / stops.length;
+    return { stops: stops.length, ink: Math.min(...stops.map(s => ratio(ink, s))).toFixed(2), num: Math.min(...stops.map(s => ratio(num, s))).toFixed(2), lift: ((lum(page) + .05) / (mean + .05)).toFixed(2), size: c.size, rim: c.bw >= 1 && !/rgba\(0, 0, 0, 0\)/.test(c.border), shadows: c.shadows, inside: c.inside }; });
+  ok(`${label}: the three cards stand off the page (deeper fill, a rim, layered shadow) and keep inside the screen`, rep.length === 3 && rep.every(r => r.stops >= 2 && Number(r.lift) >= 1.15 && r.rim && r.shadows >= 4 && r.inside), JSON.stringify(rep));
+  ok(`${label}: card words and numbers keep at least 4.5:1 on every part of the card`, rep.every(r => Number(r.ink) >= 4.5 && Number(r.num) >= 4.5), JSON.stringify(rep.map(r => [r.ink, r.num])));
+  ok(`${label}: the card numbers are large and bold`, cards.every(c => c.size >= 48 && c.weight >= 500), JSON.stringify(cards.map(c => [c.size, c.weight])));
+  ok(`${label}: no sideways scroll`, (await noScroll(p)) <= 1, String(await noScroll(p)));
+  ok(`${label}: no JS errors`, errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
 { // reduced motion: the four steps are flat and all readable at once
   for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
     const ctx = await b.newContext({ viewport: vp, reducedMotion: 'reduce' }); const p = await ctx.newPage(); p.setDefaultTimeout(10000); await setupMocks(p);
     const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.goto(base + '/coaching'); await p.waitForSelector('.cue'); await p.waitForTimeout(800);
+    // the opening's new loop holds still: the bead rests at the pause, which is lit
+    const hb = () => p.evaluate(() => ({ t: document.querySelector('#coPortal .co-bead').getAttribute('transform'), on: [...document.querySelectorAll('#coPortal .co-chip')].map(c => c.classList.contains('on')) }));
+    const hb0 = await hb(); await p.waitForTimeout(500); const hb1 = await hb();
+    ok(`reduced motion ${label}: the opening's loop holds still, resting at the pause`, hb0.t === hb1.t && hb1.on.join() === 'false,true,false,false', JSON.stringify(hb1));
     await p.evaluate(() => document.querySelector('.cue').scrollIntoView({ block: 'center' })); await p.waitForTimeout(300);
     const st = await p.evaluate(() => ({ stat: document.querySelector('.cue').classList.contains('is-static'), stage: document.querySelectorAll('.cue-stage').length,
       items: [...document.querySelectorAll('.cue-list li')].map(li => ({ t: li.querySelector('h3').textContent, p: li.querySelector('p').textContent.length, h: li.getBoundingClientRect().height, o: getComputedStyle(li).opacity })) }));
