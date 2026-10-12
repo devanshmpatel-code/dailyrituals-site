@@ -7,6 +7,7 @@ import { add } from '../cart';
 import { canvasSlugToLive, wireQuickAdd, previewOff } from './shared';
 import { MOODS, LOYALTY_ENABLED, type Format } from '../config';
 import { productStudioHTML } from '../moons';
+import { givingNote } from './giving';
 
 // Copy from the canvas product boards (roller = Product, diffuser = Cart drawer board).
 // Candle and deodorant copy is new (not from the canvas): it states only what the site already says (soy wax, wooden wicks,
@@ -202,6 +203,8 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     // no Loyalty app yet: never promise points to customers
     if (!LOYALTY_ENABLED) { const row = $('.buy .points span'); if (row && !row.dataset.fixed) { row.dataset.fixed = '1'; row.innerHTML = 'Made in small batches in British Columbia · Gift wrap available'; } }
   };
+  // giving back: one quiet line under Add to cart (src/pages/giving.ts)
+  $('.buy .points')?.insertAdjacentHTML('afterend', givingNote('product'));
   $('#qd')!.addEventListener('click', () => { qty = Math.max(1, qty - 1); $('#qv')!.textContent = String(qty); refresh(); });
   $('#qi')!.addEventListener('click', () => { qty = Math.min(20, qty + 1); $('#qv')!.textContent = String(qty); refresh(); });
   addBtn.addEventListener('click', async () => {

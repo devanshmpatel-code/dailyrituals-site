@@ -1,0 +1,239 @@
+/* ======================================================================
+   Giving back (src/pages/giving.ts): "Light that travels" at the end of Meet the maker, the public ledger at /giving,
+   and the quiet line in the cart and under Add to cart.
+   The scene: paper lanterns rising over Semiahmoo Bay, past the White Rock pier and the white rock, into a constellation.
+   Everything moves on transform and opacity only, pauses off screen, and stands still for reduced motion.
+   ====================================================================== */
+
+.gv-vh { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---- the night panel ---- */
+.gv-sec { padding-block: clamp(24px, 4vw, 56px) clamp(56px, 7vw, 112px); }
+.gv { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); border-radius: 56px 12px 56px 12px; overflow: hidden; isolation: isolate;
+  color: var(--moonstone, #EDE6DA);
+  background: radial-gradient(90% 60% at 72% 100%, rgba(226, 160, 74, .2), rgba(226, 160, 74, 0) 70%), var(--cel-grain), var(--night-sky, linear-gradient(180deg, #2A3358, #1C2140 55%, #15111F));
+  box-shadow: 0 40px 80px -48px rgba(21, 17, 31, .75), inset 0 0 0 1px rgba(201, 163, 90, .22); }
+.gv-tx { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; padding: clamp(36px, 5vw, 76px) clamp(28px, 4.4vw, 68px); }
+.gv .eyebrow { color: var(--gold-leaf, #C9A35A); }
+.gv h1, .gv h2 { margin: 0; color: var(--moonstone, #EDE6DA); line-height: .98; }
+.gv h2 { font-size: clamp(40px, 5vw, 72px); }
+.gv h1 { font-size: clamp(46px, 6vw, 92px); }
+.gv .it { color: var(--gold-light, #E9D4A1); }
+.gv-lead { margin: 0; font-size: clamp(16.5px, 1.35vw, 19px); line-height: 1.55; color: rgba(237, 230, 218, .86); max-width: 46ch; }
+.gv a:not(.btn) { color: inherit; }
+.gv a:focus-visible { outline: 2px solid var(--gold-light, #E9D4A1); outline-offset: 4px; }
+/* drafts on night: a dashed underline instead of the light highlight */
+body.show-drafts .gv .d { background: none; box-shadow: none; color: #F7E4C6; text-decoration: underline dashed rgba(247, 228, 198, .75); text-underline-offset: 4px; }
+
+/* the three beats (light pages by default; moonstone on the night panel) */
+.gv-steps { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 18px; }
+.gv-steps li { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 16px; align-items: start; align-content: start; }
+.gv-n { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font: 400 18px/1 var(--display); color: #7A5410;
+  background: radial-gradient(circle at 35% 30%, #FFF4DA, #F0CF93); box-shadow: 0 8px 20px -8px rgba(122, 84, 16, .45); }
+.gv-steps h3 { margin: 2px 0 4px; font: 400 22px/1.15 var(--display); color: var(--ink); }
+.gv-steps p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--ink-2); max-width: 44ch; }
+.gv .gv-n { color: var(--gold-light, #E9D4A1); background: radial-gradient(circle at 50% 120%, rgba(243, 190, 120, .32), rgba(243, 190, 120, 0) 70%), rgba(237, 230, 218, .04);
+  box-shadow: inset 0 0 0 1px rgba(201, 163, 90, .55), 0 0 22px -6px rgba(243, 190, 120, .5); }
+.gv .gv-steps h3 { color: var(--moonstone, #EDE6DA); }
+.gv .gv-steps p { color: rgba(237, 230, 218, .74); }
+
+.gv-line { text-wrap: balance; margin: 6px 0 0; font: italic 400 clamp(22px, 2.1vw, 28px)/1.2 var(--display); color: #7A5410; }
+.gv .gv-line { color: var(--gold-light, #E9D4A1); }
+.gv-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; }
+.btn.gv-gold { background: linear-gradient(180deg, #F6DCA8, #E2A04A); border-color: transparent; color: #231A2B; box-shadow: 0 12px 30px -12px rgba(226, 160, 74, .7); }
+.btn.gv-gold:hover { background: linear-gradient(180deg, #FFF0CF, #EDB25E); color: #231A2B; }
+.gv-link { font-weight: 600; font-size: 15px; text-decoration: underline; text-decoration-color: rgba(233, 212, 161, .55); text-underline-offset: 6px; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+.gv-link:hover { text-decoration-color: var(--gold-light, #E9D4A1); }
+.gv-link span { transition: transform .3s; } .gv-link:hover span { transform: translateX(3px); }
+.gv-fine { margin: 0; color: rgba(237, 230, 218, .62); max-width: 52ch; }
+
+/* ---- the scene ---- */
+.gv-stage { --px: 0; --py: 0; position: relative; min-height: 580px; container-type: size; overflow: hidden; perspective: 900px; perspective-origin: 50% 70%; }
+.gv-stars { position: absolute; inset: 0 0 auto 0; width: 100%; height: 78%; fill: var(--moonstone, #EDE6DA); opacity: .75; }
+.gv-stars .tw { animation: gvTwinkle 4.5s ease-in-out var(--tw, 0s) infinite alternate; animation-play-state: paused; }
+.gv-on .gv-stars .tw { animation-play-state: running; }
+@keyframes gvTwinkle { from { opacity: .25; } to { opacity: 1; } }
+/* the constellation the lanterns join: drawn in once, the first time the panel comes into view */
+.gv-const { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke: var(--gold-leaf, #C9A35A); stroke-width: 1; stroke-opacity: .55; }
+.gv-const { clip-path: inset(0 100% 0 0); transition: clip-path 3s cubic-bezier(.3, .6, .2, 1) .4s; }
+.gv-const path { vector-effect: non-scaling-stroke; }
+.gv-seen .gv-const { clip-path: inset(0 0 0 0); }
+.gv-cstar { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #FFF6E2; opacity: 0; transform: scale(.4);
+  box-shadow: 0 0 6px 2px rgba(255, 226, 170, .7), 0 0 18px 6px rgba(243, 190, 120, .25); transition: opacity .8s, transform .8s cubic-bezier(.2, .7, .2, 1); transition-delay: calc(.4s + var(--i) * .38s); }
+.gv-seen .gv-cstar { opacity: 1; transform: none; }
+.gv-glowline { position: absolute; left: -10%; right: -10%; bottom: 6%; height: 34%; pointer-events: none;
+  background: radial-gradient(50% 60% at 55% 100%, rgba(243, 176, 96, .26), rgba(243, 176, 96, .08) 55%, rgba(243, 176, 96, 0) 100%); }
+
+/* the lanterns: each rises from beyond the pier, drifting a little, and fades into the stars */
+.gv-field { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 1.4s cubic-bezier(.2, .7, .2, 1);
+  transform: rotateX(calc(var(--py) * -5deg)) rotateY(calc(var(--px) * 9deg)); }
+.gv-l { position: absolute; left: var(--x); bottom: 16%; width: calc(27px * var(--s)); height: calc(34px * var(--s)); margin-left: calc(-13.5px * var(--s));
+  transform: translate3d(0, 0, var(--z)); opacity: 0; animation: gvRise var(--t) linear var(--dl) infinite; animation-play-state: paused; will-change: transform, opacity; }
+.gv-on .gv-l, .gv-on .gv-lb { animation-play-state: running; }
+@keyframes gvRise {
+  0% { transform: translate3d(0, 0, var(--z)); opacity: 0; }
+  9% { opacity: 1; }
+  70% { opacity: .95; }
+  100% { transform: translate3d(var(--sw), -72cqh, var(--z)); opacity: 0; }
+}
+/* the warm light each one throws */
+.gv-l::before { content: ""; position: absolute; inset: -110% -130%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 186, 104, .34), rgba(255, 160, 80, .1) 55%, rgba(255, 160, 80, 0)); }
+.gv-lb { position: absolute; inset: 0; transform-origin: 50% 0; animation: gvSway 5.6s ease-in-out var(--dl) infinite alternate; animation-play-state: paused;
+  border-radius: 46% 46% 30% 30% / 26% 26% 20% 20%;
+  background:
+    radial-gradient(56% 40% at 50% 86%, rgba(255, 248, 222, .95), rgba(255, 220, 150, 0) 72%),
+    linear-gradient(90deg, rgba(120, 44, 12, .38), rgba(120, 44, 12, 0) 24%, rgba(120, 44, 12, 0) 74%, rgba(120, 44, 12, .4)),
+    linear-gradient(180deg, #F8D9A2 0%, #F0A658 58%, #C9632A 100%);
+  box-shadow: 0 0 calc(12px * var(--s)) rgba(255, 166, 80, .6), inset 0 calc(3px * var(--s)) 0 rgba(120, 50, 16, .28); }
+/* two paper seams */
+.gv-lb::after { content: ""; position: absolute; inset: 8% 30% 4%; border-left: 1px solid rgba(140, 60, 20, .22); border-right: 1px solid rgba(140, 60, 20, .22); border-radius: 40%; }
+@keyframes gvSway { from { transform: rotate(-3.5deg); } to { transform: rotate(3.5deg); } }
+
+/* the shore: Semiahmoo Bay, the long pier and the white rock */
+.gv-shore { position: absolute; left: 0; bottom: 0; z-index: 2; width: 100%; height: 30%; display: block; }
+/* beside the words, the shore fades out to the left instead of ending on a hard edge */
+@media (min-width: 861px) { .gv-shore { -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%); mask-image: linear-gradient(90deg, transparent, #000 28%); } .gv-glowline { -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%); mask-image: linear-gradient(90deg, transparent, #000 30%); } }
+.gv-hills { fill: #100D1B; }
+.gv-beach { fill: #0B0912; }
+.gv-pier path { fill: none; stroke: var(--gold-leaf, #C9A35A); stroke-opacity: .62; stroke-width: 1.1; vector-effect: non-scaling-stroke; }
+.gv-rock { opacity: .9; filter: drop-shadow(0 0 6px rgba(243, 190, 120, .25)); }
+.gv-shimmer path { fill: none; stroke: #F6CF94; stroke-width: 1; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: .2; animation: gvShimmer 4s ease-in-out var(--d) infinite alternate; animation-play-state: paused; }
+.gv-on .gv-shimmer path { animation-play-state: running; }
+@keyframes gvShimmer { from { opacity: .08; } to { opacity: .5; } }
+
+/* ---- the tracker's sky: one lantern per donation posted, floating still; or a single unlit one, waiting ---- */
+.gv-stage.still .gv-l { animation: none; opacity: 1; }
+.gv-l.float { bottom: auto; top: var(--y); animation: gvBob 7s ease-in-out var(--dl) infinite alternate !important; animation-play-state: paused !important; }
+.gv-on .gv-l.float { animation-play-state: running !important; }
+@keyframes gvBob { from { transform: translate3d(0, -7px, var(--z)); } to { transform: translate3d(0, 7px, var(--z)); } }
+.gv-l.waiting { bottom: 30%; transform: none; }
+.gv-l.waiting::before { background: radial-gradient(closest-side, rgba(233, 212, 161, .12), rgba(233, 212, 161, 0)); }
+.gv-l.waiting .gv-lb { animation: none; background: linear-gradient(90deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0) 70%, rgba(0, 0, 0, .3)), linear-gradient(180deg, #5C4C63, #3B2F47);
+  box-shadow: inset 0 0 0 1px rgba(233, 212, 161, .45); }
+.gv-l.waiting .gv-lb::after { border-color: rgba(233, 212, 161, .2); }
+.gv-stage.still { min-height: 460px; }
+
+/* ---- the quiet line where people buy ---- */
+.gv-note { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45; color: var(--ink-2); text-decoration: none; }
+.gv-note u { text-decoration-color: rgba(122, 84, 16, .45); text-underline-offset: 3px; white-space: nowrap; color: #7A5410; }
+.gv-note:hover u { text-decoration-color: currentColor; }
+.gv-note .gv-ico { flex: none; width: 15px; height: 19px; margin-top: 0; }
+.gv-note-product { margin-top: -2px; }
+.drawer .gv-note { padding: 2px 0; }
+
+.gv-ico { display: block; overflow: visible; }
+.gv-ico-body { fill: none; stroke: var(--gold-leaf, #C9A35A); stroke-width: 1.3; }
+.gv-ico-rib { fill: none; stroke: var(--gold-leaf, #C9A35A); stroke-width: .8; opacity: .5; }
+.gv-ico-flame { fill: none; }
+.gv-ico.lit .gv-ico-body { fill: #EFA554; stroke: #B86A26; }
+.gv-ico.lit .gv-ico-rib { stroke: #8F4A18; opacity: .35; }
+.gv-ico.lit .gv-ico-flame { fill: #FFE8B0; filter: drop-shadow(0 0 2px rgba(255, 190, 100, .9)); }
+.gv-ico.lit { filter: drop-shadow(0 0 4px rgba(239, 165, 84, .45)); }
+
+/* ---- /giving ---- */
+.gvp-top { padding-top: clamp(20px, 3vw, 40px); }
+.gvp-crumbs { color: rgba(237, 230, 218, .7); } .gvp-crumbs a { text-underline-offset: 3px; }
+.gvp-totals { margin: 8px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 18px clamp(24px, 3vw, 44px); padding-top: 20px; border-top: 1px solid rgba(201, 163, 90, .35); width: 100%; }
+.gvp-totals div { display: flex; flex-direction: column; gap: 6px; }
+.gvp-totals div:first-child { grid-column: 1 / -1; }
+.gvp-totals dt { white-space: nowrap; font: 500 11px/1.2 var(--mono, "DM Mono", monospace); letter-spacing: .16em; text-transform: uppercase; color: var(--gold-leaf, #C9A35A); }
+.gvp-totals dd { margin: 0; font: 400 28px/1 var(--display); color: var(--moonstone, #EDE6DA); }
+.gvp-totals dd.gvp-total { font-size: clamp(44px, 4.4vw, 64px); color: var(--gold-light, #E9D4A1); }
+.gvp-sum-note { margin: 0; font-size: 13px; color: rgba(237, 230, 218, .62); }
+.gvp-empty-hero { width: 100%; padding-top: 18px; border-top: 1px solid rgba(201, 163, 90, .35); }
+.gvp-empty-hero p { margin: 0; font: italic 400 21px/1.3 var(--display); color: rgba(237, 230, 218, .82); }
+
+.gvp-head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: clamp(28px, 4vw, 48px); }
+.gvp-head h2 { margin: 0; font-size: clamp(34px, 4vw, 56px); line-height: 1.05; }
+.gvp-head p { margin: 0; max-width: 52ch; }
+.gvp-ledger { padding-block: clamp(48px, 7vw, 104px) clamp(24px, 4vw, 56px); }
+
+/* the ledger: a hairline thread with a lit lantern for every donation */
+.gvp-list { list-style: none; margin: 0 auto; padding: 0 0 0 72px; max-width: 960px; position: relative; display: flex; flex-direction: column; gap: 22px; }
+.gvp-list::before { content: ""; position: absolute; left: 25px; top: 14px; bottom: 14px; width: 1px; background: linear-gradient(180deg, rgba(201, 163, 90, .75), rgba(201, 163, 90, .2)); }
+.gvp-e { position: relative; }
+.gvp-node { position: absolute; left: -72px; top: 20px; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 70%, rgba(243, 176, 96, .32), rgba(243, 176, 96, 0) 70%), var(--night-sky, #1C2140); box-shadow: inset 0 0 0 1px rgba(201, 163, 90, .55), 0 10px 22px -10px rgba(21, 17, 31, .6); }
+.gvp-node .gv-ico { width: 20px; height: 25px; }
+.gvp-card { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 18px 30px; align-items: start; padding: clamp(20px, 2.6vw, 30px) clamp(22px, 3vw, 34px);
+  border-radius: 28px 8px 28px 8px; background: linear-gradient(155deg, #FFFDF8, #F7EEE3); box-shadow: var(--lift); }
+.gvp-card.has-photo { grid-template-columns: 180px minmax(0, 1fr) 200px; }
+.gvp-meta { display: flex; flex-direction: column; gap: 8px; }
+.gvp-meta time { font: 500 11.5px/1.3 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
+.gvp-amt { font: 400 36px/1 var(--display); color: var(--ink); }
+.gvp-body { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.gvp-body h3 { margin: 0; font: 400 25px/1.15 var(--display); }
+.gvp-body p { margin: 0; color: var(--ink-2); line-height: 1.55; max-width: 56ch; }
+.gvp-orders { font-size: 14px; }
+.gvp-proof { font-weight: 600; font-size: 14.5px; color: #7A5410; text-underline-offset: 4px; min-height: 32px; display: inline-flex; align-items: center; }
+.gvp-proof.none { font-weight: 400; font-style: italic; color: var(--ink-3); }
+.gvp-photo { margin: 0; }
+.gvp-photo img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; }
+
+.gvp-empty { max-width: 660px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: clamp(32px, 4vw, 52px) clamp(22px, 4vw, 52px);
+  border-radius: 28px 8px 28px 8px; border: 1px dashed rgba(201, 163, 90, .6); background: linear-gradient(160deg, rgba(255, 253, 248, .85), rgba(247, 238, 227, .85)); }
+.gvp-empty-l .gv-ico { width: 36px; height: 45px; }
+.gvp-empty-h { margin: 6px 0 0; font: italic 400 clamp(24px, 2.4vw, 30px)/1.2 var(--display); color: var(--ink); }
+.gvp-empty p:last-child { margin: 0; color: var(--ink-2); line-height: 1.6; max-width: 46ch; }
+
+.gvp-how { padding-block: clamp(48px, 7vw, 104px) clamp(56px, 7vw, 112px); }
+.gvp-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+.gvp-steps li { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 14px; }
+.gvp-steps .gv-n { width: 60px; height: 60px; font-size: 22px; }
+.gvp-steps p { margin: 0 auto; max-width: 30ch; }
+.gvp-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; max-width: 1100px; margin: clamp(36px, 5vw, 64px) auto 0; }
+.gvp-note { padding: clamp(22px, 3vw, 34px); border-radius: 28px 8px 28px 8px; background: linear-gradient(155deg, var(--tint-sand, #F4ECE1), #F7EEE3); box-shadow: var(--lift); display: flex; flex-direction: column; gap: 10px; }
+.gvp-note h3 { margin: 0; font: 400 24px/1.15 var(--display); }
+.gvp-note p { margin: 0; line-height: 1.6; color: var(--ink-2); }
+.gvp-cta { margin-top: clamp(40px, 5vw, 64px); display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+
+/* ---- sizes ---- */
+@media (max-width: 1100px) {
+  .gv { grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); }
+}
+@media (max-width: 860px) {
+  .gv { grid-template-columns: 1fr; border-radius: 40px 10px 40px 10px; }
+  .gv-stage { order: -1; min-height: 0; height: clamp(320px, 56vw, 420px); }
+  .gv-stage.still { min-height: 0; height: 300px; }
+  .gv-tx { padding-top: 12px; }
+  /* stacked: the shore fades into the panel below instead of ending on a line */
+  .gv-shore { -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent); mask-image: linear-gradient(180deg, #000 62%, transparent); }
+  .gv-lead { max-width: 60ch; } .gv .gv-steps p { max-width: 58ch; }
+  .gvp-card, .gvp-card.has-photo { grid-template-columns: 150px minmax(0, 1fr); }
+  .gvp-card.has-photo .gvp-photo { grid-column: 2; max-width: 340px; }
+  .gvp-steps { grid-template-columns: 1fr; gap: 28px; }
+  .gvp-notes { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .gv { border-radius: 32px 8px 32px 8px; }
+  .gv-stage { height: 300px; }
+  .gv-stage.still { height: 250px; }
+  .gv-l.more { display: none; }
+  .gv-tx { padding: 8px 22px 34px; gap: 16px; }
+  .gv-steps li { grid-template-columns: 40px minmax(0, 1fr); gap: 14px; }
+  .gv .gv-n { width: 40px; height: 40px; font-size: 16px; }
+  .gvp-steps li { grid-template-columns: 1fr; }
+  .gv-cta { width: 100%; }
+  .gv-cta .btn { width: 100%; }
+  .gvp-totals { gap: 16px 20px; grid-template-columns: repeat(3, minmax(0, auto)); }
+  .gvp-totals dt { font-size: 10px; letter-spacing: .1em; white-space: normal; }
+  .gvp-totals dd { font-size: 19px; white-space: nowrap; }
+  .gvp-card.has-photo .gvp-photo { grid-column: auto; max-width: none; }
+  .gvp-list { padding-left: 50px; }
+  .gvp-list::before { left: 17px; }
+  .gvp-node { left: -50px; width: 36px; height: 36px; top: 22px; }
+  .gvp-node .gv-ico { width: 15px; height: 19px; }
+  .gvp-card, .gvp-card.has-photo { grid-template-columns: 1fr; gap: 12px; }
+  .gvp-meta { gap: 6px; }
+  .gvp-amt { font-size: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gv-l { animation: none !important; opacity: calc(1 - var(--p, 0) * .55); transform: translate3d(calc(var(--sw, 0px) * var(--p, 0)), calc(-72cqh * var(--p, 0)), var(--z, 0px)); }
+  .gv-l.float { transform: translate3d(0, 0, var(--z, 0px)); opacity: 1; }
+  .gv-l.waiting { transform: none; opacity: 1; }
+  .gv-lb, .gv-stars .tw, .gv-shimmer path { animation: none !important; }
+  .gv-field, .gv-const path, .gv-cstar, .gv-link span { transition: none; }
+  .gv-const { clip-path: none; } .gv-cstar { opacity: 1; transform: none; }
+}

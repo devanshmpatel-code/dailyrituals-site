@@ -3,6 +3,7 @@ import { loadCatalogue, money, type Item } from '../wix';
 import { esc, errorBox, wireCommon, cardHTML } from '../ui';
 import { wireQuickAdd, previewOff } from './shared';
 import { mountWheel } from './wheel';
+import { givingStoryHTML, mountGivingStory } from './giving';
 
 // Placeholder copy for pages that were not in the final canvas. Anything Claire has not
 // confirmed is wrapped in <span class="d"> so "Show drafts for Claire" highlights it.
@@ -73,7 +74,10 @@ export function renderStory(app: HTMLElement) {
       <div class="st-v v3"><span class="eyebrow">Habits, made easier</span><h3>Coaching alongside</h3><p class="muted">The scents create a moment. Coaching with Claire helps you change what happens next.</p></div>
     </div>
     <div class="cta" style="justify-content:center;margin-top:36px"><a class="btn" href="#/shop">Shop the rituals</a><a class="btn line" href="#/coaching">Meet the coaching</a></div></section>
+    ${givingStoryHTML()}
   </div>`;
+  // "Light that travels": $1 from every order, after Claire's story (src/pages/giving.ts)
+  mountGivingStory(app);
 }
 
 export function renderAccount(app: HTMLElement) {
