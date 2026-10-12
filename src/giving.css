@@ -115,12 +115,12 @@ body.show-drafts .gv .d { background: none; box-shadow: none; color: #F7E4C6; te
 .gv-stage.still { min-height: 460px; }
 
 /* ---- the quiet line where people buy ---- */
-.gv-note { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45; color: var(--ink-2); text-decoration: none; }
+.gv-note { display: flex; align-items: center; min-height: 44px; box-sizing: border-box; gap: 10px; font-size: 13px; line-height: 1.45; color: var(--ink-2); text-decoration: none; }
 .gv-note u { text-decoration-color: rgba(122, 84, 16, .45); text-underline-offset: 3px; white-space: nowrap; color: #7A5410; }
 .gv-note:hover u { text-decoration-color: currentColor; }
 .gv-note .gv-ico { flex: none; width: 15px; height: 19px; margin-top: 0; }
 .gv-note-product { margin-top: -2px; }
-.drawer .gv-note { padding: 2px 0; }
+.drawer .gv-note { padding: 0; }
 
 .gv-ico { display: block; overflow: visible; }
 .gv-ico-body { fill: none; stroke: var(--gold-leaf, #C9A35A); stroke-width: 1.3; }
