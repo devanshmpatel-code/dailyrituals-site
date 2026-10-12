@@ -105,7 +105,9 @@ export async function renderBook(app: HTMLElement, slug?: string) {
   const byDay = new Map<string, any[]>();
   slots.forEach(s => { const k = dayKey(s.localStartDate); byDay.set(k, [...(byDay.get(k) ?? []), s]); });
   const box = app.querySelector<HTMLElement>('#slots')!;
-  if (!byDay.size) { box.innerHTML = '<p>No open times in the next two weeks. Please check back soon.</p>'; return; }
+  // no times in the next two weeks: say so warmly and offer the free ways in (wording is a draft for Claire)
+  if (!byDay.size) { box.innerHTML = `<div class="bk-empty"><h3>No open times in the next two weeks</h3><p>New times are added as Claire's calendar opens up. Please check back soon.</p>
+    <div class="cta"><a class="btn euc" href="#/reset">Start the free 7-day reset</a><a class="btn line" href="#/coaching">Back to coaching</a></div></div>`; return; }
   box.innerHTML = [...byDay].map(([k, arr], d) => `<div class="slot-day"${d > 2 ? ' hidden' : ''}><b>${fmtDay(k)}</b><div class="slot-row">${arr.map((s, n) =>
     `<button class="chip" data-slot="${k}|${n}" aria-pressed="false">${fmtTime(s.localStartDate)}</button>`).join('')}</div></div>`).join('') +
     (byDay.size > 3 ? `<button class="btn line bk-more" id="moreDays">Show ${byDay.size - 3} more days</button>` : '');

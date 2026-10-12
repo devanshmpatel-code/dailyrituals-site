@@ -61,7 +61,7 @@ function clubSoon(app: HTMLElement) {
   plan.innerHTML = '<p class="d" style="margin:24px auto;max-width:1180px;padding:0 24px">Draft: the planned club below. Shown to Claire only until the Wix Loyalty app is set up.</p>';
   while (app.firstChild) plan.appendChild(app.firstChild);
   app.innerHTML = `<section class="clubsoon"><div class="wrap">
-    <div class="cs-tx"><a class="small" href="#/" style="opacity:.8">Home</a><span class="eyebrow">Free rewards club</span>
+    <div class="cs-tx"><div class="crumbs cs-crumbs"><a href="#/">Home</a> / The Ritualists</div><span class="eyebrow">Free rewards club</span>
       <h1>The <span class="it goldtext">Ritualists</span> are gathering.</h1>
       <p>Our rewards club is opening soon. Join the Monthly Ritual and you will be first to hear when the doors open, along with a short practice from Claire each month and first notice of every Moon Drop.</p>
       <form class="nform" id="csForm"><label for="csEmail" hidden>Email address</label><input id="csEmail" type="email" placeholder="Email address" required><button class="btn" type="submit">Tell me first</button></form>

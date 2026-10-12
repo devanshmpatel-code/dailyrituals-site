@@ -1,6 +1,6 @@
 import { MOODS, MOMENTS, FORMAT_LABEL, type Mood, type Moment, type Format } from '../config';
 import { money, findLive, type Item } from '../wix';
-import { esc, toast } from '../ui';
+import { esc, toastAdded } from '../ui';
 import { add } from '../cart';
 import '../wheel.css';
 
@@ -329,7 +329,7 @@ export function mountWheel(el: HTMLElement, items: Item[], initialMood: Mood | n
     panelEl.querySelectorAll<HTMLButtonElement>('[data-addpair]').forEach(b => b.addEventListener('click', async () => {
       const rt = ritualFor(b.dataset.addpair as Mood); if (!rt) return;
       for (const p of rt.items) await add({ productId: p.id, slug: p.slug, name: p.name, price: p.priceMin, image: p.thumb, choice: p.choices[0]?.name, optionName: p.optionName });
-      toast(`${rt.name} added to your cart`);
+      toastAdded(rt.name);
     }));
     // the mood switches live in the panel too, so the whole flow works without the sky
     panelEl.insertAdjacentHTML('beforeend', `<div class="chips wmoods" role="group" aria-label="Moods">${moods.map(m => `<button class="chip" data-mood-chip="${m}" aria-pressed="${selMood === m}">${dot(m)}${esc(SHORT[m])}</button>`).join('')}</div>`);

@@ -1,4 +1,4 @@
-import { MOODS, FORMAT_LABEL, type Mood } from '../config';
+import { MOODS, FORMAT_LABEL, type Mood, type Format } from '../config';
 import { loadCatalogue, money, type Item } from '../wix';
 import { esc, errorBox, wireCommon, cardHTML } from '../ui';
 import { wireQuickAdd, previewOff } from './shared';
@@ -19,24 +19,32 @@ const faq = (q: string, a: string, draft = false) => `<details${draft ? ' class=
 
 export function renderHelp(app: HTMLElement) {
   app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px)">
-    ${head('Help', 'Help and <span class="it">contact</span>', 'Shipping, returns and how to reach us. Orders are packed by hand, so small questions are welcome.')}
-    <div class="split" style="align-items:start">
-      <div><span class="eyebrow">Shipping</span>
-        <h2 style="font-size:clamp(30px,3.6vw,44px);margin:10px 0 16px">Shipping and <span class="it">returns</span></h2>
+    ${head('Help', 'Help and <span class="it">contact</span>', 'Shipping, returns, candle care and how to reach us. Orders are packed by hand, so small questions are welcome.')}
+    <div class="split help-split" style="align-items:start">
+      <div class="help-faq"><span class="eyebrow">Shipping</span>
+        <h2 class="help-h">Shipping and <span class="it">returns</span></h2>
         ${faq('What does shipping cost?', 'Shipping is free on Canadian orders over $75. GST, PST and shipping are calculated at checkout. <span class="d confirm">Rates for orders under $75 to be confirmed by Claire.</span>')}
         ${faq('How long will my order take?', '<span class="d">Processing and delivery times to be confirmed by Claire. Every order is packed by hand.</span>', true)}
         ${faq('Do you ship outside Canada?', '<span class="d">To be confirmed by Claire.</span>', true)}
         ${faq('What is your return policy?', '<span class="d">Return and refund terms to be confirmed by Claire before launch.</span>', true)}
         ${faq('What if something arrives damaged?', '<span class="d">Please contact us with your order number and a photo. Claire to confirm the process.</span>', true)}
-        ${faq('Can I cancel or change a Ritual on Repeat order?', 'Yes. Skip, change the date or swap scents any time before the next order ships.')}
+        <span class="eyebrow help-sub">Choosing and caring</span>
+        <h2 class="help-h">Scents and <span class="it">candles</span></h2>
+        ${faq('Which scent should I choose?', 'Start with a mood. The <a href="#/explore?tab=quiz">scent quiz</a> takes four quick questions, or read the <a href="#/explore">scent atlas</a> to see every scent by mood. Each scent comes in more than one format, so you can wear it, diffuse it and light it.')}
+        ${faq('How do I care for a wooden-wick candle?', 'Trim the wick short before each light, and let the first burn melt the wax right to the edge. The Journal has the details: <a href="#/journal/wooden-wick">how to burn a wooden-wick candle</a>, <a href="#/journal/first-burn">your first burn</a> and <a href="#/journal/candle-safety">candle safety</a>.')}
+        ${faq('Can I send something as a gift?', 'Gift wrap is available. <a href="#/gift">Send a Sunrise</a> shows the gifts we are getting ready, with a note in Claire\'s card.')}
+        ${faq('Is there a refill subscription?', '<span class="d">Not yet. Ritual on Repeat is coming soon: when it opens, the plan is that you can skip, change the date or swap scents before the next order ships.</span> <a href="#/subscribe">How it will work</a>.')}
       </div>
       <div class="panel help-contact" style="display:flex;flex-direction:column;gap:12px">
         <span class="eyebrow">Contact</span><h3 style="font-size:28px">Say hello</h3>
         <p class="muted d confirm">Contact email and response time to be confirmed by Claire.</p>
-        <a class="btn line" href="#/coaching" style="align-self:flex-start">Coaching questions</a>
+        <p class="muted">Not sure what to choose? The quiz is the quickest way in. For coaching, the first call is free.</p>
+        <div class="help-acts"><a class="btn" href="#/explore?tab=quiz">Take the scent quiz</a><a class="btn line" href="#/book">Book a free 20-minute discovery call</a><a class="btn line" href="#/coaching">Coaching questions</a></div>
         <p class="small muted">Coaching is not therapy or medical care. <span class="d confirm">Claire to confirm wording.</span></p>
       </div>
-    </div></div>`;
+    </div>
+    <div class="next-band"><div><span class="eyebrow">Ready when you are</span><h2>Find the scent for your <span class="it">day</span></h2></div><div class="cta"><a class="btn" href="#/shop">Shop the rituals</a><a class="btn line" href="#/journal">Read the Journal</a></div></div>
+    </div>`;
   wireCommon(app);
 }
 
@@ -69,12 +77,21 @@ export function renderStory(app: HTMLElement) {
 }
 
 export function renderAccount(app: HTMLElement) {
-  app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px);max-width:720px">
-    ${head('My account', 'My <span class="it">rituals</span>', 'Orders, saved details and subscriptions will live here.', true)}
-    <div class="panel acct-panel" style="display:flex;flex-direction:column;gap:12px">
-      <span class="eyebrow">Coming with launch</span>
-      <p>Sign-in is handled by a secure Wix page and is switched off in this private preview. <span class="d confirm">Wording to confirm.</span></p>
-      <a class="btn line" href="#/shop" style="align-self:flex-start">Back to the shop</a></div></div>`;
+  app.innerHTML = `<div class="wrap acct-page" style="padding-bottom:clamp(48px,6vw,96px);max-width:1080px">
+    ${head('My account', 'My <span class="it">rituals</span>', 'Your orders, saved details and favourite scents will live here.', true)}
+    <div class="panel acct-panel">
+      <span class="acct-mark" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg></span>
+      <div><span class="eyebrow">Sign-in opens soon</span>
+        <h2>Shop now, <span class="it">no account needed</span></h2>
+        <p class="muted"><span class="d">You will not need an account to place an order. When sign-in opens, your orders and details will be here.</span></p></div>
+      <div class="cta"><a class="btn" href="#/shop">Shop the rituals</a><a class="btn line" href="#/help">Help with an order</a></div>
+    </div>
+    <span class="eyebrow acct-while">While you are here</span>
+    <div class="ways three acct-ways">
+      <a class="way" href="#/explore?tab=quiz"><span class="eyebrow">Four questions</span><h3>Find your scent</h3><p class="muted small">A quick quiz that leads you to a mood and the scents in it.</p></a>
+      <a class="way" href="#/reset"><span class="eyebrow">Free · Self-paced</span><h3>The free 7-day reset</h3><p class="muted small">Ten minutes a day with Claire.</p></a>
+      <a class="way" href="#/journal"><span class="eyebrow">The Journal</span><h3>Candle care</h3><p class="muted small">How to burn a wooden-wick candle, and the rituals around it.</p></a>
+    </div></div>`;
 }
 
 export async function renderExplore(app: HTMLElement, params: URLSearchParams = new URLSearchParams()) {
@@ -135,29 +152,76 @@ function mountQuiz(el: HTMLElement, items: Item[]) {
     }
     const tally = new Map<Mood, number>();
     answers.forEach(m => tally.set(m, (tally.get(m) ?? 0) + 1));
-    const top = [...tally].sort((x, y) => y[1] - x[1])[0][0];
-    const list = items.filter(i => i.mood === top && i.format !== 'candle').concat(items.filter(i => i.mood === top && i.format === 'candle'));
-    el.innerHTML = `<h2 style="font-size:clamp(30px,4vw,48px);margin-bottom:6px">Your mood: <span class="it">${MOODS[top].label}</span></h2>
-      <p class="muted" style="margin-bottom:20px">These scents suit it best. Every scent comes in more than one format.</p>
-      <div class="grid" id="qGrid">${list.length ? list.map(i => cardHTML(i)).join('') : '<p class="muted">No scents in this mood yet. Browse the whole shop instead.</p>'}</div>
-      <div class="cta" style="margin-top:24px"><a class="btn" href="#/explore?mood=${top}">See it in the atlas</a><a class="btn line" href="#/shop?f=all&m=${top}&s=featured">Shop this mood</a><button class="btn line" id="qAgain">Retake the quiz</button></div>`;
+    // the mood most answers point to; a tie goes to the latest answer among the tied moods
+    const most = Math.max(...tally.values());
+    const tied = [...tally].filter(([, n]) => n === most).map(([k]) => k);
+    const top = [...answers].reverse().find(a => tied.includes(a))!;
+    // the visitor's own words that led here
+    const why = answers.map((mood, i) => mood === top ? QUIZ[i].a.find(([, m]) => m === mood)![0] : '').filter(Boolean);
+    const quoted = why.map(t => `&ldquo;${esc(t.charAt(0).toLowerCase() + t.slice(1))}&rdquo;`);
+    const whyText = quoted.length === 1 ? quoted[0] : `${quoted.slice(0, -1).join(', ')} and ${quoted[quoted.length - 1]}`;
+    // the best match: the scent in this mood that comes in the most formats (one with a candle first), then by name
+    const FMT_ORDER: Format[] = ['candle', 'roller', 'diffuser', 'deodorant'];
+    const inMood = items.filter(i => i.mood === top && i.inStock);
+    const byScent = new Map<string, Item[]>();
+    inMood.forEach(i => byScent.set(i.scent, [...(byScent.get(i.scent) ?? []), i]));
+    const hasCandle = (l: Item[]) => Number(l.some(i => i.format === 'candle'));
+    const best = [...byScent].sort(([a, x], [b, y]) => y.length - x.length || hasCandle(y) - hasCandle(x) || a.localeCompare(b))[0];
+    const bestFormats = best ? [...best[1]].sort((a, b) => FMT_ORDER.indexOf(a.format) - FMT_ORDER.indexOf(b.format)) : [];
+    const lead = bestFormats[0];
+    const rest = inMood.filter(i => !bestFormats.includes(i)).sort((a, b) => FMT_ORDER.indexOf(a.format) - FMT_ORDER.indexOf(b.format) || a.scent.localeCompare(b.scent));
+    let forWho: 'me' | 'gift' = 'me';
+    el.innerHTML = `<div class="qres">
+      <div class="qres-head"><span class="eyebrow">Your result</span><h2>Your mood: <span class="it">${MOODS[top].label}</span></h2>
+        <p class="qres-why">Because you chose ${whyText}.</p></div>
+      ${lead ? `<div class="qbest"><a class="qbest-ph" href="#/product/${lead.slug}" tabindex="-1" aria-hidden="true"><img src="${lead.image}" alt="" loading="lazy"></a>
+        <div class="qbest-tx"><span class="eyebrow"><span class="swatch" style="background:${MOODS[top].swatch}"></span>Your best match</span><h3>${esc(best![0])}</h3>
+          <p class="muted"><span class="d">${esc(best![0])} comes in ${bestFormats.length === 1 ? 'one format' : `${bestFormats.length} formats`}${bestFormats.length > 1 ? ', so the same scent can follow you through the day' : ''}.</span></p>
+          <div class="qbest-fmts">${bestFormats.map(i => `<a href="#/product/${i.slug}"><span>${esc(i.formatLabel)}</span><b>${i.priceMin === i.priceMax ? money(i.priceMin) : `from ${money(i.priceMin)}`}</b></a>`).join('')}</div></div></div>` : ''}
+      <div class="qfor" role="group" aria-label="Who is it for?"><span>Who is it for?</span><button type="button" class="chip" data-for="me" aria-pressed="true">Me</button><button type="button" class="chip" data-for="gift" aria-pressed="false">A gift</button></div>
+      <div class="cta qcta" id="qCta"></div>
+      ${rest.length ? `<h3 class="qmore">More in ${esc(MOODS[top].label.toLowerCase())}</h3>` : ''}
+      <div class="grid" id="qGrid">${rest.length ? rest.map(i => cardHTML(i)).join('') : lead ? cardHTML(lead) : '<p class="muted">No scents in this mood yet. Browse the whole shop instead.</p>'}</div>
+      <div class="cta" style="margin-top:24px"><button class="btn line" id="qAgain">Retake the quiz</button></div></div>`;
+    const cta = () => {
+      el.querySelector('#qCta')!.innerHTML = forWho === 'gift'
+        ? `<a class="btn" href="#/gift">Send it as a gift</a><a class="btn line" href="#/shop?f=all&m=${top}&s=featured">Shop this mood</a>`
+        : `${lead ? `<a class="btn" href="#/product/${lead.slug}">See the ${esc(lead.name)}${lead.format === 'candle' ? ' candle' : ''}</a>` : ''}<a class="btn line" href="#/shop?f=all&m=${top}&s=featured">Shop this mood</a><a class="btn line" href="#/explore?mood=${top}">See it in the atlas</a>`;
+    };
+    cta();
+    el.querySelectorAll<HTMLButtonElement>('[data-for]').forEach(b => b.addEventListener('click', () => {
+      forWho = b.dataset.for as 'me' | 'gift'; el.querySelectorAll('[data-for]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); cta();
+    }));
     wireQuickAdd(el.querySelector<HTMLElement>('#qGrid')!, items);
     el.querySelector('#qAgain')!.addEventListener('click', () => { answers.length = 0; draw(); });
+    el.scrollIntoView({ block: 'start' });
   };
   draw();
 }
 
 // ---------- Free 7-day reset ----------
 export function renderReset(app: HTMLElement) {
-  app.innerHTML = `<div class="wrap" style="padding-bottom:clamp(48px,6vw,96px);max-width:820px">
+  // the steps restate what the page already says (ten minutes a day, self-paced, by email); the day-by-day content is Claire's to add
+  app.innerHTML = `<div class="wrap reset-page" style="padding-bottom:clamp(48px,6vw,96px);max-width:1080px">
     ${head('Free 7-day reset', 'The free 7-day <span class="it">reset</span>', 'Ten minutes a day with Claire. A light, self-paced way to try the practices before anything else.', true)}
-    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
-      <span class="eyebrow">Free · Self-paced</span>
-      <p>Join with your email and the first day arrives in your inbox. <span class="d confirm">Claire to confirm what is in each day and how it is delivered.</span></p>
-      <form id="resetForm" style="display:flex;gap:10px;flex-wrap:wrap" novalidate>
-        <label for="resetEmail" hidden>Email</label><input id="resetEmail" type="email" placeholder="you@example.com" autocomplete="email" required style="flex:1 1 240px;min-height:48px;padding:0 16px;border-radius:999px;border:1px solid var(--line)">
-        <button class="btn euc" type="submit">Start Day 1</button></form>
-      <p class="small muted">Coaching is not therapy or medical care. <span class="d confirm">Claire to confirm wording.</span></p></div>
-    <div class="cta" style="margin-top:24px"><a class="btn line" href="#/book">Book a free discovery call instead</a></div></div>`;
+    <div class="reset-grid">
+      <div class="panel reset-join" style="display:flex;flex-direction:column;gap:14px">
+        <span class="eyebrow">Free · Self-paced</span>
+        <h2>Start with <span class="it">Day 1</span></h2>
+        <p>Join with your email and the first day arrives in your inbox. <span class="d confirm">Claire to confirm what is in each day and how it is delivered.</span></p>
+        <form id="resetForm" class="reset-form" novalidate>
+          <label for="resetEmail" hidden>Email</label><input id="resetEmail" type="email" placeholder="you@example.com" autocomplete="email" required>
+          <button class="btn euc" type="submit">Start Day 1</button></form>
+        <p class="small muted">Free. You can unsubscribe any time. Coaching is not therapy or medical care. <span class="d confirm">Claire to confirm wording.</span></p></div>
+      <ol class="reset-steps">
+        <li><b>Join with your email</b><span>Day 1 arrives in your inbox.</span></li>
+        <li><b>Ten minutes a day</b><span>One short practice from Claire, at your own pace.</span></li>
+        <li><b>Seven days</b><span class="d">On Day 3, a familiar scent becomes the cue for a calm, intentional pause.</span></li>
+      </ol>
+    </div>
+    <div class="reset-pair"><div><span class="eyebrow">Pair it with a scent</span><h2>A scent you love makes the <span class="it">pause easier to find</span></h2>
+      <p class="muted"><span class="d">Any scent you enjoy will do. If you would like one to keep for the reset, a roller goes everywhere with you.</span></p></div>
+      <div class="cta"><a class="btn" href="#/explore?tab=quiz">Find your scent</a><a class="btn line" href="#/shop?f=roller&m=all&s=featured">Shop rollers</a></div></div>
+    <div class="cta" style="margin-top:24px"><a class="btn line" href="#/book">Book a free 20-minute discovery call instead</a></div></div>`;
   app.querySelector('#resetForm')!.addEventListener('submit', e => { e.preventDefault(); previewOff('Sign-ups')(); });
 }
