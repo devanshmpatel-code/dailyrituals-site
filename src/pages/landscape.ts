@@ -116,7 +116,7 @@ export function drawLandscape(canvas: HTMLCanvasElement, pal: ScenePalette, seed
     }
     // the lone Bodhi tree stands on the second-nearest ridge
     // (kept modest and a little hazy: it is far away, behind the candle tins of the opening, which stand close to us)
-    if (i === 3) { const tx = w * 0.2; drawBodhi(ctx, tx, yAt(tx) + 3 * dpr, h * 0.27, mix(mix(layerColor[3], '#000000', pal.dark ? 0.26 : 0.3), haze, 0.16), rgba(pal.orb, pal.dark ? 0.26 : 0.32), dpr, rand); }
+    if (i === 3) { const tx = w * 0.2; drawBodhi(ctx, tx, yAt(tx) + 3 * dpr, h * 0.23, mix(mix(layerColor[3], '#000000', pal.dark ? 0.2 : 0.16), haze, 0.3), rgba(pal.orb, pal.dark ? 0.22 : 0.26), dpr, rand); }
     // a band of haze settles between this ridge and the next
     if (i < LAYERS.length - 1) {
       const y0 = h * (L.base - 0.02), y1 = h * (L.base + 0.16);

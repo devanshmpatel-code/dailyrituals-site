@@ -469,7 +469,7 @@ export function mountTins(app: HTMLElement, stack: HTMLElement, sets: Record<str
       grounds.forEach(g => g.remove());
       const lands = app.querySelectorAll('#scene canvas.land');
       const last = lands[lands.length - 1];
-      if (last && canvas.previousElementSibling !== knolls[1]) { last.after(knolls[0], knolls[1], canvas); }
+      if (last && !knolls.includes(canvas.previousElementSibling as HTMLCanvasElement)) { last.after(knolls[0], knolls[1], canvas); }
       [canvas, ...knolls].forEach(c => ['left', 'top', 'width', 'height'].forEach(p => c.style.removeProperty(p)));
     }
     stack.dataset.mode = phone ? 'phone' : 'desktop';
@@ -551,14 +551,19 @@ export function mountTins(app: HTMLElement, stack: HTMLElement, sets: Record<str
     return { tins: out.sort((p, q) => p.y - q.y), knoll };
   }
 
-  /** Paint the knoll for a moment into the back knoll canvas, then cross-fade to it. */
+  /** Paint the knoll for a moment into the back knoll canvas, then fade it in on top of the old one, which stays fully opaque
+   *  underneath until the fade is done (two half-transparent knolls would let the lake behind show through). */
+  let knollTimer = 0;
   function paintKnoll(m: Moment, kn: Knoll) {
-    const back = knolls[1 - knollFront];
-    const bw = Math.round(W * dpr), bh = Math.round(Hc * dpr);
-    back.width = bw; back.height = bh;
+    const back = knolls[1 - knollFront], front = knolls[knollFront];
+    window.clearTimeout(knollTimer);
+    back.classList.remove('on'); back.style.transition = 'none';
+    back.width = Math.round(W * dpr); back.height = Math.round(Hc * dpr);
     drawKnoll(back.getContext('2d')!, kn, W, Hc, dpr, m);
+    front.after(back); // on top of the old one, still under the tins
+    void back.offsetWidth; back.style.transition = ''; back.classList.add('on');
     knollFront = 1 - knollFront;
-    knolls.forEach((g, i) => g.classList.toggle('on', i === knollFront));
+    knollTimer = window.setTimeout(() => { front.style.transition = 'none'; front.classList.remove('on'); void front.offsetWidth; front.style.transition = ''; }, 1200);
   }
 
   // where the sun is across the dial for a moment (the same curve as the dial in home.ts), in 0..1000
@@ -666,7 +671,7 @@ export function mountTins(app: HTMLElement, stack: HTMLElement, sets: Record<str
 
   function destroy() {
     if (!alive) return;
-    alive = false; cancelAnimationFrame(raf); raf = 0; window.clearTimeout(rt);
+    alive = false; cancelAnimationFrame(raf); raf = 0; window.clearTimeout(rt); window.clearTimeout(knollTimer);
     window.removeEventListener('resize', onResize); ro.disconnect(); io.disconnect(); document.removeEventListener('visibilitychange', onVis);
     canvas.remove(); grounds.forEach(g => g.remove()); knolls.forEach(g => g.remove());
   }
