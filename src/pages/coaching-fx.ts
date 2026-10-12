@@ -39,19 +39,20 @@ const chevron = (deg: number) => {
 
 const ringSVG = (k: 'b' | 'f') => {
   const front = k === 'f';
+  // (no blur filters on anything that moves: a blurred trail would be blurred again every frame. The trail's glow is two soft
+  // wide strokes, and the bead is an element of its own (heroLoop), moved by the compositor without painting the ring again)
   return `<svg viewBox="0 0 500 610" preserveAspectRatio="none" focusable="false"><defs>
     <linearGradient id="coRg${k}" gradientUnits="userSpaceOnUse" x1="-40" y1="0" x2="540" y2="0">
       <stop offset="0" stop-color="${CUE_STEPS[0].hue}"/><stop offset=".3" stop-color="#F3D29A"/><stop offset=".55" stop-color="${CUE_STEPS[1].hue}"/><stop offset=".8" stop-color="${CUE_STEPS[2].hue}"/><stop offset="1" stop-color="${CUE_STEPS[3].hue}"/></linearGradient>
-    <filter id="coGl${k}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2"/></filter>
     ${front ? `<clipPath id="coFr"><rect x="-400" y="${RING.cy}" width="1300" height="700" transform="rotate(${RING.rot} ${RING.cx} ${RING.cy})"/></clipPath>` : ''}
   </defs><g${front ? ' clip-path="url(#coFr)"' : ''}>
     ${front ? `<path class="co-rg-shade" d="${RING_D}"/>` : ''}
     <path class="co-rg-line" d="${RING_D}" stroke="url(#coRg${k})"/>
-    <path class="co-rg-glow" d="${RING_D}" filter="url(#coGl${k})" stroke-dasharray="${TRAIL} ${(TOTAL - TRAIL).toFixed(1)}"/>
+    <path class="co-rg-glow" d="${RING_D}" stroke-dasharray="${TRAIL} ${(TOTAL - TRAIL).toFixed(1)}"/>
+    <path class="co-rg-glow g2" d="${RING_D}" stroke-dasharray="${TRAIL} ${(TOTAL - TRAIL).toFixed(1)}"/>
     <path class="co-rg-trail" d="${RING_D}" stroke-dasharray="${TRAIL} ${(TOTAL - TRAIL).toFixed(1)}"/>
     <g class="co-rg-arrows">${[0, 90, 180].map(chevron).join('')}</g>
-    <g class="co-bead"><circle class="co-bead-halo" r="15" filter="url(#coGl${k})"/><circle class="co-bead-ball" r="5.5"/><circle class="co-bead-spec" r="1.8" cx="-1.6" cy="-1.8"/></g>
-  </g></svg>`;
+  </g></svg><span class="co-bead"><i></i></span>`;
 };
 
 function heroLoop(app: HTMLElement) {
@@ -66,13 +67,27 @@ function heroLoop(app: HTMLElement) {
     c.style.setProperty('--x', (p.x / 5).toFixed(2)); c.style.setProperty('--y', (p.y / 6.1).toFixed(2));
     c.style.setProperty('--hue', CUE_STEPS[i].hue);
   });
-  const beads = layers.map(l => l.querySelector<SVGGElement>('.co-bead')!);
+  const beads = layers.map(l => l.querySelector<HTMLElement>('.co-bead')!);
+  const front = layers.findIndex(l => l.classList.contains('front'));
   const trails = layers.flatMap(l => [...l.querySelectorAll<SVGPathElement>('.co-rg-trail, .co-rg-glow')]);
+  // the ring is drawn in the portal's own units (500 x 610); the bead is placed in px, so the portal's size is kept to hand
+  let W = 500, H = 610, lastTrail = -1e9;
+  let at = STATION[PAUSE];
+  const measure = () => { W = layers[0].clientWidth || W; H = layers[0].clientHeight || H; };
+  measure();
+  const ro = 'ResizeObserver' in window ? new ResizeObserver(() => { if (!tilt.isConnected) { ro?.disconnect(); return; } measure(); draw(at); }) : null; ro?.observe(layers[0]);
+  const rr = RING.rot * Math.PI / 180;
   let on = -1;
-  const draw = (deg: number) => {
-    const p = ringPt(deg), d = along(deg);
-    beads.forEach(b => b.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`));
-    trails.forEach(t => t.setAttribute('stroke-dashoffset', (((TRAIL - d) % TOTAL + TOTAL) % TOTAL).toFixed(1)));
+  const draw = (deg: number, now = 0) => {
+    at = deg;
+    const p = ringPt(deg), d = along(deg), x = (p.x / 500) * W, y = (p.y / 610) * H;
+    // in front of her only on the near half of the ring (the front layer's ring is clipped to that half; its bead follows,
+    // fading over a few px at the ends, where the ring turns behind her)
+    const side = -(p.x - RING.cx) * Math.sin(rr) + (p.y - RING.cy) * Math.cos(rr);
+    beads.forEach((b, i) => { b.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`; if (i === front) b.style.opacity = Math.max(0, Math.min(1, side / 6 + 0.5)).toFixed(2); });
+    // the lit trail is part of the drawn ring, so redrawing it costs a repaint of the ring: thirty times a second is plenty
+    // for a soft trail, while the bead itself moves every frame
+    if (now - lastTrail > 30 || !now) { lastTrail = now; trails.forEach(t => t.setAttribute('stroke-dashoffset', (((TRAIL - d) % TOTAL + TOTAL) % TOTAL).toFixed(1))); }
     // the step the bead is at lights up, and the bead takes on its colour
     const near = STATION.findIndex(s => { const x = ((deg - s) % 360 + 540) % 360 - 180; return x > -26 && x < 30; });
     if (near !== on) {
@@ -87,7 +102,7 @@ function heroLoop(app: HTMLElement) {
   let deg = STATION[0] - 40, hold = 0, last = 0, raf = 0, seen = true;
   const frame = (now: number) => {
     raf = 0;
-    if (!tilt.isConnected) return;
+    if (!tilt.isConnected) { ro?.disconnect(); return; }
     const dt = last ? Math.min(.25, (now - last) / 1000) : 0; last = now;
     if (now >= hold) {
       const next = deg + SPEED * dt;
@@ -96,7 +111,7 @@ function heroLoop(app: HTMLElement) {
       if (deg < s && next >= s) { deg = s; hold = now + 1500; } else deg = next;
       if (deg > 720 + STATION[0]) deg -= 360;
     }
-    draw(deg);
+    draw(deg, now);
     if (seen) raf = requestAnimationFrame(frame);
   };
   draw(deg);

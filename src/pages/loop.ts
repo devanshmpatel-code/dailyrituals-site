@@ -49,6 +49,13 @@ const COIN_STEP: Record<Mode, (number | null)[]> = { old: [0, null, 1, 2], new: 
 const COIN_ANGLE: Record<Mode, number[]> = { old: [0, 60, 120, 240], new: [0, 90, 180, 270] };
 const COIN_OF = (m: Mode, step: number) => COIN_STEP[m].indexOf(step);
 const RIM = 28; // segments in each coin's edge
+/** the coins are laid out this many times larger and scaled back down in their transform: Chrome rasterises anything under a
+ * perspective at the screen's own resolution, ignoring how far it has come towards the visitor, so a near coin's words would
+ * otherwise be enlarged from too few pixels and blur. Laid out larger, they are drawn from more pixels than they need. */
+const SS = 1.5;
+/** the light: high, a little to the left of the visitor and behind them (as on the coins' glaze), so each coin's shadow falls on
+ * the hoop a little to the right of it and away from the visitor (a fraction of a coin's width, in the scene's own x and z) */
+const SHADOW_DX = 0.14, SHADOW_DZ = -0.1;
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mod = (n: number, m: number) => ((n % m) + m) % m;
@@ -173,8 +180,8 @@ export function wireLoop(app: HTMLElement) {
     D = phone ? clamp(w * 0.235, 80, 92) : clamp(w * 0.2, 104, 120);
     lift = D * 0.24; floorY = hgt * (phone ? 0.16 : 0.15);
     tiltBase = phone ? -34 : -27; if (!dragging) tilt = tiltBase;
-    stage.style.setProperty('--coin', `${D}px`);
-    stage.style.setProperty('--thick', `${Math.round(D * 0.11)}px`);
+    stage.style.setProperty('--coin', `${(D * SS).toFixed(1)}px`);
+    stage.style.setProperty('--thick', `${Math.round(D * 0.11 * SS)}px`);
     buildFloor();
     paint(performance.now());
   };
@@ -191,11 +198,17 @@ export function wireLoop(app: HTMLElement) {
       const y = floorY - hoopH - lift * (0.35 + 0.65 * r) - D / 2;
       // coins turn a little to face across the ring as they go round, and lean back a touch so their top edge shows
       const yaw = Math.sin(rad(w)) * 16;
-      c.style.transform = `translate(-50%, -50%) translate3d(${p.x.toFixed(1)}px, ${y.toFixed(1)}px, ${p.z.toFixed(1)}px) rotateX(${(untilt - 8).toFixed(2)}deg) rotateY(${(yaw + f * 180).toFixed(2)}deg) scale(${(0.15 + 0.85 * r).toFixed(3)})`;
+      c.style.transform = `translate(-50%, -50%) translate3d(${p.x.toFixed(1)}px, ${y.toFixed(1)}px, ${p.z.toFixed(1)}px) rotateX(${(untilt - 8).toFixed(2)}deg) rotateY(${(yaw + f * 180).toFixed(2)}deg) scale(${((0.15 + 0.85 * r) / SS).toFixed(3)})`;
       c.style.opacity = r < 0.02 ? '0' : Math.min(1, r * 1.6).toFixed(3);
       c.style.visibility = r < 0.02 ? 'hidden' : '';
-      // its shadow on the hoop, softer and smaller the higher it floats
-      const s = shadows[k]; if (s) { const q = pt(a); s.setAttribute('cx', q.x.toFixed(1)); s.setAttribute('cy', q.z.toFixed(1)); s.setAttribute('opacity', (r * 0.55).toFixed(3)); }
+      // its shadow on the hoop, thrown away from the light (worked out in the scene and turned back into the hoop's own frame,
+      // which turns with the ring), a little larger and fainter the higher it floats
+      const s = shadows[k]; if (s) {
+        const q = pt(a), h = 0.35 + 0.65 * r, co = Math.cos(rad(spin)), sn = Math.sin(rad(spin)), ox = SHADOW_DX * D * h, oz = SHADOW_DZ * D * h;
+        s.setAttribute('cx', (q.x + ox * co - oz * sn).toFixed(1)); s.setAttribute('cy', (q.z + ox * sn + oz * co).toFixed(1));
+        s.setAttribute('rx', (D * 0.4 * (0.9 + 0.2 * h)).toFixed(1)); s.setAttribute('ry', (D * 0.36 * (0.9 + 0.2 * h)).toFixed(1));
+        s.setAttribute('opacity', (r * (0.62 - 0.18 * h)).toFixed(3));
+      }
       // the bead lights a coin as it passes beneath it
       const d = Math.abs(angDiff(beadAt, a)), hit = r > 0.5 ? clamp(1 - d / 26, 0, 1) : 0;
       c.style.setProperty('--hit', hit.toFixed(3));
