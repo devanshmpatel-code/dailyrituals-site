@@ -65,7 +65,7 @@ export const ARTICLES: Article[] = [
         <li><b>Never leave it alone.</b> Blow out every candle before you leave the room or go to sleep.</li>
         <li><b>Give it space.</b> Keep it at least 12 inches (30 cm) from anything that can burn, such as curtains, books and bedding.</li>
         <li><b>Leave a gap between candles.</b> Keep burning candles at least 3 inches (7.5 cm) apart so they do not melt one another.</li>
-        <li><b>Out of the draft.</b> Keep it away from open windows, fans and vents, which make the flame flicker and smoke.</li>
+        <li><b>Out of the draught.</b> Keep it away from open windows, fans and vents, which make the flame flicker and smoke.</li>
         <li><b>On a steady, heat-safe surface,</b> out of reach of children and pets.</li>
         <li><b>Know when to stop.</b> In a tin or glass, stop when about half an inch (1 cm) of wax is left.</li>
       </ol>`,
@@ -105,6 +105,10 @@ export const ARTICLES: Article[] = [
   },
 ];
 
+/** The close of every Journal page: shop the candles, or let the quiz choose a scent. */
+const endCTA = (h: string) => `<section class="jr-end" aria-label="Next steps"><div><span class="eyebrow">From the studio</span><h2>${h}</h2></div>
+  <div class="cta"><a class="btn" href="#/shop?f=candle&m=all&s=featured">Shop candles</a><a class="btn line" href="#/explore?tab=quiz">Take the scent quiz</a></div></section>`;
+
 const pic = (a: Article, sizes: string, eager = false) => `<img src="/img/studio/tins/${a.pic.file}-900.webp" srcset="/img/studio/tins/${a.pic.file}-480.webp 480w, /img/studio/tins/${a.pic.file}-900.webp 900w" sizes="${sizes}" alt="${esc(a.pic.alt)}" width="${a.pic.w}" height="${a.pic.h}" ${eager ? '' : 'loading="lazy" '}decoding="async">`;
 
 /** Three journal cards for other pages (home). */
@@ -120,6 +124,7 @@ export function renderJournal(app: HTMLElement, slug?: string) {
     app.innerHTML = `<div class="wrap jr-index"><div class="crumbs"><a href="#/">Home</a> / Journal</div>
       <header class="jr-hero"><span class="eyebrow">The Journal</span><h1><span class="d">Candle care, <span class="it">and the rituals around it.</span></span></h1><p class="muted d">Short, useful reads from the studio in White Rock, BC: how to burn a candle well, how candles are made, and how to make a scent part of your day.</p></header>
       <div class="jr-grid">${ARTICLES.map((x, i) => `<a class="jr-card${i === 0 ? ' lead' : ''}" href="#/journal/${x.slug}"><span class="jr-pic">${pic(x, i === 0 ? '(max-width: 820px) 80vw, 40vw' : '(max-width: 820px) 60vw, 22vw', i === 0)}</span><span class="jr-tag">${esc(x.tag)} · ${x.minutes} min read</span><b>${esc(x.title)}</b><span class="d jr-dek">${esc(x.dek)}</span></a>`).join('')}</div>
+      ${endCTA('Ready to <span class="it">light one?</span>')}
     </div>`;
     document.title = 'Journal · Daily Rituals Co.';
     return;
@@ -131,6 +136,7 @@ export function renderJournal(app: HTMLElement, slug?: string) {
     <aside class="jr-shop" aria-label="Shop"><span class="eyebrow">From the studio</span><p class="d">Hand-poured in White Rock, BC, on wooden wicks.</p><div class="cta">${a.shop.map((s, k) => `<a class="btn${k ? ' line' : ''}" href="${s.href}">${esc(s.label)}</a>`).join('')}</div></aside>
     ${a.sources.length ? `<div class="jr-sources"><span class="eyebrow">Sources</span><ul>${a.sources.map(s => `<li><a href="${s.url}" target="_blank" rel="noopener">${esc(s.label)}</a></li>`).join('')}</ul><p class="small muted">General guidance. Always follow the care card that comes with your candle.</p></div>` : ''}
     <a class="jr-next" href="#/journal/${next.slug}"><span class="eyebrow">Next</span><b>${esc(next.title)}</b></a>
+    ${endCTA('Find a candle <span class="it">for your evenings</span>')}
   </article>`;
   document.title = `${a.title} · Daily Rituals Co.`;
 }

@@ -1,6 +1,6 @@
 import { add } from '../cart';
 import { findLive, money, type Item } from '../wix';
-import { toast } from '../ui';
+import { toast, toastAdded } from '../ui';
 import { navigate } from '../router';
 import type { Format } from '../config';
 
@@ -52,7 +52,7 @@ export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
 export async function quickAdd(i: Item) {
   if (i.choices.length > 1) { navigate(`/product/${i.slug}`); return; }
   await add({ productId: i.id, slug: i.slug, name: i.name, price: i.priceMin, image: i.thumb, choice: i.choices[0]?.name, optionName: i.optionName });
-  toast(`${i.name} added to your cart`);
+  toastAdded(i.name);
 }
 
 export function wireQuickAdd(root: HTMLElement, items: Item[]) {

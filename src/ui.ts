@@ -51,11 +51,32 @@ export function errorBox(msg: string) {
 }
 
 let toastTimer = 0;
-export function toast(msg: string) {
+export interface ToastAction { label: string; run: () => void; primary?: boolean }
+/** A short message at the foot of the screen. With actions (such as "View cart"), it stays longer and waits while hovered or focused. */
+export function toast(msg: string, actions: ToastAction[] = []) {
   let el = document.getElementById('toast');
-  if (!el) { el = document.createElement('div'); el.id = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-  el.textContent = msg; el.classList.add('on');
-  clearTimeout(toastTimer); toastTimer = window.setTimeout(() => el!.classList.remove('on'), 2600);
+  if (!el) {
+    el = document.createElement('div'); el.id = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el);
+    const hold = () => clearTimeout(toastTimer);
+    const later = () => { if (el!.classList.contains('acts')) { clearTimeout(toastTimer); toastTimer = window.setTimeout(() => el!.classList.remove('on'), 2400); } };
+    el.addEventListener('pointerenter', hold); el.addEventListener('focusin', hold);
+    el.addEventListener('pointerleave', later); el.addEventListener('focusout', later);
+  }
+  el.classList.toggle('acts', actions.length > 0);
+  if (!actions.length) el.textContent = msg;
+  else {
+    el.innerHTML = `<span class="t-msg">${esc(msg)}</span><span class="t-acts">${actions.map((a, i) => `<button type="button" class="t-act${a.primary ? ' pri' : ''}" data-t="${i}">${esc(a.label)}</button>`).join('')}</span>`;
+    el.querySelectorAll<HTMLButtonElement>('[data-t]').forEach(b => b.addEventListener('click', () => { el!.classList.remove('on'); actions[Number(b.dataset.t)].run(); }));
+  }
+  el.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = window.setTimeout(() => el!.classList.remove('on'), actions.length ? 6000 : 2600);
+}
+/** After something goes into the cart: say so, and offer the two next steps. */
+export function toastAdded(name: string) {
+  toast(`${name} added to your cart`, [
+    { label: 'View cart', primary: true, run: () => document.getElementById('cartBtn')?.click() },
+    { label: 'Keep shopping', run: () => { /* the toast simply closes */ } },
+  ]);
 }
 
 /** Generic canvas behaviours: tab bars, chip toggles, accordions. */
