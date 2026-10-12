@@ -28,7 +28,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const par = await p.evaluate(() => Number(document.getElementById('day').style.getPropertyValue('--p'))); ok(`${label}: the opening's landscape drifts as you scroll away`, par > 0.15 && par <= 1, `--p ${par}`);
   // breathe
   ok(`${label}: the orb breathes (it is animated)`, await p.locator('.breathorb .bo-core').evaluate(e => getComputedStyle(e).animationName !== 'none'));
-  await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.waitForTimeout(300);
+  // (on a phone the orb steps aside when a link sits under it, which depends on the hour the opening shows: focus brings it back)
+  await p.locator('.breathorb').focus(); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.waitForTimeout(300);
   // the guide waits while you choose; lighting the candle starts the breathing
   await p.locator('.jbreathe .fb-light').click(); await p.waitForTimeout(1300); const seen = new Set();
   for (let i = 0; i < 14; i++) { seen.add(await p.locator('#jbWord').innerText()); await p.waitForTimeout(700); }

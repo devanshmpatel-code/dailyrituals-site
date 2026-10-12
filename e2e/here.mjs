@@ -14,6 +14,7 @@ for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false],
     const num = Number(await p.locator('.jh-n').innerText());
     ok(`${label}: the card shows chapter ${k}`, num === k, `${num}`);
     ok(`${label}: card is visible at chapter ${k}`, await p.locator('.jhere.on').count() === 1);
+    if (k === 7) ok(`${label}: a "Coming soon" chapter is named on the card by its heading`, /Moon Drops/.test(await p.locator('.jh-t').innerText()), await p.locator('.jh-t').innerText());
   }
   await goCh(2);
   const txt = await p.locator('.jhere').innerText();

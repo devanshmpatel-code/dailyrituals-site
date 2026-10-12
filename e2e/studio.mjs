@@ -73,6 +73,10 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   // ---- home: Claire's cut-out and From the studio
   await p.evaluate(() => document.querySelector('.claire-cut').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
   ok(`${label}: Meet Claire shows her own photograph, cut out in an arch (not a render)`, await p.evaluate(() => { const i = document.querySelector('.claire-in .claire-cut .cc-arch img'); return !!i && /studio\/cut\/claire/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0 && /Claire/.test(i.alt) && !document.querySelector('.claire-in img.dimg'); }));
+  ok(`${label}: Meet Claire is ${label === 'phone' ? 'stacked: her photograph centred above comfortable lines of text' : 'two columns: photograph beside the words'}`, await p.evaluate(phone => {
+    const ph = document.querySelector('.claire-in .claire-cut').getBoundingClientRect(), tx = document.querySelector('.claire-in .tx').getBoundingClientRect();
+    return phone ? ph.bottom <= tx.top + 1 && ph.width >= innerWidth * 0.6 && Math.abs((ph.left + ph.right) / 2 - innerWidth / 2) < 12 && tx.width >= innerWidth * 0.75 : ph.right < tx.left;
+  }, label === 'phone'));
   await p.evaluate(() => document.querySelector('.studio .shelf').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500);
   ok(`${label}: the shelf stands three real cut-outs that link to their products`, await p.evaluate(() => { const a = [...document.querySelectorAll('.studio .shelf a.sh-item')]; return a.length === 3 && a.every(x => { const i = x.querySelector('img'); return /studio\/cut\//.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0 && i.alt.length > 15 && /\/product\//.test(x.getAttribute('href')) && x.querySelector('.sh-tag').textContent.trim(); }); }));
   ok(`${label}: the shelf names only scents in the catalogue (Verdant, Cabana, Westcoast)`, await p.evaluate(() => [...document.querySelectorAll('.studio .sh-tag')].map(t => t.textContent).join(' ')).then(t => /Verdant/.test(t) && /Cabana/.test(t) && /Westcoast/.test(t)));

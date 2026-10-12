@@ -3,7 +3,8 @@
 //
 // - Depth: each fact sits on the drum's surface. It is placed in real 3D (CSS perspective) so the ones at the sides turn
 //   away and get smaller; the band behind them is drawn with the same projection, so text and band always agree.
-// - Light: a soft light travels along the band every few seconds. The band's sheen, its gold edges, the glyph between two
+// - Light: a soft light travels along the band every few seconds (its own layer, moved by a transform only, so the band is
+//   not repainted as it passes). The satin's sheen, the glyph between two
 //   facts (a small star or a flame) and the words themselves brighten as it passes.
 // - Parallax: seen low on the screen you look down on the ribbon (its ends rise); as it scrolls up you come level with it.
 // - Reading: it stops under the pointer, and it can be dragged or swiped. With reduced motion it does not move at all: the
@@ -33,27 +34,24 @@ export function mountRibbon(app: HTMLElement) {
   stage.innerHTML = `<svg class="rb-band" preserveAspectRatio="none"><defs>
       <linearGradient id="rbSatin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7E5886"/><stop offset=".12" stop-color="#58385F"/><stop offset=".5" stop-color="#36223F"/><stop offset=".86" stop-color="#22152A"/><stop offset="1" stop-color="#160D1C"/></linearGradient>
       <linearGradient id="rbTurn" x1="0" y1="0" x2="1" y2="0"></linearGradient>
-      <linearGradient id="rbSheen" gradientUnits="userSpaceOnUse" x1="-230" y1="0" x2="230" y2="0"><stop offset="0" stop-color="#FFE7C2" stop-opacity="0"/><stop offset=".5" stop-color="#FFE7C2" stop-opacity=".42"/><stop offset="1" stop-color="#FFE7C2" stop-opacity="0"/></linearGradient>
-      <linearGradient id="rbEdgeLit" gradientUnits="userSpaceOnUse" x1="-200" y1="0" x2="200" y2="0"><stop offset="0" stop-color="#FFF1D6" stop-opacity="0"/><stop offset=".5" stop-color="#FFF1D6" stop-opacity="1"/><stop offset="1" stop-color="#FFF1D6" stop-opacity="0"/></linearGradient>
       <radialGradient id="rbBloom"><stop offset="0" stop-color="#FFD9A0" stop-opacity=".55"/><stop offset=".45" stop-color="#F2A65A" stop-opacity=".18"/><stop offset="1" stop-color="#F2A65A" stop-opacity="0"/></radialGradient>
       <clipPath id="rbClip"><path class="rb-shape-c"/></clipPath>
     </defs>
-    <path class="rb-shadow"/><ellipse class="rb-bloom" fill="url(#rbBloom)"/><ellipse class="rb-key" fill="url(#rbBloom)"/>
+    <path class="rb-shadow"/><ellipse class="rb-key" fill="url(#rbBloom)"/>
     <path class="rb-shape" fill="url(#rbSatin)"/>
-    <g clip-path="url(#rbClip)"><rect class="rb-turn" fill="url(#rbTurn)"/><rect class="rb-sheen" fill="url(#rbSheen)"/><path class="rb-gloss"/></g>
-    <path class="rb-edge"/><path class="rb-edge rb-edge-lit" stroke="url(#rbEdgeLit)"/>
-  </svg><div class="rb-track"></div>`;
+    <g clip-path="url(#rbClip)"><rect class="rb-turn" fill="url(#rbTurn)"/><path class="rb-gloss"/></g>
+    <path class="rb-edge"/>
+  </svg><span class="rb-light"><i class="rb-bloom"></i><i class="rb-sheen"></i></span><div class="rb-track"></div>`;
   strip.append(stage);
   const svg = stage.querySelector<SVGSVGElement>('.rb-band')!, track = stage.querySelector<HTMLElement>('.rb-track')!;
   const q = <T extends Element>(s: string) => svg.querySelector<T>(s)!;
   const shape = q<SVGPathElement>('.rb-shape'), shapeC = q<SVGPathElement>('.rb-shape-c'), shadow = q<SVGPathElement>('.rb-shadow'), gloss = q<SVGPathElement>('.rb-gloss');
-  const edges = [...svg.querySelectorAll<SVGPathElement>('.rb-edge')], turn = q<SVGRectElement>('.rb-turn'), sheenRect = q<SVGRectElement>('.rb-sheen');
-  const bloom = q<SVGEllipseElement>('.rb-bloom'), key = q<SVGEllipseElement>('.rb-key');
-  const turnGrad = q<SVGLinearGradientElement>('#rbTurn'), sheenGrad = q<SVGLinearGradientElement>('#rbSheen'), edgeGrad = q<SVGLinearGradientElement>('#rbEdgeLit');
+  const edge = q<SVGPathElement>('.rb-edge'), turn = q<SVGRectElement>('.rb-turn'), key = q<SVGEllipseElement>('.rb-key');
+  const turnGrad = q<SVGLinearGradientElement>('#rbTurn'), light = stage.querySelector<HTMLElement>('.rb-light')!;
 
   // ---- geometry: the drum's radius and the viewer's distance scale with the width, so phones and desktops look alike
   let W = 0, H = 0, cx = 0, cy = 0, R = 1, P = 1, band = 50, gap = 44, period = 1, phiMax = 0.7;
-  interface Slot { el: HTMLElement; w: number; at: number }
+  interface Slot { el: HTMLElement; w: number; at: number; lit?: number }
   let slots: Slot[] = [];
   /** screen position of a point on the ring at angle phi, at height y above the band's centre line (tilt e) */
   const project = (phi: number, y: number, e: number) => {
@@ -111,11 +109,9 @@ export function mountRibbon(app: HTMLElement) {
     gloss.setAttribute('d', `M${mid.join('L')}`);
     // a steady key light from just above the middle of the ribbon, the part that faces you
     const c0 = project(0, 0, tilt); key.setAttribute('cx', c0.x.toFixed(1)); key.setAttribute('cy', c0.y.toFixed(1)); key.setAttribute('rx', (W * 0.36).toFixed(1)); key.setAttribute('ry', (band * 1.1).toFixed(1));
-    edges[0].setAttribute('d', `M${top.slice().join('L')}M${[...bot].join('L')}`);
-    edges[1].setAttribute('d', edges[0].getAttribute('d')!);
+    edge.setAttribute('d', `M${top.slice().join('L')}M${[...bot].join('L')}`);
     // the drum turns away from the light at both ends: a horizontal shade that follows cos(phi) across the screen
     turn.setAttribute('x', '0'); turn.setAttribute('y', '0'); turn.setAttribute('width', String(W)); turn.setAttribute('height', String(H));
-    sheenRect.setAttribute('x', '0'); sheenRect.setAttribute('y', '0'); sheenRect.setAttribute('width', String(W)); sheenRect.setAttribute('height', String(H));
     turnGrad.innerHTML = [...Array(13)].map((_, i) => {
       const phi = -phiMax + (2 * phiMax * i) / 12, x = Math.min(1, Math.max(0, project(phi, 0, 0).x / W)), shade = Math.min(0.85, (1 - Math.cos(phi)) * 2.6);
       return `<stop offset="${x.toFixed(3)}" stop-color="#0E0814" stop-opacity="${shade.toFixed(3)}"/>`;
@@ -146,7 +142,7 @@ export function mountRibbon(app: HTMLElement) {
       const X = R * Math.sin(phi), Z = R * (Math.cos(phi) - 1), Y = Z * Math.sin(tilt);
       sl.el.style.transform = `translate3d(${(cx + X - sl.w / 2).toFixed(1)}px, ${Y.toFixed(1)}px, ${Z.toFixed(1)}px) rotateY(${(phi * 57.2958).toFixed(2)}deg)`;
       const lit = Math.exp(-(((phi - lightPhi) / 0.16) ** 2));
-      sl.el.style.setProperty('--lit', lit.toFixed(3));
+      const q = Math.round(lit * 20) / 20; if (q !== sl.lit) { sl.lit = q; sl.el.style.setProperty('--lit', String(q)); }
     }
     if (running) raf = requestAnimationFrame(frame);
   };
@@ -154,11 +150,9 @@ export function mountRibbon(app: HTMLElement) {
   const drawBandLight = () => {
     if (Math.abs(tilt - lastTilt) > 0.0015) { lastTilt = tilt; drawBand(); }
     const on = Math.abs(lightPhi) <= phiMax, p = project(on ? lightPhi : 0, 0, tilt);
-    sheenGrad.setAttribute('gradientTransform', `translate(${p.x.toFixed(1)} 0) scale(${p.k.toFixed(3)} 1)`);
-    edgeGrad.setAttribute('gradientTransform', `translate(${p.x.toFixed(1)} 0) scale(${p.k.toFixed(3)} 1)`);
-    svg.style.setProperty('--sheen', on ? '1' : '0');
-    // the travelling light spills a little warmth above and below the ribbon as it passes
-    bloom.setAttribute('cx', p.x.toFixed(1)); bloom.setAttribute('cy', p.y.toFixed(1)); bloom.setAttribute('rx', (260 * p.k).toFixed(1)); bloom.setAttribute('ry', (band * 1.25).toFixed(1));
+    // the light is its own layer, so moving it is only a transform (the band itself is not repainted)
+    light.style.transform = `translate3d(${(p.x - cx).toFixed(1)}px, ${(p.y - cy).toFixed(1)}px, 0) scale(${p.k.toFixed(3)})`;
+    light.style.opacity = on ? '1' : '0';
   };
   const start = () => { if (running) return; running = true; last = performance.now(); raf = requestAnimationFrame(frame); };
   const stop = () => { running = false; cancelAnimationFrame(raf); raf = 0; };
@@ -169,7 +163,7 @@ export function mountRibbon(app: HTMLElement) {
     const r = strip.getBoundingClientRect(), t = Math.min(1, Math.max(0, (r.top + r.height / 2) / window.innerHeight));
     tiltGoal = -0.04 + t * 0.2; // level with it near the top of the screen, looking down on it near the bottom
   };
-  const io = new IntersectionObserver(es => es.forEach(e => (e.isIntersecting ? start() : stop())), { rootMargin: '80px 0px' });
+  const io = new IntersectionObserver(es => es.forEach(e => (e.isIntersecting ? start() : stop())), { threshold: 0.01 });
   const onVis = () => (document.hidden ? stop() : strip.getBoundingClientRect().bottom > 0 && start());
   // hovering holds the ribbon still so a fact can be read; it picks up again when the pointer leaves
   const hold = () => { goal = 0; }, release = () => { goal = reduce.matches ? 0 : 30; };

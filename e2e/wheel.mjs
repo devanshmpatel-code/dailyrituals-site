@@ -159,7 +159,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile',
   await p.goto(base + '/explore'); await p.waitForSelector('#exp .fl-card'); ok(`${label}: full list still below`, (await p.locator('#exp .fl-card').count()) > 5);
   await p.locator('.findtabs a:has-text("Take the quiz")').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: the quiz tab still opens`, (await p.locator('[data-ans]').count()) >= 4);
   ok(`${label}: leaving the atlas tears it down`, await p.evaluate(() => !document.querySelector('.wplate')));
-  await p.goto(base + '/explore'); await p.waitForSelector('.wheel svg'); await p.locator('.wpanel .btn.line[href*="quiz"]').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: the panel's quiz link opens the quiz`, true);
+  // (the panel's own quiz link is gone: the tabs above are the one way between the atlas and the quiz)
+  await p.goto(base + '/explore'); await p.waitForSelector('.wheel svg'); ok(`${label}: the atlas panel has no second quiz button`, (await p.locator('.wpanel a[href*="quiz"]').count()) === 0);
   ok(`${label}: no sideways scroll`, await overflow());
   ok(`${label}: no JS errors`, errs.length === 0, errs.join('|'));
   await ctx.close();

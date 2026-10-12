@@ -29,7 +29,10 @@ export function mountJourney(app: HTMLElement) {
   app.querySelectorAll<HTMLElement>('.chapter').forEach(c => {
     const sec = c.closest<HTMLElement>('section'); if (!sec || stops.some(s => s.el === sec)) return;
     const m = (c.textContent ?? '').match(/Chapter\s+(\d+)\s*[·:-]\s*(.+)/);
-    stops.push({ id: `ch${m?.[1] ?? stops.length}`, label: m ? `${m[1]} · ${m[2].trim()}` : (c.textContent ?? '').trim(), short: m?.[2].trim() ?? '', el: sec });
+    // a chapter whose eyebrow only says "Coming soon" (Ritual on Repeat, Moon Drops) is named on the card by its heading
+    const head = sec.querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    const short = m ? (/^coming soon$/i.test(m[2].trim()) && head ? head : m[2].trim()) : '';
+    stops.push({ id: `ch${m?.[1] ?? stops.length}`, label: m ? `${m[1]} · ${short}` : (c.textContent ?? '').trim(), short, el: sec });
   });
   if (stops.length < 3) return;
   document.body.classList.add('has-journey');
