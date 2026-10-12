@@ -115,12 +115,13 @@ export function openBreathe(opener: HTMLElement) {
   const cur = () => candles[sel];
   const itemOf = (c: PickerCandle) => live.get(c.slug)?.item;
   const choiceOf = (c: PickerCandle) => { const it = itemOf(c); if (!it || !it.choices.length) return undefined; return size.get(c.slug) ?? (it.choices.find(x => x.inStock) ?? it.choices[0]).name; };
-  /** the price of a size, from the product's variants once they are loaded; until then (or for one size) the catalogue's lowest price */
-  const priceOf = (c: PickerCandle, choice?: string): { n: number; exact: boolean } | null => {
+  /** the price of a size, from the product's variants once they are loaded; until then (or for one size) the catalogue's lowest
+   * price, with its highest for the range (n2) */
+  const priceOf = (c: PickerCandle, choice?: string): { n: number; n2: number; exact: boolean } | null => {
     const it = itemOf(c); if (!it) return null;
     const v = choice ? variantPrice.get(c.slug)?.get(choice) : undefined;
-    if (v != null) return { n: v, exact: true };
-    return { n: it.priceMin, exact: it.priceMax === it.priceMin };
+    if (v != null) return { n: v, n2: v, exact: true };
+    return { n: it.priceMin, n2: it.priceMax, exact: it.priceMax === it.priceMin };
   };
   const renderInfo = () => {
     const c = cur(), it = itemOf(c), lv = live.get(c.slug);
@@ -134,7 +135,9 @@ export function openBreathe(opener: HTMLElement) {
       sizesEl.innerHTML = it.choices.map(ch => `<button class="fb-size" type="button" data-size="${esc(ch.name)}" aria-pressed="${ch.name === choice}" ${ch.inStock ? '' : 'disabled'}>${esc(ch.name)}${ch.inStock ? '' : ' · sold out'}</button>`).join('');
       sizesEl.hidden = false;
     } else { sizesEl.innerHTML = ''; sizesEl.hidden = true; }
-    priceEl.textContent = p ? (p.exact ? money(p.n) : `From ${money(p.n)}`) : '';
+    // a chosen size shows its own price; until the shop has said what that is, the honest range rather than "From" the
+    // cheapest, which would read as the chosen size's price ("From" only when no size is chosen)
+    priceEl.textContent = !p ? '' : p.exact ? money(p.n) : choice ? `${money(p.n)} – ${money(p.n2)}` : `From ${money(p.n)}`;
     priceEl.hidden = !p;
     const inStock = !!it && (choice ? it.choices.find(x => x.name === choice)?.inStock !== false : it.inStock);
     addBtn.hidden = !it; addBtn.disabled = !inStock;

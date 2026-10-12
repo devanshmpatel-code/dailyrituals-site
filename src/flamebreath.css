@@ -44,8 +44,8 @@
 .jbreathe.fb[data-stage="lit"] .fb-stage { cursor: default; }
 .fb-table { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .3); width: min(1500px, 175vw); height: calc(var(--pw) * .78); transform: translateX(-50%); pointer-events: none;
   background: radial-gradient(ellipse 50% 50% at 50% 54%, rgba(142, 94, 98, .5) 0%, rgba(100, 62, 86, .34) 28%, rgba(52, 33, 60, .15) 54%, rgba(30, 20, 40, 0) 72%); }
-/* the ground the candles stand on: lit softly near them, falling away into shadow towards you, so their feet (cut off at the
-   bottom of the original photographs) sink into the dark; its top edge sits just behind their feet */
+/* the ground the candles stand on: lit softly near them, falling away into shadow towards you; its top edge sits just behind
+   their feet */
 .fb-ground { position: absolute; z-index: -1; left: 0; right: 0; top: calc(var(--floorY, 70vh) - var(--pw) * .12); bottom: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(24, 15, 34, .55) 0%, rgba(17, 11, 26, .78) calc(var(--pw) * .3), rgba(12, 8, 19, .9) 100%);
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--pw) * .16)); mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--pw) * .16)); }
@@ -60,11 +60,11 @@
 .fb-c:focus-visible .fb-ph::after { content: ""; position: absolute; inset: -10px -10px 0; border-radius: 18px; border: 2px solid var(--gold); }
 /* (no mirror reflection: the candles stand on a matte surface, and a mirrored lid label gave the trick away) */
 .fb-ph { position: absolute; inset: 0; display: block; }
-/* the contact shadow: the photo's lowest edge (where the original photograph cut off the tin and lid) fades into it */
-.fb-ph::before { content: ""; position: absolute; left: -10%; right: -4%; bottom: -9%; height: 24%; pointer-events: none;
+/* the contact shadow, a flat pool under the feet of the tin and the lid (whole: picker_foot.py completed what the original
+   photograph cropped), so they stand on the floor rather than being faded into it */
+.fb-ph::before { content: ""; position: absolute; left: -8%; right: -2%; bottom: -5%; height: 13%; pointer-events: none;
   background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(4, 2, 9, .97) 0%, rgba(5, 3, 10, .9) 38%, rgba(8, 4, 14, .45) 66%, rgba(8, 4, 14, 0) 100%); }
-.fb-pic { position: absolute; inset: 0; display: block; filter: brightness(var(--dim, 1)) saturate(calc(.6 + var(--dim, 1) * .4));
-  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, .25) 4%, rgba(0, 0, 0, .8) 11%, #000 16%); mask-image: linear-gradient(to top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, .25) 4%, rgba(0, 0, 0, .8) 11%, #000 16%); }
+.fb-pic { position: absolute; inset: 0; display: block; filter: brightness(var(--dim, 1)) saturate(calc(.6 + var(--dim, 1) * .4)); }
 .fb-pic img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; -webkit-user-drag: none; }
 .fb-pic .fb-glow { opacity: 0; will-change: opacity; }
 .fb-flame { position: absolute; z-index: 3; pointer-events: none; }
@@ -105,12 +105,14 @@
 .fb-viewcart, .fb-back { background: none; border: 0; padding: 0 4px; min-height: 36px; font: 600 14px var(--body, system-ui); color: var(--gold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .fb-back { color: rgba(243, 236, 226, .7); text-decoration: none; }
 .fb-back:hover { color: var(--cream); text-decoration: underline; }
-.jbreathe.fb .jb-sub { margin: 0 0 2px; max-width: 40ch; color: rgba(243, 236, 226, .74); font-size: 15px; }
-/* the offer arrives quietly, but its buttons are never faint: only its line fades in, and the buttons rise into place
-   already legible (the night behind them may dim and brighten with the breath; they do not) */
+/* wide enough that "Stay as long as you like." keeps its last word */
+.jbreathe.fb .jb-sub { margin: 0 0 2px; max-width: min(420px, 100%); color: rgba(243, 236, 226, .8); font-size: 15px; }
+/* the offer arrives quietly, but it is never faint: its line and its buttons rise into place already legible (the line
+   from .7, well above 4.5:1 on the night) and settle in half a second (the night behind them may dim and brighten with the
+   breath; they do not) */
 .fb-offer { display: flex; flex-direction: column; align-items: center; gap: 2px; transform: translateY(8px); transition: transform 1.2s ease; }
 .fb-offer.in { transform: none; }
-.fb-offer-t { margin: 0; font-family: var(--display); font-size: 20px; color: var(--cream); opacity: 0; transition: opacity 1.2s ease; }
+.fb-offer-t { margin: 0; font-family: var(--display); font-size: 20px; color: var(--cream); opacity: .7; transition: opacity .5s ease; }
 .fb-offer.in .fb-offer-t { opacity: 1; }
 .fb-offer-a { opacity: .88; transition: opacity .5s ease; }
 .fb-offer.in .fb-offer-a { opacity: 1; }

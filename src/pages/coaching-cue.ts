@@ -122,11 +122,12 @@ export function mountCue(root: HTMLElement | null) {
     cards.forEach((c, i) => {
       const a = (i * 90 + rot + SLOT) * Math.PI / 180;
       const x = R * Math.sin(a), z = R * Math.cos(a);
-      // the two front steps stay solid and readable; going round the back a step recedes: it shrinks, dims to a faint arch
-      // and its words fade out before it gets there, so no words ever sit behind other words or behind the candle
+      // the two front steps stay solid and readable; going round the back a step recedes: it shrinks and dims to a half-lit
+      // arch peeking past the jar, its icon still showing (so the ring reads as four steps), its words faded out before it
+      // gets there, so no words ever sit behind other words or behind the candle
       const front = smooth(-0.35, 0.3, Math.cos(a)), face = smooth(0.15, 0.45, Math.cos(a));
-      c.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, ${frontY}px, ${z.toFixed(1)}px) rotateX(${-tilt}deg) scale(${(0.84 + 0.16 * front).toFixed(3)})`;
-      c.style.opacity = (0.16 + 0.84 * front).toFixed(3);
+      c.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, ${frontY}px, ${z.toFixed(1)}px) rotateX(${-tilt}deg) scale(${(0.85 + 0.15 * front).toFixed(3)})`;
+      c.style.opacity = (0.5 + 0.5 * front).toFixed(3);
       c.style.setProperty('--face', face.toFixed(3));
       c.classList.toggle('back', face < 0.02);
       c.classList.toggle('on', i === active);

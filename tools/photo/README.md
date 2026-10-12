@@ -16,5 +16,6 @@ Note: `derive.py` regrades `moons/` in place. Run it only from the original (ung
 
 ## Product cut-outs (added)
 - `hero_cut.py` cuts out the lit Cabana and Verdant photographs. It also removes flash specks, dust and scratches from the black tin and lid. Lettering is protected: marks that sit in a row are treated as text and left alone.
+- `picker_unlit.py`, `picker_rim.py` and `picker_foot.py` make the candle picker's photographs (`public/img/studio/picker/`): the unlit version of each lit photograph, a repair to the Cabana glow photograph's rim, and then, once, the feet of the tin and lid that the original photographs cropped (completed from the photographs' own colours, so they stand whole on the picker's floor).
 - `lid_clean.py` gives a tin lid a clean matte finish inside its rim. It finds the printed scent sticker from its lettering and keeps it untouched. Pass the lid's centre and radius (from HoughCircles).
 - `public/img/studio/tins/`: groups of whole tins seen from above, cut from the retouched photographs. Each tin's wax face is found as a separate shape, because the black rims divide the faces. Only tins whose whole outline is inside the frame are kept, and anything that belongs to a neighbouring tin is cut away. (The script is the inline block that produced `/tmp/cut4`. It still needs to be saved here.)

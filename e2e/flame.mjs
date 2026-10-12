@@ -44,6 +44,10 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.waitForFunction(() => /\$/.test(document.querySelector('.fb-price')?.textContent ?? ''));
   const prices = await p.evaluate(() => (document.querySelector('.jbreathe').textContent.match(/\$\d[\d,.]*/g) ?? []));
   ok(`${label}: prices come from the live catalogue, none invented`, prices.length > 0 && prices.every(x => allowed.has(x)), prices.join(' '));
+  // a chosen size shows its own price (not "From" the cheapest), the same price Add to cart will use
+  await p.waitForFunction(() => !/From/.test(document.querySelector('.fb-price').textContent), null, { timeout: 4000 }).catch(() => {});
+  const own = await p.evaluate(() => ({ size: document.querySelector('.fb-size[aria-pressed="true"]')?.textContent, price: document.querySelector('.fb-price').textContent, add: document.querySelector('.fb-add').textContent }));
+  ok(`${label}: the chosen size shows its exact price, not "From"`, !!own.size && /^\$\d+\.\d\d$/.test(own.price) && allowed.has(own.price) && own.add.endsWith(own.price), JSON.stringify(own));
   ok(`${label}: no other products are named`, await p.evaluate(() => !/Citrus|Campfire|Desert|Golden Meridian|Amber|Licorice|Lilac|Peony|Sea Foam|Windy/i.test(document.querySelector('.jbreathe').textContent)));
   ok(`${label}: Light it & breathe has focus`, await p.evaluate(() => document.activeElement?.classList.contains('fb-light')));
   // choosing: arrow keys, the ‹ › buttons, a drag

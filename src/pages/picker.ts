@@ -19,7 +19,7 @@ export interface PickerCandle {
   w: number; h: number;
   /** so every candle stands at the same scale and on the same floor: how large the photo is drawn (1: Verdant's tins and
    * tumbler; Cabana was photographed closer) and the height in the photo, as a fraction, that stands on the floor line (the
-   * tins' feet, below the frame, are lost in the contact shadow either way) */
+   * foot of the lid in front; the photographs' cropped tin and lid were completed by tools/photo/picker_foot.py) */
   scale: number; foot: number;
   wicks: Wick[];
   /** a short line under the name: drafts for Claire until she confirms them */
@@ -29,14 +29,14 @@ export interface PickerCandle {
 
 export const PICKER_CANDLES: PickerCandle[] = [
   {
-    slug: 'cabana', name: 'Cabana', image: 'cabana', w: 900, h: 802, scale: 0.91, foot: 0.955,
-    wicks: [{ x: 0.6889, y: 0.1209, h: 0.098, w: 0.122, tip: 0.25, rim: true }, { x: 0.2267, y: 0.8317, h: 0.066, w: 0.071, tip: 0.05 }],
+    slug: 'cabana', name: 'Cabana', image: 'cabana', w: 900, h: 900, scale: 0.91, foot: 0.991,
+    wicks: [{ x: 0.6889, y: 0.1077, h: 0.098, w: 0.122, tip: 0.25, rim: true }, { x: 0.2267, y: 0.7411, h: 0.066, w: 0.071, tip: 0.05 }],
     line: 'Sunny and warm, for a slow golden evening.', draft: true,
     alt: 'Cabana: a candle in a white glass tumbler with the black Daily Rituals label, a small black tin and its Cabana lid in front',
   },
   {
-    slug: 'verdant', name: 'Verdant', image: 'verdant', w: 900, h: 677, scale: 1, foot: 1,
-    wicks: [{ x: 0.7356, y: 0.1418, h: 0.098, w: 0.115, tip: 0.85, rim: true }, { x: 0.2056, y: 0.8464, h: 0.06, w: 0.069, tip: 0.1 }],
+    slug: 'verdant', name: 'Verdant', image: 'verdant', w: 900, h: 841, scale: 1, foot: 0.99,
+    wicks: [{ x: 0.7356, y: 0.1141, h: 0.098, w: 0.115, tip: 0.85, rim: true }, { x: 0.2056, y: 0.6813, h: 0.06, w: 0.069, tip: 0.1 }],
     line: 'Green and grounding, for a quieter mind.', draft: true,
     alt: 'Verdant: a candle in a white glass tumbler with the black Daily Rituals label, a small black tin and its Verdant lid in front',
   },

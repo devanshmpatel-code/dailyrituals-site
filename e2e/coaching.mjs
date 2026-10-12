@@ -45,6 +45,14 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
     return { unlit: i?.currentSrc || i?.src || '', glow: g?.currentSrc || g?.src || '', loaded: !!i && i.complete && i.naturalWidth > 0 && !!g && g.complete && g.naturalWidth > 0, drawn: c?.querySelectorAll('svg').length ?? -1 }; });
   ok(`${label}: the loop has four steps orbiting Claire's candle, her photograph (not a drawing)`, (await p.locator('.cue-card').count()) === 4 && photo.loaded && photo.drawn === 0
     && /\/img\/studio\/picker\/(verdant|cabana)-unlit-(480|900)\.webp$/.test(photo.unlit) && /\/img\/studio\/picker\/(verdant|cabana)-glow-(480|900)\.webp$/.test(photo.glow), JSON.stringify(photo));
+  // the night's stars keep out of the words: with the method's lead made invisible, nothing bright is left in its box
+  const lead = await p.evaluate(() => { const e = document.querySelector('.co-method .co-sub'); e.style.color = 'transparent'; e.querySelectorAll('*').forEach(c => { c.style.color = 'transparent'; c.style.background = 'none'; }); const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; });
+  await p.waitForTimeout(100);
+  const specks = await p.evaluate(async b64 => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data, L = []; for (let i = 0; i < d.length; i += 4) L.push(0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]); const m = [...L].sort((a, b) => a - b)[L.length >> 1]; return L.filter(l => l > m + 45).length; },
+    (await p.screenshot({ clip: lead })).toString('base64'));
+  await p.evaluate(() => { const e = document.querySelector('.co-method .co-sub'); e.style.color = ''; e.querySelectorAll('*').forEach(c => { c.style.color = ''; c.style.background = ''; }); });
+  ok(`${label}: no star lands among the words`, specks === 0, `${specks} bright specks in the lead's box`);
   // the candle catches once the loop is on screen: the lit photograph begins to glow in and a flame stands on each wick
   await p.waitForFunction(() => Number(getComputedStyle(document.querySelector('.cue-candle .lc-glow')).opacity) > 0.2, null, { timeout: 6000 }).catch(() => {});
   await p.waitForTimeout(1500);
@@ -66,9 +74,12 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
   for (let k = 0; k < 4; k++) {
     await p.locator('.cue-stage').focus(); await p.keyboard.press('ArrowRight'); await p.waitForTimeout(160);
     const mid = await words(); await p.waitForTimeout(1400); const rest = await words();
-    comp.push({ k, midClash: clash(mid).length, restClash: clash(rest).length, backWords: rest.filter(w => w.z < 0).reduce((n, w) => n + w.rects.length, 0) });
+    const back = await p.evaluate(() => [...document.querySelectorAll('.cue-card')].filter(c => new DOMMatrix(getComputedStyle(c).transform).m43 < 0)
+      .map(c => ({ o: Number(getComputedStyle(c).opacity), ic: Number(getComputedStyle(c).opacity) * Number(getComputedStyle(c.querySelector('.cue-ic')).opacity) })));
+    comp.push({ k, midClash: clash(mid).length, restClash: clash(rest).length, backWords: rest.filter(w => w.z < 0).reduce((n, w) => n + w.rects.length, 0), back });
   }
   ok(`${label}: no step's words collide with another's, and the steps round the back show none`, comp.every(c => !c.midClash && !c.restClash && !c.backWords), JSON.stringify(comp));
+  ok(`${label}: the two steps round the back still show, as dimmer arches with their icons, so the ring reads as four steps`, comp.every(c => c.back.length === 2 && c.back.every(b => b.o >= 0.45 && b.o <= 0.62 && b.ic >= 0.4)), JSON.stringify(comp.map(c => c.back)));
   await p.locator('.cue-stage').focus(); await p.keyboard.press('ArrowRight'); await p.waitForTimeout(300);
   ok(`${label}: the right arrow key turns the ring to the pause`, (await active(p)) === 'Pause' && (await pressed(p)) === 1, await active(p));
   ok(`${label}: the pause offers the one-minute breathing practice`, await p.locator('.cue-try').isVisible());
@@ -110,6 +121,10 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
   if (touch) {
     await p.evaluate(() => document.querySelector('.co-work').scrollIntoView()); await p.waitForTimeout(700);
     ok('phone: both free offers stay one tap away while reading', await p.evaluate(() => { const d = document.querySelector('#coDock'); const r = d.getBoundingClientRect(); return d.classList.contains('show') && r.top > innerHeight - 120 && r.bottom <= innerHeight &&/reset$/.test(d.querySelector('a').getAttribute('href')) && /\/book/.test(d.querySelectorAll('a')[1].getAttribute('href')); }));
+    // the bar is solid (the words it passes over never show through it), and the page ends with room to scroll clear of it
+    const bar = await p.evaluate(() => { const d = document.querySelector('#coDock'), bg = getComputedStyle(d).backgroundColor, a = bg.match(/rgba?\(([^)]+)\)/)[1].split(',').map(Number)[3];
+      return { bg, alpha: a ?? 1, op: Number(getComputedStyle(d).opacity), room: parseFloat(getComputedStyle(document.querySelector('footer.cel-night'), '::after').height) || 0, h: d.offsetHeight }; });
+    ok('phone: the bar is opaque, and the page ends with room below it', bar.alpha === 1 && bar.op === 1 && bar.room >= bar.h + 12, JSON.stringify(bar));
     await p.evaluate(() => document.querySelector('#coFinal').scrollIntoView()); await p.waitForTimeout(700);
     ok('phone: the bar steps aside at the last call to action', await p.evaluate(() => !document.querySelector('#coDock').classList.contains('show')));
   } else ok('desktop: no phone bar on a wide screen', await p.evaluate(() => getComputedStyle(document.querySelector('#coDock')).display === 'none'));
