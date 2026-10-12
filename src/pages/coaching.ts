@@ -1,5 +1,8 @@
 import Coaching from '../canvas/pages/Coaching.html?raw';
 import { wireLoop } from './loop';
+import { mountCue, candleSVG } from './coaching-cue';
+import { mountCoachingFx } from './coaching-fx';
+import '../coaching.css';
 import { loadServices, imgSrc, money, wix, saveTokens } from '../wix';
 import { fixImages, wireCommon, esc, errorBox, toast } from '../ui';
 import { navigate, routeUrl } from '../router';
@@ -16,8 +19,11 @@ const slugOf = (s: any) => s.mainSlug?.name ?? s.supportedSlugs?.[0]?.name ?? s.
 export async function renderCoaching(app: HTMLElement) {
   app.innerHTML = fixImages(Coaching);
   wireCommon(app);
-  wireCheckin(app);
   wireLoop(app);
+  mountCue(app.querySelector<HTMLElement>('#cue'));
+  mountCoachingFx(app);
+  const lastFlame = app.querySelector<HTMLElement>('.co-final-flame');
+  if (lastFlame) lastFlame.innerHTML = candleSVG('cf'); // the same candle, fully lit, under the last call to action
 
   const ways = [...app.querySelectorAll<HTMLAnchorElement>('.ways .way')];
   let list: any[] = [];
@@ -42,20 +48,8 @@ export async function renderCoaching(app: HTMLElement) {
     faq.querySelector('.dbody')!.insertAdjacentHTML('beforeend',
       `<p><span class="d confirm">[Confirm: the live booking page lists ${esc(program.name)} at ${priceLabel(program)}. Keep this answer or show the price?]</span></p>`);
   }
-  app.querySelectorAll<HTMLAnchorElement>('a[href="#/book"], a[href="/book"]').forEach(a => { if (discovery) a.href = `#/book/${slugOf(discovery)}`; });
-}
-
-function wireCheckin(app: HTMLElement) {
-  const out = app.querySelector<HTMLElement>('#pathOut');
-  if (!out) return;
-  const reset = out.innerHTML;
-  const update = () => {
-    const v = (id: string) => Number(app.querySelector<HTMLInputElement>(`#${id}`)?.value ?? 3);
-    if (v('s4') >= 4) {
-      out.innerHTML = `<div class="path"><img src="/img/coaching.jpg" alt="" class="dimg" style="border-radius:4px;aspect-ratio:16/10;object-fit:cover"><span class="eyebrow" style="color:var(--euc)">Suggested start</span><h3 style="font-size:34px">A free discovery call</h3><p>Talk with Claire about your goals and whether coaching is a fit.</p><a class="btn euc" href="#/bk" style="align-self:flex-start">Book a discovery call</a><span class="small muted">You can always choose a different path.</span></div>`;
-    } else out.innerHTML = reset;
-  };
-  ['s1', 's2', 's3', 's4'].forEach(id => app.querySelector(`#${id}`)?.addEventListener('input', update));
+  // the phone bar (#coDock) lives on <body> while the page is open, so it is looked up there too
+  document.querySelectorAll<HTMLAnchorElement>(['#app', '#coDock'].map(r => `${r} a[href="#/book"], ${r} a[href="/book"]`).join(', ')).forEach(a => { if (discovery) a.href = `#/book/${slugOf(discovery)}`; });
 }
 
 // ---------------- booking ----------------
