@@ -5,10 +5,10 @@
 // filled by space colonisation (twigs grow toward points scattered through a billowing dome), so the branching is organic
 // and leaves fill the whole crown, not only its rim. The heart-shaped leaves with their long drip tips hang from every twig.
 //
-// Where it stands: the picker lays it out (anchor: the trunk's foot and the tree's scale), large and near, so its crown
-// spreads across the top of the pause like a canopy and runs out past the edges of the window, and the candles are small
-// beside its trunk. Until a candle is lit it is a dark silhouette in the night, with a faint cool rim of moonlight along
-// the left of its bark and its leaves.
+// Where it stands: the picker lays it out (anchor: the trunk's foot and the tree's scale across and up), the whole tree in
+// the picture, its crown's dome under the words at the top and spreading nearly across the window, and the candles small
+// beside its trunk. Until a candle is lit it is a dark silhouette against the night sky, with a soft cool rim of moonlight
+// (the moon is high on the left) on the outer edges of its crown, its limbs and its bark.
 //
 // How it is lit: the candle stands on the ground a little in front of the trunk. Its light is worked out as light is: it
 // falls off with the square of the distance and with the angle it arrives at, so the bark is brightest just behind the
@@ -18,8 +18,8 @@
 // the cool night.
 //
 // How it is drawn: everything still is painted once per layout, in slices while the page is idle between the first
-// frames, into two layers: the still tree (a hazy far canopy at half resolution under the dark near tree, and the ground at
-// its foot) and the light of the candle at its brightest on the tree and the ground. A frame then costs almost nothing: the
+// frames, into two layers: the still tree (a hazy far canopy at half resolution under the dark near tree with the moon on
+// its rim, and the ground at its foot) and the light of the candle at its brightest on the tree and the ground. A frame then costs almost nothing: the
 // light layer's opacity follows the flame (the breath and the same flicker the flame has), and only the couple of hundred
 // leaves nearest the light are drawn live so they can tremble. Now and then, on an out-breath, one lets go and drifts down.
 
@@ -46,13 +46,16 @@ type Root = { x0: number; y0: number; cx: number; cy: number; x1: number; y1: nu
 type Tree = { nodes: Node[]; leaves: Leaf[]; roots: Root[]; billows: number[][] };
 type Falling = { x: number; y: number; spin: number; s: number; v: number; ph: number; age: number };
 
-const LEVELS = 12, VARIANTS = 3, TRUNK_TOP = -0.29;
-const under = (x: number) => -0.45 + 0.27 * (x / 1.3) ** 2; // the crown's underside lifts over the trunk and droops at the rim
+const LEVELS = 12, VARIANTS = 3, TRUNK_TOP = -0.32;
+/** how high the trunk forks and how high the crown's dome rises, above the trunk's foot, in the tree's own units (its scale
+ * up, sy, is how many px one unit is): the picker lays the tree out with them */
+export const BODHI_FORK = -TRUNK_TOP, BODHI_TOP = 1.04;
+const under = (x: number) => -0.47 + 0.27 * (x / 1.3) ** 2; // the crown's underside lifts over the trunk and droops at the rim
 // per layer: the shadow tints (plum, indigo, green-black), the warm colour the candle gives, and the glow at its brightest
 const PAL: { shadow: RGB[]; ember: RGB; lit: RGB; glow: RGB; rim: number }[] = [
   { shadow: [[46, 40, 74], [46, 40, 74], [46, 40, 74]], ember: [0, 0, 0], lit: [0, 0, 0], glow: [0, 0, 0], rim: 0 }, // far: one hazy tint, set from the sky
-  { shadow: [[46, 37, 66], [39, 39, 68], [37, 46, 56]], ember: [104, 50, 50], lit: [204, 124, 64], glow: [250, 192, 118], rim: 0.1 }, // mid canopy
-  { shadow: [[25, 17, 33], [20, 20, 36], [19, 27, 28]], ember: [118, 46, 36], lit: [234, 146, 58], glow: [255, 214, 140], rim: 0.065 }, // near canopy
+  { shadow: [[18, 18, 42], [16, 19, 42], [15, 21, 37]], ember: [96, 46, 50], lit: [204, 124, 64], glow: [250, 192, 118], rim: 0.09 }, // mid canopy, a little hazed by the night air
+  { shadow: [[11, 9, 21], [9, 10, 22], [8, 13, 18]], ember: [112, 44, 36], lit: [234, 146, 58], glow: [255, 214, 140], rim: 0.06 }, // near canopy: the silhouette
 ];
 const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const css = (c: RGB, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${+a.toFixed(3)})`;
@@ -95,10 +98,10 @@ function buildAtlas(dpr: number, sky: RGB) {
     g.stroke();
     // a faint cool rim, so overlapping leaves read as leaves in the dark; warm and stronger when lit
     leafPath(g, S); g.lineWidth = 0.022 * S * (0.8 + l);
-    g.strokeStyle = l > 0.2 ? css(pal.glow, 0.15 + 0.6 * (l - 0.2)) : css([168, 160, 214], pal.rim); g.stroke();
+    g.strokeStyle = l > 0.2 ? css(pal.glow, 0.15 + 0.6 * (l - 0.2)) : css([150, 162, 226], pal.rim); g.stroke();
     g.restore();
   };
-  sprite(0, 0, mix(PAL[0].shadow[0], sky, 0.5), 0, PAL[0], [20, 16, 30], false);
+  sprite(0, 0, mix([16, 17, 40], sky, 0.25), 0, PAL[0], [10, 10, 24], false);
   for (let layer = 1; layer <= 2; layer++) for (let v = 0; v < VARIANTS; v++) for (let lv = 0; lv < LEVELS; lv++) {
     const l = lv / (LEVELS - 1), pal = PAL[layer];
     // shadow, then the deep red of a leaf barely lit, then amber, then gold where the light comes through
@@ -116,8 +119,10 @@ function growTree(seed: number): Tree {
   const r = rng(seed), nodes: Node[] = [];
   const add = (x: number, y: number, p: number, min = 0, trunk = false) => { nodes.push({ x, y, p, w: 0, kids: 0, min, trunk }); if (p >= 0) nodes[p].kids++; return nodes.length - 1; };
   // the crown: a dome of billows, a little uneven, its underside lifting over the trunk and drooping at the rim
-  const billows = ([[0, -0.72, 0.33], [-0.4, -0.71, 0.3], [0.42, -0.72, 0.3], [-0.78, -0.6, 0.27], [0.8, -0.61, 0.26], [-1.1, -0.47, 0.22], [1.11, -0.49, 0.21],
-    [-0.2, -0.86, 0.22], [0.23, -0.87, 0.21], [-0.6, -0.8, 0.21], [0.62, -0.81, 0.2], [0, -0.92, 0.16]] as const).map(([x, y, rad]) => [x + (r() - 0.5) * 0.06, y + (r() - 0.5) * 0.04, rad * (0.92 + r() * 0.16)]);
+  // (fuller than a lone tree in the open: billows heaped on billows, and a few smaller ones on its rim so its outline is lumpy)
+  const billows = ([[0, -0.72, 0.35], [-0.42, -0.71, 0.33], [0.44, -0.72, 0.32], [-0.82, -0.6, 0.3], [0.84, -0.61, 0.29], [-1.12, -0.47, 0.24], [1.13, -0.49, 0.23],
+    [-0.21, -0.84, 0.22], [0.24, -0.85, 0.21], [-0.62, -0.79, 0.22], [0.64, -0.8, 0.21], [0, -0.88, 0.16], [-0.4, -0.88, 0.15], [0.42, -0.89, 0.15],
+    [-0.98, -0.72, 0.18], [1.0, -0.71, 0.17], [-1.28, -0.35, 0.16], [1.3, -0.37, 0.15]] as const).map(([x, y, rad]) => [x + (r() - 0.5) * 0.06, y + (r() - 0.5) * 0.04, rad * (0.92 + r() * 0.16)]);
   const inside = (x: number, y: number) => y < under(x) && billows.some(([bx, by, br]) => (x - bx) ** 2 + (y - by) ** 2 < br * br);
 
   // the trunk: a slow twist up to the fork
@@ -156,11 +161,11 @@ function growTree(seed: number): Tree {
   branchOff(0, 0.25, -1.24, -0.38, 0.026); branchOff(4, 0.25, 1.24, -0.4, 0.026); branchOff(2, 0.45, 0.16, -1.0, 0.022);
 
   // space colonisation: twigs grow toward the attraction points, one step at a time, until the crown is full
-  const N = 1300, DI = 0.17, DK = 0.032, GW = 32, cell = (x: number) => Math.max(0, Math.min(GW - 1, Math.floor((x + 1.6) / DI)));
+  const N = 2100, DI = 0.17, DK = 0.032, GW = 32, cell = (x: number) => Math.max(0, Math.min(GW - 1, Math.floor((x + 1.6) / DI)));
   type A = { x: number; y: number; best: number; node: number; alive: boolean };
   const attrs: A[] = [], grid: A[][] = Array.from({ length: GW * GW }, () => []);
   for (let tries = 0; attrs.length < N && tries < 20000; tries++) {
-    const x = (r() * 2 - 1) * 1.42, y = -1.1 + r() * 0.88; if (!inside(x, y)) continue;
+    const x = (r() * 2 - 1) * 1.46, y = -1.1 + r() * 0.88; if (!inside(x, y)) continue;
     const a = { x, y, best: 1e9, node: -1, alive: true }; attrs.push(a); grid[cell(y) * GW + cell(x)].push(a);
   }
   const see = (from: number) => {
@@ -171,7 +176,7 @@ function growTree(seed: number): Tree {
     }
   };
   see(0);
-  for (let iter = 0, seen = nodes.length; iter < 140 && nodes.length < 5000; iter++) {
+  for (let iter = 0, seen = nodes.length; iter < 160 && nodes.length < 8000; iter++) {
     const pull = new Map<number, [number, number]>();
     for (const a of attrs) {
       if (!a.alive) continue; if (a.best < DK) { a.alive = false; continue; } if (a.best > DI) continue;
@@ -196,7 +201,7 @@ function growTree(seed: number): Tree {
   const leaves: Leaf[] = [];
   for (const n of nodes) {
     if (n.trunk || n.w > 0.0072) continue;
-    const c = n.kids === 0 ? 4 + Math.floor(r() * 3) : 1 + (r() < 0.45 ? 1 : 0);
+    const c = n.kids === 0 ? 5 + Math.floor(r() * 3) : 1 + (r() < 0.6 ? 1 : 0);
     for (let j = 0; j < c; j++) {
       const ang = r() * 6.283, rad = r() * 0.03, any = r() < 0.14;
       leaves.push({ x: n.x + Math.cos(ang) * rad, y: n.y + Math.sin(ang) * rad * 0.8, s: 0.74 + r() * 0.5, a: any ? (r() - 0.5) * 5 : (r() - 0.5) * 1.5 + Math.sign(n.x) * 0.22,
@@ -226,6 +231,9 @@ export function createBodhi(o: BodhiOptions): Bodhi {
   const litEl = layer('fb-bodhi-lit'), liveEl = layer('fb-bodhi-live'); host.append(litEl, liveEl);
   const lc = liveEl.getContext('2d')!;
   let W = 0, H = 0, ox = 0, oy = 0, sx = 1, sy = 1, sc = 1, leafPx = 24, lx = 0, ly = 0;
+  // the tree may be laid out narrower than it is tall (on a phone): the trunk, its roots and the great limbs where they leave
+  // it keep the girth of the tree's overall size (twk: how much wider than the layout across would make them)
+  let twk = 1;
   // the candle, in host px: its foot (cgx, cgy), its radius CR and the rim RIM that shades its own foot; the flame's height
   // above the ground LH; how far in front of the trunk's axis it stands LZ; the trunk's radius at its foot rT0; e, how flat
   // the ground looks; REACH, how far its light carries across the ground
@@ -235,6 +243,9 @@ export function createBodhi(o: BodhiOptions): Bodhi {
   let tree: Tree | null = null, atlas: ReturnType<typeof buildAtlas> | null = null;
   let clr = [0, 0, 0, 0]; // the part of the moving layer drawn last frame, cleared before the next
   const X = (x: number) => ox + x * sx, Y = (y: number) => oy + y * sy;
+  /** the wood: the great limbs spread from the fork as wide as the trunk is, then run on as laid out (only close over the fork) */
+  const XW = (x: number, y: number) => X(x + (x - 0.008) * (twk * 1.45 - 1) * smooth(TRUNK_TOP - 0.26, TRUNK_TOP + 0.02, y) * (1 - smooth(0.1, 0.4, Math.abs(x))));
+  const wood = (x: number, y: number): [number, number] => [XW(x, y), Y(y)];
 
   /**
    * How much of the flame's light reaches a point, 0..1 after a soft exposure. The light falls off with the square of the
@@ -294,9 +305,9 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     const A: number[][] = [], B: number[][] = [], C: number[][] = [];
     for (let i = 0; i <= 8; i++) {
       const t = i / 8, u = 1 - t, px = u * u * s.x0 + 2 * u * t * s.cx + t * t * s.x1, py = u * u * s.y0 + 2 * u * t * s.cy + t * t * s.y1;
-      const dx = (2 * u * (s.cx - s.x0) + 2 * t * (s.x1 - s.cx)) * sx, dy = (2 * u * (s.cy - s.y0) + 2 * t * (s.y1 - s.cy)) * sy, m = Math.hypot(dx, dy) || 1;
+      const dx = (2 * u * (s.cx - s.x0) + 2 * t * (s.x1 - s.cx)) * sx * twk, dy = (2 * u * (s.cy - s.y0) + 2 * t * (s.y1 - s.cy)) * sy, m = Math.hypot(dx, dy) || 1;
       // a root is never straight or even: it wanders a little and swells and narrows along its length
-      const bend = Math.sin(Math.PI * t), wob = sc * 0.011 * Math.sin(t * 6.5 + s.x1 * 31) * bend, qx = X(px) - (dy / m) * wob, qy = Y(py) + (dx / m) * wob;
+      const bend = Math.sin(Math.PI * t), wob = sc * 0.011 * Math.sin(t * 6.5 + s.x1 * 31) * bend, qx = X(px * twk) - (dy / m) * wob, qy = Y(py) + (dx / m) * wob;
       const w = ((s.w0 + (s.w1 - s.w0) * Math.pow(t, 0.7)) * sc / 2) * (1 + 0.2 * Math.sin(t * 10 + s.x1 * 17) * bend);
       A.push([qx - (dy / m) * w, qy + (dx / m) * w]); B.push([qx + (dy / m) * w, qy - (dx / m) * w]); C.push([qx, qy, w]);
     }
@@ -307,7 +318,7 @@ export function createBodhi(o: BodhiOptions): Bodhi {
   // width the great limbs take where they part, so it divides into them in natural crotches rather than ending in a
   // rounded cap (seen near, a cap reads as a cut-out)
   const trunkX = (t: number) => 0.022 * Math.sin(t * 3.1 + 0.4) * (1 - t * 0.4) + 0.012 * t;
-  const trunkW = (t: number) => 0.155 + 0.175 * Math.pow(1 - t, 2.6);
+  const trunkW = (t: number) => (0.2 + 0.24 * Math.pow(1 - t, 2.2)) * twk;
   const trunkPoly = (g: CanvasRenderingContext2D) => {
     const A: number[][] = [], B: number[][] = [];
     for (let i = 0; i <= 22; i++) {
@@ -387,16 +398,18 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     tree = trees.get(seed) ?? growTree(seed); trees.set(seed, tree);
     const key = `${dpr}|${o.sky[1]}`; if (!atlasCache || atlasCache.key !== key) atlasCache = { key, a: buildAtlas(dpr, skyC) }; atlas = atlasCache.a;
     const an = o.anchor(), T = tree;
-    ox = an.x - rc.left; oy = an.y - rc.top; sx = an.sx; sy = an.sy; sc = Math.sqrt(sx * sy);
+    ox = an.x - rc.left; oy = an.y - rc.top; sx = an.sx; sy = an.sy; sc = Math.sqrt(sx * sy); twk = Math.min(1.7, Math.max(1, sc / sx));
     // the leaves keep their size against the tree, so a tree seen near has larger leaves, not a sparser crown
-    leafPx = Math.max(10.5, Math.min(42, sc * 0.042));
+    leafPx = Math.max(10, Math.min(40, sc * 0.04));
     for (const l of T.leaves) { l.px = X(l.x); l.py = Y(l.y); }
     placeLight();
     // the leaves that move are the near ones the light reaches: they catch it and tremble; the rest are baked
     live = T.leaves.filter(l => l.layer === 2 && l.lb > 0.22 && onScreen(l.px, l.py, leafPx)).sort((a, b) => b.lb - a.lb).slice(0, 160).sort((a, b) => a.py - b.py);
     const isLive = new Set(live); order = T.leaves.filter(l => !isLive.has(l)).sort((a, b) => a.layer - b.layer);
     // for the tests, and the page: where the trunk stands and how big it is, in CSS px in the viewport
-    cv.dataset.foot = `${an.x.toFixed(1)},${an.y.toFixed(1)}`; cv.dataset.fork = (rc.top + Y(TRUNK_TOP)).toFixed(1); cv.dataset.trunk = (trunkW(0.5) * sx).toFixed(1);
+    cv.dataset.foot = `${an.x.toFixed(1)},${an.y.toFixed(1)}`; cv.dataset.fork = (rc.top + Y(TRUNK_TOP)).toFixed(1); cv.dataset.trunk = (trunkW(0.5) * sx).toFixed(1); cv.dataset.flare = (trunkW(0) * sx).toFixed(1);
+    { let t0 = 1e9, l0 = 1e9, r0 = -1e9; for (const l of T.leaves) { t0 = Math.min(t0, l.py); l0 = Math.min(l0, l.px - leafPx * 0.4); r0 = Math.max(r0, l.px + leafPx * 0.4); }
+      cv.dataset.crown = [rc.top + t0, rc.left + l0, rc.left + r0].map(v => v.toFixed(0)).join(','); cv.dataset.leaves = String(T.leaves.length); }
     groundY = oy - 0.05 * sy; // where the ground meets the night behind the tree, a little behind its foot
 
     const far = document.createElement('canvas'), fg = size(far, W, H, 0.5), d = size(cv, W, H);
@@ -405,37 +418,80 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     const fs = dpr * 0.5, fx = (x: number) => X(-x * 1.1 + 0.05), fy = (y: number) => Y(y * 1.05 - 0.03);
     const farLeaf: Leaf = { x: 0, y: 0, s: 1, a: 0, f: 1, layer: 0, v: 0, ph: 0, wx: 1, px: 0, py: 0, d: 0, lb: 0 };
     slices(T.leaves.filter((l, i) => !(i % 2) && onScreen(fx(l.x), fy(l.y), leafPx * 2)), 900, l => { farLeaf.f = l.f; farLeaf.wx = l.wx; drawLeaf(fg, farLeaf, fx(l.x), fy(l.y), -l.a, 0, leafPx * 1.15 * l.s, fs); });
-    // then the near tree in shadow over it: the ground at its foot, the crown's body, roots, fluted trunk, limbs and twigs
+    // then the near tree in shadow: the crown's body, roots, fluted trunk, limbs and twigs (and, apart, the ground at its foot,
+    // which goes in behind it once the moon has found the tree's edges)
+    let gc: HTMLCanvasElement | null = null;
     jobs.push(() => {
       fg.setTransform(1, 0, 0, 1, 0, 0); fg.globalCompositeOperation = 'source-atop'; fg.fillStyle = css(skyC, 0.16); fg.fillRect(0, 0, far.width, far.height);
-      d.setTransform(dpr, 0, 0, dpr, 0, 0); d.globalAlpha = 0.6; d.drawImage(far, 0, 0, W, H); d.globalAlpha = 1; far.width = far.height = 0;
-      paintGround(d);
-      const bark = '#160F1D', ground = d.createRadialGradient(ox, oy, 0, ox, oy, sc * 0.6); ground.addColorStop(0, 'rgba(8,5,11,0.7)'); ground.addColorStop(1, 'rgba(8,5,11,0)');
-      d.save(); d.translate(ox, oy); d.scale(1, 0.12); d.translate(-ox, -oy); d.fillStyle = ground; d.beginPath(); d.arc(ox, oy, sc * 0.6, 0, 6.283); d.fill(); d.restore();
-      mass(d, '20,15,29');
+      gc = document.createElement('canvas'); const gg = size(gc, W, H); paintGround(gg);
+      const bark = '#0B0914', ground = gg.createRadialGradient(ox, oy, 0, ox, oy, sc * 0.6); ground.addColorStop(0, 'rgba(5,4,10,0.75)'); ground.addColorStop(1, 'rgba(5,4,10,0)');
+      gg.save(); gg.translate(ox, oy); gg.scale(1, 0.12); gg.translate(-ox, -oy); gg.fillStyle = ground; gg.beginPath(); gg.arc(ox, oy, sc * 0.6, 0, 6.283); gg.fill(); gg.restore();
+      d.setTransform(dpr, 0, 0, dpr, 0, 0);
+      mass(d, '8,8,19');
       // moonlight, from high on the left: the same wood a hair up and to the left in a cool grey, so the bark drawn over it
       // leaves a thin rim on the edges that face the moon
       const moon = 'rgba(146,144,196,0.22)', mo = Math.max(1, sc * 0.0028);
       d.save(); d.translate(-mo, -mo * 0.55); d.fillStyle = 'rgba(146,144,196,0.14)'; for (const s of T.roots) rootPoly(d, s);
-      drawWood(d, moon, (x, y) => [X(x), Y(y)], sc, 0.016);
+      drawWood(d, moon, wood, sc, 0.016);
       // (the trunk's rim only below where it parts into limbs: on its narrowing shoulders it would outline it like a cut-out)
       d.save(); d.beginPath(); d.rect(0, Y(TRUNK_TOP * 0.72), W, H); d.clip(); d.fillStyle = moon; trunkPoly(d); d.restore(); d.restore();
-      d.fillStyle = bark; for (const s of T.roots) rootPoly(d, s); trunkPoly(d); drawWood(d, bark, (x, y) => [X(x), Y(y)], sc);
+      d.fillStyle = bark; for (const s of T.roots) rootPoly(d, s); trunkPoly(d); drawWood(d, bark, wood, sc);
       // the trunk's flutes, soft: seen near, sharp grooves would read as strokes of a pen
       d.save(); d.filter = `blur(${Math.max(1, sc * 0.004).toFixed(1)}px)`; flutes(d, 'rgba(4,2,8,0.42)', 0, Math.max(1.5, sc * 0.013)); d.restore();
       paintBark(d);
       // where the trunk's round foot goes into the earth it is lost in its own shade, so it has no drawn edge
       d.save(); d.translate(ox, Y(0.035)); d.scale(1, (0.06 * sy) / (trunkW(0) * sx * 0.8)); const fs2 = d.createRadialGradient(0, 0, 0, 0, 0, trunkW(0) * sx * 0.8);
-      fs2.addColorStop(0, 'rgba(14,9,18,0.9)'); fs2.addColorStop(0.6, 'rgba(14,9,18,0.6)'); fs2.addColorStop(1, 'rgba(14,9,18,0)'); d.fillStyle = fs2; d.beginPath(); d.arc(0, 0, trunkW(0) * sx * 0.8, 0, 6.283); d.fill(); d.restore();
+      fs2.addColorStop(0, 'rgba(8,6,14,0.9)'); fs2.addColorStop(0.6, 'rgba(8,6,14,0.6)'); fs2.addColorStop(1, 'rgba(8,6,14,0)'); d.fillStyle = fs2; d.beginPath(); d.arc(0, 0, trunkW(0) * sx * 0.8, 0, 6.283); d.fill(); d.restore();
       return 700;
     });
     slices(order.filter(l => onScreen(l.px, l.py, leafPx * 1.5)), 700, l => drawLeaf(d, l, l.px, l.py, l.a, 0, near(l)));
+    // the moon on the tree's edges; then, behind it, the ground and the far canopy
+    jobs.push(() => {
+      moonRim(d);
+      d.save(); d.setTransform(dpr, 0, 0, dpr, 0, 0); d.globalCompositeOperation = 'destination-over';
+      if (gc) { d.drawImage(gc, 0, 0, W, H); gc.width = gc.height = 0; gc = null; }
+      d.globalAlpha = 0.62; d.drawImage(far, 0, 0, W, H); d.restore(); far.width = far.height = 0;
+      return 700;
+    });
     jobs.push(() => { treeReady = true; return 0; });
     paintLight();
     schedule();
   };
   /** Lay the tree out again: it is grown and laid out in the first idle slice, not in a frame. */
   const relayout = () => { dirty = false; still = false; treeReady = false; unschedule(); jobs = [() => { build(); return 0; }]; schedule(); };
+
+  /**
+   * The moon, high on the left, on the tree's edges: wherever the tree's silhouette (leaves, limbs, trunk and roots) has the
+   * night just beside it towards the moon, a thin cool rim of light, brightest on the side of the crown that faces the moon
+   * and fading across it and down to the ground. Worked out from the painted silhouette itself: the silhouette, less the
+   * same silhouette shifted away from the moon.
+   */
+  const moonRim = (d: CanvasRenderingContext2D) => {
+    const o = Math.max(1.3, sc * 0.0042) * dpr, rc2 = document.createElement('canvas'); rc2.width = cv.width; rc2.height = cv.height; const r = rc2.getContext('2d')!;
+    r.drawImage(cv, 0, 0); r.globalCompositeOperation = 'destination-out'; r.drawImage(cv, o, o * 0.7);
+    // (not at the window's own edges, where the tree runs on out of sight)
+    r.fillRect(0, 0, Math.ceil(o) + 1, rc2.height); r.fillRect(0, 0, rc2.width, Math.ceil(o * 0.7) + 1);
+    // only on the outside of the crown: in a gap between leaves inside it, the moon is hidden by the leaves beyond. The
+    // silhouette a little further towards the moon, blurred so it closes over the small gaps, takes those rims away
+    const q = 4, sm = document.createElement('canvas'); sm.width = Math.ceil(cv.width / q); sm.height = Math.ceil(cv.height / q); const sg = sm.getContext('2d')!;
+    sg.filter = `blur(${Math.max(2, (leafPx * 0.5 * dpr) / q).toFixed(1)}px)`; sg.drawImage(cv, (o * 5) / q, (o * 3.5) / q, sm.width, sm.height); sg.filter = 'none';
+    sg.globalCompositeOperation = 'lighter'; sg.drawImage(sm, 0, 0);
+    r.imageSmoothingQuality = 'high'; r.drawImage(sm, 0, 0, rc2.width, rc2.height);
+    // and only on leaves and wood of some body: a lone twig against the sky is too fine to carry a rim (it would read as a
+    // line of light)
+    sg.globalCompositeOperation = 'copy'; sg.filter = `blur(${Math.max(1.5, (leafPx * 0.22 * dpr) / q).toFixed(1)}px)`; sg.drawImage(cv, 0, 0, sm.width, sm.height); sg.filter = 'none';
+    sg.globalCompositeOperation = 'lighter'; sg.drawImage(sm, 0, 0); sg.drawImage(sm, 0, 0);
+    r.globalCompositeOperation = 'destination-in'; r.drawImage(sm, 0, 0, rc2.width, rc2.height); sm.width = sm.height = 0;
+    r.globalCompositeOperation = 'source-in';
+    const mx = X(-1.6) * dpr, my = Y(-1.5) * dpr, gr = r.createRadialGradient(mx, my, 0, mx, my, Math.hypot(cv.width, cv.height) * 0.95);
+    gr.addColorStop(0, 'rgba(200,212,255,0.9)'); gr.addColorStop(0.35, 'rgba(176,190,250,0.66)'); gr.addColorStop(0.7, 'rgba(146,160,232,0.34)'); gr.addColorStop(1, 'rgba(124,138,214,0.16)');
+    r.fillStyle = gr; r.fillRect(0, 0, rc2.width, rc2.height);
+    // low down, among the roots and the grass, the moon hardly reaches
+    r.globalCompositeOperation = 'destination-out'; const gf = r.createLinearGradient(0, Y(-0.2) * dpr, 0, Y(0.04) * dpr);
+    gf.addColorStop(0, 'rgba(0,0,0,0)'); gf.addColorStop(1, 'rgba(0,0,0,0.75)'); r.fillStyle = gf; r.fillRect(0, Y(-0.2) * dpr, rc2.width, rc2.height);
+    d.save(); d.setTransform(1, 0, 0, 1, 0, 0); d.globalCompositeOperation = 'source-atop'; d.filter = `blur(${(0.3 * dpr).toFixed(2)}px)`; d.drawImage(rc2, 0, 0); d.restore();
+    rc2.width = rc2.height = 0;
+  };
 
   /**
    * The bark in the night: the moon catches the left of the round trunk in a cool sheen that fades towards its middle and
@@ -479,7 +535,7 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     // far off, where the ground meets the sky: a low line of trees, soft and pale with distance, two rows of them, and a
     // haze of evening mist over their feet, so the ground runs away into the dusk instead of ending at a ruler-straight edge
     const tl = rng(seed + 21);
-    for (const [row, hMax, col] of [[0, 22, 'rgba(96,82,108,0.5)'], [1, 13, 'rgba(66,52,76,0.7)']] as const) {
+    for (const [row, hMax, col] of [[0, 22, 'rgba(30,32,70,0.7)'], [1, 13, 'rgba(16,16,38,0.85)']] as const) {
       // each row: clumps of round crowns of uneven size, with gaps where the land is open
       const base = y0 + 4 + row * 7; d.beginPath(); d.rect(0, base, W, 24);
       for (let x = -10; x < W + 20;) {
@@ -491,7 +547,7 @@ export function createBodhi(o: BodhiOptions): Bodhi {
     for (let i = 0; i < 46; i++) { // the earth: soft low swells and hollows, flattened by the angle we see it at
       const depth = gr(), y = y0 + depth * (y1 - y0), x = gr() * W, r = (30 + depth * 100) * k, light = gr() < 0.5;
       d.save(); d.translate(x, y); d.scale(1, 0.22); const m = d.createRadialGradient(0, 0, 0, 0, 0, r);
-      m.addColorStop(0, light ? 'rgba(40,28,46,0.16)' : 'rgba(5,3,8,0.14)'); m.addColorStop(1, 'rgba(0,0,0,0)'); d.fillStyle = m; d.fillRect(-r, -r, 2 * r, 2 * r); d.restore();
+      m.addColorStop(0, light ? 'rgba(30,30,62,0.14)' : 'rgba(3,3,8,0.16)'); m.addColorStop(1, 'rgba(0,0,0,0)'); d.fillStyle = m; d.fillRect(-r, -r, 2 * r, 2 * r); d.restore();
     }
     d.lineCap = 'round';
     const patches = Math.round(W / 18);
@@ -500,16 +556,16 @@ export function createBodhi(o: BodhiOptions): Bodhi {
       for (let j = 0; j < n; j++) {
         const x = px + (gr() - 0.5) * spread * 2, y = py + (gr() - 0.5) * spread * 0.25, h = (1.5 + depth * 5) * (0.55 + gr() * 0.8) * k;
         const blades = 2 + Math.floor(gr() * 3);
-        d.strokeStyle = `rgba(8,5,12,${(0.6 + 0.35 * gr()).toFixed(2)})`; d.lineWidth = Math.max(0.6, h * 0.11);
+        d.strokeStyle = `rgba(5,4,11,${(0.6 + 0.35 * gr()).toFixed(2)})`; d.lineWidth = Math.max(0.6, h * 0.11);
         d.beginPath();
         for (let b = 0; b < blades; b++) { const lean = (gr() - 0.5) * h * 1.1, bx = x + (b - blades / 2) * h * 0.13; d.moveTo(bx, y); d.quadraticCurveTo(bx + lean * 0.25, y - h * 0.6, bx + lean, y - h * (0.65 + gr() * 0.45)); }
         d.stroke();
-        if (gr() < 0.22) { d.strokeStyle = 'rgba(150,148,200,0.1)'; d.lineWidth = Math.max(0.5, h * 0.06); d.beginPath(); d.moveTo(x, y - h * 0.45); d.lineTo(x - h * 0.1, y - h * 0.8); d.stroke(); }
+        if (gr() < 0.22) { d.strokeStyle = 'rgba(150,164,230,0.12)'; d.lineWidth = Math.max(0.5, h * 0.06); d.beginPath(); d.moveTo(x, y - h * 0.45); d.lineTo(x - h * 0.1, y - h * 0.8); d.stroke(); }
       }
     }
     // and the evening mist lying over the far trees' feet and the far ground, thinning as the ground comes towards us
     const mist = d.createLinearGradient(0, y0 - 26 * k, 0, y0 + 90 * k);
-    mist.addColorStop(0, 'rgba(176,150,170,0)'); mist.addColorStop(0.25, 'rgba(176,150,170,0.24)'); mist.addColorStop(0.55, 'rgba(126,104,128,0.14)'); mist.addColorStop(1, 'rgba(60,44,64,0)');
+    mist.addColorStop(0, 'rgba(120,128,196,0)'); mist.addColorStop(0.25, 'rgba(120,128,196,0.16)'); mist.addColorStop(0.55, 'rgba(84,88,150,0.1)'); mist.addColorStop(1, 'rgba(40,40,80,0)');
     d.fillStyle = mist; d.fillRect(0, y0 - 26 * k, W, 116 * k);
   };
 
@@ -559,7 +615,7 @@ export function createBodhi(o: BodhiOptions): Bodhi {
         g.translate((vx / vm) * sh, (vy / vm) * sh * E + sh * 0.3); g.fillStyle = 'rgba(46,22,24,0.66)'; outline(g, A, B); g.restore();
         g.fillStyle = css(BARK_LIT);
       }
-      trunkPoly(g); drawWood(g, css(BARK_LIT), (x, y) => [X(x), Y(y)], sc);
+      trunkPoly(g); drawWood(g, css(BARK_LIT), wood, sc);
       // the bark's grain: short uneven streaks running up the trunk, only where there is wood
       g.globalCompositeOperation = 'source-atop'; g.lineCap = 'round'; const br = rng(seed + 3);
       for (let i = 0; i < 320; i++) {

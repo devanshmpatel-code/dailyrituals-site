@@ -4,29 +4,31 @@ import { MOODS } from '../config';
 import { PICKER_CANDLES, pickerSrc, matchLive, rememberCandle, lastCandle, type PickerCandle, type LiveCandle } from './picker';
 import { PhotoFlames, createFlicker } from './candleflame';
 import { createCrackle, type Crackle } from './pickersound';
-import { createBodhi, type BodhiLight } from './bodhi';
+import { createBodhi, BODHI_FORK, BODHI_TOP, type BodhiLight } from './bodhi';
 import '../flamebreath.css';
 
 // The breathing pause, opened by the breathing orb on every page and by [data-breathe] buttons: "choose your candle, light
 // it, breathe".
 //
-// Stage 1, choose: night under a great Bodhi tree (bodhi.ts). Its crown spreads across the top like a canopy and runs out
-// past the edges of the window; its broad trunk and roots stand in the middle on dark earth, solid rough bark with a little
-// moonlight on its rim; behind it the blue hour (a slate-blue sky fading to a dusky rose on the horizon, its first faint
-// stars each dimming and brightening on their own slow cycle, the whole sky drifting very slowly). The shop's candles stand unlit on the ground at the trunk's foot, small beside
-// it, in a carousel: the chosen one in the middle, the others smaller and dimmer to the sides, further back under the tree.
+// Stage 1, choose: night under a great Bodhi tree (bodhi.ts), the whole tree in the picture: its full, layered crown rises
+// to just behind the words at the top, its broad trunk and roots stand in the middle on dark earth, a dark silhouette with
+// the moon (out of sight, high on the left) on its rim. Behind it the night sky: deep navy deepening to violet at the
+// horizon, many stars and a faint band of the Milky Way, stars that twinkle each at its own moment, a few brighter, now
+// and then a shooting star, the whole sky drifting very slowly. The shop's candles stand unlit on the ground at the
+// trunk's foot, small beside it, in a carousel: the chosen one in the middle, the others smaller and dimmer to the sides, further back under the tree.
 // Swipe or drag, arrow keys, or the ‹ › buttons. Under it: its name and a short line, the live price, "Light it & breathe"
 // and "Add to cart". The breath already keeps its pace at the top ("Take a moment", then in, hold, out).
 //
-// Stage 2, breathe: the wooden wicks catch (canvas flames on the wicks, the photographed glow of the lit glass and wax
-// fading in, and, only if the sound toggle was tapped, a soft crackle made with the Web Audio API). The candle's light pools
-// on the ground and warms the roots, the trunk and the underside of the crown. The breath begins again with the candle: on
+// Stage 2, breathe: the wooden wicks catch (canvas flames on the wicks, each with a warm bloom in the air around it, the
+// photographed glow of the lit glass and wax fading in, and, only if the sound toggle was tapped, a soft crackle made with
+// the Web Audio API). The candle's light pools on the ground and warms the roots, the trunk and the underside of the crown. The breath begins again with the candle: on
 // the in-breath everything comes to life (the light rises up the tree, the stars brighten, the flames swell); on the
 // out-breath it settles and the night cools, still beautiful, and now and then a leaf lets go. After three full breaths a
 // quiet offer appears below: bring the candle home, or pair it with its roller. It never takes focus or stops the breath.
 //
-// How it is drawn: the stars are painted once onto one canvas (and a few dozen twinkle as tiny elements with their own CSS
-// cycles); the sky and its glow are CSS gradients whose opacity follows the breath; the tree is painted once per layout,
+// How it is drawn: the stars and the Milky Way are painted once onto one canvas (and a hundred or so twinkle as tiny
+// elements with their own CSS cycles; the shooting star is one element, sent with the Web Animations API from the frame,
+// so it stops when the page is hidden); the sky and its glow are CSS gradients whose opacity follows the breath; the tree is painted once per layout,
 // with the candle's light on it as a second layer whose opacity follows the flame; the candles are photographs (cut-outs of
 // Claire's photos, made unlit by hand, see picker.ts). A frame sets a few opacities, redraws the few hundred leaves nearest
 // the light so they tremble and, while a candle is lit, draws its two flames on two small canvases (a pre-painted teardrop
@@ -36,10 +38,13 @@ const IN = 4000, HOLD = 2000, OUT = 6000, CYCLE = IN + HOLD + OUT, LEAD = 1200, 
 /** the flames stand this much taller (and wider) than the photographed ones: at the candles' size under the tree, the
  * photographed flame read as a timid spark */
 const FLAME_SCALE = 1.4;
+/** how wide the candles stand, against the stage: on a phone, its width; on a wider screen, its height (a fifth smaller
+ * than before the tree was shown whole: 0.4 and 0.5) */
+const CANDLE_PHONE = 0.33, CANDLE_WIDE = 0.41;
 /** the strength of the candle's light that the tree's light layer is painted at; the flicker can briefly reach it */
 const LIGHT_MAX = 1.12;
-/** the blue-hour sky behind the tree (see .fb-sky), for the haze on its far canopy */
-const SKY = ['#4E739C', '#9FAEC4', '#A48390'] as const;
+/** the night sky behind the tree (see .fb-sky): high up, behind the crown, at the horizon; for the haze on its far canopy */
+const SKY = ['#0A1030', '#1A1D4A', '#2E2558'] as const;
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sineInOut = (t: number) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, t)));
 const clamp = (x: number, a: number, b: number) => (x < a ? a : x > b ? b : x);
@@ -47,27 +52,63 @@ const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;
 
 const seeded = (seed: number) => { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; };
 
-/** The faint stars of the night, painted once: many, small and still, thinning towards the horizon. */
-function paintStars(cv: HTMLCanvasElement, d: number) {
+/**
+ * The night sky, painted once per layout: a faint band of the Milky Way rising across it (soft clouds of light with dark
+ * lanes of dust along its middle, and many tiny stars crowded into it), and the stars themselves: many, small and still,
+ * a few much brighter with a little glow, white, blue-white and warm, thinning a little towards the horizon (hz: where the
+ * ground meets the sky, in CSS px).
+ */
+function paintStars(cv: HTMLCanvasElement, d: number, hz: number) {
   const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
   cv.width = Math.round(W * d); cv.height = Math.round(H * d);
   const g = cv.getContext('2d')!; g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
-  const rnd = seeded(11), n = Math.round(Math.min(760, (W * H) / (W < 700 ? 1500 : 2300)));
-  for (let i = 0; i < n; i++) {
-    const y = H * Math.pow(rnd(), 1.35) * 0.8, x = rnd() * W, r = 0.35 + rnd() ** 3 * 1.1, fade = 1 - y / (H * 0.85);
-    const warm = rnd(), a = (0.22 + rnd() ** 1.6 * 0.7) * fade;
-    g.fillStyle = warm < 0.2 ? `rgba(255,226,196,${a.toFixed(3)})` : warm > 0.85 ? `rgba(200,214,255,${a.toFixed(3)})` : `rgba(246,240,255,${a.toFixed(3)})`;
+  hz -= cv.getBoundingClientRect().top;
+  const rnd = seeded(11), sky = Math.max(80, Math.min(H, hz)), area = W * sky, k = Math.sqrt(area / (1440 * 620));
+  // the Milky Way: a gentle arc from low on the left up across the sky to the right (u: 0..1 along it)
+  const band = (u: number): [number, number] => [W * (-0.08 + 1.16 * u), sky * (0.96 - 0.82 * u - 0.14 * Math.sin(Math.PI * u))];
+  const bw = Math.max(70, Math.min(W, sky) * 0.17);
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 150; i++) {
+    const u = rnd(), [x, y] = band(u), off = (rnd() + rnd() + rnd() - 1.5) * bw * 0.7, r = bw * (0.35 + rnd() * 0.75);
+    const warm = rnd() < 0.3, a = 0.034 + rnd() * 0.05;
+    const gr = g.createRadialGradient(x, y + off, 0, x, y + off, r);
+    gr.addColorStop(0, warm ? `rgba(214,196,226,${a.toFixed(3)})` : `rgba(168,186,244,${a.toFixed(3)})`); gr.addColorStop(1, 'rgba(160,180,240,0)');
+    g.fillStyle = gr; g.fillRect(x - r, y + off - r, 2 * r, 2 * r);
+  }
+  g.restore();
+  // the dark lanes of dust that split its middle
+  g.save(); g.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 46; i++) {
+    const u = rnd(), [x, y] = band(u), off = (rnd() - 0.5) * bw * 0.35 + bw * 0.08 * Math.sin(u * 9), r = bw * (0.12 + rnd() * 0.22);
+    const gr = g.createRadialGradient(x, y + off, 0, x, y + off, r); gr.addColorStop(0, 'rgba(0,0,0,0.5)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(x - r, y + off - r, 2 * r, 2 * r);
+  }
+  g.restore();
+  const dot = (x: number, y: number, r: number, a: number, tone: number) => {
+    g.fillStyle = tone < 0.16 ? `rgba(255,224,190,${a.toFixed(3)})` : tone > 0.8 ? `rgba(196,212,255,${a.toFixed(3)})` : `rgba(244,242,255,${a.toFixed(3)})`;
     g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  };
+  // the dust of faint stars in the band
+  for (let i = 0, n = Math.round(900 * k); i < n; i++) {
+    const [x, y] = band(rnd()), off = (rnd() + rnd() - 1) * bw * 0.9;
+    dot(x + (rnd() - 0.5) * 8, y + off, 0.3 + rnd() * 0.35, 0.18 + rnd() ** 2 * 0.45, rnd());
+  }
+  // the stars across the whole sky: most faint, some clear, a few bright with a soft glow around them
+  for (let i = 0, n = Math.round(Math.min(1300, area / (W < 700 ? 520 : 800))); i < n; i++) {
+    const y = sky * Math.pow(rnd(), 1.15), x = rnd() * W, m = rnd(), fade = 1 - 0.45 * (y / sky) ** 2, tone = rnd();
+    const r = 0.3 + m ** 4 * 1.25, a = (0.2 + m ** 1.5 * 0.75) * fade;
+    if (m > 0.965) { const gl = g.createRadialGradient(x, y, 0, x, y, r * 5); gl.addColorStop(0, `rgba(220,226,255,${(0.22 * fade).toFixed(3)})`); gl.addColorStop(1, 'rgba(220,226,255,0)'); g.fillStyle = gl; g.fillRect(x - r * 5, y - r * 5, r * 10, r * 10); }
+    dot(x, y, r, a, tone);
   }
 }
 
-/** The stars that twinkle: each on its own slow cycle (CSS), deterministic so screenshots compare; most in the band of
- * sky between the crown and the ground, where they can be seen. */
+/** The stars that twinkle, scattered at random across the sky above the ground (top and left in %, of the sky: see .fb-tw),
+ * each on its own irregular cycle (CSS); a few are bright, with a soft cross of light. Deterministic, so screenshots compare. */
 function twinkles(count: number) {
   const rnd = seeded(29); let s = '';
   for (let i = 0; i < count; i++) {
-    const y = 18 + Math.pow(rnd(), 1.1) * 52, x = rnd() * 100, big = rnd() < 0.14, size = big ? 2.2 + rnd() * 1.2 : 1.1 + rnd() * 1.1;
-    s += `<i${big ? ' class="b"' : ''} style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--s:${size.toFixed(1)}px;--d:${(4.5 + rnd() * 9).toFixed(1)}s;--l:-${(rnd() * 12).toFixed(1)}s;--a:${(0.55 + rnd() * 0.45).toFixed(2)}"></i>`;
+    const y = 2 + Math.pow(rnd(), 1.2) * 92, x = 1 + rnd() * 98, big = rnd() < 0.12, size = big ? 2.3 + rnd() * 1.3 : 1.1 + rnd() * 1.1, tone = rnd();
+    s += `<i class="${big ? 'b' : ''}${tone < 0.18 ? ' w' : tone > 0.82 ? ' c' : ''}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--s:${size.toFixed(1)}px;--d:${(2.2 + rnd() * 5.5).toFixed(2)}s;--l:-${(rnd() * 8).toFixed(2)}s;--a:${(0.6 + rnd() * 0.4).toFixed(2)}"></i>`;
   }
   return s;
 }
@@ -89,13 +130,13 @@ export function openBreathe(opener: HTMLElement) {
   el.dataset.stage = 'pick';
   const slide = (c: PickerCandle, i: number) => `<button class="fb-c" type="button" data-i="${i}" data-slug="${c.slug}" aria-pressed="${i === sel}" aria-label="${esc(c.name)}, candle ${i + 1} of ${N}" style="--ar:${c.w} / ${c.h};--sc:${c.scale};--drop:${((1 - c.foot) * c.scale * c.h / c.w).toFixed(4)}">
       <span class="fb-ph"><span class="fb-pic"><img class="fb-unlit" src="${pickerSrc(c, 'unlit')}" srcset="${pickerSrc(c, 'unlit', 480)} 480w, ${pickerSrc(c, 'unlit')} 900w" sizes="(max-width: 700px) 80vw, 560px" alt="${esc(c.alt)}" width="${c.w}" height="${c.h}" decoding="async" draggable="false"><img class="fb-glow" src="${pickerSrc(c, 'glow')}" srcset="${pickerSrc(c, 'glow', 480)} 480w, ${pickerSrc(c, 'glow')} 900w" sizes="(max-width: 700px) 80vw, 560px" alt="" width="${c.w}" height="${c.h}" decoding="async" draggable="false"></span></span></button>`;
-  el.innerHTML = `<div class="fb-sky" aria-hidden="true"><div class="fb-drift"><canvas class="fb-stars"></canvas><div class="fb-tw">${twinkles(window.innerWidth < 700 ? 44 : 84)}</div></div></div>
+  el.innerHTML = `<div class="fb-sky" aria-hidden="true"><div class="fb-moon"></div><div class="fb-drift"><canvas class="fb-stars"></canvas><div class="fb-tw">${twinkles(window.innerWidth < 700 ? 54 : 110)}</div></div><i class="fb-meteor"></i></div>
     <div class="fb-horizon" aria-hidden="true"></div><div class="fb-cool" aria-hidden="true"></div><div class="fb-ground" aria-hidden="true"></div>
     <div class="fb-tree" aria-hidden="true"><canvas class="fb-bodhi"></canvas></div>
     <div class="fb-bar">${reduce ? '' : `<button class="fb-sound" type="button" aria-pressed="false">${SOUND_ICON}<span>Sound off</span></button>`}<button class="btn jb-close" type="button">Done</button></div>
     <header class="fb-head"><p class="fb-eyebrow">Choose your candle</p><p class="jb-word" id="jbWord">Take a moment</p></header>
     <div class="fb-stage">
-      <div class="fb-pool" aria-hidden="true"></div>
+      <div class="fb-pool" aria-hidden="true"></div><div class="fb-bloom" aria-hidden="true"></div>
       <div class="fb-track" role="group" aria-roledescription="carousel" aria-label="Candles: swipe, or use the arrow keys">${candles.map(slide).join('')}</div>
     </div>
     <div class="fb-low">
@@ -119,7 +160,7 @@ export function openBreathe(opener: HTMLElement) {
 
   const $ = <T extends HTMLElement = HTMLElement>(s: string) => el.querySelector<T>(s)!;
   const word = $('#jbWord'), stage = $('.fb-stage'), sr = $('.fb-sr'), status = $('.fb-status');
-  const drift = $('.fb-drift'), horizon = $('.fb-horizon'), cool = $('.fb-cool'), pool = $('.fb-pool');
+  const drift = $('.fb-drift'), horizon = $('.fb-horizon'), cool = $('.fb-cool'), pool = $('.fb-pool'), bloom = $('.fb-bloom');
   const slides = [...el.querySelectorAll<HTMLButtonElement>('.fb-c')];
   const starCv = $<HTMLCanvasElement>('.fb-stars'), soundBtn = el.querySelector<HTMLButtonElement>('.fb-sound');
   const offer = $('.fb-offer'), addBtn = $<HTMLButtonElement>('.fb-add'), sizesEl = $('.fb-sizes'), priceEl = $('.fb-price');
@@ -250,23 +291,25 @@ export function openBreathe(opener: HTMLElement) {
   }, { passive: false });
 
   // ---------- sizes: the tree, and the candles at its foot ----------
-  // The tree is large and near: its trunk is broader than the candles are wide and rises well above them, its crown's
-  // underside comes down to just below the words at the top, and the crown runs out past both edges of the window. The
-  // candles stand on the ground a little in front of the trunk, small beside it, as a tumbler would at the foot of an old
-  // tree. tree: the trunk's foot and the tree's scale (see bodhi.ts), in CSS px.
+  // The whole tree is in the picture: its crown's dome rises to just behind the words at the top, with the night sky and
+  // its stars around it, and on a wide screen the crown spreads nearly to both edges of the window (on a narrow one it runs
+  // a little past them, so its trunk keeps its girth). The candles stand on the ground a little in front of the trunk, small
+  // beside it, as a tumbler would at the foot of an old tree, and the trunk rises well above them before it forks. tree: the
+  // trunk's foot and the tree's scale (see bodhi.ts), in CSS px.
   let tree = { x: 0, y: 0, sx: 0, sy: 0 };
   const resize = () => {
     const r = stage.getBoundingClientRect(); if (!r.width) return;
     const ar = Math.max(...candles.map(c => c.scale * c.foot * c.h / c.w)), phone = r.width < 700, head = $('.fb-head').getBoundingClientRect();
-    // the candles stand on the floor line, a little above the bottom of the stage, small enough to sit at the trunk's foot
-    // they are the focus of the scene, so they stand low and as large as the trunk allows
+    // the candles stand on the floor line, a little above the bottom of the stage: the focus of the scene, but a fifth
+    // smaller than they were, so the tree has the room to be seen whole
     floor = Math.round(clamp(r.height * 0.035, 12, 30));
-    pw = Math.round(Math.min(phone ? clamp(r.width * 0.4, 120, 168) : clamp(r.height * 0.5, 160, 290), (r.height - floor - 10) / ar));
-    const floorY = r.bottom - floor, footY = floorY - pw * 0.36, underY = head.bottom + (phone ? 56 : 70);
-    // the crown's underside just below the words (on a short screen, behind them: the trunk still rises well above the
-    // candles before it forks, at least one and a quarter times their height; on a tall one, lower, so the tree is not
-    // blown up past the size of the window)
-    const sy = Math.max(Math.min((footY - underY) / 0.45, r.width * 1.15), (footY - floorY + 1.25 * pw * ar) / 0.29), sx = phone ? Math.max(pw * 4.15, sy * 0.72) : Math.max(pw * 4.6, sy * 1.25);
+    pw = Math.round(Math.min(phone ? clamp(r.width * CANDLE_PHONE, 98, 138) : clamp(r.height * CANDLE_WIDE, 130, 238), (r.height - floor - 10) / ar));
+    const floorY = r.bottom - floor, footY = floorY - pw * 0.36, topY = head.top + head.height * (phone ? 0.82 : 0.6);
+    // the crown's top just behind the words, with the night above it; but the trunk always rises well above the candles
+    // before it forks, at least once and a sixth their height
+    const sy = Math.max((footY - topY) / BODHI_TOP, (footY - floorY + 1.15 * pw * ar) / BODHI_FORK);
+    // across: the whole crown in the window where it fits, never squeezed to less than about half its height, nor wider than a tenth more
+    const sx = clamp(r.width / 3, sy * (phone ? 0.56 : 0.62), sy * 1.05);
     // the tree is painted again only when the window really changes: a line of text appearing below (a size, "in your
     // cart") moves the candles a few px, which no one sees, but painting the whole tree again would make it flicker
     const moved = Math.abs(r.left + r.width / 2 - tree.x) > 24 || Math.abs(footY - tree.y) > 24 || Math.abs(sx / tree.sx - 1) > 0.06 || Math.abs(sy / tree.sy - 1) > 0.06;
@@ -275,7 +318,7 @@ export function openBreathe(opener: HTMLElement) {
     spacing = phone ? r.width * 0.5 : Math.max(pw * 1.2, sx * 0.2 + pw * 0.42); back = pw * 0.09;
     el.style.setProperty('--pw', `${pw}px`); el.style.setProperty('--floor', `${floor}px`); el.style.setProperty('--floorY', `${Math.round(floorY)}px`);
     el.style.setProperty('--groundY', `${Math.round(footY - 0.05 * sy)}px`); lastLayout = ''; layout();
-    paintStars(starCv, d);
+    paintStars(starCv, d, footY - 0.05 * sy);
     if (moved) bodhi.layout();
     if (flames) buildFlames();
   };
@@ -300,8 +343,10 @@ export function openBreathe(opener: HTMLElement) {
   const buildFlames = () => {
     flames?.destroy();
     const c = cur(), ph = slides[sel].querySelector<HTMLElement>('.fb-ph')!, w = pw * c.scale;
-    flames = new PhotoFlames(ph, c.wicks, { reduce, dpr: d, cls: 'fb-flame', haloCls: 'fb-halo', haloSize: 5, scale: FLAME_SCALE });
+    flames = new PhotoFlames(ph, c.wicks, { reduce, dpr: d, cls: 'fb-flame', haloCls: 'fb-halo', haloSize: 11, scale: FLAME_SCALE });
     flames.layout(w, w * c.h / c.w); drawnStatic = false;
+    // the warm bloom of its light in the night air, centred on its main flame
+    const L = lightOf(c), r = stage.getBoundingClientRect(); bloom.style.left = `${(L.x - r.left).toFixed(1)}px`; bloom.style.top = `${(L.y - r.top).toFixed(1)}px`;
   };
 
   // ---------- the flicker, shared by the flames and their light; a pop of the wood makes it duck for a moment ----------
@@ -341,6 +386,18 @@ export function openBreathe(opener: HTMLElement) {
   $('.fb-light').addEventListener('click', light);
   $('.fb-back').addEventListener('click', unlight);
 
+  // ---------- now and then a shooting star: a thin streak of light across the sky, behind the tree ----------
+  const meteor = $('.fb-meteor'); let nextMeteor = 3 + Math.random() * 4, meteors = 0;
+  const shoot = () => {
+    const W = window.innerWidth, hz = parseFloat(el.style.getPropertyValue('--groundY')) || window.innerHeight * 0.6;
+    const len = clamp(W * 0.12, 70, 170), x = W * (0.12 + Math.random() * 0.76), y = hz * (0.04 + Math.random() * 0.4);
+    const dip = 22 + Math.random() * 20, ang = Math.random() < 0.5 ? dip : 180 - dip, far = len * (1.6 + Math.random());
+    const at = (d: number) => `translate3d(${(x - len).toFixed(0)}px, ${y.toFixed(0)}px, 0) rotate(${ang.toFixed(1)}deg) translateX(${d.toFixed(0)}px)`;
+    meteor.style.width = `${len.toFixed(0)}px`;
+    meteor.animate([{ transform: at(0), opacity: 0 }, { opacity: 1, offset: 0.18 }, { opacity: 0.85, offset: 0.6 }, { transform: at(far), opacity: 0 }], { duration: 750 + Math.random() * 450, easing: 'cubic-bezier(.3,.1,.6,1)' });
+    meteors++; el.dataset.meteors = String(meteors);
+  };
+
   // ---------- the frame ----------
   let raf = 0, last = '', prev = t0; const styleCache = new Map<HTMLElement, string>();
   const setOp = (n: HTMLElement, v: number, tf?: string) => { const s = v.toFixed(2) + (tf ?? ''); if (styleCache.get(n) === s) return; styleCache.set(n, s); n.style.opacity = v.toFixed(2); if (tf) n.style.transform = tf; };
@@ -361,6 +418,7 @@ export function openBreathe(opener: HTMLElement) {
     // each new word rises in again: two identical animations taken in turn restart it without forcing a layout mid-frame
     if (w !== last) { word.textContent = w; const odd = word.classList.contains('fb-in'); word.classList.toggle('fb-in', !odd); word.classList.toggle('fb-in2', odd); last = w; el.dataset.phase = w; }
     const t = (now - t0) / 1000, [f, gut] = flicker(t), lit = stageName === 'lit';
+    if (!reduce && t > nextMeteor) { shoot(); nextMeteor = t + 9 + Math.random() * 16; }
     // the carousel eases to the chosen candle
     if (!dragging) pos = reduce ? sel : Math.abs(sel - pos) < 0.001 ? sel : pos + (sel - pos) * (1 - Math.exp(-dt / speed * 10));
     layout();
@@ -371,11 +429,12 @@ export function openBreathe(opener: HTMLElement) {
     setOp(horizon, 0.3 + 0.7 * life, ` scale(${(0.86 + 0.26 * life).toFixed(3)})`);
     setOp(cool, lit ? 0.6 * (1 - life) : 0.3 - 0.14 * k);
     setOp(pool, catchK * (0.25 + 0.75 * life) * f);
+    setOp(bloom, catchK * (0.3 + 0.7 * life) * f);
     // the tree: its light layer shows as strongly as the flame burns (the breath and the same flicker), the leaves nearest
     // the light tremble, and on an out-breath one may fall
     const tb = performance.now(); bodhi.update(t, k, sway, outp, dt, lit ? catchK * (0.52 + 0.48 * k) * f : 0); treeN++; treeSum += performance.now() - tb;
     if (lit) {
-      const g = slides[sel].querySelector<HTMLElement>('.fb-glow')!; setOp(g, catchK * (0.5 + 0.5 * life));
+      const g = slides[sel].querySelector<HTMLElement>('.fb-glow')!; setOp(g, catchK * (0.48 + 0.4 * life));
       // the wooden wicks catch one after the other, then burn with the breath
       if (!(reduce && drawnStatic)) {
         flames?.draw(t, { k, f, gut, sway, grow: cur().wicks.map((_, i) => reduce ? 1 : clamp((sinceLit - 0.15 - i * 0.45) / 0.9, 0, 1)) });

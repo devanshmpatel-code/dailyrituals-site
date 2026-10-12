@@ -1,31 +1,47 @@
 /* The breathing pause: choose your candle at the foot of a Bodhi tree at night, light it, breathe with it. */
 .jbreathe.fb { position: fixed; inset: 0; z-index: 95; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); padding: 0; gap: 0;
   align-items: stretch; justify-items: stretch; align-content: stretch; justify-content: stretch;
-  text-align: center; color: #F3ECE2; background: #0E0B1A; opacity: 0; transition: opacity .45s ease; overflow: hidden; isolation: isolate;
+  text-align: center; color: #F3ECE2; background: #070A1C; opacity: 0; transition: opacity .45s ease; overflow: hidden; isolation: isolate;
   --pw: 420px; --floor: 15%; --gold: #E9D4A1; --cream: #FBF3E6; }
 .jbreathe.fb.open { opacity: 1; }
 
-/* the blue hour behind the tree: a soft slate blue high up, paling and warming to a dusky rose low on the horizon, then the
-   night on the ground (--groundY: where the ground meets the sky behind the trunk). Against it the crown shows its leaves
-   and its depth, and the trunk stands out as the dark, solid thing it is */
+/* the night behind the tree: a deep navy high up, deepening towards violet as it comes down to the horizon, then the night
+   on the ground (--groundY: where the ground meets the sky behind the trunk). Against it the tree stands as a dark
+   silhouette with the moon on its rim */
 .fb-sky { position: absolute; inset: 0; z-index: -6; overflow: hidden; pointer-events: none;
-  background: linear-gradient(180deg, #4E739C 0, #5F7FA4 calc(var(--groundY, 60vh) * .3), #7F8AA6 calc(var(--groundY, 60vh) * .62), #9C8C9E calc(var(--groundY, 60vh) * .84),
-    #A48390 calc(var(--groundY, 60vh) - 4px), #5A4558 calc(var(--groundY, 60vh) + 18px), #2C2030 calc(var(--groundY, 60vh) + 80px), #160F1A calc(var(--groundY, 60vh) + 200px), #0E0A13 100%); }
+  background: linear-gradient(180deg, #03050F 0, #070B22 calc(var(--groundY, 60vh) * .3), #0D1233 calc(var(--groundY, 60vh) * .6), #19173F calc(var(--groundY, 60vh) * .84),
+    #2A2152 calc(var(--groundY, 60vh) - 4px), #1A1430 calc(var(--groundY, 60vh) + 18px), #110C1E calc(var(--groundY, 60vh) + 80px), #0B0813 calc(var(--groundY, 60vh) + 200px), #08060D 100%); }
+/* the moon, out of sight high on the left: only its light, a cool haze in that corner of the sky */
+.fb-moon { position: absolute; left: -22vmax; top: -26vmax; width: 70vmax; height: 70vmax; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(170, 186, 255, .2) 0%, rgba(120, 138, 220, .09) 38%, rgba(90, 100, 190, .03) 66%, rgba(80, 90, 180, 0) 100%); }
 .fb-drift { position: absolute; inset: -3%; will-change: transform, opacity; animation: fbDrift 96s ease-in-out infinite alternate; }
 @keyframes fbDrift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-1.6%, .9%, 0) scale(1.035); } }
-/* the first stars of the evening, faint against the blue */
-.fb-stars { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: .38; }
-.fb-tw { position: absolute; inset: 0; opacity: .55; }
-.fb-tw i { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); border-radius: 50%; background: #FFF8EE; opacity: .3;
-  animation: fbTw var(--d) ease-in-out var(--l) infinite alternate; }
-.fb-tw i.b { box-shadow: 0 0 5px 1px rgba(255, 236, 214, .55), 0 0 14px 3px rgba(200, 190, 255, .16); }
-@keyframes fbTw { 0% { opacity: .06; transform: scale(.65); } 55% { opacity: calc(var(--a) * .7); } 100% { opacity: var(--a); transform: scale(1); } }
-/* the last warmth of the dusk low on the horizon behind the tree, so its trunk and roots stand out against it */
+/* the stars and the Milky Way, painted once (flamebreath.ts) */
+.fb-stars { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* and the stars that twinkle, each on its own irregular cycle, scattered over the sky above the ground */
+.fb-tw { position: absolute; left: 3%; right: 3%; top: 3%; height: var(--groundY, 60vh); }
+.fb-tw i { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); border-radius: 50%; background: #F6F4FF; opacity: var(--a);
+  animation: fbTw var(--d) linear var(--l) infinite; }
+.fb-tw i.w { background: #FFE6C8; } .fb-tw i.c { background: #D2DEFF; }
+.fb-tw i.b { box-shadow: 0 0 4px 1px rgba(230, 236, 255, .7), 0 0 12px 3px rgba(170, 190, 255, .22); }
+/* the brightest: a soft cross of light, as a bright star has to the eye */
+.fb-tw i.b::before, .fb-tw i.b::after { content: ""; position: absolute; left: 50%; top: 50%; width: calc(var(--s) * 5.5); height: 1px; margin: -.5px 0 0 calc(var(--s) * -2.75);
+  background: linear-gradient(90deg, rgba(220, 230, 255, 0), rgba(230, 236, 255, .55) 50%, rgba(220, 230, 255, 0)); }
+.fb-tw i.b::after { transform: rotate(90deg); }
+/* the twinkle: a star steady for a while, then a few quick flickers dimmer and back, never in step with the others */
+@keyframes fbTw { 0%, 100% { opacity: var(--a); transform: scale(1); } 9% { opacity: calc(var(--a) * .35); transform: scale(.7); } 14% { opacity: var(--a); transform: scale(1.08); }
+  21% { opacity: calc(var(--a) * .6); } 27% { opacity: calc(var(--a) * .95); } 52% { opacity: calc(var(--a) * .5); transform: scale(.85); } 58% { opacity: var(--a); transform: scale(1); }
+  71% { opacity: calc(var(--a) * .18); transform: scale(.6); } 80% { opacity: calc(var(--a) * .9); transform: scale(1); } }
+/* a shooting star: a thin streak with a bright head, sent across the sky now and then (flamebreath.ts) */
+.fb-meteor { position: absolute; left: 0; top: 0; width: 120px; height: 1.6px; border-radius: 2px; opacity: 0; pointer-events: none; transform-origin: 100% 50%;
+  background: linear-gradient(90deg, rgba(200, 214, 255, 0) 0%, rgba(210, 222, 255, .35) 55%, rgba(240, 244, 255, .9) 92%, #fff 100%); filter: drop-shadow(0 0 3px rgba(190, 206, 255, .85)); }
+/* a faint glow of the night low on the horizon behind the tree (the last of the twilight, long gone violet), so its trunk
+   and roots stand out against it */
 .fb-horizon { position: absolute; z-index: -5; left: calc(50% - min(760px, 90vw)); width: min(1520px, 180vw); top: calc(var(--groundY, 70vh) - 46vh); height: 62vh; pointer-events: none; transform-origin: 50% 74%;
-  background: radial-gradient(ellipse 50% 50% at 50% 74%, rgba(214, 138, 112, .42) 0%, rgba(176, 100, 112, .26) 26%, rgba(112, 64, 104, .13) 50%, rgba(70, 40, 90, 0) 74%); will-change: opacity, transform; }
-/* the cool of the out-breath: the dusk deepens and turns blue, then warms again as you breathe in */
+  background: radial-gradient(ellipse 50% 50% at 50% 74%, rgba(112, 92, 190, .3) 0%, rgba(84, 70, 168, .18) 28%, rgba(54, 44, 130, .08) 52%, rgba(40, 30, 100, 0) 76%); will-change: opacity, transform; }
+/* the cool of the out-breath: the night deepens, then warms again as you breathe in */
 .fb-cool { position: absolute; inset: 0; z-index: -4; pointer-events: none; opacity: .3; will-change: opacity;
-  background: linear-gradient(180deg, rgba(14, 22, 52, .5) 0%, rgba(16, 22, 56, .36) 48%, rgba(8, 10, 34, .5) 100%); }
+  background: linear-gradient(180deg, rgba(2, 4, 16, .5) 0%, rgba(4, 6, 22, .36) 48%, rgba(2, 2, 12, .5) 100%); }
 
 /* top: sound and Done */
 .fb-bar { position: absolute; z-index: 30; top: max(14px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); display: flex; gap: 8px; }
@@ -39,7 +55,7 @@
    candle's light warms the crown */
 .fb-head { position: relative; padding: clamp(62px, 9vh, 80px) 16px 0; min-height: 0; }
 .fb-head::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 18%; width: min(760px, 120vw); height: 120%; transform: translateX(-50%); pointer-events: none;
-  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(10, 7, 18, .72) 0%, rgba(10, 7, 18, .5) 42%, rgba(10, 7, 18, 0) 100%); }
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(5, 6, 18, .55) 0%, rgba(5, 6, 18, .36) 42%, rgba(5, 6, 18, 0) 100%); }
 .fb-head p { text-shadow: 0 1px 2px rgba(8, 5, 14, .9), 0 0 18px rgba(8, 5, 14, .8); }
 .fb-eyebrow { margin: 0 0 10px; font: 600 12px/1.2 var(--body, system-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--gold); transition: opacity .5s; }
 .jbreathe.fb .jb-word { font-family: var(--display); font-weight: 400; font-size: 25px; line-height: 1.05; margin: 0; letter-spacing: -.005em; color: rgba(251, 243, 230, .82);
@@ -64,12 +80,16 @@
 /* the ground running away into the dusk: pale and hazy far off, darkening as it comes towards us (the far trees and the
    mist on the horizon are painted with the tree, see bodhi.ts) */
 .fb-ground { position: absolute; z-index: -3; left: 0; right: 0; top: calc(var(--groundY, 70vh) - 10px); bottom: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(70, 54, 72, .5) 0, rgba(40, 29, 44, .82) 60px, #1A1220 140px, #140E19 calc(140px + var(--pw) * .4), #0D0911 100%);
+  background: linear-gradient(180deg, rgba(34, 30, 66, .55) 0, rgba(22, 18, 40, .85) 60px, #120E20 140px, #0E0A18 calc(140px + var(--pw) * .4), #09070F 100%);
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 70px); mask-image: linear-gradient(180deg, transparent 0, #000 70px); }
 /* close to the flame the air itself glows a little, over the light the tree's layer throws on the ground */
 .fb-pool { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * .1); width: calc(var(--pw) * 1.7); height: calc(var(--pw) * .5); transform: translateX(-50%); pointer-events: none; opacity: 0;
   background: radial-gradient(ellipse 50% 50% at 54% 46%, rgba(255, 176, 110, .22) 0%, rgba(255, 150, 90, .08) 44%, rgba(255, 140, 80, 0) 72%); mix-blend-mode: screen; will-change: opacity; }
 .fb-track { position: absolute; inset: 0; }
+/* and the warm bloom of the flame in the dark air around it, over the tree and the sky behind (screen: light added) */
+.fb-bloom { position: absolute; left: 50%; top: 50%; width: calc(var(--pw) * 3.6); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0;
+  mix-blend-mode: screen; will-change: opacity;
+  background: radial-gradient(closest-side, rgba(255, 196, 124, .3) 0%, rgba(255, 176, 104, .19) 8%, rgba(255, 156, 92, .1) 22%, rgba(240, 136, 84, .045) 42%, rgba(220, 120, 80, .014) 68%, rgba(220, 120, 80, 0) 100%); }
 /* every candle at the same scale and on the same floor: --sc and --drop come from picker.ts (scale, foot) */
 .fb-c { position: absolute; left: 50%; bottom: calc(var(--floor) - var(--pw) * var(--drop, 0)); width: calc(var(--pw) * var(--sc, 1)); aspect-ratio: var(--ar); padding: 0; margin: 0; border: 0; background: none; color: inherit; cursor: pointer;
   transform-origin: 50% 100%; transition: opacity .6s ease; -webkit-tap-highlight-color: transparent; }
@@ -86,8 +106,11 @@
 .fb-pic img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; -webkit-user-drag: none; }
 .fb-pic .fb-glow { opacity: 0; will-change: opacity; }
 .fb-flame { position: absolute; z-index: 3; pointer-events: none; }
-.fb-halo { position: absolute; z-index: 2; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0; will-change: opacity; mix-blend-mode: screen;
-  background: radial-gradient(closest-side, rgba(255, 198, 130, .42) 0%, rgba(255, 168, 98, .17) 32%, rgba(255, 150, 90, .05) 62%, rgba(255, 150, 90, 0) 100%); }
+.fb-halo { position: absolute; z-index: 2; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0; will-change: opacity;
+  /* the warm bloom of a flame in the dark air: bright and tight close in, then falling away softly, as light does (roughly
+     with the square of the distance), so there is no edge to it */
+  background: radial-gradient(closest-side, rgba(255, 232, 182, .8) 0%, rgba(255, 206, 136, .52) 5%, rgba(255, 182, 108, .3) 12%, rgba(255, 162, 92, .17) 23%,
+    rgba(255, 146, 82, .09) 38%, rgba(250, 132, 72, .04) 56%, rgba(240, 122, 66, .012) 78%, rgba(240, 120, 64, 0) 100%); }
 
 /* below: the candle's name, price and buttons; while it burns, the breath's words and the offer */
 .fb-low { display: grid; padding: 0 16px max(22px, env(safe-area-inset-bottom)); }
@@ -122,7 +145,7 @@
 .fb-actions, .fb-offer-a { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
 .jbreathe.fb .fb-light, .jbreathe.fb .fb-home { min-height: 52px; padding: 0 26px; border-radius: 999px; border: 0; background: var(--cream); color: #231A2B; font: 700 15px var(--body, system-ui); gap: 8px;
   box-shadow: 0 14px 40px -14px rgba(255, 190, 120, .7); }
-.jbreathe.fb .fb-light svg { color: #D9873A; }
+.jbreathe.fb .fb-light svg { color: #D9873A; flex: none; }
 .jbreathe.fb .fb-light:hover, .jbreathe.fb .fb-home:hover { background: #fff; box-shadow: 0 16px 46px -12px rgba(255, 190, 120, .85); }
 .jbreathe.fb .fb-add, .jbreathe.fb .fb-pair { min-height: 52px; padding: 0 24px; border-radius: 999px; background: rgba(16, 11, 28, .55); color: var(--cream); border: 1px solid rgba(233, 212, 161, .62); font: 700 15px var(--body, system-ui); box-shadow: none; }
 .jbreathe.fb .fb-add:hover, .jbreathe.fb .fb-pair:hover { border-color: var(--gold); background: rgba(233, 212, 161, .1); }
@@ -161,9 +184,13 @@
   .jbreathe.fb .fb-home, .jbreathe.fb .fb-pair { flex: 0 0 auto; }
   .fb-breath:has(.fb-offer:not([hidden])) .jb-sub { display: none; }
 }
+/* the narrowest phones (360 wide): the two buttons still share a row, each keeping its flame and its price */
+@media (max-width: 400px) { .jbreathe.fb .fb-light, .jbreathe.fb .fb-add { padding: 0 14px; } }
+@media (max-width: 374px) { .jbreathe.fb .fb-light, .jbreathe.fb .fb-add { padding: 0 12px; font-size: 13px; gap: 6px; } }
 @media (max-height: 700px) and (min-width: 701px) { .fb-head { padding-top: 54px; } .fb-line { display: none; } }
 @media (prefers-reduced-motion: reduce) {
   .jbreathe.fb, .jbreathe.fb .jb-word, .jbreathe.fb .jb-word.fb-in, .jbreathe.fb .jb-word.fb-in2, .fb-c, .fb-info, .fb-breath, .fb-offer, .fb-offer-t, .fb-offer-a { transition: none; animation: none; }
   .fb-drift, .fb-tw i { animation: none; }
-  .fb-tw i { opacity: calc(var(--a) * .7); }
+  .fb-tw i { opacity: calc(var(--a) * .8); }
+  .fb-meteor { display: none; }
 }

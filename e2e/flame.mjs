@@ -1,7 +1,7 @@
-// The breathing pause: choose your candle at the foot of a Bodhi tree at night, light it, breathe with it.
+// The breathing pause: choose your candle at the foot of a Bodhi tree under the night sky, light it, breathe with it.
 // Opened by the breathing orb. Stage 1 is a carousel of the shop's real candles (only Cabana and Verdant have photographs),
-// unlit, standing on the ground at the trunk's foot, with the live price and Add to cart; the tree's crown spreads across
-// the top; the breath already keeps its pace at the top. "Light it & breathe" lights the wooden wicks (canvas flames on the
+// unlit, standing on the ground at the trunk's foot, with the live price and Add to cart; the whole tree is in the picture,
+// a dark silhouette against a starry navy-to-violet night; the breath already keeps its pace at the top. "Light it & breathe" lights the wooden wicks (canvas flames on the
 // wicks, the lit glass fading in) and the in / hold / out cycle begins again with the candle: its light on the tree and the
 // ground rises on the in-breath and settles on the out-breath. After three breaths a quiet offer appears.
 import { chromium } from 'playwright-core';
@@ -32,6 +32,9 @@ const flameSize = p => p.evaluate(() => { const ph = document.querySelector('.fb
 }); });
 // before this change, measured the same way at Hold (the most of three breaths, desktop and phone): the tumbler's flame and the tin's
 const FLAME_BEFORE = [0.102, 0.078];
+// the chosen candle's width (Cabana's photo, in CSS px) before the tree was shown whole, at the two viewports below: the
+// candles now stand about a fifth smaller
+const CANDLE_BEFORE = { desktop: 217, mobile: 142 };
 // the tree: its canvas, where its trunk stands (data-foot, data-fork, data-trunk) and its light layer
 const treeInfo = p => p.evaluate(() => {
   const c = document.querySelector('.jbreathe canvas.fb-bodhi'), g = c.getContext('2d'), W = c.width, H = c.height, d = g.getImageData(0, 0, W, H).data, s = W / c.clientWidth;
@@ -39,7 +42,7 @@ const treeInfo = p => p.evaluate(() => {
   // the crown across the top: how much of the top tenth of the window is painted, in each fifth across
   const band = [0, 1, 2, 3, 4].map(k => { let m = 0, t = 0; for (let y = 0; y < Math.round(H * 0.1); y += 3) for (let x = Math.round(W * k / 5); x < Math.round(W * (k + 1) / 5); x += 3) { t++; if (d[(y * W + x) * 4 + 3] > 120) m++; } return m / t; });
   const lit = document.querySelector('.jbreathe .fb-bodhi-lit');
-  return { painted: n / (d.length / 4 / 7), band, ready: !!c.dataset.readyMs, foot: c.dataset.foot?.split(',').map(Number), fork: Number(c.dataset.fork), trunk: Number(c.dataset.trunk), s,
+  return { painted: n / (d.length / 4 / 7), band, ready: !!c.dataset.readyMs, foot: c.dataset.foot?.split(',').map(Number), fork: Number(c.dataset.fork), trunk: Number(c.dataset.trunk), flare: Number(c.dataset.flare), crown: c.dataset.crown?.split(',').map(Number), s,
     litOp: Number(getComputedStyle(lit).opacity), litPx: lit.width * lit.height };
 });
 // how dark the scene is behind a piece of text: the text is hidden for a moment, the box is photographed, and the contrast
@@ -68,13 +71,25 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await open(p);
   const dlg = await p.evaluate(() => { const e = document.querySelector('.jbreathe'); return [e.getAttribute('role'), e.getAttribute('aria-modal'), !!e.getAttribute('aria-label'), e.dataset.stage]; });
   ok(`${label}: the orb opens a modal dialog with a name, on the candle picker`, dlg[0] === 'dialog' && dlg[1] === 'true' && dlg[2] && dlg[3] === 'pick', dlg.join(','));
-  const sky = await p.evaluate(() => { const c = document.querySelector('.jbreathe .fb-stars'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) n++; return { n, tw: document.querySelectorAll('.jbreathe .fb-tw i').length, anim: getComputedStyle(document.querySelector('.fb-tw i')).animationName, drift: getComputedStyle(document.querySelector('.fb-drift')).animationName }; });
-  ok(`${label}: a night sky: painted stars, stars that twinkle on their own cycles, a slow drift`, sky.n > 100 && sky.tw > 30 && sky.anim !== 'none' && sky.drift !== 'none', JSON.stringify(sky));
+  const sky = await p.evaluate(() => { const c = document.querySelector('.jbreathe .fb-stars'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) n++; return { n, tw: document.querySelectorAll('.jbreathe .fb-tw i').length, bright: document.querySelectorAll('.jbreathe .fb-tw i.b').length, anim: getComputedStyle(document.querySelector('.fb-tw i')).animationName, drift: getComputedStyle(document.querySelector('.fb-drift')).animationName }; });
+  ok(`${label}: a night sky: many painted stars, stars that twinkle on their own cycles, a few brighter ones, a slow drift`, sky.n > 300 && sky.tw > 40 && sky.bright >= 3 && sky.anim !== 'none' && sky.drift !== 'none', JSON.stringify(sky));
+  // a true night: deep navy high up, deepening to violet towards the horizon (no dusk blue or rose)
+  const stops = await p.evaluate(() => (getComputedStyle(document.querySelector('.jbreathe .fb-sky')).backgroundImage.match(/rgb\(\d+, \d+, \d+\)/g) ?? []).slice(0, 5).map(s => s.match(/\d+/g).map(Number)));
+  ok(`${label}: the sky is a true night, deep navy to violet`, stops.length === 5 && stops.every(([r, g, b]) => b > r && b > g && r + g + b < 200) && stops[0][2] < 30 && stops[4][0] > stops[4][1] + 6, JSON.stringify(stops));
+  // the stars twinkle at random: over a third of a second many change, and at any moment they are not in step
+  const twk = () => p.evaluate(() => [...document.querySelectorAll('.jbreathe .fb-tw i')].slice(0, 30).map(i => Number(getComputedStyle(i).opacity)));
+  const tw1 = await twk(); await p.waitForTimeout(350); const tw2 = await twk();
+  const changed = tw1.filter((v, i) => Math.abs(v - tw2[i]) > 0.02).length, distinct = new Set(tw1.map(v => v.toFixed(2))).size;
+  ok(`${label}: the stars twinkle, each at its own moment`, changed >= 8 && distinct >= 12, `${changed} of 30 changed, ${distinct} different brightnesses`);
   // the Bodhi tree: painted (once, while the page is idle), its crown spreading right across the top of the window, unlit
   await p.waitForFunction(() => !!document.querySelector('.jbreathe canvas.fb-bodhi')?.dataset.readyMs, null, { timeout: 15000 });
   const tree0 = await treeInfo(p);
-  ok(`${label}: the Bodhi tree is painted behind the candles`, tree0.ready && tree0.painted > 0.25, `${(tree0.painted * 100).toFixed(0)}% of the window`);
-  ok(`${label}: its crown spreads across the top like a canopy, from edge to edge`, tree0.band.every(f => f > 0.5), tree0.band.map(f => f.toFixed(2)).join(' '));
+  ok(`${label}: the Bodhi tree is painted behind the candles`, tree0.ready && tree0.painted > 0.2, `${(tree0.painted * 100).toFixed(0)}% of the window`);
+  // the whole tree in the picture: the top of the window is night sky, and the crown's dome rises below it, spreading
+  // nearly across the window (on a wide screen within it, on a phone a little past its edges)
+  const vw = await p.evaluate(() => innerWidth), [cTop, cL, cR] = tree0.crown;
+  ok(`${label}: the whole crown is in the picture under the night sky, spreading across the window`, tree0.band.every(f => f < 0.15) && cTop > 40 && cR - cL > vw * 0.85 && (label === 'mobile' || (cL > -vw * 0.02 && cR < vw * 1.02)),
+    `top band ${tree0.band.map(f => f.toFixed(2)).join(' ')}; crown from ${cTop}, ${cL} to ${cR}`);
   ok(`${label}: before a candle is lit, the tree is in the night (its light layer is off)`, tree0.litOp === 0 && tree0.litPx > 0, `${tree0.litOp}`);
   ok(`${label}: the tree is under the words and buttons, never over them`, await p.evaluate(() => { const z = n => Number(getComputedStyle(n).zIndex) || 0; const t = document.querySelector('.fb-tree'); return z(t) < 0 && getComputedStyle(t).pointerEvents === 'none' && ['.fb-head', '.fb-low', '.fb-bar', '.fb-stage'].every(s => z(document.querySelector(s)) >= 0); }));
   // the candles at its foot: the chosen one in the middle in front of the trunk, small beside it; the others smaller, dimmer and further back
@@ -82,7 +97,11 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
     const a = r(on.querySelector('.fb-ph')), b = r(off.querySelector('.fb-ph'));
     return { cx: (a.left + a.right) / 2, top: a.top, bottom: a.bottom, w: a.width, h: a.height, ow: b.width, obottom: b.bottom, oc: (b.left + b.right) / 2, dim: Number(off.style.getPropertyValue('--dim')), op: Number(getComputedStyle(off).opacity) }; });
   ok(`${label}: the chosen candle stands centred at the foot of the trunk, in front of it`, Math.abs(foot.cx - tree0.foot[0]) < tree0.trunk * 0.25 && foot.bottom > tree0.foot[1] && foot.bottom - tree0.foot[1] < foot.h * 0.6, `candle ${foot.cx.toFixed(0)},${foot.bottom.toFixed(0)} trunk foot ${tree0.foot.map(Math.round)}`);
-  ok(`${label}: the tree is large beside the candles: the trunk is broader than the three of them and forks well above them`, tree0.trunk > foot.w * 0.8 && tree0.fork < foot.top - foot.h * 0.25, `trunk ${tree0.trunk} vs candles ${foot.w.toFixed(0)} wide; fork at ${tree0.fork}, candles' top ${foot.top.toFixed(0)}`);
+  ok(`${label}: the tree is large beside the candles: its flared foot is broader than the three of them, and it forks well above them`, tree0.flare > foot.w && tree0.trunk > foot.w * 0.5 && tree0.fork < foot.top - foot.h * 0.12, `trunk ${tree0.trunk} (foot ${tree0.flare}) vs candles ${foot.w.toFixed(0)} wide; fork at ${tree0.fork}, candles' top ${foot.top.toFixed(0)}`);
+  // the candles a fifth smaller than before, and never cut off: whole in the window, below the words, above their name
+  const room = await p.evaluate(() => ({ head: document.querySelector('.fb-eyebrow').getBoundingClientRect().bottom, info: document.querySelector('.fb-mood').getBoundingClientRect().top, vw: innerWidth, vh: innerHeight }));
+  ok(`${label}: the candles stand about a fifth smaller than before`, foot.w / CANDLE_BEFORE[label] > 0.78 && foot.w / CANDLE_BEFORE[label] < 0.86, `${foot.w.toFixed(0)} px wide, ${(foot.w / CANDLE_BEFORE[label]).toFixed(2)}x`);
+  ok(`${label}: the chosen candle is whole in the picture, clear of the words above and below`, foot.top > room.head && foot.bottom < room.info && foot.cx - foot.w / 2 >= 0 && foot.cx + foot.w / 2 <= room.vw, JSON.stringify({ top: foot.top, bottom: foot.bottom, ...room }));
   ok(`${label}: the other candle stands smaller, dimmer and further back to the side, still in the carousel`, foot.ow < foot.w * 0.75 && foot.dim < 0.7 && foot.op > 0.3 && foot.obottom < foot.bottom && Math.abs(foot.oc - foot.cx) > foot.w * 0.6, JSON.stringify({ w: foot.ow / foot.w, dim: foot.dim, op: foot.op }));
   // only the shop's real candles, photographed, with their images loaded
   await p.waitForFunction(() => [...document.querySelectorAll('.jbreathe .fb-c img')].every(i => i.complete && i.naturalWidth > 0));
@@ -184,6 +203,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   for (let i = 0; i < 6; i++) await p.keyboard.press('Tab');
   ok(`${label}: focus stays inside`, await p.evaluate(() => !!document.activeElement?.closest('.jbreathe')));
   await p.keyboard.press('Shift+Tab'); ok(`${label}: and backwards`, await p.evaluate(() => !!document.activeElement?.closest('.jbreathe')));
+  ok(`${label}: now and then a shooting star crosses the sky`, await p.evaluate(() => Number(document.querySelector('.jbreathe').dataset.meteors) >= 1));
   const cost = await p.evaluate(() => [Number(document.querySelector('.jbreathe').dataset.frameMs), Number(document.querySelector('.jbreathe').dataset.frameMaxMs)]);
   ok(`${label}: a frame's own work is small`, cost[0] < 4, `mean ${cost[0]} ms, longest ${cost[1]} ms`);
   await p.keyboard.press('Escape'); await p.waitForTimeout(600);
@@ -210,8 +230,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   // reduced motion: no drift or twinkle, no sound toggle, a steady lit flame, the words still cycle
   const r = await (await b.newContext({ viewport: vp, reducedMotion: 'reduce' })).newPage(); r.setDefaultTimeout(9000); await setupMocks(r);
   await open(r);
-  const still = await r.evaluate(() => [getComputedStyle(document.querySelector('.fb-drift')).animationName, getComputedStyle(document.querySelector('.fb-tw i')).animationName, document.querySelectorAll('.fb-sound').length]);
-  ok(`${label}: reduced motion: the sky is still and there is no sound`, still[0] === 'none' && still[1] === 'none' && still[2] === 0, still.join(','));
+  const still = await r.evaluate(() => [getComputedStyle(document.querySelector('.fb-drift')).animationName, getComputedStyle(document.querySelector('.fb-tw i')).animationName, document.querySelectorAll('.fb-sound').length, getComputedStyle(document.querySelector('.fb-meteor')).display]);
+  ok(`${label}: reduced motion: the sky is still (no twinkle, no shooting star) and there is no sound`, still[0] === 'none' && still[1] === 'none' && still[2] === 0 && still[3] === 'none', still.join(','));
   await r.locator('.fb-light').click(); await r.waitForTimeout(800);
   const a = await flamePx(r); await r.waitForTimeout(400); const c2 = await flamePx(r);
   ok(`${label}: reduced motion keeps a steady, lit flame`, a > 30 && a === c2, `${a} / ${c2}`);
@@ -221,6 +241,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: reduced motion: the tree stands still and lit, no leaf moves or falls`, ts1[0] === ts2[0] && ts1[1] === ts2[1] && ts1[1] > 0.5, `${ts1} / ${ts2}`);
   const seenR = new Set(); for (let i = 0; i < 30; i++) { seenR.add(await r.evaluate(() => document.querySelector('.jbreathe').dataset.phase)); await r.waitForTimeout(50); }
   ok(`${label}: reduced motion: the words still cycle`, ['Breathe in', 'Hold', 'Breathe out'].every(w => seenR.has(w)), [...seenR].join(' / '));
+  ok(`${label}: reduced motion: no shooting star was sent`, await r.evaluate(() => !document.querySelector('.jbreathe').dataset.meteors));
   await r.context().close();
 }
 
