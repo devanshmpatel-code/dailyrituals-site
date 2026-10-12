@@ -113,7 +113,8 @@
   background: radial-gradient(120% 70% at 50% 100%, rgba(255, 214, 160, .95), rgba(255, 214, 160, 0) 60%), linear-gradient(180deg, #F6DDB6 0%, #EFB98F 46%, #C98674 78%, #8C5A6B 100%); }
 .cc-ring { position: absolute; left: 50%; top: 0; width: 104%; aspect-ratio: 1; translate: -50% 0; border-radius: 50%; border: 1px solid rgba(201, 163, 90, .5); pointer-events: none; }
 .cc-ring::after { content: ""; position: absolute; right: 9%; top: 15%; width: 7px; height: 7px; border-radius: 50%; background: var(--gold-leaf, #C9A35A); }
-.claire-cut img { position: absolute; left: -6%; bottom: 0; width: 112%; max-width: none; height: auto; display: block; }
+/* her portrait plate (4:5, transparent, eyes a third down, faded where the photograph ends) fills the arch from the bottom */
+.claire-cut img { position: absolute; left: -3%; top: -3%; width: 106%; height: 103%; max-width: none; object-fit: cover; object-position: 50% 100%; display: block; }
 .claire-in .tx h2 { font-size: clamp(34px, 4vw, 56px); line-height: 1.05; }
 @media (max-width: 820px) { .claire-cut { max-width: 320px; } }
 

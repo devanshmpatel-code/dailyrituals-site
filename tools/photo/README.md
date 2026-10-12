@@ -7,10 +7,9 @@ These scripts produce every studio photograph the site uses from Claire's origin
    - the sizes in `web/`;
    - the square hero crops (`web/hero-*`) with a soft vignette;
    - the product cut-outs in `cut/`;
-   - Claire's portraits;
    - regraded copies of the archive pictures in `moons/`.
 
-Requirements (Python 3.11): `opencv-python-headless`, `numpy`, `pillow`, `rembg`, `onnxruntime`, `pymatting`. The cut-outs use the rembg models `isnet-general-use` and `u2net`. Claire's cut-out also uses `birefnet-portrait`, combined with the `u2net` mask so the sofa behind her drops out, then cleaned at the edges with pymatting's `estimate_foreground_ml`. `derive.py` reads that result from `/tmp/retouch/claire-cut-clean.png`.
+Requirements (Python 3.11): `opencv-python-headless`, `numpy`, `pillow`, `rembg`, `onnxruntime`, `pymatting`. The cut-outs use the rembg models `isnet-general-use` and `u2net`. Claire's portrait is made separately by `claire_portrait.py` (below), which also uses `birefnet-portrait` and `u2net_human_seg`.
 
 Note: `derive.py` regrades `moons/` in place. Run it only from the original (ungraded) archive pictures, or they will be graded twice.
 
@@ -46,3 +45,30 @@ objects' real shapes instead of a mask's outline. Run them from the repository r
 The masters are `/tmp/retouch/master/<name>.png` (grade.py); when one is missing `moon_faces.master()` grades it on the fly.
 The flawed whole-tin cut-outs that no page showed (apple-cider, candy-cane-lane, easter-bread, mulled-wine, sea-salt-sage)
 were removed rather than left to be picked up later.
+
+## Claire's portrait and the glass tumblers (October 2026, second retouch)
+The owner asked for Claire's picture to fit its frames better ("too close up"), as a professional cut-out with nothing of
+the original background leaking and soft fades where the photograph ends, on the home page and the coaching page; and
+for the glass candles' missing bottom-left glass to be put back everywhere (Cabana behind the shelf, the breathing pause).
+
+- `claire_portrait.py public/img/studio` (with the rembg models in `/root/.rembg/models/<name>/`): rebuilds every Claire
+  image from `claire.jpg`. Three rembg models and hand-drawn sofa areas make the trimap; closed-form matting (pymatting)
+  finds the alpha, with the u2net matte along the cushion right of her hair and a traced curve by her ear where the
+  compressed photograph defeats matting; the edges are decontaminated (`estimate_foreground_ml`, then pulled towards her
+  own colour just inside). The crown the photograph cut flat is completed from the hair's own pixels along its flow. A
+  gentle retouch evens and warms the skin (texture kept, no reshaping). It writes:
+  - `cut/claire-900.webp` (900 x 1125) and `cut/claire-480.webp` (480 x 600): a transparent 4:5 plate for the arch frames
+    (home Meet Claire, coaching opener): head and shoulders centred, room above her head, the torso and the raised arm
+    fading softly to transparent where the photograph ends. The frames show it with `object-fit: cover` from the bottom.
+  - `web/claire-round.webp` (720 x 720): head and shoulders on the warm studio backdrop (coaching Meet your coach, story).
+  - `web/claire-900.webp` (826 x 900): the same on the backdrop (no page uses it at present).
+- `glass_restore.py public/img/studio`: puts back the glass the background removal cut away from the tumblers in
+  `cut/cabana-*`, `cut/verdant-*` and `picker/*` (lit, glow and unlit; 900 and 480). Each cut-out is registered to its
+  master (template match, then ECC); the tumbler's outline is its walls plus a rounded base fitted to the side the cut
+  kept, mirrored across the tumbler's axis to close the side it lost; inside it, the master's own pixels come back behind
+  the lid's and tin's edges, mapped to each variant's grade by a polynomial colour fit over the whole tumbler. Half-
+  transparent pixels inside the tins and lid are made opaque. Image sizes are unchanged. Run it after `picker_foot.py` and
+  `cut_feet.py`, once.
+- `frame_shots.mjs` (Node, with the preview running): screenshots of every frame that shows the portrait or a tumbler
+  (home, coaching opener, Meet your coach, story, the home shelf, the shop's candle heading, the coaching cue kit, the
+  breathing pause) at 1440, 1024, 390 and 360 px.

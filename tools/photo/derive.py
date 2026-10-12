@@ -2,9 +2,8 @@
 
 - web/<name>-1000.webp and -560.webp (scaled, some cropped to the aspect the layout uses)
 - web/hero-<name>-1000.webp and -720.webp: square crops for the hero arch, with a soft vignette
-- cut/: product cut-outs re-cut from the retouched photographs; Claire from /tmp/retouch/claire-cut.png
-- web/claire-900.webp: the coaching portrait (Claire's cut-out over a warm studio backdrop)
-- web/claire-round.webp: the story page's round portrait, the same treatment
+- cut/: product cut-outs re-cut from the retouched photographs (then cut_feet.py and glass_restore.py; Claire's
+  portraits, cut/claire-* and web/claire-*, are made by claire_portrait.py)
 - moons/*.webp: the circular archive pictures, regraded in place (alpha kept)
 Usage: python3 -I derive.py <repo>/public/img/studio
 """
@@ -95,37 +94,7 @@ for name, src, hard in [('verdant', 'verdant-candles', True), ('cabana', 'cabana
             save(out.resize((w, round(out.height * w / out.width)), Image.LANCZOS), f'{OUT}/cut/{name}-{w}.webp', 84)
     print(name, out.size)
 
-claire = Image.open('/tmp/retouch/claire-cut.png').convert('RGBA')
-claire = claire.crop(claire.getbbox())
-for w in (480, 900):
-    save(claire.resize((w, round(claire.height * w / claire.width)), Image.LANCZOS), f'{OUT}/cut/claire-{w}.webp', 86)
-
-
-# Claire over a warm studio backdrop (soft light behind her, the brand's sand and rose), for the photo slots that are not cut-outs
-def backdrop(w, h):
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    top = np.array([246, 226, 196], np.float32); bot = np.array([196, 140, 128], np.float32)
-    t = (yy / h)[..., None]
-    base = top * (1 - t) + bot * t
-    glow = np.exp(-(((xx - w * .5) / (w * .55)) ** 2 + ((yy - h * .38) / (h * .5)) ** 2))[..., None]
-    base = base * (1 - .35 * glow) + np.array([255, 236, 210], np.float32) * (.35 * glow)
-    return Image.fromarray(np.clip(base, 0, 255).astype(np.uint8)).convert('RGBA')
-
-
-def on_backdrop(size, scale, ox, oy):
-    W, H = size
-    bg = backdrop(W, H)
-    c = claire.resize((round(claire.width * scale), round(claire.height * scale)), Image.LANCZOS)
-    bg.alpha_composite(c, (ox, oy))
-    return bg.convert('RGB')
-
-
-# coaching portrait slot: 826 x 900, object-position 46% 14%
-p = on_backdrop((826, 900), 826 * 1.04 / claire.width, -18, 900 - round(claire.height * 826 * 1.04 / claire.width))
-save(p, f'{OUT}/web/claire-900.webp', 86)
-# story page round portrait: 360 square, head and shoulders
-r = on_backdrop((360, 360), 360 * 1.25 / claire.width, -45, 0)
-save(r, f'{OUT}/web/claire-round.webp', 88)
+# Claire's portraits are made by claire_portrait.py (from public/img/studio/claire.jpg).
 
 # ---- the archive's circular pictures: regraded in place ----
 for f in sorted(os.listdir(f'{OUT}/moons')):
