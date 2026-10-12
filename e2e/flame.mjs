@@ -78,7 +78,9 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: the sky is a true night, deep navy to violet`, stops.length === 5 && stops.every(([r, g, b]) => b > r && b > g && r + g + b < 200) && stops[0][2] < 30 && stops[4][0] > stops[4][1] + 6, JSON.stringify(stops));
   // the stars twinkle at random: over a third of a second many change, and at any moment they are not in step
   const twk = () => p.evaluate(() => [...document.querySelectorAll('.jbreathe .fb-tw i')].slice(0, 30).map(i => Number(getComputedStyle(i).opacity)));
-  const tw1 = await twk(); await p.waitForTimeout(350); const tw2 = await twk();
+  // (wait for real painted frames as well as the clock: a busy machine can hold frames back, which is not a still sky)
+  const frames = n => p.evaluate(k => new Promise(r => { const f = () => (--k > 0 ? requestAnimationFrame(f) : r()); requestAnimationFrame(f); }), n);
+  const tw1 = await twk(); await p.waitForTimeout(350); await frames(3); const tw2 = await twk();
   const changed = tw1.filter((v, i) => Math.abs(v - tw2[i]) > 0.02).length, distinct = new Set(tw1.map(v => v.toFixed(2))).size;
   ok(`${label}: the stars twinkle, each at its own moment`, changed >= 8 && distinct >= 12, `${changed} of 30 changed, ${distinct} different brightnesses`);
   // the Bodhi tree: painted (once, while the page is idle), its crown spreading right across the top of the window, unlit
