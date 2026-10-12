@@ -35,8 +35,14 @@
 .dayhero #sunC { stroke: rgba(255, 255, 255, .95); stroke-width: 3px; }
 .dayhero:not(.sky-dark) .hint { text-shadow: 0 0 10px rgba(255, 248, 240, .9), 0 0 3px rgba(255, 248, 240, .9); }
 .dayhero.sky-dark .hint { text-shadow: 0 0 10px rgba(16, 10, 26, .9), 0 0 3px rgba(16, 10, 26, .9); }
-/* phone: smaller, lighter birds in the picture band */
-@media (max-width: 820px) { .dayhero .bird svg { width: 17px; height: 8px; } .dayhero .bird { filter: opacity(.7); } }
+/* phone: smaller, lighter birds in the picture band; a smaller glow round the sun or moon, so it fades out before the top of
+   the picture rather than being cut off there */
+@media (max-width: 820px) { .dayhero .bird svg { width: 17px; height: 8px; } .dayhero .bird { filter: opacity(.7); } .dayhero:has(.stack.tins) .sunorb { width: 250px; height: 250px; }
+  /* (only the tight glow round the disc: the wide blurred one was cut off square at high pixel density) */
+  .dayhero:has(.stack.tins) .sunorb::after { box-shadow: 0 0 30px 8px rgba(var(--orb-rgb, 255, 241, 198), .9); } }
+/* the time-of-day pills stay legible where they sit over the dark knoll */
+.dayhero:has(.stack.tins):not(.sky-dark) .moments button:not([aria-current="true"]) { background: rgba(255, 255, 255, .58); }
+.dayhero:has(.stack.tins).sky-dark .moments button:not([aria-current="true"]) { background: rgba(20, 14, 32, .5); }
 /* the sun dial runs under the words, so its sun never passes through the grass in front of the tins */
 @media (min-width: 821px) { .dayhero:has(.stack.tins) .arcwrap { width: 56%; } }
 /* the two offers rise to the top of the picture column, so the hills below are the tins' stage */

@@ -154,7 +154,7 @@ function renderTin(p: Placed, m: Moment, img: HTMLImageElement | null, dpr: numb
     for (let i = n - 1; i >= 0; i--) {
       const t = i / (n - 1), cx = sdx * len * t * 0.9, cz = sdz * len * t * 0.9, r = R * (1 + 0.55 * t);
       const g = ctx.createRadialGradient(cx, cz, r * (0.85 - 0.6 * t), cx, cz, r);
-      const a = L.shadowA * 0.32 * Math.pow(1 - t, 1.2);
+      const a = L.shadowA * 0.5 * Math.pow(1 - t, 1.2);
       g.addColorStop(0, css(shade, a)); g.addColorStop(1, css(shade, 0));
       ctx.fillStyle = g; ellipsePath(ctx, cx, cz, r, r); ctx.fill();
     }

@@ -17,7 +17,7 @@
 .scene:not(.has-photo) .land { bottom: var(--lake); -webkit-box-reflect: below 0px linear-gradient(to bottom, transparent 30%, rgba(0, 0, 0, .4)); }
 .scene:not(.has-photo)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--lake); pointer-events: none; z-index: 2;
   background:
-    linear-gradient(to bottom, rgba(255, 255, 255, .28) 0, rgba(255, 255, 255, 0) 2px),
+    linear-gradient(to bottom, rgba(255, 255, 255, .16) 0, rgba(255, 255, 255, 0) 2px),
     repeating-linear-gradient(to bottom, rgba(255, 255, 255, .045) 0 1px, rgba(255, 255, 255, 0) 1px 9px),
     linear-gradient(to bottom, rgba(14, 18, 36, .10), rgba(8, 10, 24, .40)); }
 /* the realistic sky draws its own water; keep only the surface line there */
