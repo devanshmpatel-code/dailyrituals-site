@@ -1,7 +1,7 @@
 import Shop from '../canvas/pages/Shop.html?raw';
 import { loadCatalogue, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon } from '../ui';
-import { wireQuickAdd } from './shared';
+import { wireQuickAdd, wireNotify } from './shared';
 import { navigate } from '../router';
 import { MOODS, type Mood, type Format } from '../config';
 
@@ -12,7 +12,10 @@ function conceptCards(): string {
   doc.querySelectorAll('.grid > .card').forEach(card => {
     const href = card.querySelector('a')?.getAttribute('href') ?? '';
     if (['#/discovery', '#/drops', '#/subscribe'].includes(href)) {
-      card.querySelector('.qa')?.remove();
+      // not in the store: no price and no add button, only "get notified"; no stand-in render on hover either
+      card.querySelector('.qa')?.replaceWith(Object.assign(doc.createElement('button'), { className: 'qa soon', textContent: 'Coming soon · get notified' }));
+      card.querySelector('.qa')?.setAttribute('data-notify', 'concept');
+      card.querySelector('img.alt')?.remove();
       card.setAttribute('data-concept', '1');
       card.querySelector('.ph')?.insertAdjacentHTML('beforeend', '<span class="concept-tag">Concept · not in store yet</span>');
       out.push(card.outerHTML);
@@ -79,6 +82,7 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
       + (showConcepts ? `<header class="ghead soon"><span class="eyebrow">Coming soon</span><h2>Kits and boxes</h2><p class="muted">Ideas we are getting ready. Not in the store yet.</p></header>${concepts}` : '');
   } else grid.innerHTML = list.map(card).join('') + (showConcepts ? concepts : '');
   if (!list.length) grid.insertAdjacentHTML('afterbegin', `<p class="muted" style="grid-column:1/-1">Nothing matches ${m !== 'all' ? MOODS[m].label.toLowerCase() : 'that filter'} right now.</p>`);
-  if (countEl) countEl.textContent = `${list.length} product${list.length === 1 ? '' : 's'} · ${matchMedia('(hover: hover)').matches ? 'Hover' : 'Tap'} a product to see its scent family`;
+  if (countEl) countEl.textContent = `${list.length} product${list.length === 1 ? '' : 's'} · ${matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth > 820 ? 'Hover over' : 'Tap'} a product to see its scent family`;
   wireQuickAdd(grid, items);
+  wireNotify(grid);
 }

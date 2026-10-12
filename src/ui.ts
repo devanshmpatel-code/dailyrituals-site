@@ -21,7 +21,7 @@ export const productHref = (i: Item) => `#/product/${i.slug}`;
 /** The canvas ProductCard, filled from a live product. */
 export function cardHTML(i: Item, badge?: string): string {
   const mood = i.mood ? MOODS[i.mood] : undefined;
-  const alt = mood ? `<img class="alt" src="${mood.backdrop}" alt="" loading="lazy">` : '';
+  // (no second picture on hover: the mood backdrops were generic renders of amber jars, not Daily Rituals packaging)
   const sw = mood ? `<span class="swatch" style="background:${mood.swatch}"></span>` : '';
   const single = i.choices.length <= 1;
   const qa = single && i.inStock
@@ -31,7 +31,7 @@ export function cardHTML(i: Item, badge?: string): string {
   const tone = mood ? ` style="--mood-c:${mood.swatch};--mood-s:${STAR[i.mood!] ?? mood.swatch}"` : '';
   return `<div class="card" data-format="${i.format}" data-mood="${i.mood ?? ''}"${tone}>
     <div class="ph">${badge ? `<span class="badge">${esc(badge)}</span>` : ''}
-      <a href="${productHref(i)}" aria-label="${esc(i.name)}"><img class="main" src="${i.image}" alt="${esc(i.name)}" loading="lazy">${alt}</a>
+      <a href="${productHref(i)}" aria-label="${esc(i.name)}"><img class="main" src="${i.image}" alt="${esc(i.name)}" loading="lazy"></a>
       ${cardOrbit()}
       ${qa}
     </div>

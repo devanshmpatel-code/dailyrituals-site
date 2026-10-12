@@ -52,7 +52,7 @@ export function renderStory(app: HTMLElement) {
     <section class="st-hero"><div class="wrap">
       <div class="st-tx"><span class="small"><a href="#/">Home</a> <span class="muted">/ Our story</span></span><h1>Our <span class="it">story</span></h1>
         <p class="lead">Clean products made with intention. Neuro coaching with Claire. Hand poured in small batches in British Columbia.</p></div>
-      <div class="st-ph"><img class="dimg" src="/img/story.jpg" alt="Candles and a fragrance roller from Daily Rituals Co."></div>
+      <div class="st-ph"><img src="/img/studio/web/hero-verdant-1000.webp" srcset="/img/studio/web/hero-verdant-720.webp 720w, /img/studio/web/hero-verdant-1000.webp 1000w" sizes="(max-width: 820px) 90vw, 44vw" alt="Verdant: a lit candle in a glass tumbler with the black Daily Rituals label, a small lit black tin in front" width="1000" height="1000" decoding="async"></div>
     </div></section>
     <section class="wrap st-path"><span class="eyebrow">How it began</span><h2>From one life changed <span class="it">to a daily practice.</span></h2>
       <ol class="st-steps">${beats.map(([t, d], i) => `<li style="--i:${i}"><span class="st-dot" aria-hidden="true">${['\u2726', '\u2735', '\u2740', '\u2600'][i]}</span><b>${t}</b><p>${d}</p></li>`).join('')}</ol>

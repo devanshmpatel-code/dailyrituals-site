@@ -5,6 +5,7 @@
 // --star-* tokens), so the same drawing works on sand by day and on nocturne by night. Decoration is aria-hidden; the moon
 // phase, which carries real information (tonight's sky), is labelled.
 import { moonPhase } from './pages/sky';
+import { isNewMoonToday } from './drop';
 import type { Mood } from './config';
 
 const A = 'aria-hidden="true" focusable="false"';
@@ -20,7 +21,13 @@ const line = (w = 1, more = '') => `fill="none" stroke="currentColor" stroke-wid
 export const PHASE_NAMES = ['new moon', 'waxing crescent', 'first quarter', 'waxing gibbous', 'full moon', 'waning gibbous', 'last quarter', 'waning crescent'];
 /** Which of the eight drawn phases is tonight's. */
 export const tonightIndex = () => Math.round(moonPhase() * 8) % 8;
-export const tonightName = () => PHASE_NAMES[tonightIndex()];
+/** Tonight's phase in words. The eight drawn phases are wide buckets, so "new moon" is only said on the new moon's own day
+ *  (the same sky the Moon Drop date uses, src/drop.ts); the days either side are called crescents. */
+export const tonightName = () => {
+  const i = tonightIndex();
+  if (i !== 0 || isNewMoonToday()) return PHASE_NAMES[i];
+  return moonPhase() < 0.5 ? 'waxing crescent' : 'waning crescent';
+};
 
 /** The lit part of a moon at phase k (0 new, .25 first quarter, .5 full, .75 last quarter), as a path. Empty at new moon. */
 function litPath(x: number, y: number, r: number, k: number): string {

@@ -65,7 +65,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   // gallery: Claire's photos first; canvas renders only fill empty slots
   const live = (p?.media?.itemsInfo?.items ?? []).map((m: any) => imgSrc(m, 1000, 1250)).filter(Boolean);
   const photos: { src: string; render: boolean }[] = live.length ? live.map((src: string) => ({ src, render: false })) : [{ src: it.image, render: false }];
-  if (photos.length < 3 && it.mood) photos.push({ src: MOODS[it.mood].backdrop, render: true });
+  // (renders no longer fill empty slots: they showed generic amber jars beside the real product)
   const mainImg = $<HTMLImageElement>('#mainImg')!;
   mainImg.src = photos[0].src; mainImg.alt = it.name; mainImg.classList.toggle('dimg', photos[0].render);
   $('.thumbs')!.innerHTML = photos.map((ph, n) =>
@@ -149,7 +149,10 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     metaSpan.textContent = it.format === 'deodorant' ? (size ? `Scent · ${size}` : '') : size ? `${it.formatLabel} · ${size}` : it.formatLabel;
     const [once, sub] = po.querySelectorAll('label');
     once.lastElementChild!.textContent = money(price);
-    sub.querySelector(':scope > span:last-child')!.innerHTML = `<span class="d">${money(Math.round(price * 90) / 100)}</span>`;
+    // Ritual on Repeat is not open yet: the refill choice is shown as coming soon and cannot be picked (no price promised)
+    sub.querySelector(':scope > span:last-child')!.innerHTML = '<span class="soon-tag">Coming soon</span>';
+    const subIn = sub.querySelector<HTMLInputElement>('input'); if (subIn) { subIn.disabled = true; subIn.checked = false; }
+    sub.classList.add('po-soon'); sub.querySelector('select')?.setAttribute('disabled', '');
     const inStock = choice ? stockOf(choice) : it.inStock;
     addBtn.disabled = !inStock;
     addBtn.textContent = inStock ? `Add to cart · ${money(price * qty)}` : 'Sold out';
