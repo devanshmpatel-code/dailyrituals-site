@@ -394,6 +394,15 @@ export function refreshDropBar() {
 }
 
 // ---------- Send a Sunrise ----------
+// The gift page's card carries one of Claire's past pours in its bottom corner (public/img/studio/moons), a different topping
+// for each sky: florals at dawn, citrus and spice at golden hour, lavender at night. They are past pours, so the line under
+// the card names only the topping, never a scent. The wording is a draft for Claire.
+const SKY_TOPPING: Record<string, string> = {
+  dawn: 'dried flowers and petals',
+  golden: 'dried orange, star anise and pink peppercorns',
+  night: 'dried lavender buds',
+};
+
 export function wireSunrise(app: HTMLElement) {
   const note = app.querySelector<HTMLTextAreaElement>('#gNote');
   const out = app.querySelector<HTMLElement>('#gCardNote');
@@ -405,9 +414,14 @@ export function wireSunrise(app: HTMLElement) {
     to.addEventListener('input', () => { const n = to.value.trim(); if (n) toOut.textContent = `For ${n}`; else toOut.innerHTML = blank; });
   }
   const card = app.querySelector<HTMLElement>('#gCard');
-  app.querySelectorAll<HTMLButtonElement>('[data-sky]').forEach(b => b.addEventListener('click', () => {
+  const cap = app.querySelector<HTMLElement>('#gCandleCap');
+  app.querySelectorAll<HTMLButtonElement>('button[data-sky]').forEach(b => b.addEventListener('click', () => {
     b.parentElement!.querySelectorAll('[data-sky]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     if (card) card.dataset.t = b.dataset.sky!;
+    // the gift page's card (data-candle): the candle in its corner changes with the sky, and the line under it says what it
+    // is topped with (CSS does the cross-fade)
+    const top = SKY_TOPPING[b.dataset.sky!];
+    if (cap && card?.hasAttribute('data-candle') && top) cap.innerHTML = `<span class="d">On the card: a candle Claire topped by hand with ${top}.</span>`;
   }));
   app.querySelector('#gAdd')?.addEventListener('click', previewOff('Send a Sunrise gifting'));
 }

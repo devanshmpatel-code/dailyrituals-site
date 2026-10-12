@@ -1,9 +1,112 @@
-// The coaching page's quieter motion: Claire's arch tilts a little toward the pointer (the words orbiting her sit at
-// different depths, so they part as it turns), sections ease in as they arrive, and on phones the two free ways in
+// The coaching page's quieter motion: Claire's arch tilts a little toward the pointer (the new loop orbiting her sits at
+// different depths, so it parts as it turns), sections ease in as they arrive, and on phones the two free ways in
 // stay one tap away in a small bar at the foot of the screen; the night's stars keep out of the words. With reduced motion
 // nothing moves and every section shows.
+import { CUE_STEPS } from './coaching-cue';
 
 const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------- the opening: the new loop orbiting Claire ----------------
+ * The page's new loop (cue, pause, chosen response, repeat: the same four steps and colours as the calm-cue loop further
+ * down) as a ring in perspective round Claire's arch. Its back half is drawn behind the arch and its front half over it, so
+ * the ring passes behind her head and in front of her; a lit bead travels it clockwise, through the four steps in order,
+ * and rests a breath at the pause, each step's chip lighting in its own colour as the bead reaches it. The geometry is in
+ * the portal's own units (its box is 500 x 610), so it scales with the portal. With reduced motion the bead rests at the
+ * pause and nothing travels. */
+const RING = { cx: 250, cy: 330, rx: 274, ry: 112, rot: -7 };
+/** where each step sits round the ring, in degrees (clockwise from the right-hand end): cue and pause on the far side,
+ * either side of her head; chosen response and repeat on the near side */
+const STATION = [208, 332, 388, 512];
+const PAUSE = 1;
+const ringPt = (deg: number) => {
+  const t = deg * Math.PI / 180, r = RING.rot * Math.PI / 180, dx = RING.rx * Math.cos(t), dy = RING.ry * Math.sin(t);
+  return { x: RING.cx + dx * Math.cos(r) - dy * Math.sin(r), y: RING.cy + dx * Math.sin(r) + dy * Math.cos(r) };
+};
+/** the ring as a fine polyline (one point every two degrees) and the distance along it at each point, so the bead and its
+ * lit trail agree exactly */
+const RING_PTS = Array.from({ length: 181 }, (_, i) => ringPt(i * 2));
+const RING_LEN = RING_PTS.reduce<number[]>((a, q, i) => { a.push(i ? a[i - 1] + Math.hypot(q.x - RING_PTS[i - 1].x, q.y - RING_PTS[i - 1].y) : 0); return a; }, []);
+const RING_D = RING_PTS.map((q, i) => `${i ? 'L' : 'M'}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join('') + 'Z';
+const along = (deg: number) => { const a = ((deg % 360) + 360) % 360 / 2, i = Math.floor(a), f = a - i; return RING_LEN[i] + (RING_LEN[Math.min(180, i + 1)] - RING_LEN[i]) * f; };
+const TOTAL = RING_LEN[180];
+const TRAIL = 120;
+
+/** a chevron on the ring at `deg`, pointing the way the loop runs */
+const chevron = (deg: number) => {
+  const p = ringPt(deg), q = ringPt(deg + 1), a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
+  return `<path d="M-5 -5.5 L1.5 0 L-5 5.5" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${a.toFixed(1)})"/>`;
+};
+
+const ringSVG = (k: 'b' | 'f') => {
+  const front = k === 'f';
+  return `<svg viewBox="0 0 500 610" preserveAspectRatio="none" focusable="false"><defs>
+    <linearGradient id="coRg${k}" gradientUnits="userSpaceOnUse" x1="-40" y1="0" x2="540" y2="0">
+      <stop offset="0" stop-color="${CUE_STEPS[0].hue}"/><stop offset=".3" stop-color="#F3D29A"/><stop offset=".55" stop-color="${CUE_STEPS[1].hue}"/><stop offset=".8" stop-color="${CUE_STEPS[2].hue}"/><stop offset="1" stop-color="${CUE_STEPS[3].hue}"/></linearGradient>
+    <filter id="coGl${k}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2"/></filter>
+    ${front ? `<clipPath id="coFr"><rect x="-400" y="${RING.cy}" width="1300" height="700" transform="rotate(${RING.rot} ${RING.cx} ${RING.cy})"/></clipPath>` : ''}
+  </defs><g${front ? ' clip-path="url(#coFr)"' : ''}>
+    ${front ? `<path class="co-rg-shade" d="${RING_D}"/>` : ''}
+    <path class="co-rg-line" d="${RING_D}" stroke="url(#coRg${k})"/>
+    <path class="co-rg-glow" d="${RING_D}" filter="url(#coGl${k})" stroke-dasharray="${TRAIL} ${(TOTAL - TRAIL).toFixed(1)}"/>
+    <path class="co-rg-trail" d="${RING_D}" stroke-dasharray="${TRAIL} ${(TOTAL - TRAIL).toFixed(1)}"/>
+    <g class="co-rg-arrows">${[0, 90, 180].map(chevron).join('')}</g>
+    <g class="co-bead"><circle class="co-bead-halo" r="15" filter="url(#coGl${k})"/><circle class="co-bead-ball" r="5.5"/><circle class="co-bead-spec" r="1.8" cx="-1.6" cy="-1.8"/></g>
+  </g></svg>`;
+};
+
+function heroLoop(app: HTMLElement) {
+  const tilt = app.querySelector<HTMLElement>('#coPortal .co-tilt');
+  const layers = [...app.querySelectorAll<HTMLElement>('#coPortal .co-orbit')];
+  const chips = [...app.querySelectorAll<HTMLElement>('#coPortal .co-loop .co-chip')];
+  if (!tilt || !layers.length || chips.length !== STATION.length) return;
+  layers.forEach(l => { l.innerHTML = ringSVG(l.classList.contains('front') ? 'f' : 'b'); });
+  // each chip's numbered coin sits on the ring at its step; the chip's words reach in towards Claire
+  chips.forEach((c, i) => {
+    const p = ringPt(STATION[i]);
+    c.style.setProperty('--x', (p.x / 5).toFixed(2)); c.style.setProperty('--y', (p.y / 6.1).toFixed(2));
+    c.style.setProperty('--hue', CUE_STEPS[i].hue);
+  });
+  const beads = layers.map(l => l.querySelector<SVGGElement>('.co-bead')!);
+  const trails = layers.flatMap(l => [...l.querySelectorAll<SVGPathElement>('.co-rg-trail, .co-rg-glow')]);
+  let on = -1;
+  const draw = (deg: number) => {
+    const p = ringPt(deg), d = along(deg);
+    beads.forEach(b => b.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`));
+    trails.forEach(t => t.setAttribute('stroke-dashoffset', (((TRAIL - d) % TOTAL + TOTAL) % TOTAL).toFixed(1)));
+    // the step the bead is at lights up, and the bead takes on its colour
+    const near = STATION.findIndex(s => { const x = ((deg - s) % 360 + 540) % 360 - 180; return x > -26 && x < 30; });
+    if (near !== on) {
+      on = near;
+      chips.forEach((c, i) => c.classList.toggle('on', i === near));
+      if (near >= 0) tilt.style.setProperty('--bead', CUE_STEPS[near].hue);
+    }
+  };
+  if (reduce()) { draw(STATION[PAUSE]); return; }
+
+  const SPEED = 360 / 11; // degrees a second: once round in eleven seconds, plus the rest at the pause
+  let deg = STATION[0] - 40, hold = 0, last = 0, raf = 0, seen = true;
+  const frame = (now: number) => {
+    raf = 0;
+    if (!tilt.isConnected) return;
+    const dt = last ? Math.min(.25, (now - last) / 1000) : 0; last = now;
+    if (now >= hold) {
+      const next = deg + SPEED * dt;
+      // arriving at the pause: rest there for a breath
+      const k = Math.floor((next - STATION[PAUSE]) / 360), s = STATION[PAUSE] + 360 * k;
+      if (deg < s && next >= s) { deg = s; hold = now + 1500; } else deg = next;
+      if (deg > 720 + STATION[0]) deg -= 360;
+    }
+    draw(deg);
+    if (seen) raf = requestAnimationFrame(frame);
+  };
+  draw(deg);
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => {
+    seen = es.some(e => e.isIntersecting);
+    if (!tilt.isConnected) { io?.disconnect(); return; }
+    if (seen && !raf) { last = 0; raf = requestAnimationFrame(frame); }
+  }) : null;
+  if (io) io.observe(tilt); else raf = requestAnimationFrame(frame);
+}
 
 function tiltPortal(app: HTMLElement) {
   const portal = app.querySelector<HTMLElement>('#coPortal');
@@ -134,6 +237,7 @@ function restOffscreen(app: HTMLElement) {
 export function mountCoachingFx(app: HTMLElement) {
   document.body.classList.remove('co-docked');
   restOffscreen(app);
+  heroLoop(app);
   tiltPortal(app);
   reveal(app);
   dock(app);
