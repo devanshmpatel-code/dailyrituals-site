@@ -464,7 +464,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 .co-reset-tx h2 { font-size: clamp(38px, 4.6vw, 64px); color: var(--co-cream); }
 .co-reset-tx h2 .it { color: var(--co-gold-2); }
 .co-reset-tx p { font-size: 18px; color: rgba(251, 243, 234, .86); max-width: 42ch; }
-.co-reset-tx .co-note { font-size: 14px; color: rgba(251, 243, 234, .66); }
+.co-reset-tx .co-note { font-size: 14px; color: rgba(251, 243, 234, .8); }
 .co-days { list-style: none; margin: 0; padding: 0 0 52px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: end; position: relative; z-index: 1; }
 .co-days li { position: relative; height: 128px; border-radius: 999px 999px 12px 12px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 14px; background: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .04)); border: 1px solid rgba(233, 212, 161, .3); }
 .co-days li:nth-child(2) { height: 140px; } .co-days li:nth-child(4) { height: 150px; } .co-days li:nth-child(5) { height: 160px; } .co-days li:nth-child(6) { height: 170px; } .co-days li:nth-child(7) { height: 182px; }
@@ -570,7 +570,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 .co-final h2 .it { color: var(--co-gold-2); }
 .co-final p { max-width: 48ch; font-size: 18px; color: rgba(251, 243, 234, .84); }
 .co-final .cta { justify-content: center; }
-.co-final .co-note { font-size: 13px; color: rgba(251, 243, 234, .6); }
+.co-final .co-note { font-size: 13px; color: rgba(251, 243, 234, .78); }
 /* the pause light again, glowing in full: the practice, not a product, under the last call to action */
 .co-final-light { --lit: 1; --hue: #EDB462; position: relative; display: grid; place-items: center; margin-bottom: 26px; }
 .co-final-light .pl { --orb: 150px; }

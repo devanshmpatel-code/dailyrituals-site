@@ -200,7 +200,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       el.style.setProperty('--inv', (1 / f.s).toFixed(4)); // the caption keeps one size whatever the moon's
       el.style.setProperty('--glow', smooth(0.55, 1, c).toFixed(3));
       // captions: full under the front three, softer under the crescents at the ends
-      el.style.setProperty('--cap', (1 - 0.35 * smooth(1.2, 2, a)).toFixed(3));
+      el.style.setProperty('--cap', (1 - 0.12 * smooth(1.2, 2, a)).toFixed(3));
       el.classList.toggle('full', Math.abs(off) < 0.5);
       const name = MOMENTS[f.i].name;
       const ph = phaseName(Math.round(off));
@@ -249,8 +249,8 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
         const [name, ph] = (f.cap.dataset.t || '|').split('|');
         const small = !phone;
         const top = f.y + f.s * (D / 2 + (phone ? 6 : 10));
-        const wFull = Math.max(textW(name, phone ? 9 : 10, 0.16), small ? textW(ph, 9, 0.14) : 0), hFull = small ? 23 : 10;
-        const wName = textW(name, phone ? 9 : 10, 0.16), hName = phone ? 10 : 11;
+        const wFull = Math.max(textW(name, 12, 0.16), small ? textW(ph, 11.5, 0.14) : 0), hFull = small ? 29 : 13;
+        const wName = textW(name, 12, 0.16), hName = 14;
         const inward = f.x < cx0() ? 1 : -1;
         const tryFit = (wv: number, hv: number) => {
           for (const step of [0, 1, 2, 3, 4, 5, 6]) for (const dir of step ? [inward, -inward] : [1]) {

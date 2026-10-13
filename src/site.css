@@ -594,7 +594,7 @@ button.soon { background: transparent !important; color: inherit !important; bor
 .gcard[data-t="night"] .gc-warm { animation: gcFlicker 3.2s ease-in-out infinite; }
 @keyframes gcFlicker { 0%, 100% { scale: 1; opacity: .9; } 30% { scale: .96; opacity: .8; } 55% { scale: 1.03; opacity: 1; } 80% { scale: .98; opacity: .86; } }
 @keyframes gcFlame { 0%, 100% { scale: 1 1; } 30% { scale: .94 .9; } 55% { scale: 1.04 1.08; } 80% { scale: .98 .95; } }
-.gc-cap { margin: 0; }
+.gc-cap { margin: 0; color: #4E4453; }
 /* the one way to send a gift today, ahead of the gift sets that are coming soon: a candle from the shop */
 .gr-live { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 60px; padding: 8px 14px; border-radius: 16px; text-decoration: none; color: inherit;
   background: linear-gradient(120deg, #FFF8EC, #FBEBD3); border: 1px solid rgba(201, 163, 90, .7); box-shadow: 0 10px 26px -18px rgba(122, 84, 16, .55); transition: border-color .2s, box-shadow .2s, transform .2s; }
@@ -984,6 +984,8 @@ body[data-page="drops"] .night > .wrap { padding-bottom: clamp(56px, 7vw, 96px) 
 body[data-page="drops"] .night .tier { border-radius: 24px 6px 24px 6px; }
 /* the night pages (Moon Drops, the Ritualists) stay dark all the way into the footer instead of fading to linen and back */
 body[data-page="drops"] .night, body[data-page="club"] .clubsoon { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 90px); mask-image: linear-gradient(to bottom, transparent 0, #000 90px); }
+/* on a phone the breadcrumb sits in that fade: a shorter fade keeps it on the night sky (contrast) */
+@media (max-width: 820px) { body[data-page="drops"] .night, body[data-page="club"] .clubsoon { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 34px); mask-image: linear-gradient(to bottom, transparent 0, #000 34px); } }
 body[data-page="drops"] .lotusdiv { background: var(--night-2, #231B36); margin: 0; padding-block: 40px; opacity: 1; color: #C9B8E6; }
 body[data-page="club"] .lotusdiv { background: #231A2B; margin: 0; padding-block: 40px; opacity: 1; color: #E7C99A; }
 body[data-page="drops"] .lotusdiv i, body[data-page="club"] .lotusdiv i { background: rgba(238, 232, 246, .25); }
