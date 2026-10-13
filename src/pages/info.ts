@@ -4,6 +4,7 @@ import { esc, errorBox, wireCommon, cardHTML } from '../ui';
 import { wireQuickAdd, previewOff } from './shared';
 import { mountWheel } from './wheel';
 import { givingStoryHTML, mountGivingStory } from './giving';
+import '../giftbook.css';
 
 // Placeholder copy for pages that were not in the final canvas. Anything Claire has not
 // confirmed is wrapped in <span class="d"> so "Show drafts for Claire" highlights it.
@@ -204,24 +205,38 @@ function mountQuiz(el: HTMLElement, items: Item[]) {
 }
 
 // ---------- Free 7-day reset ----------
+// A short look at Day 1, beside the sign-up. Every line restates what the site already says about the reset (it arrives by
+// email, short daily videos and practices of about ten minutes, self-paced) and the coaching page's "why patterns repeat";
+// what Day 1 really holds is Claire's to confirm, so all of it is a draft.
+function day1HTML() {
+  return `<div class="reset-day1" aria-labelledby="day1H"><span class="eyebrow">A look at Day 1</span><h2 id="day1H" class="reset-day1-h"><span class="d">What the first ten minutes <span class="it">look like</span></span></h2>
+    <ul>
+      <li><b><span class="d">In your inbox</span></b><span><span class="d">Day 1 arrives as soon as you join: a short video from Claire and one practice to try.</span></span></li>
+      <li><b><span class="d">About ten minutes</span></b><span><span class="d">Watch, then try the practice, at your own pace.</span></span></li>
+      <li><b><span class="d">Where it starts</span></b><span><span class="d">Why patterns repeat: most habits are not a lack of willpower, but a loop your brain has practised many times.</span></span></li>
+    </ul>
+    <p class="small muted d confirm">[Confirm: is this what Day 1 covers, and is it a video?]</p></div>`;
+}
+
 export function renderReset(app: HTMLElement) {
   // the steps restate what the page already says (ten minutes a day, self-paced, by email); the day-by-day content is Claire's to add
   app.innerHTML = `<div class="wrap reset-page" style="padding-bottom:clamp(48px,6vw,96px);max-width:1080px">
     ${head('Free 7-day reset', 'The free 7-day <span class="it">reset</span>', 'Ten minutes a day with Claire. A light, self-paced way to try the practices before anything else.', true)}
     <div class="reset-grid">
       <div class="panel reset-join" style="display:flex;flex-direction:column;gap:14px">
-        <span class="eyebrow">Free · Self-paced</span>
+        <div class="reset-who"><img class="reset-claire" src="/img/studio/web/claire-round.webp" alt="Claire, founder of Daily Rituals Co." width="360" height="360" decoding="async"><span><span class="eyebrow">Free · Self-paced</span><span class="reset-by">With Claire, neuro coach · White Rock, BC</span></span></div>
         <h2>Start with <span class="it">Day 1</span></h2>
         <p>Join with your email and the first day arrives in your inbox. <span class="d confirm">Claire to confirm what is in each day and how it is delivered.</span></p>
         <form id="resetForm" class="reset-form" novalidate>
           <label for="resetEmail" hidden>Email</label><input id="resetEmail" type="email" placeholder="you@example.com" autocomplete="email" required>
           <button class="btn euc" type="submit">Start Day 1</button></form>
         <p class="small muted">Free. You can unsubscribe any time. Coaching is not therapy or medical care. <span class="d confirm">Claire to confirm wording.</span></p></div>
-      <ol class="reset-steps">
+      <div class="reset-side"><ol class="reset-steps">
         <li><b>Join with your email</b><span>Day 1 arrives in your inbox.</span></li>
         <li><b>Ten minutes a day</b><span>One short practice from Claire, at your own pace.</span></li>
         <li><b>Seven days</b><span class="d">On Day 3, a familiar scent becomes the cue for a calm, intentional pause.</span></li>
       </ol>
+      ${day1HTML()}</div>
     </div>
     <div class="reset-pair"><div><span class="eyebrow">Pair it with a scent</span><h2>A scent you love makes the <span class="it">pause easier to find</span></h2>
       <p class="muted"><span class="d">Any scent you enjoy will do. If you would like one to keep for the reset, a roller goes everywhere with you.</span></p></div>
