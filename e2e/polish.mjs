@@ -51,12 +51,11 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   const wallImgs = await p.locator('.wall-studio .studio-tile img').evaluateAll(a => a.map(i => i.getAttribute('src')));
   ok(`${label} /wall: one row labelled "From the studio", real studio photographs only`, wallImgs.length >= 4 && wallImgs.every(s => s.startsWith('/img/studio/')) && /From the studio/i.test(await p.locator('.wall-studio').innerText()), wallImgs.join(' '));
   ok(`${label} /wall: the studio photographs link to nothing (no past scent looks buyable)`, (await p.locator('.wall-studio a').count()) === 0);
-  // the home teaser: not "Proof", studio photographs only
+  // the home page: the wall is one line of the "Opening soon" chapter (no photo teaser), never presented as proof
   await p.goto(base + '/'); await p.waitForTimeout(1500);
-  const teaser = p.locator('section[data-ground="sage"]');
-  ok(`${label} home: the wall teaser is not presented as proof`, !/proof|Ritualists use/i.test(await teaser.innerText()));
-  const teaserImgs = await teaser.locator('.wall img').evaluateAll(a => a.map(i => i.getAttribute('src')));
-  ok(`${label} home: the wall teaser shows studio photographs only`, teaserImgs.length >= 3 && teaserImgs.every(s => s.startsWith('/img/studio/')), teaserImgs.join(' '));
+  const teaser = p.locator('.soonflow a[href*="wall"]');
+  ok(`${label} home: the wall line is not presented as proof`, (await teaser.count()) === 1 && /opens with your first photo/i.test(await teaser.innerText()) && !/proof|Ritualists use/i.test(await teaser.innerText()));
+  ok(`${label} home: no photo teaser of the wall`, (await p.locator('main .wall img').count()) === 0);
   ok(`${label} home: chapter pictures are real studio photographs, not stock mockups`, await p.evaluate(() => [...document.querySelectorAll('.cf-ph img, .plans img, .disc .ph img')].every(i => (i.getAttribute('src') ?? '').startsWith('/img/studio/'))));
   // concepts: no price, no value maths, labelled coming soon, notify only
   for (const r of ['/', '/shop', '/subscribe', '/gift', '/explore', '/drops']) {

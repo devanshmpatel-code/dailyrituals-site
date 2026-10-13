@@ -36,6 +36,7 @@
 
 /* home teaser */
 .jr-teaser { padding-block: clamp(36px, 5vw, 72px); }
+.giftsec > .jr-teaser { padding-top: 0; } /* (on home it closes the Send a Sunrise chapter) */
 .jr-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: clamp(18px, 2.4vw, 30px); }
 .jr-head h2 { margin: 8px 0 0; font-size: clamp(32px, 4vw, 56px); line-height: 1.05; }
 .jr-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 2vw, 26px); }
@@ -50,5 +51,17 @@
   .jr-grid, .jr-cards { grid-template-columns: 1fr; }
   .jr-card.lead { grid-column: auto; }
   .jr-head { flex-direction: column; align-items: flex-start; }
+}
+/* the home teaser on phones: the three cards in a row you swipe (the page itself never scrolls sideways), so the Journal
+   takes one card's height instead of three; the next card peeks in at the edge */
+@media (max-width: 620px) {
+  .jr-teaser .jr-cards { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 80%; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+    /* the row runs to the screen's edges; its first card still lines up with the words above */
+    margin-inline: calc(50% - 50vw); padding: 4px calc(50vw - 50%) 12px; }
+  .jr-teaser .jr-cards::-webkit-scrollbar { display: none; }
+  .giftsec:has(> .jr-teaser) { overflow-x: clip; } /* (100vw counts a desktop scrollbar: never let the row widen the page) */
+  .jr-teaser .jr-card { scroll-snap-align: center; } /* (centred, an 80% card sits about one gutter in from the edge) */
+  .jr-teaser .jr-card:hover, .jr-teaser .jr-card:focus-visible { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .jr-card, .jr-pic img { transition: none; } }

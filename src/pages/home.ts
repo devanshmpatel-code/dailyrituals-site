@@ -54,18 +54,19 @@ export async function renderHome(app: HTMLElement) {
   resetHero();
   app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
   app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
-  app.querySelector('section.newsflow')?.insertAdjacentHTML('beforebegin', journalTeaserHTML());
+  // the Journal teaser closes the gifting chapter, on its rose ground (it used to sit between two night sections near the end)
+  app.querySelector('section.giftsec')?.insertAdjacentHTML('beforeend', journalTeaserHTML());
   app.querySelector('.gift-grid > div:has(.gcard)')?.insertAdjacentHTML('beforeend', giftPhotoHTML());
   swapRenders(app);
   wireStudio(app);
   wireCommon(app);
   mountRibbon(app); // the proof ribbon under the opening: a lit band turning slowly round a drum
   wireHeroStatic(app);
-  // the Ritualists head: an embossed membership card with Claire's logo and a wax seal (the owner preferred it to the mood
-  // constellation). The club is not open: the card says "coming soon" and promises nothing.
-  if (!LOYALTY_ENABLED) { app.querySelector('.club .head')?.insertAdjacentHTML('beforeend', ritualistsCardHTML()); wireRitualistsCard(app.querySelector('.club') ?? app); }
-  // Ritual on Repeat and Moon Drops are not open: they share the "Opening soon" strip near the end (one notify button, and
-  // the next new moon's date from the one drop state)
+  // Everything not open yet (the Ritualists, Ritual on Repeat, Moon Drops, the Ritual Wall) shares the one "Opening soon"
+  // chapter near the end, beside the one Monthly Ritual sign-up; the Moon Drop line takes the next new moon from the one drop
+  // state. The Ritualists keep their embossed membership card (Claire's logo and a wax seal, the owner preferred it to the mood
+  // constellation) above the sign-up. The club is not open: the card says "coming soon" and promises nothing.
+  if (!LOYALTY_ENABLED) { app.querySelector('.soonflow .soon-card')?.insertAdjacentHTML('beforeend', ritualistsCardHTML()); wireRitualistsCard(app.querySelector('.soonflow') ?? app); }
   wireNotify(app);
   wireCountdown(app);
   wireSunrise(app);

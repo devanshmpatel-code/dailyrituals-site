@@ -195,3 +195,36 @@ html.mm-lock { overflow: hidden; }
   .lnav-add.did { animation: none; }
   .gn-disclose .chev, .mm-acc .chev, .lnav-more .chev, .cst-star .star, .cst .cst-star::before { transition: none; }
 }
+
+/* ---- the announcement bar leads with what is live now (free shipping in Canada, gifting); the Moon Drop date follows, quieter ---- */
+.announce { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 10px; row-gap: 0; padding: 0 16px; line-height: 1.35; }
+.announce .an-live { padding-block: 9px; }
+.announce .an-sep { opacity: .55; }
+.announce .an-gift { display: inline-flex; align-items: center; min-height: 44px; color: inherit; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.announce .an-gift:hover { text-decoration-thickness: 2px; }
+.announce .an-gift:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 4px; }
+.announce .an-drop { opacity: .78; padding-block: 9px; }
+.announce .an-short { display: none; }
+@media (max-width: 600px) {
+  .announce { font-size: 12.5px; column-gap: 8px; }
+  .announce .an-live { flex-basis: 100%; text-align: center; padding-block: 8px 0; }
+  .announce .an-live + .an-sep { display: none; }
+  .announce .an-drop { padding-block: 0; }
+  /* the full date stays for screen readers; the eye gets "Nov 8" */
+  .announce .an-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .announce .an-short { display: inline; }
+}
+
+/* ---- the Ritualists link in the header: quiet while the club is not open (no "Soon" badge, no pill), the link kept ---- */
+body.loyalty-off .hdr-r .club-pill { background: none; border: 0; color: var(--ink-2, #5A4B5E); font-weight: 500; font-size: 13.5px; padding: 0 10px; min-height: 44px; gap: 7px; border-radius: 10px; }
+body.loyalty-off .hdr-r .club-pill::before { width: 6px; height: 6px; opacity: .85; }
+body.loyalty-off .hdr-r .club-pill .pts { display: none; }
+body.loyalty-off .hdr-r .club-pill .lbl { display: inline; }
+body.loyalty-off .hdr-r .club-pill:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+body.loyalty-off .hdr-r .club-pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* (821–1180px: the header is tight, so the link says just "Ritualists" and the main menu keeps one line per item) */
+@media (max-width: 1180px) {
+  body.loyalty-off .hdr-r .club-pill { padding-inline: 6px; gap: 6px; font-size: 13px; }
+  body.loyalty-off .hdr-r .club-pill .lbl { display: none; }
+  body.loyalty-off .hdr-r .club-pill::after { content: "Ritualists"; }
+}

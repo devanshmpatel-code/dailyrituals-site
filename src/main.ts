@@ -72,7 +72,8 @@ document.addEventListener('pointerdown', e => {
 
 // ---------- header ----------
 mountNav(); // desktop flyouts, the phone menu and the hamburger (src/nav.ts)
-document.getElementById('clubPts')!.textContent = LOYALTY_ENABLED ? 'Join' : 'Soon';
+// (while the club is not open the header link is a quiet "The Ritualists" with no badge: the club page says it is opening soon)
+document.getElementById('clubPts')!.textContent = LOYALTY_ENABLED ? 'Join' : '';
 if (!LOYALTY_ENABLED) document.body.classList.add('loyalty-off');
 
 // ---------- drafts toggle ----------

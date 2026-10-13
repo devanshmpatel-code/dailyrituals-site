@@ -106,11 +106,12 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.studio').innerText + document.querySelector('.claire').innerText + document.querySelector('.soonflow').innerText + document.querySelector('.gift-grid').innerText))));
   ok(`${label}: home has no sideways scroll`, (await noScroll(p)) <= 1);
 
-  // ---- the Ritualists (chapter 6): a membership card with Claire's logo in place of the mood constellation; it promises nothing
-  await p.evaluate(() => document.querySelector('.club').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
-  const card = await p.evaluate(() => { const w = document.querySelector('.club .rit-card-wrap'), i = w?.querySelector('.rc-logo'); return w && { label: w.getAttribute('role') + ':' + w.getAttribute('aria-label'), logo: i.complete && i.naturalWidth > 0 && /\/img\/brand\/logo-(600|1200)\.webp/.test(i.currentSrc || i.src), text: w.innerText, seal: !!w.querySelector('.rc-seal svg'), wd: w.getBoundingClientRect().width }; });
-  ok(`${label}: the Ritualists show a membership card with the logo and a wax seal`, !!card && card.logo && card.seal && /^img:.*coming soon/i.test(card.label) && card.wd > 220, JSON.stringify(card));
-  ok(`${label}: the mood constellation is gone from the Ritualists`, (await p.locator('.club .cs-const, .club .cel-const').count()) === 0);
+  // ---- the Ritualists: a membership card with Claire's logo in place of the mood constellation; it promises nothing. (It sits
+  // above the Monthly Ritual sign-up in the one "Opening soon" chapter now, a little smaller on a phone.)
+  await p.evaluate(() => document.querySelector('.soonflow .soon-card').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
+  const card = await p.evaluate(() => { const w = document.querySelector('.soonflow .rit-card-wrap'), i = w?.querySelector('.rc-logo'); return w && { label: w.getAttribute('role') + ':' + w.getAttribute('aria-label'), logo: i.complete && i.naturalWidth > 0 && /\/img\/brand\/logo-(600|1200)\.webp/.test(i.currentSrc || i.src), text: w.innerText, seal: !!w.querySelector('.rc-seal svg'), wd: w.getBoundingClientRect().width }; });
+  ok(`${label}: the Ritualists show a membership card with the logo and a wax seal`, !!card && card.logo && card.seal && /^img:.*coming soon/i.test(card.label) && card.wd > 200, JSON.stringify(card));
+  ok(`${label}: the mood constellation is gone from the Ritualists`, (await p.locator('.soonflow .cs-const, .soonflow .cel-const').count()) === 0);
   ok(`${label}: the card promises no points, tiers or rewards`, !!card && /coming soon/i.test(card.text) && !/\d|points?|reward|tier|member no/i.test(card.text), card?.text);
 
   // ---- the footer: Claire's logo, cut out clean and lit, in place of the star chart and the constellation
