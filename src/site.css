@@ -23,7 +23,7 @@ body.show-drafts .d { background: var(--mari-soft, #F7E4C6); box-shadow: 0 0 0 2
 @keyframes sk { to { background-position: -150% 0; } }
 @media (prefers-reduced-motion: reduce) { .card.sk .ph { animation: none; } }
 .live-error { grid-column: 1 / -1; background: #fff; border: 1px solid var(--ink-subtle); border-radius: 10px; padding: 16px 20px; display: flex; gap: 8px; flex-wrap: wrap; }
-.live-tag { font: 500 11px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--eucalyptus); margin-top: auto; }
+.live-tag { font: 500 12px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--eucalyptus); margin-top: auto; }
 .concept-tag { position: absolute; left: 12px; bottom: 12px; background: #fff; border: 1px solid var(--line, #E5DEE2); border-radius: 4px; font-size: 12px; font-weight: 600; padding: 6px 10px; }
 .card[data-concept] .ph { position: relative; }
 a.qa { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
@@ -169,7 +169,7 @@ body:not(.show-drafts) .confirm { display: none !important; }
 .wseg:hover { opacity: 1 !important; filter: brightness(1.06); }
 .wseg:focus-visible { stroke: var(--ink); stroke-width: 4; }
 .wlab { font: 500 13px var(--mono, "DM Mono", monospace); letter-spacing: .12em; pointer-events: none; }
-.wnow { font: 600 11px var(--mono, "DM Mono", monospace); letter-spacing: .14em; fill: var(--ink-2); }
+.wnow { font: 600 12px var(--mono, "DM Mono", monospace); letter-spacing: .14em; fill: var(--ink-2); }
 .whub-t { font-family: var(--display); font-size: 38px; fill: var(--ink); }
 .whub-s { font-family: var(--display); font-size: 28px; fill: var(--ink); }
 .whub-n { font: 500 13px var(--mono, "DM Mono", monospace); letter-spacing: .1em; text-transform: uppercase; fill: var(--ink-2); }
@@ -364,8 +364,8 @@ footer::before { content: ""; position: absolute; left: 0; right: 0; top: -90px;
 @media (max-width: 420px) { .card .qa.soon { font-size: 12px !important; } }
 /* the concept label stands just above the card's button, never under it */
 .card .ph:has(.qa) .concept-tag { bottom: 64px; white-space: nowrap; }
-@media (max-width: 560px) { .card .ph:has(.qa) .concept-tag { left: 8px; bottom: 58px; font-size: 11px; padding: 4px 8px; } }
-@media (max-width: 380px) { .card .qa.soon { font-size: 11px !important; padding-inline: 4px; letter-spacing: -.01em; } }
+@media (max-width: 560px) { .card .ph:has(.qa) .concept-tag { left: 8px; bottom: 58px; font-size: 12px; padding: 4px 8px; } }
+@media (max-width: 380px) { .card .qa.soon { font-size: 12px !important; padding-inline: 4px; letter-spacing: -.01em; } }
 .path2 .p-img { position: relative; min-height: 340px; height: 100%; border-radius: 150px 16px 150px 16px; }
 .path2 .p-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .drop-img { -webkit-mask-image: linear-gradient(to bottom, #000 84%, transparent 100%); mask-image: linear-gradient(to bottom, #000 84%, transparent 100%); }
@@ -439,7 +439,7 @@ body:not(.no-grade) :is(.card .ph, .stack, .path2 .p-img, .mainimg, .disc .ph, .
 .jhere .fg { stroke: #F3D29A; stroke-linecap: round; stroke-dasharray: 119.4; stroke-dashoffset: calc(119.4 * (1 - var(--seg, 0))); transition: stroke-dashoffset .2s linear; }
 .jhere .jh-n { position: relative; width: 44px; height: 44px; display: grid; place-items: center; font: 500 20px var(--display); color: #F3D29A; }
 .jhere .jh-w { display: flex; flex-direction: column; line-height: 1.25; text-align: left; min-width: 0; }
-.jhere small { font: 600 10px var(--mono, var(--body)); letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+.jhere small { font: 600 12px var(--mono, var(--body)); letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
 .jhere strong { font: 500 17px var(--display); } .jhere em { font: normal 600 12px var(--body); color: #F3D29A; }
 @media (max-width: 1100px) { .jhere { bottom: max(18px, env(safe-area-inset-bottom)); } .jhere em, .jhere small { display: none; } .jhere { padding-right: 16px; } }
 body:not(.has-journey) .jhere { display: none; }
@@ -644,7 +644,7 @@ body:not(.no-grade) .dayhero[data-m="dawn"] img[data-mimg] { filter: brightness(
   .wall { columns: 2; column-gap: 10px; }
   .wall .tile { margin-bottom: 10px; }
   .moment-shop ~ section .wall .tile:nth-child(n+7) { display: none; }
-  .wall .cap { font-size: 11px; padding: 28px 8px 8px; }
+  .wall .cap { font-size: 12px; padding: 28px 8px 8px; }
   .wall .tile img { aspect-ratio: auto !important; max-height: 280px; object-fit: cover; }
 }
 /* legal pages */
@@ -817,7 +817,7 @@ body.has-buybar .breathorb { bottom: calc(max(18px, env(safe-area-inset-bottom))
 .stack-products { gap: 12px; }
 .sp { transition: translate .3s cubic-bezier(.2, .7, .2, 1), box-shadow .3s; box-shadow: 0 12px 30px rgba(35, 26, 43, .18); }
 .sp:hover { translate: 4px 0; box-shadow: 0 16px 38px rgba(35, 26, 43, .26); }
-.sp small { display: block; font: 600 10px var(--mono, var(--body)); letter-spacing: .14em; text-transform: uppercase; opacity: .7; margin-bottom: 1px; }
+.sp small { display: block; font: 600 12px var(--mono, var(--body)); letter-spacing: .14em; text-transform: uppercase; opacity: .7; margin-bottom: 1px; }
 .sp b { font-size: 15px; }
 .sp-ritual { grid-template-columns: auto auto; }
 .sp-thumbs { display: flex; padding-left: 2px; }

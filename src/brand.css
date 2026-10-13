@@ -58,7 +58,7 @@
 .clubsoon .rit-card-wrap { width: min(100%, 440px); }
 @media (max-width: 820px) {
   .club .head .rit-card-wrap, .clubsoon .rit-card-wrap { width: min(86%, 330px); margin: 18px auto 10px; }
-  .rc-name { font-size: 10.5px; letter-spacing: .3em; }
+  .rc-name { font-size: 12px; letter-spacing: .3em; }
 }
 @media (prefers-reduced-motion: reduce) { .rc-glow, .rc-float, .rc-shadow { animation: none; } .rc-tilt, .rc-sheen { transition: none; } }
 body.show-drafts .rit-card .d { background: none; box-shadow: none; color: #F7E4C6; text-decoration: underline dashed rgba(247, 228, 198, .7); text-underline-offset: 4px; }

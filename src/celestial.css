@@ -50,7 +50,7 @@
 }
 .card:hover .ph img.main { transform: none !important; }
 .card:hover .ph { transform: none !important; }
-.card .sub { font: 500 11px/1.5 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--euc); transition: color .3s; }
+.card .sub { font: 500 12px/1.5 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--euc); transition: color .3s; }
 .card:hover .sub, .card:focus-within .sub { color: var(--mood-c, var(--euc)); }
 .card .sub .swatch { width: 8px; height: 8px; }
 
