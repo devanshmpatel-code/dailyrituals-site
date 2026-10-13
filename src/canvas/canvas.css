@@ -161,7 +161,7 @@ section{padding-block:clamp(64px,8vw,112px)}
 
 footer{background:var(--plum);color:#D8CCDA;margin-top:clamp(64px,8vw,112px)}
 .foot{display:grid;grid-template-columns:1.5fr repeat(4,minmax(0,1fr));gap:32px;padding-block:64px 48px}
-.foot h4{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#fff;margin-bottom:14px;font-weight:600}
+.foot .fh{font-family:inherit;font-size:12px;letter-spacing:.14em;line-height:inherit;text-wrap:wrap;text-transform:uppercase;color:#fff;margin-bottom:14px;font-weight:600}
 .foot a{display:block;text-decoration:none;padding:4px 0;font-size:15px}
 .foot a:hover{color:#fff}
 .legal{border-top:1px solid rgba(255,255,255,.14);padding-block:22px;font-size:13px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}

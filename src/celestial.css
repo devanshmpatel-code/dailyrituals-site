@@ -64,7 +64,7 @@
 footer.cel-night { position: relative; isolation: isolate; }
 footer::before { top: -96px !important; height: 96px !important; }
 footer.cel-night > .wrap { position: relative; z-index: 1; }
-footer.cel-night .foot h4 { color: var(--gold-leaf); font-family: var(--mono, "DM Mono", monospace); font-weight: 500; letter-spacing: .18em; }
+footer.cel-night .foot .fh { color: var(--gold-leaf); font-family: var(--mono, "DM Mono", monospace); font-weight: 500; letter-spacing: .18em; }
 footer.cel-night .foot p { color: rgba(237, 230, 218, .78); }
 footer.cel-night .foot a { color: rgba(237, 230, 218, .82); }
 footer.cel-night .foot a:hover { color: var(--moonstone); }
