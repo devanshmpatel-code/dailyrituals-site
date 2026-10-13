@@ -16,6 +16,7 @@ import { currentRoute } from './router';
 import { MOMENTS } from './config';
 import { dropState } from './drop';
 import { mountMoonArc, type MoonArc } from './pages/moonarc';
+import { previewOff } from './pages/shared';
 
 export type Season = 'winter' | 'love' | 'spring' | 'autumn' | 'any';
 export interface Moon {
@@ -227,7 +228,8 @@ export function pastMoonsHTML(): string {
       <img src="${moonSrc(m.slug)}" alt="${esc(alt(m.slug))}" width="520" height="520" loading="lazy" decoding="async">
       <div class="pm-tx"><h4>${esc(m.name)}</h4>
         ${m.quote ? `<q>${esc(m.quote)}</q>` : ''}${m.quote2 ? `<q>${esc(m.quote2)}</q>` : ''}
-        <small>${esc(SEASONS.find(s => s.key === m.season)!.label)}${m.when ? ` · ${esc(m.when)}` : ''}</small></div>
+        <small>${esc(SEASONS.find(s => s.key === m.season)!.label)}${m.when ? ` · ${esc(m.when)}` : ''}</small>
+        <button type="button" class="pm-ret" data-return="${m.slug}" aria-label="Tell me if ${esc(m.name)} returns"><span class="d">Tell me if it returns</span></button></div>
       ${m.slug === 'midnight-forest' ? `<img class="pm-photo" src="/img/studio/tins/midnight-forest-moons-900.webp" srcset="/img/studio/tins/midnight-forest-moons-480.webp 480w, /img/studio/tins/midnight-forest-moons-900.webp 900w" sizes="(max-width: 820px) 90vw, 360px" alt="Midnight Forest candles in black tins seen from above, each topped with small moon- and star-shaped stones" width="900" height="821" loading="lazy" decoding="async">` : ''}
     </li>`;
   // the groups pack into three columns (two on tablets): a season with one candle takes one column, so Love and Autumn share a row
@@ -236,7 +238,10 @@ export function pastMoonsHTML(): string {
     return `<div class="pm-group" style="--n:${Math.min(3, list.length)};--n2:${Math.min(2, list.length)}"><h3 class="pm-season"><span>${esc(s.label)}</span><i></i></h3><ul class="pm-grid">${list.map(card).join('')}</ul></div>`;
   }).join('') +
     // the spare cell beside Love and Autumn: tonight's real moon (the site's phase row) and where new pours are announced. Draft for Claire.
-    `<aside class="pm-aside" aria-label="Tonight's moon"><span class="eyebrow">Tonight</span>${moonRow()}<p class="d">${tonightName() === 'new moon' ? 'A new moon tonight.' : `Tonight's moon is a ${esc(tonightName())}; the next new moon is ${esc(dropState().dateText)}.`} New pours are announced in the Monthly Ritual first.</p><a class="tlink" href="#/club">Join the Monthly Ritual</a></aside>`;
+    `<aside class="pm-aside" aria-label="Tonight's moon"><span class="eyebrow">Tonight</span>${moonRow()}<p class="d">${tonightName() === 'new moon' ? 'A new moon tonight.' : `Tonight's moon is a ${esc(tonightName())}; the next new moon is ${esc(dropState().dateText)}.`} New pours are announced in the Monthly Ritual first.</p>` +
+    // the one way to hear if a past pour comes back: the Monthly Ritual sign-up (the same form as the home page's). A card's
+    // "Tell me if it returns" fills the hidden interest with that candle, for when the sign-up is connected to Wix.
+    `<p class="pm-ask" id="pmAsk" aria-live="polite" hidden></p><form class="nform pm-form" id="pmForm"><label for="nemail" hidden>Email address</label><input id="nemail" type="email" placeholder="Email address" autocomplete="email" required><input type="hidden" name="interest" id="pmInterest" value=""><button class="btn" type="submit">Join the Monthly Ritual</button></form></aside>`;
   // draft for Claire: the heading, the lead and the "bring one back" idea (the idea stays a review note until she decides)
   return `<section class="pm" id="pastMoons" aria-labelledby="pmH">
     <div class="pm-head">
@@ -251,6 +256,7 @@ export function pastMoonsHTML(): string {
 
 /** Deep links into the archive: #/drops?moon=slug lights that card; #/drops?past=1 scrolls to the archive. */
 export function wirePastMoons(app: HTMLElement) {
+  wireReturnAsks(app);
   const q = new URLSearchParams(currentRoute().split('?')[1] ?? '');
   const slug = q.get('moon'), past = q.get('past');
   const target = (slug && app.querySelector<HTMLElement>(`#pm-${CSS.escape(slug)}`)) || (past ? app.querySelector<HTMLElement>('#pastMoons') : null);
@@ -258,4 +264,25 @@ export function wirePastMoons(app: HTMLElement) {
   if (slug) target.classList.add('on');
   const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.setTimeout(() => target.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: slug ? 'center' : 'start' }), 80);
+}
+
+/**
+ * "Tell me if it returns" on a past pour: nothing is reserved and nothing can be bought. It leads to the archive's Monthly
+ * Ritual sign-up, notes which candle was asked about (the hidden interest field) and says so beside the form. Draft for Claire.
+ */
+function wireReturnAsks(app: HTMLElement) {
+  const form = app.querySelector<HTMLFormElement>('#pmForm'), email = form?.querySelector<HTMLInputElement>('#nemail');
+  const interest = app.querySelector<HTMLInputElement>('#pmInterest'), ask = app.querySelector<HTMLElement>('#pmAsk');
+  if (!form || !email || !interest || !ask) return;
+  app.querySelectorAll<HTMLButtonElement>('[data-return]').forEach(b => b.addEventListener('click', () => {
+    const m = byId[b.dataset.return ?? ''];
+    if (!m) return;
+    interest.value = `returns:${m.slug}`;
+    ask.innerHTML = `<span class="d">You asked about ${esc(m.name)}. Join the Monthly Ritual and you will hear if it returns.</span>`;
+    ask.hidden = false;
+    app.querySelectorAll('[data-return].asked').forEach(x => x.classList.remove('asked')); b.classList.add('asked');
+    form.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    email.focus({ preventScroll: true });
+  }));
+  form.addEventListener('submit', e => { e.preventDefault(); previewOff('Newsletter sign-up')(); });
 }

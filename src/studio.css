@@ -270,6 +270,19 @@
 .pm-aside .cel-moonrow { width: 200px; max-width: 100%; height: 22px; color: var(--gold-leaf); }
 .pm-aside p { margin: 0; font-size: 14px; line-height: 1.5; color: rgba(237, 230, 218, .82); }
 .pm-aside .tlink { align-self: flex-start; color: var(--gold-light); font-size: 14px; }
+/* "Tell me if it returns" on a past pour (never a buy button) and the Monthly Ritual sign-up it leads to */
+.pm-ret { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; margin: 0 0 -8px -2px; padding: 0 2px; border: 0; background: none;
+  color: var(--gold-light, #E9D4A1); font: 600 13.5px/1.2 var(--body, inherit); cursor: pointer; text-decoration: underline; text-decoration-color: rgba(233, 212, 161, .45); text-underline-offset: 4px; }
+.pm-ret::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1px solid currentColor; flex: none; }
+.pm-ret:hover, .pm-ret.asked { text-decoration-color: currentColor; }
+.pm-ret.asked::before { background: currentColor; }
+.pm-ret:focus-visible { outline: 2px solid var(--gold-light, #E9D4A1); outline-offset: 2px; border-radius: 6px; }
+.pm-ask { color: var(--gold-light, #E9D4A1) !important; }
+.pm-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.pm-form input[type=email] { flex: 1 1 180px; min-height: 48px; border-radius: 999px; border: 1px solid rgba(237, 230, 218, .3); background: rgba(237, 230, 218, .08); color: var(--moonstone, #EDE6DA); padding: 0 16px; font: inherit; }
+.pm-form input[type=email]::placeholder { color: rgba(237, 230, 218, .6); }
+.pm-form input[type=email]:focus-visible { outline: 2px solid var(--gold-light, #E9D4A1); outline-offset: 2px; }
+.pm-form .btn { min-height: 48px; background: var(--gold-light, #E9D4A1); color: var(--nocturne, #120F1F); border: 0; }
 /* Midnight Forest closes the archive with its photograph beside it */
 .pm-card.feature { grid-column: 1 / -1; grid-template-columns: 92px minmax(0, 1fr) minmax(0, 300px); align-items: center; }
 .pm-card.feature .pm-photo { width: min(100%, 320px); height: auto; justify-self: center; filter: drop-shadow(0 18px 20px rgba(0, 0, 0, .45)); }

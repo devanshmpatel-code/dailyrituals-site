@@ -137,7 +137,14 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: the archive lists 15 named moons`, cards.length === 15 && new Set(cards).size === 15 && !cards.some(n => /crescent/i.test(n)), cards.join(', '));
   ok(`${label}: every card has a moon, Claire's words where she gave them, and no "No caption yet" placeholder`, await p.evaluate(() => [...document.querySelectorAll('#pastMoons .pm-card')].every(c => c.querySelector('img').alt.length > 10) && !/No caption yet/i.test(document.querySelector('#pastMoons').innerText) && document.querySelectorAll('#pastMoons .pm-card q').length >= 14));
   const archiveText = await p.locator('#pastMoons').innerText();
-  ok(`${label}: nothing in the archive can be bought`, (await p.locator('#pastMoons button, #pastMoons [data-add], #pastMoons [data-qa], #pastMoons .qa').count()) === 0 && !/add to cart|quick add|\$\d/i.test(archiveText) && /not for sale/i.test(archiveText));
+  // (its only buttons are "Tell me if it returns", one per candle, and the Monthly Ritual sign-up they lead to)
+  ok(`${label}: nothing in the archive can be bought`, (await p.locator('#pastMoons button:not([data-return]):not(#pmForm button[type=submit]), #pastMoons [data-add], #pastMoons [data-qa], #pastMoons .qa, #pastMoons a[href*="product"]').count()) === 0 && !/add to cart|quick add|\$\d/i.test(archiveText) && /not for sale/i.test(archiveText));
+  ok(`${label}: every past candle offers "Tell me if it returns"`, (await p.locator('#pastMoons .pm-card [data-return]').count()) === 15 && /tell me if it returns/i.test(archiveText));
+  await p.locator('#pm-christmas-eve [data-return]').click(); await p.waitForTimeout(900);
+  const asked = await p.evaluate(() => ({ focus: document.activeElement?.id, interest: document.querySelector('#pmInterest').value, ask: document.querySelector('#pmAsk').hidden ? '' : document.querySelector('#pmAsk').innerText, r: document.querySelector('#pmForm').getBoundingClientRect().top, h: innerHeight }));
+  ok(`${label}: "Tell me if it returns" on Christmas Eve leads to the Monthly Ritual sign-up and notes the candle`, asked.focus === 'nemail' && asked.interest === 'returns:christmas-eve' && /Christmas Eve/.test(asked.ask) && /Monthly Ritual/.test(asked.ask) && asked.r > 0 && asked.r < asked.h, JSON.stringify(asked));
+  await p.locator('#pmForm button[type=submit]').click(); await p.waitForTimeout(400);
+  ok(`${label}: the sign-up stays switched off in the preview`, (await p.locator('#nemail').evaluate(i => i.validity.valueMissing)) || /switched off/i.test(await p.locator('#toast').innerText()));
   ok(`${label}: the archive is grouped by season`, (await p.locator('#pastMoons .pm-season').count()) === 5);
   ok(`${label}: the "bring one back" idea is a draft for Claire only`, !/bring one back/i.test(archiveText));
   ok(`${label}: drops has no sideways scroll`, (await noScroll(p)) <= 1);
