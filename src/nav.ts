@@ -13,7 +13,7 @@
 // Every route used here exists in main.ts's switch, static.ts's PAGES or the pages' own query handling.
 import './nav.css';
 import { MOODS, type Mood } from './config';
-import { esc } from './ui';
+import { esc, lockBackground } from './ui';
 
 const MOOD_KEYS = Object.keys(MOODS) as Mood[];
 /** Lifted "star" variants of the mood swatches so a small star still reads on night blue (celestial brief, §3a). */
@@ -160,7 +160,7 @@ function mountDesktop(header: HTMLElement) {
 }
 
 // ---------------------------------------------------------------- phone overlay
-let overlay: HTMLElement | null = null, menuBtn: HTMLButtonElement | null = null, phoneOpen = false;
+let overlay: HTMLElement | null = null, menuBtn: HTMLButtonElement | null = null, phoneOpen = false; let unlockPage: (() => void) | null = null;
 
 function skyHTML() {
   // a seeded scatter of faint stars so every open looks the same
@@ -226,7 +226,7 @@ function openPhone() {
   overlay.hidden = false; void overlay.offsetHeight; overlay.classList.add('open');
   menuBtn!.setAttribute('aria-expanded', 'true');
   document.documentElement.classList.add('mm-lock');
-  const root = document.getElementById('root'); if (root) root.inert = true;
+  unlockPage = lockBackground(overlay); // the page, header, footer and the breathing orb are inert while the menu is open
   overlay.querySelector<HTMLElement>('.mm-close')!.focus();
 }
 function closePhone(refocus = true) {
@@ -235,7 +235,7 @@ function closePhone(refocus = true) {
   overlay.classList.remove('open');
   menuBtn!.setAttribute('aria-expanded', 'false');
   document.documentElement.classList.remove('mm-lock');
-  const root = document.getElementById('root'); if (root) root.inert = false;
+  unlockPage?.(); unlockPage = null;
   const done = () => { if (!phoneOpen) { overlay!.hidden = true; overlay!.querySelectorAll('.mm-acc[aria-expanded="true"]').forEach(b => { b.setAttribute('aria-expanded', 'false'); b.parentElement!.classList.remove('open'); }); } };
   if (reduce()) done(); else window.setTimeout(done, token('--dur-base', 240) + 40);
   if (refocus) menuBtn!.focus();

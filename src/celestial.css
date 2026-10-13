@@ -14,7 +14,7 @@
 /* ---- the night panel: gradient sky, grain, a faint star-chart grid, moonstone ink ---- */
 .night, .cel-night { background: var(--cel-grain), var(--cel-grid), var(--night-sky); color: var(--moonstone); }
 .night .eyebrow, .night .chapter, .cel-night .eyebrow { color: var(--gold-leaf); }
-.night .crumbs, .night .crumbs a, .clubsoon .crumbs, .clubsoon .crumbs a { color: rgba(237, 230, 218, .72) !important; }
+.night .crumbs, .night .crumbs a, .clubsoon .crumbs, .clubsoon .crumbs a { color: rgba(237, 230, 218, .86) !important; }
 .night a:focus-visible, .cel-night a:focus-visible, .cel-night button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
 
 /* ---- section dividers (home chapters) ---- */
@@ -50,7 +50,7 @@
 }
 .card:hover .ph img.main { transform: none !important; }
 .card:hover .ph { transform: none !important; }
-.card .sub { font: 500 11px/1.5 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--euc); transition: color .3s; }
+.card .sub { font: 500 12px/1.5 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--euc); transition: color .3s; }
 .card:hover .sub, .card:focus-within .sub { color: var(--mood-c, var(--euc)); }
 .card .sub .swatch { width: 8px; height: 8px; }
 
@@ -64,7 +64,7 @@
 footer.cel-night { position: relative; isolation: isolate; }
 footer::before { top: -96px !important; height: 96px !important; }
 footer.cel-night > .wrap { position: relative; z-index: 1; }
-footer.cel-night .foot h4 { color: var(--gold-leaf); font-family: var(--mono, "DM Mono", monospace); font-weight: 500; letter-spacing: .18em; }
+footer.cel-night .foot .fh { color: var(--gold-leaf); font-family: var(--mono, "DM Mono", monospace); font-weight: 500; letter-spacing: .18em; }
 footer.cel-night .foot p { color: rgba(237, 230, 218, .78); }
 footer.cel-night .foot a { color: rgba(237, 230, 218, .82); }
 footer.cel-night .foot a:hover { color: var(--moonstone); }

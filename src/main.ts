@@ -9,7 +9,7 @@ import Footer from './canvas/footer.html?raw';
 import Drawer from './canvas/drawer.html?raw';
 import { WRITES_ENABLED, LOYALTY_ENABLED, FREE_SHIPPING_THRESHOLD, LAUNCHED } from './config';
 import { hasClient, money, loadCatalogue } from './wix';
-import { fixImages, esc, toast } from './ui';
+import { fixImages, esc, toast, initToast, lockBackground, trapTab } from './ui';
 import { getLines, count, subtotal, setQty, onCart, checkout, add } from './cart';
 import { currentRoute, onRoute, installLinkHandling } from './router';
 import { renderHome } from './pages/home';
@@ -73,6 +73,8 @@ document.addEventListener('pointerdown', e => {
   ring.className = 'rip'; ring.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
   b.appendChild(ring); window.setTimeout(() => ring.remove(), 700);
 });
+
+initToast(); // the polite live region exists from the start, so the very first message is announced
 
 // ---------- header ----------
 mountNav(); // desktop flyouts, the phone menu and the hamburger (src/nav.ts)
@@ -161,19 +163,25 @@ async function fillSuggestions(db: HTMLElement) {
   }));
 }
 function updateCount() { document.getElementById('cartCount')!.textContent = String(count()); }
+let unlockPage: (() => void) | null = null;
 function openCart() {
+  if (!overlay.hidden) return;
   lastFocus = document.activeElement;
   document.getElementById('toast')?.classList.remove('on');
   renderDrawer(); overlay.hidden = false; document.body.classList.add('cart-open');
+  unlockPage = lockBackground(overlay); // page, header, footer and the orb can't be tabbed to or read while the cart is open
   drawer.querySelector<HTMLElement>('[data-x]')?.focus();
 }
 function closeCart() {
+  if (overlay.hidden) return;
   overlay.hidden = true; document.body.classList.remove('cart-open');
+  unlockPage?.(); unlockPage = null;
   (lastFocus as HTMLElement | null)?.focus?.();
 }
 document.getElementById('cartBtn')!.addEventListener('click', openCart);
 overlay.querySelector('.scrim')!.addEventListener('click', closeCart);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlay.hidden) closeCart(); });
+overlay.addEventListener('keydown', e => trapTab(e, drawer));
 onCart(() => { updateCount(); if (!overlay.hidden) renderDrawer(); });
 onCart(() => { if (overlay.hidden) { const c = document.getElementById('cartBtn')!; c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); } });
 updateCount();

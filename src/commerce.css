@@ -16,7 +16,7 @@ body.cart-open #toast { bottom: auto; top: calc(96px + env(safe-area-inset-top, 
 .drawer .ship .ship-t { font-size: 15px; line-height: 1.35; }
 .drawer .ship .meter { display: block; grid-column: 2; height: 6px; border-radius: 3px; background: rgba(42, 31, 51, .1); overflow: hidden; }
 .drawer .ship .meter div { height: 100%; }
-.drawer .ship .ship-ends { grid-column: 2; display: flex; justify-content: space-between; font: 500 11px var(--mono, var(--body)); letter-spacing: .08em; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.drawer .ship .ship-ends { grid-column: 2; display: flex; justify-content: space-between; font: 500 12px var(--mono, var(--body)); letter-spacing: .08em; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .drawer .ship.done { background: linear-gradient(155deg, #F7ECD2, #F1E2C2); }
 .drawer .ship.done .meter div { background: linear-gradient(90deg, #C9A35A, #E0BC72); }
 .drawer .li .qty button { width: 44px; height: 44px; }
@@ -41,7 +41,7 @@ body.cart-open #toast { bottom: auto; top: calc(96px + env(safe-area-inset-top, 
   body[data-page="shop"] .ways.two > a.way::after { width: 40px; height: 40px; right: 8px; bottom: 8px; opacity: .55; }
   body[data-page="shop"] .ways.two > a.way h3 { font-size: 20px; }
   body[data-page="shop"] .ways.two > a.way p { font-size: 12.5px; line-height: 1.4; padding-right: 30px; }
-  body[data-page="shop"] .ways.two > a.way .eyebrow { font-size: 10.5px; }
+  body[data-page="shop"] .ways.two > a.way .eyebrow { font-size: 12px; }
 }
 .shop-count { align-items: center; margin-bottom: 22px !important; }
 .shop-count .sort { min-height: 44px; border-radius: 999px; padding: 0 36px 0 16px; border: 1px solid var(--line); background-color: #fff; font: 500 14px var(--body); color: var(--ink); }
@@ -77,7 +77,7 @@ body.cart-open #toast { bottom: auto; top: calc(96px + env(safe-area-inset-top, 
   body:not([data-page="home"]) .card .meta { flex-direction: column; align-items: flex-start; gap: 2px; }
   body:not([data-page="home"]) .card .meta h3 { font-size: 18px; }
   body:not([data-page="home"]) .card .meta > span { font-size: 15px; }
-  body:not([data-page="home"]) .card .sub { align-items: flex-start !important; font-size: 10.5px; letter-spacing: .06em; line-height: 1.5; }
+  body:not([data-page="home"]) .card .sub { align-items: flex-start !important; font-size: 12px; letter-spacing: .06em; line-height: 1.5; }
   body:not([data-page="home"]) .card .sub .swatch { margin-top: 4px; flex: none; }
   body:not([data-page="home"]) .card .sub .nw { white-space: nowrap; }
 }
@@ -205,7 +205,7 @@ body.cart-open #toast { bottom: auto; top: calc(96px + env(safe-area-inset-top, 
 @media (max-width: 820px) { .reset-grid, .reset-pair { grid-template-columns: minmax(0, 1fr); } .reset-pair .cta .btn { flex: 1 1 100%; } }
 
 /* ---------- Ritual on Repeat: the builder says it is an estimate ---------- */
-.calc-est { align-self: flex-start; font: 600 11px/1.4 var(--body); letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px dashed currentColor; color: var(--ink-2); }
+.calc-est { align-self: flex-start; font: 600 12px/1.4 var(--body); letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px dashed currentColor; color: var(--ink-2); }
 
 /* ---------- tap targets of at least 44px on these pages ---------- */
 .lnav-name { min-height: 44px; }

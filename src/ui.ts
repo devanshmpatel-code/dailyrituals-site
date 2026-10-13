@@ -56,16 +56,20 @@ export function errorBox(msg: string) {
 
 let toastTimer = 0;
 export interface ToastAction { label: string; run: () => void; primary?: boolean }
+/** The toast's live region. Created once at startup (empty) so screen readers already know it when the first message lands. */
+export function initToast(): HTMLElement {
+  let el = document.getElementById('toast');
+  if (el) return el;
+  el = document.createElement('div'); el.id = 'toast'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); el.setAttribute('aria-atomic', 'true'); document.body.appendChild(el);
+  const hold = () => clearTimeout(toastTimer);
+  const later = () => { if (el!.classList.contains('acts')) { clearTimeout(toastTimer); toastTimer = window.setTimeout(() => el!.classList.remove('on'), 2400); } };
+  el.addEventListener('pointerenter', hold); el.addEventListener('focusin', hold);
+  el.addEventListener('pointerleave', later); el.addEventListener('focusout', later);
+  return el;
+}
 /** A short message at the foot of the screen. With actions (such as "View cart"), it stays longer and waits while hovered or focused. */
 export function toast(msg: string, actions: ToastAction[] = []) {
-  let el = document.getElementById('toast');
-  if (!el) {
-    el = document.createElement('div'); el.id = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el);
-    const hold = () => clearTimeout(toastTimer);
-    const later = () => { if (el!.classList.contains('acts')) { clearTimeout(toastTimer); toastTimer = window.setTimeout(() => el!.classList.remove('on'), 2400); } };
-    el.addEventListener('pointerenter', hold); el.addEventListener('focusin', hold);
-    el.addEventListener('pointerleave', later); el.addEventListener('focusout', later);
-  }
+  const el = initToast();
   el.classList.toggle('acts', actions.length > 0);
   if (!actions.length) el.textContent = msg;
   else {
@@ -95,4 +99,32 @@ export function wireCommon(root: HTMLElement) {
   });
   root.querySelectorAll<HTMLButtonElement>('button[data-heart]').forEach(b =>
     b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))));
+}
+
+/**
+ * Make the rest of the page inert while a modal dialog is open: every sibling along the path from the dialog up to <body>
+ * (page, header, footer, the breathing orb, the journey rail...) except the live toast. Returns the function that undoes
+ * exactly what this call changed (so anything already inert stays inert).
+ */
+export function lockBackground(dialog: Element): () => void {
+  const changed: HTMLElement[] = [];
+  for (let n: Element | null = dialog; n && n !== document.body; n = n.parentElement) {
+    const parent = n.parentElement; if (!parent) break;
+    for (const sib of Array.from(parent.children)) {
+      if (sib === n || !(sib instanceof HTMLElement) || sib.inert) continue;
+      if (sib.id === 'toast' || ['SCRIPT', 'STYLE', 'LINK'].includes(sib.tagName)) continue;
+      sib.inert = true; changed.push(sib);
+    }
+  }
+  return () => { changed.forEach(e => { e.inert = false; }); };
+}
+/** Keep Tab / Shift+Tab inside a dialog (call from a keydown listener on it). */
+export function trapTab(e: KeyboardEvent, dialog: HTMLElement) {
+  if (e.key !== 'Tab') return;
+  const f = [...dialog.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
+  if (!f.length) { e.preventDefault(); return; }
+  const first = f[0], last = f[f.length - 1], a = document.activeElement;
+  if (e.shiftKey && (a === first || !dialog.contains(a))) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && (a === last || !dialog.contains(a))) { e.preventDefault(); first.focus(); }
 }
