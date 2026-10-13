@@ -15,7 +15,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.goto(base + '/'); await p.waitForTimeout(800);
   ok(`${label}: no "Watch the day" button`, (await p.locator('#dayPlay').count()) === 0);
   await p.goto(base + '/shop'); await p.waitForSelector('.ghead');
-  ok(`${label}: shop is grouped by format`, (await p.locator('.grid.grouped .ghead').count()) >= 4);
+  ok(`${label}: shop is grouped (scent families, then formats)`, (await p.locator('.grid.grouped .ghead').count()) >= 4);
   ok(`${label}: "Kits and boxes" is marked coming soon`, /Coming soon/i.test(await p.locator('.ghead.soon').innerText()));
   if (label === 'mobile') ok('mobile: shop filters are one swipeable row', await p.evaluate(() => { const c = document.querySelector('.toolbar .chips'); return getComputedStyle(c).flexWrap === 'nowrap' && c.scrollWidth > c.clientWidth; }));
   await p.goto(base + '/club'); await p.waitForSelector('.clubsoon');

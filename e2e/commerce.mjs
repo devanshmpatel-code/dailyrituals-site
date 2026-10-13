@@ -26,7 +26,8 @@ const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(base + '/shop'); await p.waitForSelector('.grid.grouped .ghead'); await p.waitForTimeout(500);
   const heads = await p.locator('.grid.grouped .ghead h2').allInnerTexts();
-  ok('phone /shop: candles come first', /candle/i.test(heads[0] ?? ''), heads.join(' / '));
+  // one card per scent: the shop is grouped by scent family first, then the products with no family yet, by format
+  ok('phone /shop: scent families come first, then the formats', /Fresh and coastal/.test(heads[0] ?? '') && heads.some(h => /candles/i.test(h)) && /Kits and boxes/.test(heads.at(-1) ?? ''), heads.join(' / '));
   const jump = await p.locator('.shop-jump a').evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href'), a.getBoundingClientRect().height]));
   ok('phone /shop: a shortcut row of Candles, Rollers, Diffusers and Gifts sits near the top', jump.map(j => j[0]).join(',') === 'Candles,Rollers,Diffusers,Gifts' && /\/gift$/.test(jump[3][1]) && jump.every(j => j[2] >= 44) && await p.evaluate(() => document.querySelector('.shop-jump').getBoundingClientRect().top < innerHeight), JSON.stringify(jump));
   ok('phone /shop: the format heads keep their photograph clear of the words', await p.evaluate(() => [...document.querySelectorAll('.ghead .ghead-ph')].every(img => { const r = img.getBoundingClientRect(), h = img.closest('.ghead').querySelector('h2').getBoundingClientRect(); return r.bottom <= h.top + 1; })));
@@ -106,6 +107,41 @@ const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :
   }
   await p.goto(base + '/product/cabana'); await p.waitForSelector('#addBtn'); await p.click('#addBtn'); await p.waitForTimeout(400); await p.click('#cartBtn'); await p.waitForTimeout(500);
   ok('360 cart: no sideways scroll with the cart open', (await p.evaluate(() => document.querySelector('.drawer').scrollWidth - document.querySelector('.drawer').clientWidth)) <= 1);
+  await ctx.close();
+}
+for (const [w, h] of [[1440, 900], [390, 844]]) { // one card per scent: format chips switch the card, quick add puts the chosen format in the cart
+  const phone = w < 600, ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: phone, hasTouch: phone }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.goto(base + '/shop'); await p.waitForSelector('.grid .scard'); await p.waitForTimeout(700);
+  const names = await p.locator('.grid .card:not([data-concept]) h3').allInnerTexts();
+  ok(`${w} /shop: one card per scent (no scent twice)`, names.length === 17 && new Set(names).size === names.length, names.join(', '));
+  const cab = p.locator('.scard[data-scent="cabana"]');
+  const state = () => cab.evaluate(c => ({ href: c.querySelector('a.sc-link').getAttribute('href'), ph: c.querySelector('a.sc-ph').getAttribute('href'), price: c.querySelector('.sc-price').textContent, sub: c.querySelector('.sc-sub').textContent, img: c.querySelector('img.main')?.getAttribute('src'), add: c.querySelector('.sc-add').textContent.replace(/\s+/g, ' ').trim(), pressed: c.querySelector('.sc-fmt[aria-pressed="true"]').getAttribute('aria-label') }));
+  ok(`${w} /shop: Cabana's card offers its candle, roller and diffuser`, (await cab.locator('.sc-fmt').evaluateAll(bs => bs.map(x => x.getAttribute('aria-label')).join())) === 'Candle,Roller,Diffuser');
+  const s0 = await state();
+  ok(`${w} /shop: the card opens on the candle, sizes as the product names them`, /product\/cabana$/.test(s0.href) && s0.price === 'From $12.00' && /Candle · 2 oz · 8 oz/.test(s0.sub) && /^Quick add · 2 oz/.test(s0.add), JSON.stringify(s0));
+  await cab.locator('.sc-fmt[aria-label="Roller"]').click(); await p.waitForTimeout(200);
+  const s1 = await state();
+  ok(`${w} /shop: the Roller chip switches the photo, price, sizes and links`, /product\/cabana-fragrance-roller$/.test(s1.href) && s1.ph === s1.href && s1.price === '$25.00' && /Fragrance Roller · 10 ml/.test(s1.sub) && s1.img !== s0.img && s1.add === 'Quick add · 10 ml · $25.00' && s1.pressed === 'Roller', JSON.stringify(s1));
+  await cab.locator('.sc-fmt[aria-label="Diffuser"]').click(); await p.waitForTimeout(200);
+  const s2 = await state();
+  ok(`${w} /shop: the Diffuser chip does the same`, /product\/cabana-mini-diffuser$/.test(s2.href) && s2.price === '$15.00' && /Mini Diffuser · 8 ml/.test(s2.sub) && s2.add === 'Quick add · 8 ml · $15.00', JSON.stringify(s2));
+  const c0 = await count(p); await cab.locator('button.sc-add').click(); await p.waitForTimeout(500);
+  ok(`${w} /shop: quick add puts the chosen format in the cart`, (await count(p)) === c0 + 1 && /Cabana Mini Diffuser added/.test(await p.locator('#toast.on').innerText()));
+  await cab.locator('.sc-fmt[aria-label="Candle"]').click(); await p.waitForTimeout(600);
+  ok(`${w} /shop: a candle's quick add names the size it adds and its own price`, /^Quick add · 2 oz · \$12\.00$/.test((await state()).add), (await state()).add);
+  const c1 = await count(p); await cab.locator('button.sc-add').click(); await p.waitForTimeout(600);
+  const line = await p.evaluate(() => JSON.parse(localStorage.getItem('dr_cart') ?? '[]').find(l => l.slug === 'cabana'));
+  ok(`${w} /shop: quick add on a candle adds the first size at that size's price`, (await count(p)) === c1 + 1 && /Cabana \(2 oz\) added/.test(await p.locator('#toast.on').innerText()) && !!line && line.choice === '2 oz' && line.price === 12, JSON.stringify(line));
+  ok(`${w} /shop: the deodorant (a choice of scent) leads to its page instead of guessing`, (await p.locator('.scard a.sc-add[href*="natural-deodorant"]').count()) === 1 && (await p.locator('.scard button[data-qa]').evaluateAll(bs => bs.some(x => /natural-deodorant/.test(x.closest('.scard').querySelector('a.sc-link').getAttribute('href'))))) === false);
+  ok(`${w} /shop: sizes read one way ("10 ml", never "10ml")`, !(await p.locator('.grid').innerText()).match(/\d(ml|oz)\b/i));
+  const small = await p.locator('.scard :is(.sc-fmt, .sc-add)').evaluateAll(els => els.filter(e => { const r = e.getBoundingClientRect(); return r.width < 43.5 || r.height < 43.5; }).length);
+  ok(`${w} /shop: format chips and quick add are at least 44px`, small === 0, String(small));
+  await p.goto(base + '/shop?f=roller&m=all&s=featured'); await p.waitForSelector('.grid .scard'); await p.waitForTimeout(400);
+  const rl = await p.locator('.grid .scard').evaluateAll(cs => cs.map(c => c.dataset.format));
+  ok(`${w} /shop?f=roller: only scents with a roller, each card open on its roller`, rl.length === 11 && rl.every(x => x === 'roller'), rl.join());
+  ok(`${w} /shop: no sideways scroll`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 1);
+  ok(`${w} /shop: no JS errors`, errs.length === 0, errs.join(' | '));
   await ctx.close();
 }
 { // desktop: the cards lift on hover; the quick add's toast
