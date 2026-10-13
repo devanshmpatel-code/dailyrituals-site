@@ -23,32 +23,65 @@ export function mountBreathButton() {
   b.innerHTML = `<span class="bo-orb" aria-hidden="true"><i class="r r1"></i><i class="r r2"></i><i class="r r3"></i><span class="bo-core">${LOTUS}</span></span>
     <span class="bo-say" aria-hidden="true"><span class="in">Breathe in</span><span class="out">Breathe out</span></span>`;
   b.addEventListener('click', () => openBreathe(b));
+  // keyboard focus always brings it out; leaving it, it steps aside again if it is over something
+  b.addEventListener('focus', () => b.classList.remove('bo-tucked'));
+  b.addEventListener('blur', () => window.setTimeout(settle, 50));
   document.body.appendChild(b);
   // the label only shows on hover or focus: the breathing orb speaks for itself and never covers the page
   watchScroll();
+  // on a phone or tablet it first looks at what the page has put under it (once the page has laid out, and again once
+  // pictures and fonts have settled)
+  window.clearTimeout(settleT1); window.clearTimeout(settleT2);
+  settleT1 = window.setTimeout(settle, 450);
+  settleT2 = window.setTimeout(settle, 1400);
 }
 
-// ---------- on phones the orb steps aside ----------
-// The orb floats over the page's bottom-right corner, where on a phone the text, prices and buttons run right to the edge.
-// While the visitor scrolls down it slips away; it comes back when they scroll up or pause, but only if nothing they can
-// press (a button, a link, a field, a price) sits under it at that moment; otherwise it waits for the next pause. At the top
-// of a page it always shows, and keyboard focus always brings it back (it stays in the tab order with its label throughout).
+// ---------- on phones and tablets the orb steps aside ----------
+// The orb floats over the page's bottom-right corner, where on a phone the words, prices and buttons run right to the
+// edge. It only shows where nothing lies under it: no words, and nothing to press (a button, a link, a field, a price),
+// at the top of a page too. While the visitor scrolls down it slips away; when they scroll up or pause it comes back if
+// the spot under it is clear, and otherwise waits for the next pause. Keyboard focus always brings it back (it stays in
+// the tab order with its label throughout).
 const PHONE = '(max-width: 820px)';
 const PRESSABLE = 'a[href], button, input, select, textarea, label, summary, [role="button"], [role="tab"], .price, .btn';
-let watching = false, lastY = 0, idle = 0;
+let watching = false, lastY = 0, idle = 0, settleT1 = 0, settleT2 = 0;
 
-/** True when no pressable thing lies under the orb's footprint. */
+/** True when a letter of the page's text (not the orb's own) is drawn at this point. */
+function glyphAt(x: number, y: number, b: HTMLElement): boolean {
+  const doc = document as Document & { caretRangeFromPoint?: (x: number, y: number) => Range | null };
+  const r = doc.caretRangeFromPoint?.(x, y);
+  const n = r?.startContainer;
+  if (!r || !n || n.nodeType !== 3 || b.contains(n) || !n.textContent?.trim()) return false;
+  const t = n as Text, rg = document.createRange();
+  rg.setStart(t, Math.max(0, r.startOffset - 1)); rg.setEnd(t, Math.min(t.length, r.startOffset + 1));
+  return [...rg.getClientRects()].some(q => x >= q.left - 3 && x <= q.right + 3 && y >= q.top - 2 && y <= q.bottom + 2);
+}
+
+/** True when nothing to press and no words lie under the orb's footprint. */
 export function orbSpotClear(b: HTMLElement): boolean {
   // the resting footprint (offset* ignore the slide while it is tucked away; a fixed element's offsets are viewport ones)
-  const r = { left: b.offsetLeft, top: b.offsetTop, right: b.offsetLeft + b.offsetWidth, bottom: b.offsetTop + b.offsetHeight, width: b.offsetWidth, height: b.offsetHeight };
-  const pts: [number, number][] = [[r.left + r.width / 2, r.top + r.height / 2], [r.left + 4, r.top + 4], [r.right - 4, r.top + 4], [r.left + 4, r.bottom - 4], [r.right - 4, r.bottom - 4]];
-  return pts.every(([x, y]) => document.elementsFromPoint(x, y).every(el => b.contains(el) || !el.closest(PRESSABLE) || !!el.closest('.breathorb')));
+  const l = b.offsetLeft, t = b.offsetTop, w = b.offsetWidth, h = b.offsetHeight;
+  if (!w || !h) return true;
+  const pts: [number, number][] = [];
+  for (const fx of [0.08, 0.3, 0.5, 0.7, 0.92]) for (const fy of [0.08, 0.3, 0.5, 0.7, 0.92]) pts.push([l + w * fx, t + h * fy]);
+  const pe = b.style.pointerEvents; b.style.pointerEvents = 'none'; // (so the text hit test sees the page under it)
+  try {
+    return pts.every(([x, y]) => document.elementsFromPoint(x, y).every(el => b.contains(el) || !el.closest(PRESSABLE) || !!el.closest('.breathorb')) && !glyphAt(x, y, b));
+  } finally { b.style.pointerEvents = pe; }
 }
 
 function setTucked(on: boolean) {
   const b = document.querySelector<HTMLElement>('.breathorb');
   if (!b) return;
   b.classList.toggle('bo-tucked', on && b !== document.activeElement);
+}
+
+/** Out where the spot is clear, aside where it is not (phones and tablets only). */
+function settle() {
+  const b = document.querySelector<HTMLElement>('.breathorb');
+  if (!b) return;
+  if (!window.matchMedia(PHONE).matches) { setTucked(false); return; }
+  setTucked(!orbSpotClear(b));
 }
 
 function watchScroll() {
@@ -61,11 +94,10 @@ function watchScroll() {
     const b = document.querySelector<HTMLElement>('.breathorb');
     if (!b) return;
     window.clearTimeout(idle);
-    if (y < 80) setTucked(false);
-    else if (dy > 2) setTucked(true);
-    else if (dy < -2) setTucked(!orbSpotClear(b));
+    if (dy > 2 && y >= 80) setTucked(true);
+    else if (dy < -2 || y < 80) setTucked(!orbSpotClear(b));
     // after a pause it comes back if the spot under it is free
-    idle = window.setTimeout(() => { if (window.scrollY < 80 || orbSpotClear(b)) setTucked(false); }, 900);
+    idle = window.setTimeout(settle, 900);
   }, { passive: true });
-  window.addEventListener('resize', () => { if (!window.matchMedia(PHONE).matches) setTucked(false); });
+  window.addEventListener('resize', () => { window.clearTimeout(idle); idle = window.setTimeout(settle, 300); });
 }

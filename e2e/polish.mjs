@@ -137,15 +137,25 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
         if (o.classList.contains('bo-tucked')) return null;
         const r = o.getBoundingClientRect(), x = r.left + r.width / 2, yy = r.top + r.height / 2;
         const hit = document.elementsFromPoint(x, yy).find(el => !o.contains(el) && el.closest('a[href], button, input, select, textarea, .price, .btn'));
-        return hit ? `${hit.tagName}.${hit.className}`.slice(0, 60) : null;
+        if (hit) return `${hit.tagName}.${hit.className}`.slice(0, 60);
+        // nor over words: no letter of the page drawn under its middle
+        o.style.pointerEvents = 'none'; const cr = document.caretRangeFromPoint(x, yy); o.style.pointerEvents = '';
+        const n = cr?.startContainer;
+        if (n?.nodeType === 3 && n.textContent.trim() && !o.contains(n)) { const g = document.createRange(); g.setStart(n, Math.max(0, cr.startOffset - 1)); g.setEnd(n, Math.min(n.length, cr.startOffset + 1));
+          if ([...g.getClientRects()].some(q => x >= q.left && x <= q.right && yy >= q.top && yy <= q.bottom)) return `words "${n.textContent.trim().slice(0, 30)}"`; }
+        return null;
       });
       if (c) covered.push(c);
     }
     ok(`phone ${r}: the orb slips away while scrolling down`, hidDown);
-    ok(`phone ${r}: after a pause the orb never sits over a button, link, field or price`, covered.length === 0, covered.join(' | '));
+    ok(`phone ${r}: after a pause the orb never sits over a button, link, field, price or words`, covered.length === 0, covered.join(' | '));
     await p.mouse.wheel(0, -900); await p.waitForTimeout(1300);
     await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(1300);
-    ok(`phone ${r}: back at the top the orb is there to tap`, !(await orb.evaluate(o => o.classList.contains('bo-tucked'))));
+    // at the top it is out only where its spot is clear (the opening's words and buttons come first); focus always brings it out
+    const top = await orb.evaluate(o => o.classList.contains('bo-tucked') ? 'aside' : 'out');
+    await orb.focus(); await p.waitForTimeout(500);
+    ok(`phone ${r}: back at the top the orb is out or aside (${top}), and focus brings it out to tap`, await orb.evaluate(o => getComputedStyle(o).opacity === '1' && getComputedStyle(o).pointerEvents !== 'none' && !o.classList.contains('bo-tucked')));
+    await orb.evaluate(o => o.blur());
   }
   await ctx.close();
 }
@@ -177,7 +187,7 @@ for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
     const shown = [...card.querySelectorAll('.gc-tin img')].filter(i => Number(getComputedStyle(i).opacity) > .99);
     return { t: card.dataset.t, shown: shown.map(i => i.getAttribute('src')), loaded: shown.every(i => i.complete && i.naturalWidth > 0),
       hidden: [...card.querySelectorAll('.gc-tin img')].filter(i => Number(getComputedStyle(i).opacity) < .01).length,
-      vis, card: cr.toJSON(), note: [...rng.getClientRects()].map(r => r.toJSON()), to: card.querySelector('#gCardTo').getBoundingClientRect().toJSON(),
+      vis, tin: tin.toJSON(), card: cr.toJSON(), note: [...rng.getClientRects()].map(r => r.toJSON()), to: card.querySelector('#gCardTo').getBoundingClientRect().toJSON(),
       cap: document.querySelector('#gCandleCap').textContent, live: document.querySelector('#gCandleCap').getAttribute('aria-live'), aria: card.querySelector('.gc-candle').getAttribute('aria-hidden'),
       glow: getComputedStyle(card).getPropertyValue('--gcg').trim(), wick: Number(getComputedStyle(card.querySelector('.gc-wick')).opacity), dur: getComputedStyle(card.querySelector('.gc-tin img')).transitionDuration };
   });
@@ -188,7 +198,8 @@ for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
     ok(`${label} /gift ${sky}: the card's candle shows its own topping (one candle, the others faded out)`, s.t === sky && s.shown.length === 1 && s.shown[0].includes(`/img/studio/moons/${TOPS[sky][0]}.webp`) && s.loaded && s.hidden === 2, JSON.stringify(s.shown));
     ok(`${label} /gift ${sky}: the line under the card names the topping, never a scent`, TOPS[sky][1].test(s.cap) && !/Spring Blooms|Mulled Wine|Lavender Haze/i.test(s.cap) && s.live === 'polite' && s.aria === 'true', s.cap);
     const cx = (s.vis.left + s.vis.right) / 2, cy = (s.vis.top + s.vis.bottom) / 2;
-    ok(`${label} /gift ${sky}: the candle sits tucked into the bottom-right corner, partly off the card`, cx > (s.card.left + s.card.right) / 2 && cy > (s.card.top + s.card.bottom) / 2 && s.vis.right >= s.card.right - 1 && s.vis.bottom >= s.card.bottom - 1 && (s.vis.right - s.vis.left) >= 80, JSON.stringify(s.vis));
+    // (the whole tin, a little in from the corner: cut off by the card's edges it read as a cropped photograph)
+    ok(`${label} /gift ${sky}: the candle sits in the bottom-right corner, whole, inside the card`, cx > (s.card.left + s.card.right) / 2 && cy > (s.card.top + s.card.bottom) / 2 && s.tin.right <= s.card.right - 8 && s.tin.bottom <= s.card.bottom - 8 && s.card.right - s.tin.right <= 32 && s.card.bottom - s.tin.bottom <= 32 && (s.vis.right - s.vis.left) >= 80, JSON.stringify({ tin: s.tin, card: s.card }));
     ok(`${label} /gift ${sky}: it covers neither the note nor the recipient line`, !s.note.some(r => hits(r, s.vis)) && !hits(s.to, s.vis));
   }
   const s = await state();

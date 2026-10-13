@@ -60,7 +60,7 @@ const contrastBehind = async (p, sel) => {
     return (fg + 0.05) / (bg + 0.05);
   }, [png.toString('base64'), color]);
 };
-const open = async (p, q = '?breath=fast') => { await p.goto(base + '/coaching' + q); await p.waitForSelector('.breathorb'); await p.waitForTimeout(500); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); };
+const open = async (p, q = '?breath=fast') => { await p.goto(base + '/coaching' + q); await p.waitForSelector('.breathorb'); await p.waitForTimeout(500); await p.locator('.breathorb').focus(); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); };
 const sel = p => p.evaluate(() => [document.querySelector('.fb-c[aria-pressed="true"]')?.dataset.slug, document.querySelector('.fb-name')?.textContent]);
 const countAudio = () => { window.__audio = 0; const A = window.AudioContext; window.AudioContext = class extends A { constructor(...a) { super(...a); window.__audio++; } }; };
 
@@ -212,8 +212,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: Esc closes and returns focus to the orb`, (await p.locator('.jbreathe').count()) === 0 && await p.evaluate(() => document.activeElement?.classList.contains('breathorb')));
   const o = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(`${label}: no sideways scroll`, o <= 1, `${o}`);
   // the last chosen candle comes back next time
-  await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.keyboard.press('ArrowRight'); await p.waitForTimeout(200); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
-  await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.waitForTimeout(200);
+  await p.locator('.breathorb').focus(); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.keyboard.press('ArrowRight'); await p.waitForTimeout(200); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+  await p.locator('.breathorb').focus(); await p.locator('.breathorb').click(); await p.waitForSelector('.jbreathe.open'); await p.waitForTimeout(200);
   ok(`${label}: the pause opens on the last chosen candle`, (await sel(p))[0] === 'verdant');
   ok(`${label}: Verdant has no roller in the shop, so the offer links to the rollers`, await p.evaluate(() => /^#?\/shop\?f=roller$/.test(document.querySelector('.fb-pair').getAttribute('href'))));
   await p.keyboard.press('Escape'); await p.waitForTimeout(600);
