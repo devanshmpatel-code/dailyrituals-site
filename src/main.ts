@@ -241,3 +241,14 @@ async function route() {
 installLinkHandling();
 onRoute(route);
 route();
+// Once the page has loaded and the browser is idle, the other pages' chunks are fetched one at a time, so following a link
+// later shows the new page at once, as when every page was in one bundle.
+{
+  const later: (() => Promise<unknown>)[] = [
+    () => import('./pages/product'), () => import('./pages/shop'), () => import('./pages/info'), () => import('./pages/journal'),
+    () => import('./pages/static'), () => import('./pages/legal'), () => import('./pages/coaching'),
+  ];
+  const idle = (f: () => void) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(f, { timeout: 8000 }) : setTimeout(f, 2000));
+  const next = () => { const f = later.shift(); if (f) idle(() => { f().catch(() => {}).finally(next); }); };
+  if (document.readyState === 'complete') next(); else window.addEventListener('load', next, { once: true });
+}
