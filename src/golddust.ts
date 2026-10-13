@@ -30,11 +30,13 @@ function sprites() {
   return { dot, star };
 }
 
-/** The arc, as a cubic Bézier in fractions of the sky, chosen for the hero's layout. */
-function arcFor(w: number): [number, number][] {
-  if (w >= 980) return [[0.455, 0.0], [0.4, 0.26], [0.41, 0.5], [0.67, 0.6]]; // between the words and the moons, sweeping out under them
-  return [[0.035, 0.0], [0.14, 0.06], [0.07, 0.18], [0.2, 0.27]]; // stacked layouts: the top-left corner of the sky, beside the moons
+/** The arc, as a cubic Bézier in fractions of the sky: it streams from behind the full moon and sweeps down to the left,
+ *  towards the gap between the words and the moons, fading before the mountain ridge. */
+function arcFrom(mx: number, my: number): [number, number][] {
+  return [[mx, my], [mx - 0.03, my + 0.21], [mx - 0.17, 0.42], [mx - 0.36, 0.45]];
 }
+/** Below this width the hero stacks and there is no room for the trail: only the CSS glow stays. */
+const MIN_W = 980;
 const bez = (p: [number, number][], t: number, i: 0 | 1) => {
   const u = 1 - t; return u * u * u * p[0][i] + 3 * u * u * t * p[1][i] + 3 * u * t * t * p[2][i] + t * t * t * p[3][i];
 };
@@ -51,15 +53,16 @@ export function mountGoldDust(sky: HTMLElement) {
   el.className = 'hol-dust'; el.dataset.hol = ''; el.setAttribute('aria-hidden', 'true');
   // just above the sky and its mountains, below every word, button and moon of the hero
   sky.after(el);
-  if (reduce()) { el.dataset.state = 'still'; current = { el, stop: () => {} }; return; }
+  if (reduce() || window.innerWidth < MIN_W) { el.dataset.state = 'still'; current = { el, stop: () => {} }; return; }
 
   const cv = document.createElement('canvas'); el.appendChild(cv);
   const ctx = cv.getContext('2d');
   if (!ctx) { el.dataset.state = 'still'; current = { el, stop: () => {} }; return; }
   const { dot, star } = sprites();
   const hero = sky.closest<HTMLElement>('#day') ?? sky;
-  let W = 0, H = 0, dpr = 1, arc = arcFor(1000), scale = 1, avoid: R[] = [];
+  let W = 0, H = 0, dpr = 1, arc = arcFrom(0.74, 0.14), scale = 1, avoid: R[] = [], narrow = false;
   let parts: P[] = [], glints: G[] = [];
+  let run: (() => void) | null = null;
 
   const spawn = (fresh: boolean): P => ({
     t: fresh ? Math.sqrt(Math.random()) : Math.random() * Math.random() * 0.25,
@@ -80,6 +83,12 @@ export function mountGoldDust(sky: HTMLElement) {
       for (let t = tw.nextNode(); t; t = tw.nextNode()) if (t.textContent?.trim()) { const rg = document.createRange(); rg.selectNodeContents(t); rects.push(...rg.getClientRects()); }
     }
     hero.querySelectorAll<HTMLElement>('#dCta > *, #dProducts > *, .moments > *, #dClock > *').forEach(n => rects.push(n.getBoundingClientRect()));
+    // the trail starts behind the full moon (the largest of the moons), wherever the layout puts it
+    const moons = [...hero.querySelectorAll<HTMLElement>('.moonarc .cm')].map(m => m.getBoundingClientRect()).filter(r => r.width > 0);
+    const full = moons.sort((a, b) => b.width - a.width)[0];
+    arc = full && box.width > 0 && box.height > 0
+      ? arcFrom((full.left + full.width / 2 - box.left) / box.width, (full.top + full.height / 2 - box.top) / box.height)
+      : arcFrom(0.74, 0.14);
     avoid = rects.map(r => ({ l: r.left - box.left - 12, t: r.top - box.top - 10, r: r.right - box.left + 12, b: r.bottom - box.top + 10 }))
       .filter(r => r.r > r.l && r.b > r.t);
   };
@@ -88,11 +97,12 @@ export function mountGoldDust(sky: HTMLElement) {
     W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
     dpr = Math.min(1.5, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    arc = arcFor(W); scale = Math.min(W, H * 1.4) / 900;
-    const n = W >= 980 ? 320 : 130;
-    parts = Array.from({ length: n }, () => spawn(true));
-    glints = Array.from({ length: W >= 980 ? 7 : 4 }, (_, i) => ({ t: 0.25 + (i / (W >= 980 ? 7 : 4)) * 0.7 + Math.random() * 0.06, o: gauss() * 0.8, s: 0.6 + Math.random() * 0.6, ph: Math.random() * 6.28, f: 0.35 + Math.random() * 0.4 }));
+    scale = Math.min(W, H * 1.4) / 900;
+    narrow = window.innerWidth < MIN_W;
+    parts = Array.from({ length: 180 }, () => spawn(true));
+    glints = Array.from({ length: 6 }, (_, i) => ({ t: 0.22 + (i / 6) * 0.6 + Math.random() * 0.06, o: gauss() * 0.8, s: 0.6 + Math.random() * 0.6, ph: Math.random() * 6.28, f: 0.35 + Math.random() * 0.4 }));
     measure();
+    run?.();
   };
   const inside = (x: number, y: number) => avoid.some(a => x > a.l && x < a.r && y > a.t && y < a.b);
   const point = (t: number, o: number) => {
@@ -103,6 +113,8 @@ export function mountGoldDust(sky: HTMLElement) {
     return [x - (dy / len) * o * spread, y + (dx / len) * o * spread] as const;
   };
 
+  // the dust thins out as it nears the mountain ridge, about halfway down the sky
+  const low = (y: number) => 1 - smooth(0.4 * H, 0.56 * H, y);
   let raf = 0, last = 0, clock = 0, frames = 0, visible = true;
   const draw = (now: number) => {
     raf = requestAnimationFrame(draw);
@@ -114,7 +126,8 @@ export function mountGoldDust(sky: HTMLElement) {
     ctx.globalCompositeOperation = 'lighter';
     const sweep = ((clock / 7) % 1.4) - 0.2;
     for (const p of parts) {
-      p.t += p.v * dt * 0.5 * (1.25 - 0.95 * Math.min(1, p.t)); // slower, so denser, as the trail opens out p.o += p.a * dt;
+      p.t += p.v * dt * 0.5 * (1.25 - 0.95 * Math.min(1, p.t)); // slower, so denser, as the trail opens out
+      p.o += p.a * dt;
       if (p.t > 1.02) Object.assign(p, spawn(false));
       const env = smooth(0, 0.12, p.t) * (1 - smooth(0.8, 1.02, p.t));
       if (env <= 0.01) continue;
@@ -124,7 +137,8 @@ export function mountGoldDust(sky: HTMLElement) {
       // a slow shimmer sweeps down the arc every few seconds
       const dd = (p.t - sweep) / 0.08, boost = Math.exp(-dd * dd);
       const s = p.r * 4.6 * (0.7 + scale * 0.5);
-      ctx.globalAlpha = Math.min(1, env * tw * (0.5 + 0.4 * (1 - Math.abs(p.o) / 2)) * (0.75 + 0.6 * boost));
+      ctx.globalAlpha = Math.min(0.7, env * low(y) * tw * (0.5 + 0.4 * (1 - Math.abs(p.o) / 2)) * (0.75 + 0.6 * boost));
+      if (ctx.globalAlpha < 0.02) continue;
       ctx.drawImage(dot, x - s / 2, y - s / 2, s, s);
     }
     for (const g of glints) {
@@ -133,14 +147,16 @@ export function mountGoldDust(sky: HTMLElement) {
       const k = Math.max(0, Math.sin(clock * g.f + g.ph));
       if (k < 0.05) continue;
       const s = 26 * g.s * (0.5 + 0.5 * k) * (0.7 + scale * 0.4);
-      ctx.globalAlpha = 0.85 * k;
+      ctx.globalAlpha = Math.min(0.7, 0.85 * k * low(y));
+      if (ctx.globalAlpha < 0.02) continue;
       ctx.drawImage(star, x - s / 2, y - s / 2, s, s);
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   };
-  const run = () => {
-    const go = visible && !document.hidden;
-    el.dataset.state = go ? 'running' : 'paused';
+  run = () => {
+    const go = visible && !document.hidden && !narrow;
+    el.dataset.state = narrow ? 'still' : go ? 'running' : 'paused';
+    if (narrow) ctx.clearRect(0, 0, cv.width, cv.height);
     if (go && !raf) { last = 0; raf = requestAnimationFrame(draw); }
     if (!go && raf) { cancelAnimationFrame(raf); raf = 0; }
   };

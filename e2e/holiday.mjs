@@ -1,6 +1,6 @@
 // The holiday layer (src/season.ts): off by default outside Nov 15 to Dec 31, on inside it by the visitor's own date (a Date
 // override injected before the page loads); the preview toggle and ?season= work; the seal shows the computed Moon Drop date;
-// the stubs, flags and seal exist only while it is on, as drafts; the gold dust sits behind the hero's words, pauses off screen
+// the bar's stub, the flags and the seal exist only while it is on (new words as drafts); the gold dust sits behind the hero's words, pauses off screen
 // and in hidden tabs and is never drawn with reduced motion; nothing covers text or the breathing orb; no sideways scroll.
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
@@ -36,7 +36,7 @@ const coverHits = p => p.evaluate(async () => {
   const hit = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
   const hits = [];
   for (const [sel, host] of [['.soon-list a[href$="drops"] > .hol-flag', '.soon-list'], ['.gift-grid .hol-flag', '.gift-grid'], ['.hol-seal', '.claire']]) {
-    const el = document.querySelector(sel); if (!el) { if (document.querySelector(host)) hits.push(`${sel} missing`); continue; }
+    const el = document.querySelector(sel); if (!el) continue; // (presence is checked on its own)
     el.scrollIntoView({ block: 'center' }); await new Promise(r => setTimeout(r, 50));
     const r = el.getBoundingClientRect(); textRects(document.querySelector(host)).forEach(t => { if (hit(r, t)) hits.push(`${sel} over text at ${Math.round(t.left)},${Math.round(t.top)}`); });
   }
@@ -113,11 +113,15 @@ for (const at of ['2026-11-20T18:00:00', '2026-12-20T18:00:00']) {
     return {
       bar: document.querySelector('.announce .an-live .hol-stub .hol-stub-t')?.textContent, moon: flag('.soon-list a[href$="drops"] > .hol-flag'), gift: flag('.gift-grid .hol-flag'),
       seal: leafD(document.querySelector('.hol-seal')), sealPe: getComputedStyle(document.querySelector('.hol-seal')).pointerEvents,
+      sealDay: document.querySelector('.hol-seal b')?.textContent, sealLabel: document.querySelector('.hol-seal i')?.innerText.replace(/\s+/g, ' ').trim(),
+      rot: getComputedStyle(document.querySelector('.announce .hol-stub')).rotate, fs: getComputedStyle(document.querySelector('.announce .hol-stub')).fontSize,
     };
   });
   ok('on: free shipping sits in a ticket stub in the announcement bar, in its own words', d.bar === 'Free shipping on Canadian orders over $75', d.bar);
-  ok('on: the Moon Drops row has a "Next new moon" ribbon flag, a draft', d.moon?.t === 'Next new moon' && d.moon.d && d.moon.pe === 'none', JSON.stringify(d.moon));
-  ok('on: the Send a Sunrise card has a "Gift it" ribbon flag, a draft', d.gift?.t === 'Gift it' && d.gift.d && d.gift.pe === 'none', JSON.stringify(d.gift));
+  ok('on: the bar\'s ticket sits level at 13.5px', (d.rot === 'none' || d.rot === '0deg') && d.fs === '13.5px', `${d.rot} ${d.fs}`);
+  ok('on: the Moon Drops row has a ribbon flag with the computed next drop date (the seal\'s date), a draft', !!d.moon && d.moon.t === d.sealDay && /^([A-Z][a-z]{2} \d{1,2}|Tonight)$/.test(d.moon.t) && d.moon.d && d.moon.pe === 'none', `${JSON.stringify(d.moon)} ${d.sealDay}`);
+  ok('on: the seal reads NEXT MOON DROP over the date', /^next moon drop$/i.test(d.sealLabel ?? ''), d.sealLabel);
+  ok('on: the home Send a Sunrise card has a "Gift it" ribbon flag, a draft', d.gift?.t === 'Gift it' && d.gift.d && d.gift.pe === 'none', JSON.stringify(d.gift));
   ok('on: the seal\'s words are drafts and it takes no taps', d.seal && d.sealPe === 'none');
 
   const cover = await coverHits(p);
@@ -152,13 +156,17 @@ for (const at of ['2026-11-20T18:00:00', '2026-12-20T18:00:00']) {
   });
   ok('on: buttons turn cranberry and keep AA contrast; chapter labels stay AA on their ground', con.bg === 'rgb(122, 31, 31)' && con.btn >= 4.5 && con.chapter >= 4.5, JSON.stringify(con));
 
-  // the giving line: product page and cart
+  // the giving line (product page and cart) gets no holiday stub; the sticky header's Add to cart turns cranberry with the main one
   await p.goto(`${origin}/#/product/cabana`); await p.waitForSelector('#addBtn:not([disabled])'); await p.waitForTimeout(400);
-  const pg = await p.evaluate(() => { const s = document.querySelector('.buy .hol-stub.give'); return s ? { t: s.textContent.trim(), d: !!s.querySelector('.d'), next: s.nextElementSibling?.classList.contains('gv-note') } : null; });
-  ok('on: a "$1 to BC Children\'s" stub sits beside the giving line on the product page, as a draft', pg?.t === "$1 to BC Children's" && pg.d && pg.next, JSON.stringify(pg));
-  await p.click('#addBtn'); await p.waitForTimeout(300); await p.click('#cartBtn'); await p.waitForSelector('.drawer .gv-note');
-  const cs = await p.evaluate(() => { const s = document.querySelector('.drawer .hol-stub.give'); return s ? { t: s.textContent.trim(), d: !!s.querySelector('.d'), next: s.nextElementSibling?.classList.contains('gv-note') } : null; });
-  ok('on: and in the cart, beside its giving line', cs?.t === "$1 to BC Children's" && cs.d && cs.next, JSON.stringify(cs));
+  const nearGive = () => p.evaluate(() => ({ stubs: document.querySelectorAll('#app .hol-stub, .drawer .hol-stub').length, bc: [...document.querySelectorAll('[data-hol]')].some(el => /Children/.test(el.textContent)) }));
+  const pg = await nearGive();
+  await p.evaluate(() => scrollTo(0, 1400)); await p.waitForTimeout(700);
+  const sticky = await p.evaluate(() => { const b = document.querySelector('.lnav-add'); return b ? getComputedStyle(b).backgroundColor : null; });
+  ok('on: the product page has no stub by the giving line', pg.stubs === 0 && !pg.bc, JSON.stringify(pg));
+  ok('on: the sticky header\'s Add to cart is cranberry like the main button', sticky === 'rgb(122, 31, 31)', String(sticky));
+  await p.evaluate(() => scrollTo(0, 0)); await p.click('#addBtn'); await p.waitForTimeout(300); await p.click('#cartBtn'); await p.waitForSelector('.drawer .gv-note');
+  const cs = await nearGive();
+  ok('on: nor does the cart', cs.stubs === 0 && !cs.bc, JSON.stringify(cs));
   await ctx.close();
 }
 
@@ -196,13 +204,23 @@ for (const w of [1440, 1024, 768, 390, 360]) {
             return [...document.querySelectorAll('.hol-flag, .hol-seal, .hol-stub')].filter(el => { const r = el.getBoundingClientRect(); return r.left < o.right && o.left < r.right && r.top < o.bottom && o.top < r.bottom; }).map(el => el.className);
           });
           ok(`${w}px on: no holiday piece sits over the breathing orb`, over.length === 0, over.join(' '));
+          const dust = await p.evaluate(() => { const d = document.querySelector('.hol-dust'); return { state: d?.dataset.state, canvas: !!d?.querySelector('canvas') }; });
+          ok(`${w}px on: the gold dust ${w >= 980 ? 'runs' : 'is only a soft glow (no canvas below 980px)'}`, w >= 980 ? dust.state === 'running' && dust.canvas : dust.state === 'still' && !dust.canvas, JSON.stringify(dust));
           const cov = await coverHits(p);
           ok(`${w}px on: the ribbon flags and the seal cover no words`, cov.length === 0, cov.join('; '));
+          const sealW = await p.evaluate(() => document.querySelector('.hol-seal')?.getBoundingClientRect().width ?? 0);
+          ok(`${w}px on: the seal is at least 104px across`, sealW >= 103.5, String(sealW));
+          const seps = await p.evaluate(() => {
+            const same = (a, b) => { const x = a.getBoundingClientRect(), y = b.getBoundingClientRect(); return x.top < y.bottom && y.top < x.bottom; };
+            return [...document.querySelectorAll('.announce > .an-sep')].filter(s => getComputedStyle(s).display !== 'none')
+              .filter(s => !(s.previousElementSibling && same(s, s.previousElementSibling) && s.nextElementSibling && same(s, s.nextElementSibling))).length;
+          });
+          ok(`${w}px on: no "·" is left at the start or end of a line in the announcement bar`, seps === 0, String(seps));
           const taps = await p.evaluate(() => [...document.querySelectorAll('.hol-flag, .hol-seal, .hol-stub, .hol-dust')].filter(el => getComputedStyle(el).pointerEvents !== 'none' && el.closest('a, button')).length);
           ok(`${w}px on: the layer adds no new tap targets (its pieces take no taps inside links)`, taps === 0, String(taps));
         }
       }
-      if (on && route === '/gift') { const cov = await coverHits(p); ok(`${w}px on /gift: the card's ribbon flag covers no words`, cov.length === 0 && await p.locator('.gift-grid .hol-flag').count() === 1, cov.join('; ')); }
+      if (on && route === '/gift') ok(`${w}px on /gift: no ribbon flag on the gift page's card (home only)`, await p.locator('.hol-flag').count() === 0);
       ok(`${w}px ${on ? 'on' : 'off'} ${route}: no sideways scroll`, (await noScroll(p)) <= 1);
       await ctx.close();
     }
