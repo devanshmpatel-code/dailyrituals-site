@@ -22,8 +22,8 @@ export function photoUrl(renderFile: string, w = 1000, h = 1000): string | null 
 export function swapRenders(root: HTMLElement) {
   root.querySelectorAll<HTMLImageElement>('img').forEach(img => {
     if (img.dataset.photo) return;
-    const m = img.getAttribute('src')?.match(/\/img\/([a-z-]+\.jpg)$/);
-    const u = m && photoUrl(m[1]);
+    const m = img.getAttribute('src')?.match(/\/img\/([a-z-]+)\.(?:jpg|webp)$/);
+    const u = m && photoUrl(`${m[1]}.jpg`);
     if (!m || !u) return;
     const original = img.getAttribute('src')!;
     img.dataset.photo = '1';

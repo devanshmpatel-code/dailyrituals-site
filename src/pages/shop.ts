@@ -1,12 +1,19 @@
 import Shop from '../canvas/pages/Shop.html?raw';
 import { loadCatalogue, loadProduct, money, type Item } from '../wix';
-import { esc, fixImages, skeletonCards, errorBox, wireCommon, priceText, productHref, toastAdded } from '../ui';
+import { esc, fixImages, cardImg, skeletonCards, errorBox, wireCommon, priceText, productHref, toastAdded } from '../ui';
 import { wireNotify } from './shared';
 import { add } from '../cart';
 import { cardOrbit } from '../celestial';
 import { navigate } from '../router';
 import { MOODS, FORMAT_LABEL, type Mood, type Format } from '../config';
 import '../shop.css';
+
+// Their pictures sit at the end of the page and show at about 170 to 300 px: lazy, sized, and offered in small widths.
+const CONCEPT_PIC: Record<string, { srcset?: string; w: number; h: number }> = {
+  '#/discovery': { srcset: '/img/discovery-320.webp 320w, /img/discovery-640.webp 640w, /img/discovery.webp 1100w', w: 1100, h: 917 },
+  '#/drops': { srcset: '/img/moondrop-320.webp 320w, /img/moondrop-640.webp 640w, /img/moondrop.webp 800w', w: 800, h: 1000 },
+  '#/subscribe': { w: 560, h: 298 },
+};
 
 // The three concept cards from the canvas (not products in the live store yet).
 function conceptCards(): string {
@@ -20,6 +27,11 @@ function conceptCards(): string {
       card.querySelector('.qa')?.setAttribute('data-notify', 'concept');
       card.querySelector('img.alt')?.remove();
       card.setAttribute('data-concept', '1');
+      const pic = card.querySelector('img.main'), cp = CONCEPT_PIC[href];
+      if (pic && cp) {
+        if (cp.srcset) { pic.setAttribute('srcset', cp.srcset); pic.setAttribute('sizes', '(max-width: 820px) 46vw, 300px'); }
+        pic.setAttribute('width', String(cp.w)); pic.setAttribute('height', String(cp.h)); pic.setAttribute('loading', 'lazy'); pic.setAttribute('decoding', 'async');
+      }
       // there is no Discovery Kit page yet: its picture and name lead to the scent atlas, the closest real thing
       if (href === '#/discovery') card.querySelectorAll('a[href="#/discovery"]').forEach(a => a.setAttribute('href', '#/explore'));
       card.querySelector('.ph')?.insertAdjacentHTML('beforeend', '<span class="concept-tag">Concept · not in store yet</span>');
@@ -38,8 +50,15 @@ const GLYPH: Record<string, string> = {
 };
 const glyph = (k: string, s = 26) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${GLYPH[k]}</svg>`;
 
+/** The canvas page without its sample grid (the grid is filled from the live catalogue, so the sample pictures are never fetched). */
+function shopShell(): string {
+  const doc = new DOMParser().parseFromString(`<div>${Shop}</div>`, 'text/html');
+  doc.querySelector('.grid')?.replaceChildren();
+  return fixImages(doc.body.firstElementChild!.innerHTML);
+}
+
 export async function renderShop(app: HTMLElement, params: URLSearchParams) {
-  app.innerHTML = fixImages(Shop);
+  app.innerHTML = shopShell();
   wireCommon(app);
   const f = (params.get('f') ?? 'all') as Format | 'all';
   const m = (params.get('m') ?? 'all') as Mood | 'all';
@@ -203,7 +222,7 @@ function scentCard(g: ScentGroup & { sel: Item }): string {
     : '';
   return `<div class="card scard" data-scent="${esc(g.key)}" data-sel="${i.id}" data-format="${i.format}" data-formats="${g.items.map(x => x.format).join(' ')}" data-mood="${g.mood ?? ''}"${tone}>
     <div class="ph">${i.inStock ? '' : '<span class="badge">Sold out</span>'}
-      <a class="sc-ph" href="${productHref(i)}" aria-label="${esc(i.name)}">${i.image ? `<img class="main" src="${i.image}" alt="${esc(i.name)}" loading="lazy">` : ''}</a>
+      <a class="sc-ph" href="${productHref(i)}" aria-label="${esc(i.name)}">${i.image ? cardImg(i) : ''}</a>
       ${cardOrbit()}
     </div>
     <a class="sc-link" href="${productHref(i)}">
@@ -247,7 +266,7 @@ function wireScentCards(grid: HTMLElement, items: Item[]) {
       card.querySelector('a.sc-ph')!.setAttribute('aria-label', i.name);
       const ph = card.querySelector('a.sc-ph')!;
       // the format's own photograph; never another format's picture under its name
-      ph.innerHTML = i.image ? `<img class="main" src="${i.image}" alt="${esc(i.name)}">` : '';
+      ph.innerHTML = i.image ? cardImg(i) : '';
       const badge = card.querySelector('.ph .badge');
       if (!i.inStock && !badge) card.querySelector('.ph')!.insertAdjacentHTML('afterbegin', '<span class="badge">Sold out</span>');
       else if (i.inStock) badge?.remove();

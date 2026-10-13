@@ -51,6 +51,7 @@ Only step 5 changes the live site. Everything before it is safe to do while the 
   - `VITE_LAUNCH` = `true` (removes the preview bar, lets search engines index the site and opens `robots.txt`)
   - `VITE_ENABLE_WRITES` = `true` (turns on real checkout and booking)
   - `SITE_URL` = `https://www.dailyritualsco.com` (optional; this is already the default)
+  - `VITE_SITE_URL` = the same address (optional, same default): the canonical links, share-card pictures and JSON-LD use it once launched; previews use their own address
 - [ ] Leave **Preview** environments without `VITE_LAUNCH`. Previews keep the preview bar and stay hidden from search engines. The `X-Robots-Tag` rule in `vercel.json` also applies to any address that isn't dailyritualsco.com.
 - [ ] Merge this branch into the production branch and confirm the site loads at its `*.vercel.app` address.
 

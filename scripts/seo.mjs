@@ -6,7 +6,7 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 const env = Object.fromEntries((existsSync('.env') ? readFileSync('.env', 'utf8') : '').split('\n').filter(l => /^\w+=/.test(l)).map(l => [l.split('=')[0], l.slice(l.indexOf('=') + 1).trim()]));
 const get = k => process.env[k] ?? env[k];
 const launched = get('VITE_LAUNCH') === 'true';
-const origin = (get('SITE_URL') || 'https://www.dailyritualsco.com').replace(/\/$/, '');
+const origin = (get('SITE_URL') || get('VITE_SITE_URL') || 'https://www.dailyritualsco.com').replace(/\/$/, '');
 const clientId = get('VITE_WIX_CLIENT_ID');
 
 const pages = ['', 'shop', 'explore', 'coaching', 'reset', 'subscribe', 'drops', 'gift', 'wall', 'club', 'story', 'giving', 'journal', 'journal/wooden-wick', 'journal/first-burn', 'journal/candle-safety', 'journal/wax-guide', 'journal/candle-and-roller', 'help', 'privacy', 'terms', 'accessibility', 'refund-policy'];
