@@ -44,7 +44,7 @@ export function mountBreathButton() {
 // the tab order with its label throughout).
 const PHONE = '(max-width: 820px)';
 const PRESSABLE = 'a[href], button, input, select, textarea, label, summary, [role="button"], [role="tab"], .price, .btn';
-let watching = false, lastY = 0, idle = 0, settleT1 = 0, settleT2 = 0;
+let watching = false, lastY = 0, idle = 0, settleT1 = 0, settleT2 = 0, lastScrollAt = -1e9;
 
 /** True when a letter of the page's text (not the orb's own) is drawn at this point. */
 function glyphAt(x: number, y: number, b: HTMLElement): boolean {
@@ -80,6 +80,9 @@ function setTucked(on: boolean) {
 function settle() {
   const b = document.querySelector<HTMLElement>('.breathorb');
   if (!b) return;
+  // mid-scroll (a page's first look can land just as the visitor starts scrolling): the pause after the scroll decides
+  const since = performance.now() - lastScrollAt;
+  if (since < 850) { window.clearTimeout(idle); idle = window.setTimeout(settle, 900 - since); return; }
   if (!window.matchMedia(PHONE).matches) { setTucked(false); return; }
   setTucked(!orbSpotClear(b));
 }
@@ -90,7 +93,7 @@ function watchScroll() {
   lastY = window.scrollY;
   window.addEventListener('scroll', () => {
     if (!window.matchMedia(PHONE).matches) { setTucked(false); return; }
-    const y = window.scrollY, dy = y - lastY; lastY = y;
+    const y = window.scrollY, dy = y - lastY; lastY = y; lastScrollAt = performance.now();
     const b = document.querySelector<HTMLElement>('.breathorb');
     if (!b) return;
     window.clearTimeout(idle);
