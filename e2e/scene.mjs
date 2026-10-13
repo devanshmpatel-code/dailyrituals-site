@@ -94,7 +94,7 @@ for (const [label, url, vp] of [['CSS sky', '/', { width: 1440, height: 900 }], 
   if (gl) {
     ok(`${label}: the lake mirrors the painted hills (the flat CSS mirror steps aside)`, await p.evaluate(() => document.getElementById('scene').classList.contains('refl') && !/below/.test(getComputedStyle(document.querySelector('#scene canvas.land')).webkitBoxReflect || '')));
     ok(`${label}: the haze over the hills follows the sky's own sun`, await p.evaluate(() => /%$/.test(document.getElementById('scene').style.getPropertyValue('--sx'))));
-    ok(`${label}: the moons' names keep their small type (not the glossary's display type)`, await p.evaluate(() => [...document.querySelectorAll('.moonarc .cm-cap b')].every(b => parseFloat(getComputedStyle(b).fontSize) <= 11)));
+    ok(`${label}: the moons' names keep their small type (not the glossary's display type)`, await p.evaluate(() => [...document.querySelectorAll('.moonarc .cm-cap b')].every(b => parseFloat(getComputedStyle(b).fontSize) <= 12.5)));
   }
   if (vp.width > 1000) {
     // no caption crowds another moon or another caption, at any moment

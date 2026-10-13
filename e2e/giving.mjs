@@ -52,7 +52,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
       amounts: [...t.matchAll(/\$\s?\d[\d,]*(?:\.\d+)?/g)].map(m => m[0].replace(/\s/g, '')),
       how: /How it works/i.test(t) && /How the amount is calculated/i.test(t),
       bcDraft: [...app.querySelectorAll('*')].filter(el => el.children.length === 0 && /BC Children/.test(el.textContent)).every(el => el.closest('.d')),
-      impact: /helped \d|\d+ children/i.test(t), footer: [...document.querySelectorAll('footer a')].some(a => /giving$/.test(a.getAttribute('href')) && /Community/i.test(a.parentElement.querySelector('h4')?.textContent ?? '')),
+      impact: /helped \d|\d+ children/i.test(t), footer: [...document.querySelectorAll('footer a')].some(a => /giving$/.test(a.getAttribute('href')) && /Community/i.test(a.parentElement.querySelector('.fh')?.textContent ?? '')),
     };
   });
   ok(`${label}: /giving has its page title, one h1, and a link in the footer's Community column`, /^Giving back · Daily Rituals Co\.$/.test(em.title) && em.h1 === 1 && em.footer, em.title);
