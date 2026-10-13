@@ -1076,3 +1076,6 @@ footer::before { background: linear-gradient(to bottom, transparent, var(--deep-
 
 /* visually hidden, still read by screen readers (headings that give a block its place in the outline) */
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* a long call to action may wrap onto two lines on a phone rather than run past the edge */
+.btn.btn-wrap { white-space: normal; max-width: 100%; text-align: center; height: auto; min-height: 44px; line-height: 1.3; padding-block: 10px; }

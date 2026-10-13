@@ -241,6 +241,6 @@ export function renderReset(app: HTMLElement) {
     <div class="reset-pair"><div><span class="eyebrow">Pair it with a scent</span><h2>A scent you love makes the <span class="it">pause easier to find</span></h2>
       <p class="muted"><span class="d">Any scent you enjoy will do. If you would like one to keep for the reset, a roller goes everywhere with you.</span></p></div>
       <div class="cta"><a class="btn" href="#/explore?tab=quiz">Find your scent</a><a class="btn line" href="#/shop?f=roller&m=all&s=featured">Shop rollers</a></div></div>
-    <div class="cta" style="margin-top:24px"><a class="btn line" href="#/book">Book a free 20-minute discovery call instead</a></div></div>`;
+    <div class="cta" style="margin-top:24px"><a class="btn line btn-wrap" href="#/book">Book a free 20-minute discovery call instead</a></div></div>`;
   app.querySelector('#resetForm')!.addEventListener('submit', e => { e.preventDefault(); previewOff('Sign-ups')(); });
 }
