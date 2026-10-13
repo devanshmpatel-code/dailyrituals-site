@@ -110,6 +110,18 @@ const PRACTICE: Record<MomentKey, { title: string; sub: string; href: string }> 
   night: { title: 'Free 7-day reset', sub: 'Short daily practices, about 10 minutes', href: '#/reset' },
 };
 
+/** While the catalogue loads, an invisible stand-in of the same size keeps the ritual's place (from the moment's own
+ *  pairing), so the hero does not grow and push the page down when the real one arrives (layout shift). */
+function ritualHold(m: Moment) {
+  const titled = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase()), d = titled(m.pair.diffuser), r = titled(m.pair.roller);
+  return `<span class="sp sp-hold" aria-hidden="true" style="visibility:hidden;grid-template-columns:auto auto"><span class="sp-thumbs"><img alt=""><img alt=""></span>
+        <span><small>The ritual</small><b>${esc(d === r ? `${d}, two ways` : `${d} + ${r}`)}</b><em>Diffuser + roller · $00.00 together</em></span></span>`;
+}
+/** Set markup only when it differs from what is there (compared as the browser serialises it). */
+function setHTML(el: Element, html: string) {
+  const t = document.createElement('template'); t.innerHTML = html;
+  if (el.innerHTML !== t.innerHTML) el.innerHTML = html;
+}
 function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: number) {
   const hero = app.querySelector<HTMLElement>('#day');
   if (!hero) return;
@@ -120,15 +132,18 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
   const clock = app.querySelector('#dClock');
   if (clock) {
     const [hm, ap] = useRealClock ? clockParts(new Date()) : (m.time.split(' ') as [string, string]);
-    clock.innerHTML = `<span class="mono">${hm}</span><span class="ap">${ap}</span><span class="mname">${m.name}</span>`;
+    const html = `<span class="mono">${hm}</span><span class="ap">${ap}</span><span class="mname">${m.name}</span>`;
+    setHTML(clock, html);
   }
   const greet = app.querySelector('.greet');
   const greetLine = greeting(new Date(), useRealClock ? undefined : m.name);
   if (greet && greet.textContent !== greetLine) greet.innerHTML = `<span class="dot-live"></span>${greetLine}`;
+  // (the words are only rewritten when they change: the hero's headline and line are painted once, not again when the
+  // catalogue arrives, so the largest paint of the page is not pushed later)
   const title = app.querySelector('#dTitle')!;
-  title.textContent = m.title;
+  if (title.textContent !== m.title) title.textContent = m.title;
   const line = app.querySelector('#dLine')!;
-  line.innerHTML = m.draft ? `<span class="d">${esc(m.line)}</span>` : esc(m.line);
+  setHTML(line, m.draft ? `<span class="d">${esc(m.line)}</span>` : esc(m.line));
 
   showHero(app, m.key);
 
@@ -144,7 +159,7 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
     // (the moment's own mood can differ: Night is floral, but its ritual leads with Campfire Stories, which is woody)
     const ritual = pair.length ? `<a class="sp sp-ritual" href="#/explore?mood=${pair[0].mood ?? m.mood}" aria-label="The ${esc(m.name.toLowerCase())} ritual: ${esc(names)}, ${money(total)} together">
         <span class="sp-thumbs" aria-hidden="true">${pair.map(p => `<img src="${p.thumb}" alt="">`).join('')}</span>
-        <span><small>The ritual</small><b>${esc(names)}</b><em>${esc(kinds.charAt(0).toUpperCase() + kinds.slice(1))} · ${money(total)} together</em></span></a>` : '';
+        <span><small>The ritual</small><b>${esc(names)}</b><em>${esc(kinds.charAt(0).toUpperCase() + kinds.slice(1))} · ${money(total)} together</em></span></a>` : heroItems.length ? '' : ritualHold(m);
     const c = PRACTICE[m.key];
     const practice = `<a class="sp sp-coach" href="${c.href}" aria-label="${esc(c.title)}: ${esc(c.sub)}">
         <span class="sp-ico" aria-hidden="true"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M16 25c-3.2-3.4-3.2-9.6 0-15 3.2 5.4 3.2 11.6 0 15z"/><path d="M16 25c-5-1-8.6-5-8.6-11 4.6 1.2 7.4 4.6 8.6 11z"/><path d="M16 25c5-1 8.6-5 8.6-11-4.6 1.2-7.4 4.6-8.6 11z"/></svg></span>

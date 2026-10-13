@@ -204,6 +204,8 @@ async function route() {
     return;
   }
   app.classList.remove('pagein'); void app.offsetWidth; app.classList.add('pagein');
+  // while a page loads, #app keeps at least a screen's height, so the footer never rises into view and drops back (layout shift)
+  app.style.minHeight = `${window.innerHeight}px`;
   const view = (async () => {
     switch (seg) {
       case '': return renderHome(app);
@@ -230,7 +232,7 @@ async function route() {
       }
     }
   })();
-  try { await view; } catch (e) { if (e === STALE) return; throw e; }
+  try { await view; } catch (e) { if (e === STALE) return; throw e; } finally { if (seq === routeSeq) app.style.minHeight = ''; }
   if (seg === 'product') markMorphTarget(app);
   decoratePage(app, seg);
   celestialPage(app, seg);
