@@ -1,0 +1,74 @@
+/* Send a Sunrise (a live candle chosen on the page), the booking page's empty state, and the 7-day reset's Day 1 and portrait. */
+
+/* ---------- Send a Sunrise: the candle list under "Gift a candle" ---------- */
+.gr-livebox { display: flex; flex-direction: column; gap: 10px; margin-bottom: -6px; }
+.gr-live.on { cursor: default; }
+.gr-live.on:hover { transform: none; }
+.gr-live.on > span:first-child { flex: none; white-space: nowrap; }
+.gr-live.on .gr-go { white-space: normal; text-align: right; }
+.gpick { display: flex; flex-direction: column; gap: 12px; }
+.gp-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.gp-c { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 6px 12px 6px 6px; border-radius: 14px; border: 1px solid var(--line, rgba(35, 26, 43, .14)); background: var(--paper, #fff);
+  text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color .2s, box-shadow .2s; min-width: 0; }
+.gp-c:hover { border-color: var(--ink-3, #8C8090); }
+.gp-c[aria-pressed="true"] { border-color: var(--ink, #231A2B); box-shadow: inset 0 0 0 1px var(--ink, #231A2B), 0 10px 26px -18px rgba(42, 31, 51, .5); background: #FFF8EC; }
+.gp-c img { width: 44px; height: 52px; border-radius: 10px; object-fit: cover; flex: none; background: rgba(35, 26, 43, .06); }
+.gp-c > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gp-c b { font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.gp-c em { font-style: normal; font-size: 13px; color: var(--ink-2, #5E5361); }
+.gp-size { display: flex; flex-direction: column; gap: 8px; }
+.gp-size[hidden] { display: none; }
+.gp-size .chip { min-height: 44px; }
+.g-err { margin: -8px 0 0; font-size: 14px; font-weight: 500; color: #9B2C2C; }
+.gpick .g-err { margin: 0; }
+.g-err[hidden] { display: none; }
+.gsteps [aria-invalid="true"] { border-color: #B23A3A !important; box-shadow: 0 0 0 1px #B23A3A; }
+.g-hide { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+#gAddWhy { margin: 0; }
+#gAddWhy.g-why-err { color: #9B2C2C; font-weight: 500; }
+/* what is in the box, beside the card: the chosen candle's photograph */
+.g-sum { display: flex; gap: 14px; align-items: center; padding: 10px 14px 10px 10px; border-radius: 16px; background: rgba(255, 255, 255, .7); border: 1px solid rgba(201, 163, 90, .5); }
+.g-sum[hidden] { display: none; }
+.g-sum img { width: 64px; height: 80px; border-radius: 10px; object-fit: cover; flex: none; }
+.g-sum > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.g-sum b { font: 500 22px/1.15 var(--display); }
+@media (max-width: 820px) {
+  body[data-page="gift"] .giftsec #gAddWhy { order: 3; }
+}
+@media (max-width: 400px) {
+  .gp-c { gap: 8px; padding-right: 8px; }
+  .gp-c img { width: 36px; height: 44px; }
+  .gp-c b { font-size: 14px; }
+  .gp-c em { font-size: 12px; }
+}
+
+/* ---------- the cart: a gift's card details under the item ---------- */
+.li-gift { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 10px; background: #FFF6E8; border: 1px dashed rgba(168, 121, 46, .55); font-size: 13px; line-height: 1.4; }
+.li-gift-tag { font: 600 12px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: #7A5410; }
+.li-gift-meta { color: var(--ink-2, #5E5361); overflow-wrap: anywhere; }
+.li-gift-note { font: italic 400 15px/1.35 var(--display); color: var(--ink, #231A2B); overflow-wrap: anywhere; }
+
+/* ---------- booking: hear when times open ---------- */
+.bk-notify { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; padding-top: 18px; border-top: 1px solid var(--line, rgba(35, 26, 43, .14)); }
+.bk-notify-h { font: 400 22px/1.2 var(--display); }
+.bk-notify p { margin: 0; }
+.bk-notify .nform { display: flex; gap: 10px; flex-wrap: wrap; }
+.bk-notify .nform input { flex: 1 1 200px; min-height: 48px; border-radius: 999px; padding: 0 18px; border: 1px solid var(--line, rgba(35, 26, 43, .2)); background: #fff; font: inherit; min-width: 0; }
+.bk-notify .nform .btn { min-height: 48px; }
+.bk-consent { display: flex; gap: 8px; align-items: flex-start; min-height: 44px; }
+.bk-consent input { margin-top: 4px; }
+@media (max-width: 560px) { .bk-notify .nform .btn { flex: 1 1 100%; } }
+
+/* ---------- the 7-day reset: Claire beside the sign-up, and a look at Day 1 ---------- */
+.reset-who { display: flex; gap: 16px; align-items: center; }
+.reset-claire { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(201, 163, 90, .6), 0 0 0 7px rgba(201, 163, 90, .14); }
+.reset-who > span { display: flex; flex-direction: column; gap: 4px; }
+.reset-by { font-size: 14px; color: var(--ink-2, #5E5361); }
+.reset-day1 { margin-top: 18px; padding: clamp(18px, 2.4vw, 26px); border-radius: 28px 8px 28px 8px; background: #E9EFE9; display: flex; flex-direction: column; gap: 10px; }
+.reset-day1-h { font-size: clamp(24px, 2.4vw, 30px); margin: 0; }
+.reset-day1 ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.reset-day1 li { display: flex; flex-direction: column; gap: 2px; padding-left: 16px; border-left: 2px solid var(--euc, #2F5B4E); }
+.reset-day1 li b { font-weight: 600; }
+.reset-day1 li > span { color: var(--ink-2, #5E5361); }
+.reset-day1 p { margin: 0; }
+@media (max-width: 400px) { .reset-claire { width: 68px; height: 68px; } }

@@ -1,6 +1,7 @@
 import { add } from '../cart';
 import { findLive, money, type Item } from '../wix';
-import { toast } from '../ui';
+import { toast, toastAdded } from '../ui';
+import { navigate } from '../router';
 import type { Format } from '../config';
 
 /** Canvas product slugs look like "roller-citrus-and-sun"; map them to live products. */
@@ -19,8 +20,8 @@ export function canvasSlugToLive(items: Item[], canvasSlug: string): Item | unde
  * render (marked as a draft image) and link to a "not in the store yet" page.
  */
 export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
-  root.querySelectorAll<HTMLAnchorElement>('a[href^="#/product/"]').forEach(a => {
-    const slug = a.getAttribute('href')!.slice('#/product/'.length);
+  root.querySelectorAll<HTMLAnchorElement>('a[href^="#/product/"], a[href^="/product/"]').forEach(a => {
+    const slug = a.getAttribute('href')!.replace(/^#?\/product\//, '');
     if (items.some(i => i.slug === slug)) return; // already live
     const live = canvasSlugToLive(items, slug);
     if (!live) return;
@@ -37,16 +38,21 @@ export function bindCanvasProductLinks(root: HTMLElement, items: Item[]) {
   });
   root.querySelectorAll<HTMLButtonElement>('button[data-add]').forEach(b => {
     const live = canvasSlugToLive(items, b.dataset.add!);
-    if (!live) { b.addEventListener('click', previewOff('This item is not in the live store yet, so it')); return; }
+    if (!live) {
+      // not in the store yet: say so plainly and offer the Monthly Ritual instead of a dead "add" button
+      b.textContent = 'Coming soon · get notified'; b.classList.add('soon');
+      b.addEventListener('click', notifyMe);
+      return;
+    }
     b.textContent = `Quick add · ${money(live.priceMin)}`;
     b.addEventListener('click', () => quickAdd(live));
   });
 }
 
 export async function quickAdd(i: Item) {
-  if (i.choices.length > 1) { location.hash = `#/product/${i.slug}`; return; }
+  if (i.choices.length > 1) { navigate(`/product/${i.slug}`); return; }
   await add({ productId: i.id, slug: i.slug, name: i.name, price: i.priceMin, image: i.thumb, choice: i.choices[0]?.name, optionName: i.optionName });
-  toast(`${i.name} added to your cart`);
+  toastAdded(i.name);
 }
 
 export function wireQuickAdd(root: HTMLElement, items: Item[]) {
@@ -58,3 +64,19 @@ export function wireQuickAdd(root: HTMLElement, items: Item[]) {
 
 export const previewOff = (what: string) => () =>
   toast(`${what} is switched off in this private preview.`);
+
+/**
+ * "Coming soon · get notified": the only action a concept (Discovery Kit, Moon Drops, Solstice Box, Ritual on Repeat, gift
+ * cards) offers. It leads to the email sign-up on the page (the Monthly Ritual, or the club's "Tell me first"); pages without
+ * one say plainly that sign-ups are not open in the preview. Nothing is reserved and no price is shown.
+ */
+export function notifyMe() {
+  const f = document.querySelector<HTMLInputElement>('#nemail, #csEmail');
+  if (f) { f.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }); f.focus({ preventScroll: true }); return; }
+  toast('Not in the shop yet. Sign-ups for news are switched off in this private preview.');
+}
+
+/** Wire every [data-notify] button inside root (once). */
+export function wireNotify(root: ParentNode) {
+  root.querySelectorAll<HTMLElement>('[data-notify]:not([data-notify-wired])').forEach(b => { b.dataset.notifyWired = '1'; b.addEventListener('click', notifyMe); });
+}

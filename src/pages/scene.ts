@@ -1,0 +1,96 @@
+import { MOMENTS } from '../config';
+import { drawLandscape } from './landscape';
+import type { Look } from './daycycle';
+import { getSky } from './sky';
+
+// A layered landscape behind the home hero. Mountains drift slowly, clouds and mist pass through, birds fly in the
+// morning and evening, and at night there are stars (from the hero), a moon and fireflies. Colours per moment live in config.
+// Everything is decorative (aria-hidden) and all motion stops for visitors who prefer reduced motion.
+
+const bird = (n: number) => `<span class="bird b${n}"><svg viewBox="0 0 28 12" width="28" height="12"><path d="M2,8 Q8,0 14,7 Q20,0 26,8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>`;
+const fly = (n: number) => `<i class="ff f${n}"></i>`;
+const FIREFLIES = 14;
+
+// Layers, back to front. The Milky Way, horizon glow and cloud textures are the CSS sky (hidden when the WebGL sky draws them itself);
+// the mountains stand on a lake in both; mist lies in the valleys in front of them, and the "sun haze" is the air between us and
+// the hills lit by a low sun (it washes the ridges nearest the sun, as a backlit landscape looks); the veil on top is lifted by
+// the opening (see opening.ts / opening.css).
+export function sceneHTML(): string {
+  return `<div class="scene" id="scene" aria-hidden="true">
+    <div class="milky"></div>
+    <div class="horizon"></div>
+    <div class="sunorb" id="sunorb"></div>
+    <div class="ctex-wrap"><div class="ctex a"></div><div class="ctex b"></div></div>
+    <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+    <img class="scenephoto" id="scenePhoto" alt="" hidden>
+    ${MOMENTS.map(m => `<canvas class="land" data-k="${m.key}"></canvas>`).join('')}
+    <div class="mist k1"></div><div class="mist k2"></div>
+    <div class="sunhaze"></div>
+    ${[1, 2, 3, 4, 5].map(bird).join('')}${Array.from({ length: FIREFLIES }, (_, i) => fly(i + 1)).join('')}
+    <i class="meteor m1"></i><i class="meteor m2"></i>
+    <div class="wakeveil"></div></div>`;
+}
+
+let started = false, resizeTimer = 0, photoKey = '';
+/** Where the sun (or moon) stands across the picture at a moment's hour, 0..1: the dial's own path (home.ts), and for the
+ *  realistic sky the narrower band it keeps to (sky.ts). The hills are painted lit from there. */
+function sunXAt(hour: number, gl: boolean) {
+  const t = Math.min(1, Math.max(0, (hour - 6) / 16)), x = (40 + 920 * t) / 1000;
+  return gl ? 0.44 + x * 0.22 : x;
+}
+function paintAll(app: HTMLElement) {
+  const gl = !!app.querySelector('#scene.gl');
+  MOMENTS.forEach(m => { const c = app.querySelector<HTMLCanvasElement>(`canvas.land[data-k="${m.key}"]`); if (c) drawLandscape(c, { sky: m.sky, land: m.land, orb: m.orb, dark: m.dark, sunX: sunXAt(m.hour, gl) }); });
+  getSky()?.repainted();
+}
+
+/** The scene's drifting layers (mist, birds, fireflies, the moons' sway) stop while the opening is off screen. */
+function pauseOffscreen(sc: HTMLElement) {
+  if (sc.dataset.io) return;
+  sc.dataset.io = '1';
+  const io = new IntersectionObserver(es => { const e = es[es.length - 1]; if (e) sc.classList.toggle('paused', !e.isIntersecting); });
+  io.observe(sc);
+}
+
+/** If a real photograph exists at /img/scenes/<moment>.jpg it is used instead of the generated landscape. */
+function tryPhoto(sc: HTMLElement, key: string) {
+  const photo = sc.querySelector<HTMLImageElement>('#scenePhoto');
+  if (!photo) return;
+  const img = new Image();
+  img.onload = () => { photo.src = img.src; photo.hidden = false; sc.classList.add('has-photo'); };
+  img.onerror = () => { sc.classList.remove('has-photo'); photo.hidden = true; };
+  img.src = `/img/scenes/${key}.jpg`;
+}
+
+/** Show the landscape for any hour of the day: the two neighbouring moments cross-fade by how far along the hour is. */
+export function setLook(app: HTMLElement, L: Look) {
+  const sc = app.querySelector<HTMLElement>('#scene');
+  if (!sc) return;
+  if (!started) { started = true; paintAll(app); window.addEventListener('resize', () => { window.clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => paintAll(app), 220); }); }
+  pauseOffscreen(sc);
+  sc.querySelectorAll<HTMLCanvasElement>('canvas.land').forEach(c => { c.style.opacity = c.dataset.k === L.a.key && c.dataset.k === L.b.key ? '1' : c.dataset.k === L.a.key ? String(1 - L.t) : c.dataset.k === L.b.key ? String(L.t) : '0'; });
+  // the lake mirrors the same two hills, blended the same way (the realistic sky draws the water)
+  const land = (k: string) => sc.querySelector<HTMLCanvasElement>(`canvas.land[data-k="${k}"]`);
+  getSky()?.hills(land(L.a.key), land(L.b.key), L.t);
+  sc.style.setProperty('--orb', L.orb);
+  sc.style.setProperty('--orb-rgb', L.orbRgb.join(', '));
+  if (L.nearest.key !== photoKey) { photoKey = L.nearest.key; tryPhoto(sc, photoKey); }
+}
+
+/** Put the sun (or moon) where the dial's sun is: x and y are the dial's own coordinates (0 to 1000 wide). */
+export function placeOrb(app: HTMLElement, x: number, y: number) {
+  const orb = app.querySelector<HTMLElement>("#sunorb");
+  if (!orb) return;
+  let top = 70 - ((140 - y) / 100) * 45;
+  // phone: the picture is a band above the words, so the sun rises and sets within that band's sky, never behind the words
+  const hero = orb.closest<HTMLElement>('.dayhero'), band = hero?.querySelector<HTMLElement>('#dStack.moons');
+  if (hero && band && window.matchMedia('(max-width: 820px)').matches && hero.clientHeight) {
+    top = ((band.offsetTop + band.offsetHeight * (0.34 + 0.3 * Math.min(1, Math.max(0, (y - 40) / 100)))) / hero.clientHeight) * 100;
+  }
+  orb.style.left = `${(x / 10).toFixed(1)}%`;
+  orb.style.top = `${top.toFixed(1)}%`;
+  // the haze over the hills gathers round the sun (the realistic sky moves it to its own sun as it draws)
+  const sc = orb.parentElement;
+  if (sc && !sc.classList.contains('gl')) { sc.style.setProperty('--sx', `${(x / 10).toFixed(1)}%`); sc.style.setProperty('--sy', `${top.toFixed(1)}%`); }
+  getSky()?.set({ sunX: x / 1000, sunY: 1 - top / 100 });
+}
