@@ -99,7 +99,7 @@ if (gradeToggle) {
 }
 
 // holiday look: on by itself from Nov 15 to Dec 31; in the preview, a toggle and ?season=holiday|off|auto (src/season.ts)
-wireSeasonToggle(document.getElementById('seasonToggle') as HTMLInputElement | null);
+if (!LAUNCHED) wireSeasonToggle(document.getElementById('seasonToggle') as HTMLInputElement | null);
 applySeason();
 
 // ---------- cart drawer ----------
