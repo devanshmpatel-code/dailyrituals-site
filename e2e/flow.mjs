@@ -9,20 +9,21 @@ await p.goto(base + '/'); await p.waitForSelector('.jhere', { state: 'attached' 
 const cs = (sel, prop) => p.evaluate(([s, pr]) => { const e = document.querySelector(s); return e ? getComputedStyle(e)[pr] || getComputedStyle(e).getPropertyValue(pr) : null; }, [sel, prop]);
 // the home page is a day: each chapter's ground blends out of the colour of the one before it, with no hard edge and no see-through fade
 const flow = await p.evaluate(() => [...document.querySelectorAll('main section.df')].map(el => ({ g: el.dataset.ground, bg: getComputedStyle(el).backgroundImage, mask: getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage || 'none', bt: getComputedStyle(el).borderTopWidth })));
-ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,sage,rose,euc,plum,night,night-solid', flow.map(f => f.g).join(','));
+// (the Ritual Wall and Ritualists chapters and the separate newsletter became one "Opening soon" chapter at dusk, October 2026)
+ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,rose,euc,dusk', flow.map(f => f.g).join(','));
 ok('home: every chapter after the first blends from the previous colour', flow.filter(f => f.g !== 'night-solid').every(f => /linear-gradient/.test(f.bg)), flow.map(f => f.bg.slice(0, 30)).join(' | '));
 ok('home: no see-through fades or hairlines between chapters', flow.every(f => f.mask === 'none' && f.bt === '0px'));
-// the Discovery Kit chapter was removed (owner, October 2026), and Ritual on Repeat and Moon Drops (not open yet) became one
-// "Opening soon" strip after the live chapters: the chapters left run 1 to 5 without a gap
-ok('home: chapters are numbered 1 to 5 in journey order, with no gap', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '12345');
+// the Discovery Kit chapter was removed (owner, October 2026); then everything not open yet (the Ritualists, Ritual on Repeat,
+// Moon Drops, the Ritual Wall) became one compact "Opening soon" chapter after the live ones: the chapters run 1 to 4
+ok('home: chapters are numbered 1 to 4 in journey order, with no gap', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '1234');
 ok('home: the Discovery Kit chapter is gone', await p.evaluate(() => !document.querySelector('main .disc') && !/Discovery Kit/.test(document.querySelector('main').innerText)));
-ok('home: the Ritualists are chapter 5', await p.evaluate(() => /Chapter 5 · Belong/.test(document.querySelector('.club').textContent)));
 const soon = await p.evaluate(() => { const s = document.querySelector('main .soonflow');
-  const ch = [...document.querySelectorAll('main .chapter')];
-  return s && { after: ch.filter(c => s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_PRECEDING).length, before: ch.filter(c => s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING).length, notify: s.querySelectorAll('[data-notify]').length,
+  const ch = [...document.querySelectorAll('main .chapter')].filter(c => !s?.contains(c));
+  return s && { after: ch.filter(c => s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_PRECEDING).length, before: ch.filter(c => s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING).length, own: /Chapter 4 · Opening soon/.test(s.querySelector('.chapter')?.textContent ?? ''),
+    notify: s.querySelectorAll('[data-notify]').length, forms: s.querySelectorAll('form.nform #nemail').length, card: !!s.querySelector('.rit-card-wrap'),
     names: s.innerText, links: [...s.querySelectorAll('a')].map(a => a.getAttribute('href')).join(' '), price: /\$\d/.test(s.innerText), h: s.getBoundingClientRect().height,
-    gone: !document.querySelector('main .rep-grid, main .plans, main #calc, main .drop-grid, main #voteBox, main #cd') }; });
-ok('home: Ritual on Repeat and Moon Drops share one short "Opening soon" strip after every live chapter, with one notify button', !!soon && soon.after === 5 && soon.before === 0 && soon.notify === 1 && /Ritual on Repeat/.test(soon.names) && /Moon Drops/.test(soon.names) && /subscribe/.test(soon.links) && /drops/.test(soon.links) && !soon.price && soon.h < 900 && soon.gone, JSON.stringify({ ...soon, names: undefined }));
+    gone: !document.querySelector('main .rep-grid, main .plans, main #calc, main .drop-grid, main #voteBox, main #cd, main .wall, main .club:not(.confirm)') && document.querySelectorAll('main section.soonflow, main section.newsflow').length === 1 }; });
+ok('home: the Ritualists, Ritual on Repeat, Moon Drops and the Ritual Wall share one "Opening soon" chapter after every live chapter, with the one Monthly Ritual sign-up and the Ritualists card', !!soon && soon.after === 3 && soon.before === 0 && soon.own && soon.notify === 0 && soon.forms === 1 && soon.card && /Ritualists/.test(soon.names) && /Ritual on Repeat/.test(soon.names) && /Moon Drops/.test(soon.names) && /Ritual Wall/.test(soon.names) && /monthly ritual/i.test(soon.names) && /club/.test(soon.links) && /subscribe/.test(soon.links) && /drops/.test(soon.links) && /wall/.test(soon.links) && !soon.price && soon.h < 900 && soon.gone, JSON.stringify({ ...soon, names: undefined }));
 ok('home: the strip gives the next new moon from the one drop state', await p.evaluate(() => /\w+ \d{1,2}/.test(document.querySelector('.soonflow [data-drop-date]')?.textContent ?? '')));
 ok('home: no link to the missing /discovery page', (await p.locator('main a[href*="discovery"]').count()) === 0);
 // chapter 1 leads with candles: a clear "Shop candles" action, and a candle first in the row
@@ -60,8 +61,8 @@ ok('home: the first chapter eases down from the dark opening strip', /gradient/.
 ok('home: the footer rises out of a soft fade', /gradient/.test(await p.evaluate(() => getComputedStyle(document.querySelector('footer'), '::before').backgroundImage)));
 const radii = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card .ph')].map(e => getComputedStyle(e).borderTopLeftRadius));
 ok('home: product pictures alternate arch and soft-window cutouts', new Set(radii).size >= 2 && radii.some(r => parseFloat(r) > 100), radii.join(' '));
-const tiles = await p.evaluate(() => new Set([...document.querySelectorAll('.wall .tile img')].map(e => getComputedStyle(e).borderTopLeftRadius)).size);
-ok('home: Ritual Wall photos use a mix of cutouts', tiles >= 3, `${tiles} shapes`);
+// (the Ritual Wall's studio photographs stay on /wall; on home the wall is one line of the Opening soon chapter)
+ok('home: the Ritual Wall is a line in the Opening soon chapter, not a wall of studio photos', (await p.locator('main .wall .tile').count()) === 0 && (await p.locator('.soonflow a[href*="wall"]').count()) === 1);
 const f = () => p.evaluate(() => getComputedStyle(document.querySelector('#msGrid .card .ph img.main, .wall .tile img')).filter);
 ok('photo grade is on by default', /saturate/.test(await f()), await f());
 await p.locator('#gradeToggle').uncheck(); await p.waitForTimeout(200); ok('the Photo grade switch turns it off', (await f()) === 'none', await f());
@@ -83,5 +84,19 @@ await p.goto(base + '/order-confirmed'); await p.waitForSelector('[data-breathe]
 await p.goto(base + '/shop'); await p.reload(); await p.waitForSelector('#skipBtn'); await p.waitForTimeout(900); await p.keyboard.press('Tab'); ok('the skip link is the first thing a keyboard user reaches', await p.evaluate(() => document.activeElement?.id === 'skipBtn'));
 await p.keyboard.press('Enter'); ok('and it moves focus to the page content', await p.evaluate(() => document.activeElement?.id === 'app'));
 ok('headings never skip a level for screen readers', await p.evaluate(() => { let prev = 0, bad = 0; document.querySelectorAll('main h1,main h2,main h3,main h4').forEach(h => { const l = Number(h.getAttribute('aria-level') || h.tagName[1]); if (prev && l > prev + 1) bad++; prev = l; }); return bad === 0; }));
+{ // the bar and header lead with what is live; on a phone the home page is shorter (a sales review, October 2026)
+  await p.goto(base + '/'); await p.waitForSelector('#announceDrop .d'); await p.waitForTimeout(600);
+  const bar = await p.evaluate(() => { const a = document.querySelector('#announce'); return { kids: [...a.children].filter(e => !e.classList.contains('an-sep')).map(e => e.className), text: a.innerText.replace(/\s+/g, ' '), gift: a.querySelector('a.an-gift')?.getAttribute('href'), giftH: a.querySelector('a.an-gift')?.getBoundingClientRect().height }; });
+  ok('desktop bar: free shipping first, then gifting (a link), then the next new moon, last', bar.kids.join(',') === 'an-live,an-gift,an-drop' && /^Free shipping on Canadian orders over \$75/.test(bar.text) && /gift$/.test(bar.gift ?? '') && bar.giftH >= 44 && /new moon/i.test(bar.text) && !/coming soon/i.test(bar.text), JSON.stringify(bar));
+  const pill = await p.evaluate(() => { const a = document.querySelector('.club-pill'), r = a.getBoundingClientRect(), cs = getComputedStyle(a); return { href: a.getAttribute('href'), text: a.innerText.trim(), h: r.height, bg: cs.backgroundImage, border: cs.borderTopWidth }; });
+  ok('desktop header: the Ritualists link is quiet (no "Soon" badge, no pill) and still goes to the club', /club$/.test(pill.href) && pill.text === 'The Ritualists' && pill.h >= 44 && pill.bg === 'none' && pill.border === '0px', JSON.stringify(pill));
+  const pc = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const pp = await pc.newPage(); await setupMocks(pp);
+  await pp.goto(base + '/'); await pp.waitForSelector('.soonflow .rit-card-wrap'); await pp.waitForTimeout(1200);
+  const ph = await pp.evaluate(() => { const bar = document.querySelector('#announce'), r = bar.getBoundingClientRect(), row = document.querySelector('.jr-teaser .jr-cards'), cards = [...row.children].map(c => Math.round(c.getBoundingClientRect().top));
+    return { bar: Math.round(r.height), barText: bar.innerText.replace(/\s+/g, ' '), soon: Math.round(document.querySelector('.soonflow').getBoundingClientRect().height), row: new Set(cards).size === 1 && row.scrollWidth > row.clientWidth && getComputedStyle(row).overflowX === 'auto', page: document.documentElement.scrollHeight, sw: document.documentElement.scrollWidth - innerWidth }; });
+  ok('phone bar: two short lines, free shipping first and the new moon short ("Nov 8")', ph.bar <= 80 && /^Free shipping/.test(ph.barText) && /New moon [A-Z][a-z]{2} \d{1,2}/.test(ph.barText), JSON.stringify(ph));
+  ok('phone home: one compact Opening soon chapter, the Journal as a swipe row, and a shorter page than before (12,100px)', ph.soon < 1400 && ph.row && ph.page < 11000 && ph.sw <= 1, JSON.stringify(ph));
+  await pc.close();
+}
 ok('no JS errors', errs.length === 0, errs.join('|'));
 await b.close(); process.exit(res.every(Boolean) ? 0 : 1);

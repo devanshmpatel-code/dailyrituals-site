@@ -108,12 +108,15 @@ export function applyDrop(root: ParentNode, now: Date = new Date()) {
   return s;
 }
 
-/** The announcement bar's first line (a draft for Claire). */
+/**
+ * The announcement bar's last, quieter item (a draft for Claire). The bar leads with what is live now (free shipping, gifting);
+ * the Moon Drop date follows. Phones see the short form ("New moon Nov 8"); the full line stays in the text for screen readers.
+ */
 export function dropBarHTML(now: Date = new Date()): string {
   const s = dropState(now);
-  return s.state === 'today'
-    ? '<span class="d">New moon tonight · Moon Drops are coming soon</span>'
-    : `<span class="d">Moon Drops are coming soon · next new moon ${s.dateText}</span>`;
+  if (s.state === 'today') return '<span class="d">New moon tonight · Moon Drops soon</span>';
+  const short = s.at.toLocaleDateString('en-CA', { timeZone: TIME_ZONE, month: 'short', day: 'numeric' }).replace('.', '');
+  return `<span class="d"><span class="an-long">Moon Drops · next new moon ${s.dateText}</span><span class="an-short" aria-hidden="true">New moon ${short}</span></span>`;
 }
 
 /** True when today (in White Rock) is the day of a new moon, by the sky alone (a pinned drop date does not count). */

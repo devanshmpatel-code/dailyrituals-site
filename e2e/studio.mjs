@@ -106,11 +106,12 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.studio').innerText + document.querySelector('.claire').innerText + document.querySelector('.soonflow').innerText + document.querySelector('.gift-grid').innerText))));
   ok(`${label}: home has no sideways scroll`, (await noScroll(p)) <= 1);
 
-  // ---- the Ritualists (chapter 6): a membership card with Claire's logo in place of the mood constellation; it promises nothing
-  await p.evaluate(() => document.querySelector('.club').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
-  const card = await p.evaluate(() => { const w = document.querySelector('.club .rit-card-wrap'), i = w?.querySelector('.rc-logo'); return w && { label: w.getAttribute('role') + ':' + w.getAttribute('aria-label'), logo: i.complete && i.naturalWidth > 0 && /\/img\/brand\/logo-(600|1200)\.webp/.test(i.currentSrc || i.src), text: w.innerText, seal: !!w.querySelector('.rc-seal svg'), wd: w.getBoundingClientRect().width }; });
-  ok(`${label}: the Ritualists show a membership card with the logo and a wax seal`, !!card && card.logo && card.seal && /^img:.*coming soon/i.test(card.label) && card.wd > 220, JSON.stringify(card));
-  ok(`${label}: the mood constellation is gone from the Ritualists`, (await p.locator('.club .cs-const, .club .cel-const').count()) === 0);
+  // ---- the Ritualists: a membership card with Claire's logo in place of the mood constellation; it promises nothing. (It sits
+  // above the Monthly Ritual sign-up in the one "Opening soon" chapter now, a little smaller on a phone.)
+  await p.evaluate(() => document.querySelector('.soonflow .soon-card').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
+  const card = await p.evaluate(() => { const w = document.querySelector('.soonflow .rit-card-wrap'), i = w?.querySelector('.rc-logo'); return w && { label: w.getAttribute('role') + ':' + w.getAttribute('aria-label'), logo: i.complete && i.naturalWidth > 0 && /\/img\/brand\/logo-(600|1200)\.webp/.test(i.currentSrc || i.src), text: w.innerText, seal: !!w.querySelector('.rc-seal svg'), wd: w.getBoundingClientRect().width }; });
+  ok(`${label}: the Ritualists show a membership card with the logo and a wax seal`, !!card && card.logo && card.seal && /^img:.*coming soon/i.test(card.label) && card.wd > 200, JSON.stringify(card));
+  ok(`${label}: the mood constellation is gone from the Ritualists`, (await p.locator('.soonflow .cs-const, .soonflow .cel-const').count()) === 0);
   ok(`${label}: the card promises no points, tiers or rewards`, !!card && /coming soon/i.test(card.text) && !/\d|points?|reward|tier|member no/i.test(card.text), card?.text);
 
   // ---- the footer: Claire's logo, cut out clean and lit, in place of the star chart and the constellation
@@ -136,7 +137,14 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: the archive lists 15 named moons`, cards.length === 15 && new Set(cards).size === 15 && !cards.some(n => /crescent/i.test(n)), cards.join(', '));
   ok(`${label}: every card has a moon, Claire's words where she gave them, and no "No caption yet" placeholder`, await p.evaluate(() => [...document.querySelectorAll('#pastMoons .pm-card')].every(c => c.querySelector('img').alt.length > 10) && !/No caption yet/i.test(document.querySelector('#pastMoons').innerText) && document.querySelectorAll('#pastMoons .pm-card q').length >= 14));
   const archiveText = await p.locator('#pastMoons').innerText();
-  ok(`${label}: nothing in the archive can be bought`, (await p.locator('#pastMoons button, #pastMoons [data-add], #pastMoons [data-qa], #pastMoons .qa').count()) === 0 && !/add to cart|quick add|\$\d/i.test(archiveText) && /not for sale/i.test(archiveText));
+  // (its only buttons are "Tell me if it returns", one per candle, and the Monthly Ritual sign-up they lead to)
+  ok(`${label}: nothing in the archive can be bought`, (await p.locator('#pastMoons button:not([data-return]):not(#pmForm button[type=submit]), #pastMoons [data-add], #pastMoons [data-qa], #pastMoons .qa, #pastMoons a[href*="product"]').count()) === 0 && !/add to cart|quick add|\$\d/i.test(archiveText) && /not for sale/i.test(archiveText));
+  ok(`${label}: every past candle offers "Tell me if it returns"`, (await p.locator('#pastMoons .pm-card [data-return]').count()) === 15 && /tell me if it returns/i.test(archiveText));
+  await p.locator('#pm-christmas-eve [data-return]').click(); await p.waitForTimeout(900);
+  const asked = await p.evaluate(() => ({ focus: document.activeElement?.id, interest: document.querySelector('#pmInterest').value, ask: document.querySelector('#pmAsk').hidden ? '' : document.querySelector('#pmAsk').innerText, r: document.querySelector('#pmForm').getBoundingClientRect().top, h: innerHeight }));
+  ok(`${label}: "Tell me if it returns" on Christmas Eve leads to the Monthly Ritual sign-up and notes the candle`, asked.focus === 'nemail' && asked.interest === 'returns:christmas-eve' && /Christmas Eve/.test(asked.ask) && /Monthly Ritual/.test(asked.ask) && asked.r > 0 && asked.r < asked.h, JSON.stringify(asked));
+  await p.locator('#pmForm button[type=submit]').click(); await p.waitForTimeout(400);
+  ok(`${label}: the sign-up stays switched off in the preview`, (await p.locator('#nemail').evaluate(i => i.validity.valueMissing)) || /switched off/i.test(await p.locator('#toast').innerText()));
   ok(`${label}: the archive is grouped by season`, (await p.locator('#pastMoons .pm-season').count()) === 5);
   ok(`${label}: the "bring one back" idea is a draft for Claire only`, !/bring one back/i.test(archiveText));
   ok(`${label}: drops has no sideways scroll`, (await noScroll(p)) <= 1);

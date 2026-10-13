@@ -190,6 +190,16 @@ for (const [w, h] of [[1440, 900], [390, 844]]) { // one card per scent: format 
   ok(`${w} /shop: no JS errors`, errs.length === 0, errs.join(' | '));
   await ctx.close();
 }
+{ // tablets and small laptops: the product details tabs (About, How to use, Ingredients, Shipping) all fit, none cut off
+  for (const w of [768, 860, 900, 960, 1024]) {
+    const ctx = await b.newContext({ viewport: { width: w, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
+    await p.goto(base + '/product/cabana'); await p.waitForSelector('.tabsbar [role=tab]'); await p.waitForTimeout(600);
+    const t = await p.evaluate(() => { const bar = document.querySelector('.tabsbar'), br = bar.getBoundingClientRect();
+      return [...bar.querySelectorAll('[role=tab]')].map(b => { const r = b.getBoundingClientRect(); return { n: b.textContent.trim(), inside: r.left >= br.left - 0.5 && r.right <= br.right + 0.5, h: r.height, fs: parseFloat(getComputedStyle(b).fontSize) }; }); });
+    ok(`${w}px product: all four detail tabs fit in the bar, at least 44px tall and 13px type`, t.length === 4 && t.every(x => x.inside && x.h >= 44 && x.fs >= 13), JSON.stringify(t.filter(x => !x.inside || x.h < 44 || x.fs < 13)));
+    await ctx.close();
+  }
+}
 { // desktop: the cards lift on hover; the quick add's toast
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   await p.goto(base + '/shop?f=roller&m=all&s=featured'); await p.waitForSelector('.grid .card:not(.sk) button[data-qa]'); await p.waitForTimeout(500);

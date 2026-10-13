@@ -11,9 +11,10 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label}: no side rail or map button (the "you are here" card does that job)`, (await p.locator('.jrail, [data-jmap]').count()) === 0);
   ok(`${label}: the breathing orb is on the home page`, (await p.locator('.breathorb').count()) === 1);
   ok(`${label}: no flags under the opening`, (await p.locator('.flags, .jflag').count()) === 0);
-  ok(`${label}: chapter headings carry a mandala`, (await p.locator('.jhead .jorn').count()) >= 5, `${await p.locator('.jhead .jorn').count()}`);
+  ok(`${label}: chapter headings carry a mandala`, (await p.locator('.jhead .jorn').count()) >= 4, `${await p.locator('.jhead .jorn').count()}`);
   // the "you are here" card follows the chapters as you scroll
-  await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight * 0.55)); await p.waitForTimeout(700);
+  // (three quarters down: past the coaching chapter now that the page is shorter, four chapters instead of five)
+  await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight * 0.75)); await p.waitForTimeout(700);
   ok(`${label}: the page remembers the chapter you are in`, Number(await p.locator('.jh-n').innerText()) >= 3, await p.locator('.jh-n').innerText());
   await p.evaluate(() => window.scrollTo(0, 1800)); await p.waitForTimeout(700);
   const reveal = await p.evaluate(() => ({ total: document.querySelectorAll('[data-reveal]').length, shown: document.querySelectorAll('[data-reveal].in').length }));
