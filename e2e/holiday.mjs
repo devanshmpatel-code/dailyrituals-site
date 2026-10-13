@@ -30,6 +30,20 @@ const state = p => p.evaluate(() => ({
   toggle: document.getElementById('seasonToggle')?.checked ?? null,
 }));
 
+/** Holiday pieces (flags, seal) that sit over words around them. */
+const coverHits = p => p.evaluate(async () => {
+  const textRects = root => { const out = []; const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = tw.nextNode(); t; t = tw.nextNode()) { if (!t.textContent.trim() || t.parentElement.closest('.hol-flag, .hol-seal, .hol-stub')) continue; const r = document.createRange(); r.selectNodeContents(t); out.push(...r.getClientRects()); } return out; };
+  const hit = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+  const hits = [];
+  for (const [sel, host] of [['.soon-list a[href$="drops"] > .hol-flag', '.soon-list'], ['.gift-grid .hol-flag', '.gift-grid'], ['.hol-seal', '.claire']]) {
+    const el = document.querySelector(sel); if (!el) { if (document.querySelector(host)) hits.push(`${sel} missing`); continue; }
+    el.scrollIntoView({ block: 'center' }); await new Promise(r => setTimeout(r, 50));
+    const r = el.getBoundingClientRect(); textRects(document.querySelector(host)).forEach(t => { if (hit(r, t)) hits.push(`${sel} over text at ${Math.round(t.left)},${Math.round(t.top)}`); });
+  }
+  scrollTo(0, 0);
+  return hits;
+});
+
 // ---- the calendar decides (no override)
 for (const [at, want, label] of [
   ['2026-10-20T12:00:00', false, 'Oct 20'], ['2026-11-14T23:30:00', false, 'Nov 14 (late evening)'], ['2026-11-15T00:30:00', true, 'Nov 15 (just after midnight)'],
@@ -106,17 +120,7 @@ for (const at of ['2026-11-20T18:00:00', '2026-12-20T18:00:00']) {
   ok('on: the Send a Sunrise card has a "Gift it" ribbon flag, a draft', d.gift?.t === 'Gift it' && d.gift.d && d.gift.pe === 'none', JSON.stringify(d.gift));
   ok('on: the seal\'s words are drafts and it takes no taps', d.seal && d.sealPe === 'none');
 
-  // nothing covers words: flags and seal against the text around them; the dust is behind everything and never hit by a tap
-  const cover = await p.evaluate(() => {
-    const textRects = root => { const out = []; const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = tw.nextNode(); t; t = tw.nextNode()) { if (!t.textContent.trim() || t.parentElement.closest('.hol-flag, .hol-seal, .hol-stub')) continue; const r = document.createRange(); r.selectNodeContents(t); out.push(...r.getClientRects()); } return out; };
-    const hit = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
-    const hits = [];
-    for (const [sel, host] of [['.soon-list a[href$="drops"] > .hol-flag', '.soon-list'], ['.gift-grid .hol-flag', '.giftsec'], ['.hol-seal', '.claire']]) {
-      const el = document.querySelector(sel); el.scrollIntoView({ block: 'center' });
-      const r = el.getBoundingClientRect(); textRects(document.querySelector(host)).forEach(t => { if (hit(r, t)) hits.push(`${sel} over "${t.width}x${t.height}"`); });
-    }
-    return hits;
-  });
+  const cover = await coverHits(p);
   ok('on: the ribbon flags and the seal cover no words', cover.length === 0, cover.join('; '));
   await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(700);
   const dust = await p.evaluate(() => {
@@ -192,10 +196,13 @@ for (const w of [1440, 1024, 768, 390, 360]) {
             return [...document.querySelectorAll('.hol-flag, .hol-seal, .hol-stub')].filter(el => { const r = el.getBoundingClientRect(); return r.left < o.right && o.left < r.right && r.top < o.bottom && o.top < r.bottom; }).map(el => el.className);
           });
           ok(`${w}px on: no holiday piece sits over the breathing orb`, over.length === 0, over.join(' '));
+          const cov = await coverHits(p);
+          ok(`${w}px on: the ribbon flags and the seal cover no words`, cov.length === 0, cov.join('; '));
           const taps = await p.evaluate(() => [...document.querySelectorAll('.hol-flag, .hol-seal, .hol-stub, .hol-dust')].filter(el => getComputedStyle(el).pointerEvents !== 'none' && el.closest('a, button')).length);
           ok(`${w}px on: the layer adds no new tap targets (its pieces take no taps inside links)`, taps === 0, String(taps));
         }
       }
+      if (on && route === '/gift') { const cov = await coverHits(p); ok(`${w}px on /gift: the card's ribbon flag covers no words`, cov.length === 0 && await p.locator('.gift-grid .hol-flag').count() === 1, cov.join('; ')); }
       ok(`${w}px ${on ? 'on' : 'off'} ${route}: no sideways scroll`, (await noScroll(p)) <= 1);
       await ctx.close();
     }

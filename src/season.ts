@@ -49,7 +49,7 @@ export const stubHTML = (inner: string, cls = '') =>
   `<span class="hol-stub${cls ? ` ${cls}` : ''}" data-hol><span class="hol-stub-t">${inner}</span><span class="hol-stub-end" aria-hidden="true"><svg viewBox="0 0 12 12" width="9" height="9"><path d="M6 0l1.4 4.6L12 6l-4.6 1.4L6 12 4.6 7.4 0 6l4.6-1.4z" fill="currentColor"/></svg></span></span>`;
 
 /** A ribbon flag that hangs off the right corner of a card, folded under at the back. */
-const flagHTML = (text: string) => `<span class="hol-flag" data-hol aria-hidden="true"><span class="d">${text}</span></span>`;
+const flagHTML = (text: string, cls = '') => `<span class="hol-flag${cls ? ` ${cls}` : ''}" data-hol aria-hidden="true"><span class="d">${text}</span></span>`;
 
 /** The round cream seal on Claire's arch: the next Moon Drop, from the one drop state in src/drop.ts. */
 function sealHTML() {
@@ -88,7 +88,7 @@ export function decorateHoliday(root: ParentNode = document) {
   });
   root.querySelectorAll<HTMLElement>('.gcard').forEach(c => {
     const p = c.parentElement; if (!p || p.querySelector(':scope > .hol-flag')) return;
-    host(p); c.insertAdjacentHTML('beforebegin', flagHTML('Gift it'));
+    host(p); c.insertAdjacentHTML('beforebegin', flagHTML('Gift it', 'on-card'));
   });
   // the seal on Claire's arch (home)
   root.querySelectorAll<HTMLElement>('.claire-in .claire-cut').forEach(c => {
