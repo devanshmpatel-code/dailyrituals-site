@@ -30,12 +30,14 @@ import { renderLegal } from './pages/legal';
 import { renderGiving, givingNote } from './pages/giving';
 import { mountNav, navRouteChange } from './nav';
 import { giftLineHTML } from './pages/gift';
+import { applySeason, decorateHoliday, wireSeasonToggle } from './season';
+import { unmountGoldDust } from './golddust';
 
 const root = document.getElementById('root')!;
 root.innerHTML = `
   <button class="skip" id="skipBtn">Skip to content</button>
   ${LAUNCHED ? '' : `<div class="preview-bar" role="note"><span><b>Private preview</b> · Live catalogue, photos and booking times from dailyritualsco.com. ${WRITES_ENABLED ? 'Checkout and booking are ON.' : 'Checkout, booking and sign-ups are switched off.'}</span>
-    <span class="pb-toggles"><label class="drafts-toggle"><input type="checkbox" id="gradeToggle" checked> Photo grade</label><label class="drafts-toggle"><input type="checkbox" id="draftsToggle"> Show drafts for Claire</label></span></div>`}
+    <span class="pb-toggles"><label class="drafts-toggle"><input type="checkbox" id="gradeToggle" checked> Photo grade</label><label class="drafts-toggle"><input type="checkbox" id="draftsToggle"> Show drafts for Claire</label><label class="drafts-toggle"><input type="checkbox" id="seasonToggle"> Holiday look</label></span></div>`}
   ${fixImages(Header)}
   <main id="app" tabindex="-1"></main>
   ${Footer}
@@ -96,6 +98,10 @@ if (gradeToggle) {
   applyGrade();
 }
 
+// holiday look: on by itself from Nov 15 to Dec 31; in the preview, a toggle and ?season=holiday|off|auto (src/season.ts)
+wireSeasonToggle(document.getElementById('seasonToggle') as HTMLInputElement | null);
+applySeason();
+
 // ---------- cart drawer ----------
 const overlay = document.getElementById('overlay')!;
 const drawer = overlay.querySelector<HTMLElement>('.drawer')!;
@@ -128,6 +134,7 @@ function renderDrawer() {
   db.querySelectorAll<HTMLButtonElement>('[data-inc]').forEach(b => b.addEventListener('click', () => { const l = getLines().find(x => x.key === b.dataset.inc)!; setQty(l.key, l.qty + 1); }));
   db.querySelectorAll<HTMLButtonElement>('[data-dec]').forEach(b => b.addEventListener('click', () => { const l = getLines().find(x => x.key === b.dataset.dec)!; setQty(l.key, l.qty - 1); }));
   drawer.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', closeCart));
+  decorateHoliday(drawer);
   void fillSuggestions(db);
 }
 // "Complete your ritual": other formats of the scents already in the cart.
@@ -189,7 +196,7 @@ async function route() {
   if (!overlay.hidden) closeCart();
   document.body.dataset.page = seg || 'home';
   requestAnimationFrame(growTree);
-  unmountJourney(); cleanupMotion(); unmountDayScrub(); getSky()?.destroy();
+  unmountJourney(); cleanupMotion(); unmountDayScrub(); getSky()?.destroy(); unmountGoldDust();
   document.title = PAGE_TITLES[seg] ? `${PAGE_TITLES[seg]} · Daily Rituals Co.` : 'Daily Rituals Co.';
   window.scrollTo(0, 0);
 
@@ -227,6 +234,7 @@ async function route() {
   decoratePage(app, seg);
   celestialPage(app, seg);
   mountSay(app); mountShapes(app);
+  decorateHoliday(app);
 }
 installLinkHandling();
 onRoute(route);
