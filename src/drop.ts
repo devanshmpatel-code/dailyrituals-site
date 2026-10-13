@@ -53,7 +53,8 @@ export function nextNewMoon(from: Date = new Date()): Date {
 }
 
 /** "2026-11-08": the calendar day of an instant in the studio's time zone (White Rock, BC). */
-export const localDay = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' });
+const dayFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }); // (one formatter, made once)
+export const localDay = (d: Date) => dayFmt.format(d);
 
 export interface DropState {
   /** upcoming: the new moon is on a later day; today: it is today in White Rock */

@@ -75,7 +75,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
 
   let alive = true, key = '', phi = 0, raf = 0, tween: { from: number; to: number; t0: number; ms: number } | null = null;
   let D = 140, N = 280, dpr = 1, phone = false;
-  let cx = 0, top = 0, RX = 200, RY = 90;
+  let cx = 0, top = 0, RX = 200, RY = 90, arcW = 0;
   let sky: RGB[] = [[120, 150, 200], [180, 200, 230], [230, 220, 210]], orb: RGB = [255, 240, 200], night = 0;
 
   // ---------- the shared geometry of a face at N x N: its radius, the sphere's normal (phase) and the dome's (light) ----------
@@ -104,6 +104,11 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     f.img = img;
     if (!(img.complete && img.naturalWidth > 0)) {
       if (!img.dataset.wait) { img.dataset.wait = '1'; img.addEventListener('load', () => { if (alive) { f.px = null; f.sig = ''; kick(); } }, { once: true }); }
+      return false;
+    }
+    // the photograph is decoded off the main thread first, so drawing it here never stalls a frame
+    if (img.dataset.dec !== '1') {
+      if (!img.dataset.dec) { img.dataset.dec = '0'; img.decode().catch(() => {}).then(() => { img.dataset.dec = '1'; if (alive) { f.px = null; f.sig = ''; kick(); } }); }
       return false;
     }
     const c = document.createElement('canvas'); c.width = c.height = N;
@@ -138,6 +143,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     const box = arc.getBoundingClientRect();
     if (!box.width || !box.height) return false;
+    arcW = arc.clientWidth; // (kept for each frame's captions and glint, so a frame never forces a layout to read it)
     let W: number, H: number, left: number;
     if (phone) {
       // the band above the words: the whole ring inside it, inside the screen
@@ -231,7 +237,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     return wv;
   }
   function captions() {
-    const box = { w: arc.clientWidth };
+    const box = { w: arcW };
     const tight = arc.classList.contains('tight');
     const discs = faces.map(f => ({ f, x: f.x, y: f.y, r: (D * f.s) / 2 + 3, on: Number(f.el.style.opacity || 1) > 0.3 }));
     const placed: { l: number; t: number; r: number; b: number }[] = [];
@@ -276,7 +282,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
   function glint() {
     const sky = getSky(); if (!sky) return;
     const full = faces.reduce((a, b) => (Math.cos(b.th) > Math.cos(a.th) ? b : a));
-    const w = arc.clientWidth || 1;
+    const w = arcW || 1;
     const c = full.avg ?? [250, 238, 220];
     sky.set({ glint: [full.x / w, Math.max(0.012, (D * full.s) / w * 0.32), 0.12 + 0.6 * night], glintC: c.map(v => Math.min(255, v * 1.05)) as RGB });
   }
@@ -291,9 +297,13 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     return [r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top];
   }
 
-  function shadeAll() {
+  // Shading is per pixel, so one frame shades only as many faces as fit in a short budget (the full moon first, then the
+  // nearest); the rest follow on the next frames. A slow phone never sees one long frame, and the finished picture is the same.
+  const BUDGET = 12;
+  let pending = false;
+  function shadeAll([ox, oy]: [number, number]) {
+    pending = false;
     if (!geo) return;
-    const [ox, oy] = orbAt();
     const front = faces.reduce((a, b) => (Math.cos(b.th) > Math.cos(a.th) ? b : a));
     const haze = sky[1], deep = sky[0];
     const day = 1 - night;
@@ -305,7 +315,10 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     const nightSide: RGB = [0, 1, 2].map(c => deep[c] * 0.45 + NIGHT_SIDE[c] * 0.75) as RGB;
     const shadowTint: RGB = [0, 1, 2].map(c => daySide[c] * day + nightSide[c] * night) as RGB;
     const lit: RGB = [mixc(255, orb[0], 0.18 + 0.12 * night), mixc(255, orb[1], 0.18 + 0.12 * night), mixc(255, orb[2], 0.18 + 0.12 * night)];
-    for (const f of faces) {
+    const t0 = performance.now();
+    let shaded = 0;
+    for (const f of [...faces].sort((a, b) => Math.abs(a.th) - Math.abs(b.th))) {
+      if (shaded && performance.now() - t0 > BUDGET) { pending = true; break; }
       if (!f.px && !grab(f)) continue;
       // the light of the sun or moon, from where it is in the sky (a little in front of the faces, so they are never black)
       let lx = ox - f.x, ly = oy - f.y; const ll = Math.hypot(lx, ly) || 1; lx /= ll; ly /= ll;
@@ -320,14 +333,14 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       const sig = [Math.round(L[0] * 60), Math.round(L[1] * 60), Math.round(P[0] * 200), Math.round(P[1] * 200), Math.round(P[2] * 200), Math.round(hz * 100), haze.join(), Math.round(night * 50), N].join(',');
       if (sig === f.sig) continue;
       f.sig = sig;
-      shade(f, L, Hh, P, hz, haze, shadowTint, lit);
+      shade(f, L, Hh, P, hz, haze, shadowTint, lit); shaded++;
       f.cv.getContext('2d')!.putImageData(f.out!, 0, 0);
       // its shadow on the haze falls away from the light
       f.el.style.setProperty('--shx', (-lx * 0.09).toFixed(3));
       f.el.style.setProperty('--shy', (-ly * 0.09 + 0.05).toFixed(3));
     }
     stack.dataset.moons = String(faces.filter(f => f.px).length);
-    if (faces.every(f => f.px) && !tween) stack.dataset.shown = key;
+    if (faces.every(f => f.px) && !tween && !pending) stack.dataset.shown = key;
   }
 
   function shade(f: Face, L: number[], H: number[], P: number[], hz: number, haze: RGB, dark: RGB, lit: RGB) {
@@ -383,10 +396,12 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       phi = tween.from + (tween.to - tween.from) * ease(k);
       if (k >= 1) { phi = ((tween.to % 5) + 5) % 5; tween = null; }
     }
+    // where the light is, read before this frame moves the moons (their styles would make the read lay the page out again)
+    const light: [number, number] = geo ? orbAt() : [0, 0];
     place();
-    shadeAll();
+    shadeAll(light);
     glint();
-    if (tween || faces.some(f => !f.px && f.img && !f.img.complete)) raf = requestAnimationFrame(frame);
+    if (tween || pending || faces.some(f => !f.px && f.img && !f.img.complete)) raf = requestAnimationFrame(frame);
   }
   function kick() { if (!raf && alive) raf = requestAnimationFrame(frame); }
 
