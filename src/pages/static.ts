@@ -11,6 +11,7 @@ import { loadCatalogue } from '../wix';
 import { bindCanvasProductLinks, previewOff } from './shared';
 import { wireVote, wireCountdown, wireSunrise, wireClub, wireRepeatCalc } from './home';
 import { pastMoonsHTML, wirePastMoons } from '../moons';
+import { wireGift } from './gift';
 
 const PAGES: Record<string, string> = {
   drops: MoonDrops, subscribe: RitualOnRepeat, wall: RitualWall, club: Ritualists, gift: SendASunrise, 'order-confirmed': OrderConfirmed,
@@ -42,6 +43,8 @@ export async function renderStatic(app: HTMLElement, route: string) {
     const upP = app.querySelector<HTMLSelectElement>('#upP');
     if (upP && items.length) upP.innerHTML = [...items].sort((a, b) => a.name.localeCompare(b.name)).map(i => `<option value="${esc(i.slug)}">${esc(i.name)}</option>`).join('') + '<option value="other">Something else</option>';
     if (route === 'subscribe') wireRepeatCalc(app, items);
+    // Send a Sunrise: choose a live candle on the page and add it to the cart with the card details
+    if (route === 'gift') wireGift(app, items);
   } catch { /* static page still renders without live data */ }
 }
 

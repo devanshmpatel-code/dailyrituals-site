@@ -596,10 +596,10 @@ button.soon { background: transparent !important; color: inherit !important; bor
 @keyframes gcFlame { 0%, 100% { scale: 1 1; } 30% { scale: .94 .9; } 55% { scale: 1.04 1.08; } 80% { scale: .98 .95; } }
 .gc-cap { margin: 0; }
 /* the one way to send a gift today, ahead of the gift sets that are coming soon: a candle from the shop */
-.fmt-pick a.gr-live { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 60px; padding: 8px 14px; border-radius: 16px; text-decoration: none; color: inherit;
+.gr-live { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 60px; padding: 8px 14px; border-radius: 16px; text-decoration: none; color: inherit;
   background: linear-gradient(120deg, #FFF8EC, #FBEBD3); border: 1px solid rgba(201, 163, 90, .7); box-shadow: 0 10px 26px -18px rgba(122, 84, 16, .55); transition: border-color .2s, box-shadow .2s, transform .2s; }
-.fmt-pick a.gr-live:hover { border-color: #A8792E; transform: translateY(-1px); box-shadow: 0 14px 30px -18px rgba(122, 84, 16, .65); }
-.fmt-pick .gr-ic-live { background: radial-gradient(circle at 50% 60%, #FFE9C4, #F6D9A8); color: #C9762E; }
+.gr-live:hover { border-color: #A8792E; transform: translateY(-1px); box-shadow: 0 14px 30px -18px rgba(122, 84, 16, .65); }
+.gr-ic-live { background: radial-gradient(circle at 50% 60%, #FFE9C4, #F6D9A8); color: #C9762E; }
 .gr-go { font: 600 13px var(--body); color: #7A5410; white-space: nowrap; }
 .gr-live-note { margin: -4px 0 0; color: var(--ink-2, #5E5361); }
 #gAdd:disabled { opacity: .55; cursor: not-allowed; }

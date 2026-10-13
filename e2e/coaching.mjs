@@ -333,4 +333,36 @@ for (const w of [1440, 1024, 768, 390, 360]) {
     await ctx.close();
   }
 }
+// ---------- booking: the page is named after what is being booked; with no times, the reset, the way back and the Monthly Ritual ----------
+{
+  const DISC = { _id: 'svc-disc', name: 'Discovery Call', mainSlug: { name: 'discovery-call' }, payment: { custom: { description: 'Free' } }, schedule: { availabilityConstraints: { sessionDurations: [20] } } };
+  const PROG = { _id: 'svc-prog', name: 'Rewire Program', mainSlug: { name: 'rewire-program' }, payment: { fixed: { price: { value: '150' } } }, schedule: { availabilityConstraints: { sessionDurations: [60] } } };
+  for (const [label, vp, services] of [['desktop, no services', { width: 1440, height: 900 }, []], ['phone, discovery call with no times', { width: 390, height: 844 }, [DISC, PROG]]]) {
+    const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p, { services });
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.goto(base + '/book'); await p.waitForSelector('.bk-empty'); await p.waitForTimeout(300);
+    const h = await p.evaluate(() => ({ h1: document.querySelector('.bk-title').innerText, eb: document.querySelector('.bk-intro > .eyebrow').innerText, title: document.title }));
+    ok(`book ${label}: the title is the free discovery call, not "a session"`, /^Book your free discovery call$/.test(h.h1.trim()) && /discovery call/i.test(h.title) && !/session/i.test(h.h1 + h.title), JSON.stringify(h));
+    ok(`book ${label}: the eyebrow names a free call with Claire`, /free/i.test(h.eb) && /Claire/i.test(h.eb), h.eb);
+    ok(`book ${label}: with no times, the reset and the way back to coaching stay`, (await p.locator('.bk-empty a[href$="/reset"]').count()) === 1 && (await p.locator('.bk-empty a[href$="/coaching"]').count()) === 1);
+    ok(`book ${label}: and the Monthly Ritual sign-up says it is for hearing when times open`, /Join the Monthly Ritual to hear when times open/.test(await p.locator('.bk-notify').innerText()) && (await p.locator('#bkNform input[type=email]').count()) === 1 && !/@\w+\.\w+/.test(await p.locator('.bk-notify').innerText()));
+    await p.fill('#bkEmail', 'someone@example.com'); await p.click('#bkNform button'); await p.waitForTimeout(300);
+    ok(`book ${label}: signing up in the preview creates nothing and says so`, /switched off/i.test(await p.locator('#toast').innerText()));
+    ok(`book ${label}: no sideways scroll`, (await noScroll(p)) <= 1);
+    ok(`book ${label}: no JS errors`, errs.length === 0, errs.join(' | '));
+    // the reset: Claire's round portrait beside the sign-up, and a short look at Day 1 (drafts, no new claims)
+    await p.goto(base + '/reset'); await p.waitForSelector('#resetForm'); await p.waitForTimeout(600);
+    const rs = await p.evaluate(() => { const i = document.querySelector('.reset-join img.reset-claire'); const d = document.querySelector('.reset-day1'); const f = document.querySelector('#resetForm').getBoundingClientRect(), r = i?.getBoundingClientRect();
+      return { src: i?.getAttribute('src'), loaded: !!i && i.complete && i.naturalWidth > 0, round: i && getComputedStyle(i).borderRadius === '50%', near: !!r && Math.abs(r.top - f.top) < 260, items: d ? [...d.querySelectorAll('li')].map(li => !!li.querySelector('.d')) : [], t: d?.innerText ?? '' }; });
+    ok(`reset ${label}: Claire's round portrait sits with the sign-up`, /claire-round\.webp$/.test(rs.src ?? '') && rs.loaded && rs.round && rs.near, JSON.stringify(rs));
+    ok(`reset ${label}: a short look at Day 1, every line a draft for Claire`, rs.items.length === 3 && rs.items.every(Boolean) && /Day 1/.test(rs.t), JSON.stringify(rs.items));
+    ok(`reset ${label}: the Day 1 preview makes no health claims`, !/heal|cure|treat|therap|anxiety|stress relief|diagnos/i.test(rs.t), rs.t);
+    ok(`reset ${label}: no sideways scroll`, (await noScroll(p)) <= 1);
+    if (services.length) {
+      await p.goto(base + '/book/rewire-program'); await p.waitForSelector('.bk-empty'); await p.waitForTimeout(300);
+      ok(`book ${label}: another service is titled by its own name`, /^Book Rewire Program$/.test((await p.locator('.bk-title').innerText()).trim()) && /Rewire Program/.test(await p.title()), await p.locator('.bk-title').innerText());
+    }
+    await ctx.close();
+  }
+}
 await b.close(); process.exit(res.every(Boolean) ? 0 : 1);

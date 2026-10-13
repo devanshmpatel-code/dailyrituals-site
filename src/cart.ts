@@ -12,6 +12,20 @@ export interface Line {
   price: number;
   image: string;
   qty: number;
+  gift?: GiftDetails;   // Send a Sunrise: the card and delivery details travel with the line
+}
+
+/**
+ * What the buyer wrote on Send a Sunrise. Kept on the local cart line (this browser only while checkout is off).
+ * Before checkout is switched on, these need a home in the live Wix cart (e.g. custom text fields on the candles, or a
+ * buyer note at checkout): addToLiveCart below does not send them yet.
+ */
+export interface GiftDetails {
+  to: string;           // recipient name, printed on the card
+  note: string;         // the card note (140 characters at most)
+  date?: string;        // arrive on or after, YYYY-MM-DD (empty: as soon as it is ready)
+  hidePrices: boolean;  // hide prices on the packing slip
+  sky?: string;         // the card's sky: dawn, golden or night
 }
 
 type Listener = () => void;
@@ -32,8 +46,9 @@ export const count = () => lines.reduce((n, l) => n + l.qty, 0);
 export const subtotal = () => lines.reduce((n, l) => n + l.qty * l.price, 0);
 
 export async function add(line: Omit<Line, 'key' | 'qty'>, qty = 1) {
-  const key = `${line.productId}::${line.choice ?? ''}`;
-  const found = lines.find(l => l.key === key);
+  // a gift is its own line (its own card and note), never merged into the same candle bought for oneself
+  const key = `${line.productId}::${line.choice ?? ''}${line.gift ? `::gift-${Date.now().toString(36)}` : ''}`;
+  const found = line.gift ? undefined : lines.find(l => l.key === key);
   if (found) found.qty += qty; else lines.push({ ...line, key, qty });
   write(lines); emit();
   if (WRITES_ENABLED) await addToLiveCart(line.productId, line.optionName, line.choice, qty);

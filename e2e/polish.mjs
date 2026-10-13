@@ -119,7 +119,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
 }
 { // the breathing orb on a phone: smaller, labelled, focusable, out of the way while scrolling down, never left over a button
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
-  for (const r of ['/shop', '/product/cabana', '/subscribe', '/gift', '/wall', '/coaching']) {
+  for (const r of ['/shop', '/product/cabana', '/subscribe', '/gift', '/wall', '/coaching', '/book', '/reset']) {
     await p.goto(base + r); await p.waitForTimeout(1300);
     const orb = p.locator('.breathorb');
     const meta = await orb.evaluate(o => ({ w: o.querySelector('.bo-core').getBoundingClientRect().width, label: o.getAttribute('aria-label'), tab: o.tabIndex }));
