@@ -143,7 +143,7 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
     // link to the mood of the lead scent shown, so the compass opens on a family that contains it
     // (the moment's own mood can differ: Night is floral, but its ritual leads with Campfire Stories, which is woody)
     const ritual = pair.length ? `<a class="sp sp-ritual" href="#/explore?mood=${pair[0].mood ?? m.mood}" aria-label="The ${esc(m.name.toLowerCase())} ritual: ${esc(names)}, ${money(total)} together">
-        <span class="sp-thumbs" aria-hidden="true">${pair.map(p => `<img src="${p.thumb}" alt="">`).join('')}</span>
+        <span class="sp-thumbs" aria-hidden="true">${pair.map(p => `<img src="${p.thumb}" alt="" width="240" height="300" decoding="async">`).join('')}</span>
         <span><small>The ritual</small><b>${esc(names)}</b><em>${esc(kinds.charAt(0).toUpperCase() + kinds.slice(1))} · ${money(total)} together</em></span></a>` : '';
     const c = PRACTICE[m.key];
     const practice = `<a class="sp sp-coach" href="${c.href}" aria-label="${esc(c.title)}: ${esc(c.sub)}">

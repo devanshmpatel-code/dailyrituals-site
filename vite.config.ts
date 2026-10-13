@@ -5,10 +5,12 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const launched = (process.env.VITE_LAUNCH ?? env.VITE_LAUNCH) === 'true';
+  // Where the site lives, for the share-card address and picture in index.html (src/seo.ts sets the per-route ones at run time).
+  const site = (process.env.SITE_URL ?? env.SITE_URL ?? process.env.VITE_SITE_URL ?? env.VITE_SITE_URL ?? 'https://www.dailyritualsco.com').replace(/\/$/, '');
   return {
     plugins: [{
       name: 'launch-robots',
-      transformIndexHtml: (html: string) => launched ? html.replace(/\s*<meta name="robots"[^>]*>/, '') : html,
+      transformIndexHtml: (html: string) => (launched ? html.replace(/\s*<meta name="robots"[^>]*>/, '') : html).replace(/__SITE_URL__/g, site),
     }],
   };
 });

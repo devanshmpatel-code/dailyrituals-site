@@ -8,8 +8,8 @@ const STAR: Record<string, string> = { fresh: '#A3C8C0', sunny: '#ECB76A', flora
 export const esc = (s: string) =>
   s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
-/** Canvas markup references images by bare filename; serve them from /img. */
-export const fixImages = (html: string) => html.replace(/src="([a-z0-9-]+\.jpg)"/g, 'src="/img/$1"');
+/** Canvas markup references images by bare filename (name.jpg); serve them from /img as the webp made from each (tools/photo/README.md). */
+export const fixImages = (html: string) => html.replace(/src="([a-z0-9-]+)\.jpg"/g, 'src="/img/$1.webp"');
 
 export const priceText = (i: Item) =>
   i.priceMin === i.priceMax ? money(i.priceMin) : `From ${money(i.priceMin)}`;
@@ -31,7 +31,7 @@ export function cardHTML(i: Item, badge?: string): string {
   const tone = mood ? ` style="--mood-c:${mood.swatch};--mood-s:${STAR[i.mood!] ?? mood.swatch}"` : '';
   return `<div class="card" data-format="${i.format}" data-mood="${i.mood ?? ''}"${tone}>
     <div class="ph">${badge ? `<span class="badge">${esc(badge)}</span>` : ''}
-      <a href="${productHref(i)}" aria-label="${esc(i.name)}"><img class="main" src="${i.image}" alt="${esc(i.name)}" loading="lazy"></a>
+      <a href="${productHref(i)}" aria-label="${esc(i.name)}">${cardImg(i)}</a>
       ${cardOrbit()}
       ${qa}
     </div>
@@ -41,6 +41,10 @@ export function cardHTML(i: Item, badge?: string): string {
     </a>
   </div>`;
 }
+
+/** A catalogue card's photograph: sized (no layout shift), lazy, and offered at three widths. */
+export const cardImg = (i: Item, lazy = true) =>
+  `<img class="main" src="${i.image}"${i.imageSet ? ` srcset="${i.imageSet}" sizes="(max-width: 820px) 46vw, 300px"` : ''} alt="${esc(i.name)}" width="900" height="1125"${lazy ? ' loading="lazy"' : ''} decoding="async">`;
 
 export function skeletonCards(n: number) {
   return Array.from({ length: n }, () => `<div class="card sk"><div class="ph">${skeletonOrbit()}</div><div class="sk-line"></div><div class="sk-line short"></div></div>`).join('');

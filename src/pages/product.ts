@@ -85,7 +85,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   const mainImg = $<HTMLImageElement>('#mainImg')!;
   mainImg.src = photos[0].src; mainImg.alt = it.name; mainImg.classList.toggle('dimg', photos[0].render);
   $('.thumbs')!.innerHTML = photos.map((ph, n) =>
-    `<button data-g="${n}" aria-pressed="${n === 0}" aria-label="Image ${n + 1}"><img src="${ph.src}" alt=""${ph.render ? ' class="dimg"' : ''}></button>`).join('');
+    `<button data-g="${n}" aria-pressed="${n === 0}" aria-label="Image ${n + 1}"><img src="${ph.src}" alt="" width="72" height="90" loading="lazy" decoding="async"${ph.render ? ' class="dimg"' : ''}></button>`).join('');
   $('.gallery')!.classList.toggle('one', photos.length < 2);
   app.querySelectorAll<HTMLButtonElement>('.thumbs button').forEach(b => b.addEventListener('click', () => {
     const ph = photos[Number(b.dataset.g)];

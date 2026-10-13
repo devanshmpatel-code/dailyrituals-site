@@ -40,6 +40,12 @@ export function imgSrc(v: unknown, w = 800, h = 1000): string {
   return media.getScaledToFillImageUrl(`wix:image://v1/${val}/${val}#originWidth=${w}&originHeight=${h}`, w, h, {});
 }
 
+/** A srcset of one Wix photograph at several widths (4:5), so a card shows a file near its size. Empty when the source cannot be rescaled. */
+export function imgSet(v: unknown, widths = [360, 540, 900]): string {
+  const urls = widths.map(w => imgSrc(v, w, Math.round(w * 1.25)));
+  return urls[0] && urls[0] !== urls[urls.length - 1] ? urls.map((u, n) => `${u} ${widths[n]}w`).join(', ') : '';
+}
+
 // ---------- money ----------
 export const money = (n: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', currencyDisplay: 'narrowSymbol' }).format(n);
@@ -59,6 +65,8 @@ export interface Item {
   priceMax: number;
   image: string;
   thumb: string;
+  /** srcset of the main photograph (360, 540 and 900 wide), for catalogue cards */
+  imageSet: string;
   inStock: boolean;
   optionName?: string;
   choices: Choice[];
@@ -109,6 +117,7 @@ export function toItem(p: any): Item {
     priceMax: Number(p.actualPriceRange?.maxValue?.amount ?? 0),
     image: imgSrc(main, 900, 1125),
     thumb: imgSrc(main, 240, 300),
+    imageSet: imgSet(main),
     inStock: p.inventory?.availabilityStatus !== 'OUT_OF_STOCK',
     optionName: opt?.name,
     choices,

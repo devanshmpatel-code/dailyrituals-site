@@ -30,6 +30,7 @@ import { renderLegal } from './pages/legal';
 import { renderGiving, givingNote } from './pages/giving';
 import { mountNav, navRouteChange } from './nav';
 import { giftLineHTML } from './pages/gift';
+import { applySeo } from './seo';
 
 const root = document.getElementById('root')!;
 root.innerHTML = `
@@ -227,6 +228,7 @@ async function route() {
   decoratePage(app, seg);
   celestialPage(app, seg);
   mountSay(app); mountShapes(app);
+  void applySeo(); // title, description, canonical, social tags and JSON-LD for this route (src/seo.ts)
 }
 installLinkHandling();
 onRoute(route);
