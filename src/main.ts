@@ -29,6 +29,7 @@ import { renderStatic, renderMissing, hasStatic } from './pages/static';
 import { renderLegal } from './pages/legal';
 import { renderGiving, givingNote } from './pages/giving';
 import { mountNav, navRouteChange } from './nav';
+import { giftLineHTML } from './pages/gift';
 
 const root = document.getElementById('root')!;
 root.innerHTML = `
@@ -108,7 +109,7 @@ function renderDrawer() {
   db.innerHTML = `
     ${lines.length ? `<div class="ship${away > 0 ? '' : ' done'}" role="group" aria-label="Free shipping">${shipArc((sub / FREE_SHIPPING_THRESHOLD) * 100)}<span class="ship-t">${away > 0 ? `Add <b>${money(away)}</b> more for free shipping in Canada.` : '<b>Free shipping</b> in Canada is yours on this order.'}</span><div class="meter" role="meter" aria-label="Progress to free shipping" aria-valuemin="0" aria-valuemax="${FREE_SHIPPING_THRESHOLD}" aria-valuenow="${Math.min(FREE_SHIPPING_THRESHOLD, Math.round(sub * 100) / 100)}"><div style="width:${Math.min(100, (sub / FREE_SHIPPING_THRESHOLD) * 100)}%"></div></div><span class="ship-ends" aria-hidden="true"><span>${money(sub)}</span><span>${money(FREE_SHIPPING_THRESHOLD)}</span></span></div>` : ''}
     ${lines.length && LOYALTY_ENABLED ? `<div class="points"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A5410" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span>This order earns <b>${Math.floor(sub)} Ritual Points</b> <span class="d">(1 point per $1)</span></span></div>` : ''}
-    ${lines.map(l => `<div class="li"><img src="${l.image}" alt=""><div style="display:flex;flex-direction:column;gap:6px"><a href="#/product/${l.slug}" style="font-weight:600;line-height:1.25;text-decoration:none">${esc(l.name)}</a>${l.choice ? `<span class="small muted">${esc(l.choice)}</span>` : ''}<div class="qty" style="align-self:flex-start"><button data-dec="${esc(l.key)}" aria-label="Decrease ${esc(l.name)}">−</button><span>${l.qty}</span><button data-inc="${esc(l.key)}" aria-label="Increase ${esc(l.name)}">+</button></div></div><b style="font-weight:500">${money(l.price * l.qty)}</b></div>`).join('')
+    ${lines.map(l => `<div class="li"><img src="${l.image}" alt=""><div style="display:flex;flex-direction:column;gap:6px"><a href="#/product/${l.slug}" style="font-weight:600;line-height:1.25;text-decoration:none">${esc(l.name)}</a>${l.choice ? `<span class="small muted">${esc(l.choice)}</span>` : ''}${l.gift ? giftLineHTML(l.gift) : ''}<div class="qty" style="align-self:flex-start"><button data-dec="${esc(l.key)}" aria-label="Decrease ${esc(l.name)}">−</button><span>${l.qty}</span><button data-inc="${esc(l.key)}" aria-label="Increase ${esc(l.name)}">+</button></div></div><b style="font-weight:500">${money(l.price * l.qty)}</b></div>`).join('')
       || '<img class="empty-cut" src="/img/studio/cut/cabana-480.webp" alt="" width="480" height="480" decoding="async"><p class="muted" style="padding:8px 0 24px"><span class="empty-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8h14l-1.2 12H6.2z"></path><path d="M9 8V6a3 3 0 016 0v2"></path></svg></span><span>Your cart is empty.</span><a href="#/shop" data-x>Browse the shop</a></p>'}`;
   // the drawer heading shows how many items are inside
   const dhN = drawer.querySelector<HTMLElement>('.dh .dh-n') ?? (() => { const s = document.createElement('span'); s.className = 'dh-n'; drawer.querySelector('.dh h3')!.appendChild(s); return s; })();
@@ -118,7 +119,7 @@ function renderDrawer() {
     ${lines.length ? givingNote('cart') : ''}
     <button class="btn" id="checkoutBtn" ${lines.length ? '' : 'disabled'}>Checkout · ${money(sub)}</button>
     ${lines.length ? '<button type="button" class="tlink keep" data-x>Keep shopping</button>' : ''}
-    ${WRITES_ENABLED ? '' : '<span class="small muted">Private preview: checkout is switched off, and this cart is saved only in this browser.</span>'}`;
+    ${WRITES_ENABLED ? '' : `<span class="small muted">Private preview: checkout is switched off, and this cart is saved only in this browser.${lines.some(l => l.gift) ? ' <span class="d">Gift notes are kept with it and nothing is sent.</span>' : ''}</span>`}`;
   df.querySelector('#checkoutBtn')!.addEventListener('click', async () => {
     if (!WRITES_ENABLED) { toast('Checkout is switched off in the private preview. No order was created.'); return; }
     try { await checkout(); } catch (e) { toast(`Checkout could not start: ${(e as Error).message}`); }
@@ -171,7 +172,7 @@ updateCount();
 // ---------- router ----------
 // Product pages set their own title; routes not listed here keep the site name.
 const PAGE_TITLES: Record<string, string> = {
-  shop: 'Shop', coaching: 'Coaching', book: 'Book a session', subscribe: 'Ritual on Repeat',
+  shop: 'Shop', coaching: 'Coaching', book: 'Book your free discovery call', subscribe: 'Ritual on Repeat',
   drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
   'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Meet the maker', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset', giving: 'Giving back',
 };

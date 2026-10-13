@@ -9,10 +9,10 @@
         <b style="font-family:var(--display);font-weight:500;font-size:24px">2. Pick a sky</b>
         <div class="segs three"><button data-sky="dawn" aria-pressed="false">Dawn</button><button data-sky="golden" aria-pressed="false">Golden hour</button><button data-sky="night" aria-pressed="true">Night</button></div>
         <b style="font-family:var(--display);font-weight:500;font-size:24px">3. Write your note</b>
-        <label for="gNote" hidden="">Gift note</label><textarea id="gNote" rows="4" maxlength="140">Happy birthday. Light this tonight and take a moment that is just for you.</textarea><span class="small muted" id="gCount">74 of 140 characters</span>
+        <label for="gNote" hidden="">Gift note</label><textarea id="gNote" rows="4" maxlength="140" aria-describedby="gCount">Happy birthday. Light this tonight and take a moment that is just for you.</textarea><span class="small muted" id="gCount">74 of 140 characters</span>
         <b style="font-family:var(--display);font-weight:500;font-size:24px">4. Who and when</b>
-        <div class="two"><div class="field"><label for="gTo">Recipient name</label><input id="gTo" value="" autocomplete="off"></div><div class="field"><label for="gDate">Arrive on or after</label><input id="gDate" type="date" value=""></div></div>
-        <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked=""> Hide prices on the packing slip</label>
+        <div class="two"><div class="field"><label for="gTo">Recipient name</label><input id="gTo" value="" autocomplete="off" maxlength="60"></div><div class="field"><label for="gDate">Arrive on or after</label><input id="gDate" type="date" value=""></div></div>
+        <label class="small g-hide"><input type="checkbox" id="gHide" checked=""> Hide prices on the packing slip</label>
         <button class="btn" id="gAdd" type="button" disabled aria-disabled="true" aria-describedby="gAddWhy">Choose a ritual first</button>
         <p class="small muted" id="gAddWhy">The gift sets are coming soon. To send a gift today, <a href="#/shop?f=candle">choose a candle in the shop</a>.</p>
         

@@ -7,7 +7,7 @@ const base = process.env.BASE ?? 'http://localhost:4173/#';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const count = p => p.locator('#cartCount').innerText().then(Number);
-const PAGES = ['/shop', '/shop?f=candle&m=all&s=featured', '/product/cabana', '/product/cabana-fragrance-roller', '/product/cabana-mini-diffuser', '/product/natural-deodorant', '/drops', '/subscribe', '/journal', '/journal/wooden-wick', '/help', '/account', '/wall', '/club', '/reset', '/book', '/order-confirmed', '/explore', '/explore?tab=quiz'];
+const PAGES = ['/shop', '/shop?f=candle&m=all&s=featured', '/product/cabana', '/product/cabana-fragrance-roller', '/product/cabana-mini-diffuser', '/product/natural-deodorant', '/drops', '/subscribe', '/journal', '/journal/wooden-wick', '/help', '/account', '/wall', '/club', '/reset', '/book', '/gift', '/order-confirmed', '/explore', '/explore?tab=quiz'];
 // visible controls in the page body that are smaller than 44px (inline text links in running text, radio dots inside a
 // bigger label, and draft notes for Claire are left out)
 const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :is(a, button, select, summary, input:not([type=radio]), [role=tab]), .drawer :is(a, button)')].filter(el => {
@@ -95,6 +95,52 @@ const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :
     ok(`phone ${r}: tap targets are at least 44px`, s.length === 0, s.slice(0, 6).join(' | '));
   }
   ok('phone: no JS errors', errs.length === 0, errs.join(' | ').slice(0, 200));
+  await ctx.close();
+}
+{ // Send a Sunrise: a live candle chosen on the gift page goes into the cart with the card details on its line
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
+  await p.goto(base + '/gift'); await p.waitForSelector('[data-gift-candle]');
+  const list = await p.locator('[data-gift-candle] b').allInnerTexts();
+  ok('gift: the candles to choose from are the live, in-stock candles (no rollers, diffusers or deodorant)', list.length >= 6 && list.includes('Cabana') && !list.some(n => /Roller|Diffuser|Deodorant/i.test(n)), list.join(', '));
+  ok('gift: "Gift a candle" no longer sends the buyer away to the shop', (await p.locator('#app a.gr-live, #app a[href*="shop?f=candle"]').count()) === 0);
+  ok('gift: the gift sets stay coming soon and cannot be chosen', (await p.locator('[data-gr-soon][disabled]').count()) === 5 && (await p.locator('[data-gr^="set-"]').count()) === 0);
+  ok('gift: the arrive-on date cannot start before today', (await p.getAttribute('#gDate', 'min')) === day(0));
+  const c0 = await count(p);
+  await p.click('#gAdd'); await p.waitForTimeout(200);
+  ok('gift: adding with no candle chosen asks for one and adds nothing', await p.locator('#gPickErr').isVisible() && (await count(p)) === c0, await p.locator('#gPickErr').innerText().catch(() => ''));
+  await p.locator('[data-gift-candle]', { hasText: 'Cabana' }).click();
+  await p.waitForSelector('[data-gift-size="8 oz"]'); await p.waitForFunction(() => /\$32\.00/.test(document.querySelector('[data-gift-size="8 oz"]')?.textContent ?? ''));
+  await p.click('[data-gift-size="8 oz"]'); await p.waitForTimeout(150);
+  ok('gift: the chosen size shows its real price on the button and beside the card', /\$32\.00/.test(await p.locator('#gAdd').innerText()) && /Cabana/.test(await p.locator('#gSum').innerText()) && /8 oz · \$32\.00/.test(await p.locator('#gSum').innerText()), await p.locator('#gAdd').innerText());
+  const note = 'For your new flat. Light it on a quiet evening.';
+  await p.fill('#gNote', note); await p.fill('#gTo', 'Sam');
+  await p.fill('#gDate', day(-1)); await p.click('#gAdd'); await p.waitForTimeout(200);
+  ok('gift: a date in the past is refused, and nothing is added', await p.locator('#gDateErr').isVisible() && /passed/i.test(await p.locator('#gDateErr').innerText()) && (await p.getAttribute('#gDate', 'aria-invalid')) === 'true' && (await count(p)) === c0);
+  await p.evaluate(() => { const t = document.getElementById('gNote'); t.value = 'x'.repeat(150); t.dispatchEvent(new Event('input', { bubbles: true })); });
+  await p.fill('#gDate', day(7)); await p.click('#gAdd'); await p.waitForTimeout(200);
+  ok('gift: a note over 140 characters is refused', await p.locator('#gNoteErr').isVisible() && (await count(p)) === c0 && !(await p.locator('#gDateErr').isVisible()));
+  await p.fill('#gNote', ''); await p.fill('#gTo', ''); await p.click('#gAdd'); await p.waitForTimeout(200);
+  ok('gift: an empty note and no name are asked for', await p.locator('#gNoteErr').isVisible() && await p.locator('#gToErr').isVisible() && (await count(p)) === c0);
+  await p.fill('#gNote', note); await p.fill('#gTo', 'Sam'); await p.click('[data-sky="dawn"]');
+  await p.click('#gAdd'); await p.waitForTimeout(500);
+  ok('gift: with a candle, a note, a name and a date it goes in the cart', (await count(p)) === c0 + 1 && /gift for Sam/i.test(await p.locator('#toast').innerText()), await p.locator('#toast').innerText());
+  ok('gift: every message clears once fixed', (await p.locator('.g-err:not([hidden])').count()) === 0);
+  await p.click('#cartBtn'); await p.waitForTimeout(500);
+  const li = await p.evaluate(() => { const g = document.querySelector('.drawer .li-gift'); const l = g?.closest('.li'); return g ? { t: g.innerText, name: l.querySelector('a').textContent, size: l.textContent, price: l.querySelector(':scope > b').textContent } : null; });
+  ok('cart: the gift line carries the note, the name, the date and "no prices"', !!li && li.t.includes(note) && /For Sam/.test(li.t) && /Arrives on or after/.test(li.t) && /No prices on the packing slip/.test(li.t) && /Dawn card/.test(li.t), JSON.stringify(li));
+  ok('cart: the gift line is the chosen candle and size at its real price', !!li && li.name === 'Cabana' && /8 oz/.test(li.size) && li.price === '$32.00', JSON.stringify(li));
+  ok('cart: it stays clear that checkout is off and nothing is sent', /checkout is switched off/i.test(await p.locator('.drawer .df').innerText()) && /nothing is sent/i.test(await p.locator('.drawer .df').innerText()));
+  const cs = await smallTargets(p);
+  ok('cart with a gift: every control is at least 44px, no sideways scroll', cs.length === 0 && (await p.evaluate(() => document.querySelector('.drawer').scrollWidth - document.querySelector('.drawer').clientWidth)) <= 1, cs.join(' | '));
+  await p.locator('.drawer [data-x]').first().click(); await p.waitForTimeout(300);
+  await p.click('#gAdd'); await p.waitForTimeout(400);
+  ok('gift: a second gift is its own line with its own card, not merged', (await count(p)) === c0 + 2 && await p.evaluate(() => JSON.parse(localStorage.getItem('dr_cart')).filter(l => l.gift).length === 2));
+  await p.reload(); await p.waitForTimeout(1200); await p.click('#cartBtn'); await p.waitForTimeout(500);
+  ok('cart: the gift details survive a reload (kept with the cart in this browser)', (await p.locator('.drawer .li-gift').count()) === 2);
+  ok('gift: no JS errors', errs.length === 0, errs.join(' | '));
   await ctx.close();
 }
 { // 360px (small Android): no sideways scroll anywhere on these pages
