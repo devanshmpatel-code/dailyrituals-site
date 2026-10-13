@@ -7,6 +7,8 @@ import '../coaching.css';
 import { loadServices, imgSrc, money, wix, saveTokens } from '../wix';
 import { fixImages, wireCommon, esc, errorBox, toast } from '../ui';
 import { navigate, routeUrl } from '../router';
+import { previewOff } from './shared';
+import '../giftbook.css';
 import { WRITES_ENABLED, TIME_ZONE, BOOKINGS_APP_ID, STAFF_RESOURCE_TYPE_ID } from '../config';
 
 const duration = (s: any) => s.schedule?.availabilityConstraints?.sessionDurations?.[0] as number | undefined;
@@ -62,11 +64,44 @@ const dayKey = (s: string) => s.slice(0, 10);
 const fmtDay = (k: string) => new Date(`${k}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' });
 const fmtTime = (s: string) => new Date(s).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }).replace('a.m.', 'am').replace('p.m.', 'pm');
 
+// The page is named after what is being booked. Nearly every way in ("Book a free discovery call", the menus, the reset page)
+// promises the free 20-minute discovery call, so that is the title until a service says otherwise. (New titles are drafts.)
+const isDiscovery = (s: any) => !s || /discovery/i.test(s.name ?? '');
+const isFree = (s: any) => !s || /free/i.test(priceLabel(s)) || Number(s.payment?.fixed?.price?.value ?? NaN) === 0 || (!s.payment?.fixed && !s.payment?.custom);
+function bookTitle(s: any) {
+  if (isDiscovery(s)) return isFree(s) ? 'Book your free discovery call' : 'Book your discovery call';
+  return `Book ${String(s.name ?? 'a session')}`;
+}
+function bookEyebrow(s: any) {
+  if (!s) return 'Free 20-minute call with Claire';
+  const mins = duration(s);
+  return [isFree(s) ? 'Free' : priceLabel(s), mins ? `${mins} min` : '', 'with Claire'].filter(Boolean).join(' · ').replace(' · with Claire', ' with Claire');
+}
+function setBookHead(app: HTMLElement, s: any) {
+  const t = bookTitle(s);
+  app.querySelector('.bk-title')!.innerHTML = `<span class="d">${esc(t)}</span>`;
+  app.querySelector('.bk-intro > .eyebrow')!.innerHTML = `<span class="d">${esc(bookEyebrow(s))}</span>`;
+  document.title = `${t} · Daily Rituals Co.`;
+}
+
+/** No times to book: the reset, the way back, and the Monthly Ritual sign-up (the site's newsletter form) to hear when times open. */
+function bookEmptyHTML(heading: string) {
+  return `<div class="bk-empty"><h3>${heading}</h3><p>New times are added as Claire's calendar opens up. Please check back soon.</p>
+    <div class="cta"><a class="btn euc" href="#/reset">Start the free 7-day reset</a><a class="btn line" href="#/coaching">Back to coaching</a></div>
+    <div class="bk-notify" id="bkNotify"><b class="bk-notify-h"><span class="d">Join the Monthly Ritual to hear when times open</span></b>
+      <p class="small muted"><span class="d">One email a month from Claire, with first word when new call times are added.</span> <span class="d confirm">[Confirm: will the Monthly Ritual announce new call times?]</span></p>
+      <form class="nform" id="bkNform"><label for="bkEmail" hidden>Email address</label><input id="bkEmail" type="email" placeholder="Email address" autocomplete="email" required><button class="btn" type="submit">Join</button></form>
+      <label class="small bk-consent"><input type="checkbox" required> Yes, email me rituals, drops and offers. Unsubscribe any time.</label></div></div>`;
+}
+function wireBookEmpty(app: HTMLElement) {
+  app.querySelector('#bkNform')?.addEventListener('submit', e => { e.preventDefault(); previewOff('Newsletter sign-up')(); });
+}
+
 export async function renderBook(app: HTMLElement, slug?: string) {
   app.innerHTML = `<div class="wrap bk">
     <div class="phead"><div class="crumbs"><a href="#/">Home</a> / <a href="#/coaching">Coaching</a> / Book</div></div>
     <div class="bk-grid">
-      <div class="bk-intro"><span class="eyebrow" style="color:var(--euc)">Neuro coaching with Claire</span><h1 class="bk-title">Book a session</h1><div id="svcPick" class="segs"></div><div id="svcInfo"></div>
+      <div class="bk-intro"><span class="eyebrow" style="color:var(--euc)">${slug && !/discovery/i.test(slug) ? 'Neuro coaching with Claire' : `<span class="d">${bookEyebrow(null)}</span>`}</span><h1 class="bk-title">${slug && !/discovery/i.test(slug) ? 'Book a session' : `<span class="d">${bookTitle(null)}</span>`}</h1><div id="svcPick" class="segs"></div><div id="svcInfo"></div>
         <p class="disclaimer">Coaching is not therapy or medical care. It does not diagnose or treat any condition and is not a substitute for care from a qualified professional. <span class="d confirm">Claire to confirm wording.</span></p></div>
       <div class="bk-panel"><h2 class="bk-h">Choose a time</h2><p class="small muted">Times shown in ${TIME_ZONE.replace('_', ' ')} time.</p><div id="slots"><div class="sk-line"></div><div class="sk-line short"></div></div><div id="bookForm"></div></div>
     </div></div>`;
@@ -75,12 +110,14 @@ export async function renderBook(app: HTMLElement, slug?: string) {
   const svc = list.find(s => slugOf(s) === slug) ?? list.find(s => /discovery/i.test(s.name)) ?? list[0];
   if (!svc) {
     // nothing bookable yet: a warm empty state with the two free ways in. The wording below is a draft for Claire.
-    app.querySelector('#slots')!.innerHTML = `<div class="bk-empty"><h3>No open times right now</h3><p>New times are added as Claire's calendar opens up. Please check back soon.</p>
-      <div class="cta"><a class="btn euc" href="#/reset">Start the free 7-day reset</a><a class="btn line" href="#/coaching">Back to coaching</a></div></div>`;
+    setBookHead(app, null);
+    app.querySelector('#slots')!.innerHTML = bookEmptyHTML('No open times right now');
+    wireBookEmpty(app);
     app.querySelector('#svcInfo')!.innerHTML = `<div class="bk-aside"><span class="eyebrow">While you wait</span><h2>Try one practice <span class="it">today</span></h2><p>The free 7-day reset is ten minutes a day with Claire, self-paced, and a gentle way to see whether coaching is for you.</p></div>`;
     return;
   }
 
+  setBookHead(app, svc);
   app.querySelector('#svcPick')!.innerHTML = list.map(s =>
     `<a class="chip" href="#/book/${slugOf(s)}" aria-pressed="${s._id === svc._id}">${esc(s.name)}</a>`).join('');
   const img = imgSrc(svc.media?.mainMedia?.image, 960, 600);
@@ -106,8 +143,7 @@ export async function renderBook(app: HTMLElement, slug?: string) {
   slots.forEach(s => { const k = dayKey(s.localStartDate); byDay.set(k, [...(byDay.get(k) ?? []), s]); });
   const box = app.querySelector<HTMLElement>('#slots')!;
   // no times in the next two weeks: say so warmly and offer the free ways in (wording is a draft for Claire)
-  if (!byDay.size) { box.innerHTML = `<div class="bk-empty"><h3>No open times in the next two weeks</h3><p>New times are added as Claire's calendar opens up. Please check back soon.</p>
-    <div class="cta"><a class="btn euc" href="#/reset">Start the free 7-day reset</a><a class="btn line" href="#/coaching">Back to coaching</a></div></div>`; return; }
+  if (!byDay.size) { box.innerHTML = bookEmptyHTML('No open times in the next two weeks'); wireBookEmpty(app); return; }
   box.innerHTML = [...byDay].map(([k, arr], d) => `<div class="slot-day"${d > 2 ? ' hidden' : ''}><b>${fmtDay(k)}</b><div class="slot-row">${arr.map((s, n) =>
     `<button class="chip" data-slot="${k}|${n}" aria-pressed="false">${fmtTime(s.localStartDate)}</button>`).join('')}</div></div>`).join('') +
     (byDay.size > 3 ? `<button class="btn line bk-more" id="moreDays">Show ${byDay.size - 3} more days</button>` : '');
