@@ -1,5 +1,7 @@
-import { esc } from '../ui';
+import { esc, cardHTML, productHref, priceText, metaText } from '../ui';
 import { replaceRoute } from '../router';
+import { loadCatalogue, type Item } from '../wix';
+import { wireQuickAdd } from './shared';
 import '../journal.css';
 
 // The Journal: short, useful pieces on caring for a candle and making a ritual of it, each ending with the products it
@@ -15,6 +17,10 @@ type Article = {
   body: string; // trusted HTML written here (no user input)
   shop: { label: string; href: string }[];
   sources: Source[];
+  /** the products at the foot of the article (live and buyable only), and their heading (trusted HTML, a draft for Claire) */
+  picks: { kind: 'candles' | 'pair'; title: string };
+  /** where the body names a format that is in the shop: a small product link after that paragraph (0-based, top-level <p>) */
+  hook?: { afterP: number; kind: 'candle' | 'pair' };
 };
 
 const NCA_GUIDE: Source = { label: 'National Candle Association: Your foolproof guide to burning a candle correctly', url: 'https://candles.org/your-foolproof-guide-to-burning-a-candle-correctly' };
@@ -36,6 +42,7 @@ export const ARTICLES: Article[] = [
       <p>Let the wax melt all the way to the edge on the first burn (see <a href="#/journal/first-burn">your first burn</a>). Wooden wicks can take a little longer to build a full melt pool.</p>
       <h2>The crackle</h2>
       <p>Wooden wicks can crackle softly as they burn. It is part of their charm.</p>`,
+    picks: { kind: 'candles', title: 'Wooden wicks, <span class="it">ready to light</span>' }, hook: { afterP: 0, kind: 'candle' },
     shop: [{ label: 'Shop candles', href: '#/shop?f=candle' }],
     sources: [{ label: 'Scrub Me Good: wooden wick care tips', url: 'https://scrubmegood.com/pages/wooden-wick-care-tips' }, NCA_GUIDE],
   },
@@ -52,6 +59,7 @@ export const ARTICLES: Article[] = [
       <p>Most guidance suggests no more than about four hours at a time. Then blow it out, let it cool for a couple of hours and trim the wick before you light it again.</p>
       <h2>Make the first burn a ritual</h2>
       <p>Choose an evening when you will be home for a while. Light it, take three slow breaths, and let it set the pace of the evening.</p>`,
+    picks: { kind: 'candles', title: 'For your <span class="it">first burn</span>' }, hook: { afterP: 1, kind: 'candle' },
     shop: [{ label: 'Shop candles', href: '#/shop?f=candle' }, { label: 'Try the free 7-day reset', href: '#/reset' }],
     sources: [NCA_GUIDE, { label: 'Good Light Candles: candle 101', url: 'https://goodlightcandles.com/blogs/news/burning-a-candle' }],
   },
@@ -69,6 +77,8 @@ export const ARTICLES: Article[] = [
         <li><b>On a steady, heat-safe surface,</b> out of reach of children and pets.</li>
         <li><b>Know when to stop.</b> In a tin or glass, stop when about half an inch (1 cm) of wax is left.</li>
       </ol>`,
+    // (no product link inside the safety list itself: it reads as a checklist, so the candles wait for the end)
+    picks: { kind: 'candles', title: 'Calm candles, <span class="it">from the studio</span>' },
     shop: [{ label: 'Shop candles', href: '#/shop?f=candle' }],
     sources: [NCA_SAFETY, NCA_GUIDE],
   },
@@ -87,6 +97,7 @@ export const ARTICLES: Article[] = [
       <p>A by-product of petroleum refining and long the industry standard. It holds a lot of fragrance and fills a room quickly. It has a reputation for more soot, though a well-made, well-wicked candle of any wax burns cleanly.</p>
       <h2>What matters as much as the wax</h2>
       <p>How a candle smells and burns depends on the wick, the width of the vessel and how much fragrance is used, not only the wax. Many makers blend waxes to get the best of each.</p>`,
+    picks: { kind: 'candles', title: 'Poured with soy, <span class="it">by hand</span>' }, hook: { afterP: 0, kind: 'candle' },
     shop: [{ label: 'Shop candles', href: '#/shop?f=candle' }],
     sources: [{ label: 'Coloured Bottles: candle wax types explained', url: 'https://colouredbottles.co.uk/blogs/news/candle-wax-types-guide' }, { label: 'Northwood Candle & Craft: soy vs paraffin vs coconut wax', url: 'https://northwoodcandleandcraft.com/blogs/news/soy-wax-vs-paraffin-vs-coconut-wax-which-is-right-for-you' }],
   },
@@ -100,6 +111,7 @@ export const ARTICLES: Article[] = [
       <h2>How to start</h2>
       <p>Pick one moment you want to feel different, such as the first ten minutes after work. Light the candle then, and take three slow breaths. Through the day, roll the matching scent on your wrists when you want to come back to that feeling.</p>
       <p>Not sure where to start? <a href="#/explore">Find your scent</a>, or try the <a href="#/reset">free 7-day reset</a>.</p>`,
+    picks: { kind: 'pair', title: 'One scent, <span class="it">two ways</span>' }, hook: { afterP: 1, kind: 'pair' },
     shop: [{ label: 'Shop rollers', href: '#/shop?f=roller' }, { label: 'Shop candles', href: '#/shop?f=candle' }, { label: 'Ritual pairs', href: '#/shop' }],
     sources: [],
   },
@@ -130,13 +142,59 @@ export function renderJournal(app: HTMLElement, slug?: string) {
     return;
   }
   const i = ARTICLES.indexOf(a), next = ARTICLES[(i + 1) % ARTICLES.length];
-  app.innerHTML = `<article class="wrap jr-article"><div class="crumbs"><a href="#/">Home</a> / <a href="#/journal">Journal</a> / ${esc(a.title)}</div>
+  app.innerHTML = `<article class="wrap jr-article" data-slug="${a.slug}"><div class="crumbs"><a href="#/">Home</a> / <a href="#/journal">Journal</a> / ${esc(a.title)}</div>
     <header class="jr-ahead"><div><span class="jr-tag">${esc(a.tag)} · ${a.minutes} min read</span><h1><span class="d">${esc(a.title)}</span></h1><p class="jr-lede d">${esc(a.dek)}</p></div><figure class="jr-apic">${pic(a, '(max-width: 820px) 80vw, 36vw', true)}</figure></header>
     <div class="jr-body d">${a.body}</div>
+    <section class="jr-picks" aria-labelledby="jrPicksH" hidden><span class="eyebrow"><span class="d">In the shop</span></span><h2 id="jrPicksH"><span class="d">${a.picks.title}</span></h2><div class="jr-picks-grid"></div></section>
     <aside class="jr-shop" aria-label="Shop"><span class="eyebrow">From the studio</span><p class="d">Hand-poured in White Rock, BC, on wooden wicks.</p><div class="cta">${a.shop.map((s, k) => `<a class="btn${k ? ' line' : ''}" href="${s.href}">${esc(s.label)}</a>`).join('')}</div></aside>
     ${a.sources.length ? `<div class="jr-sources"><span class="eyebrow">Sources</span><ul>${a.sources.map(s => `<li><a href="${s.url}" target="_blank" rel="noopener">${esc(s.label)}</a></li>`).join('')}</ul><p class="small muted">General guidance. Always follow the care card that comes with your candle.</p></div>` : ''}
     <a class="jr-next" href="#/journal/${next.slug}"><span class="eyebrow">Next</span><b>${esc(next.title)}</b></a>
     ${endCTA('Find a candle <span class="it">for your evenings</span>')}
   </article>`;
   document.title = `${a.title} · Daily Rituals Co.`;
+  void hookProducts(app, a);
+}
+
+// ---------- the way back to the shop: real products, only ones that exist and can be bought ----------
+// Past and seasonal pours never appear (the three candles whose Wix addresses end in -need-pics may be past seasonals, see
+// LAUNCH.md), nor anything sold out or without a price. If the catalogue cannot load, the article simply has no product links.
+const buyable = (i: Item) => i.inStock && i.priceMin > 0 && !!i.image && !/-need-pics$/.test(i.slug);
+
+/** Candles for an article (a different starting point per article, so the Journal does not repeat one candle everywhere). */
+function candlesFor(items: Item[], a: Article, n: number): Item[] {
+  const pool = items.filter(i => i.format === 'candle' && buyable(i));
+  if (!pool.length) return [];
+  const start = ARTICLES.indexOf(a) % pool.length;
+  return [...pool.slice(start), ...pool.slice(0, start)].slice(0, n);
+}
+/** One scent made as both a candle and a roller, both buyable. */
+function pairFor(items: Item[]): Item[] {
+  for (const c of items.filter(i => i.format === 'candle' && buyable(i))) {
+    const r = items.find(i => i.format === 'roller' && buyable(i) && i.scent.toLowerCase() === c.scent.toLowerCase());
+    if (r) return [c, r];
+  }
+  return [];
+}
+/** A small product link that sits in the text: the scent, its format and price, and the shop's own photograph. */
+const hookHTML = (i: Item) => `<a class="jr-hook" href="${productHref(i)}"><img src="${i.thumb}" alt="" width="48" height="60" loading="lazy" decoding="async"><span><small>In the shop</small><b>${esc(i.scent)}</b><em>${esc(metaText(i))} · ${priceText(i)}</em></span><span class="jr-hook-go" aria-hidden="true">&rarr;</span></a>`;
+
+async function hookProducts(app: HTMLElement, a: Article) {
+  let items: Item[];
+  try { items = await loadCatalogue(); } catch { return; }
+  const art = app.querySelector<HTMLElement>(`.jr-article[data-slug="${a.slug}"]`);
+  if (!art) return; // the visitor has moved on
+  const picks = a.picks.kind === 'pair' ? pairFor(items) : candlesFor(items, a, 3);
+  const box = art.querySelector<HTMLElement>('.jr-picks');
+  if (box && picks.length) {
+    box.querySelector('.jr-picks-grid')!.innerHTML = picks.map(i => cardHTML(i)).join('');
+    box.hidden = false;
+    wireQuickAdd(box, items);
+  }
+  if (a.hook) {
+    // (a candle in the text is not one of the three at the foot, where the shop has enough candles for that)
+    const more = candlesFor(items, a, 4);
+    const inline = a.hook.kind === 'pair' ? pairFor(items) : more.length > 3 ? [more[3]] : more.slice(0, 1);
+    const p = art.querySelectorAll(':scope .jr-body > p')[a.hook.afterP];
+    if (p && inline.length) p.insertAdjacentHTML('afterend', `<div class="jr-hooks">${inline.map(hookHTML).join('')}</div>`);
+  }
 }

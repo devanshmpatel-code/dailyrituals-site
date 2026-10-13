@@ -2,6 +2,11 @@
 // teaser; the newsletter is the Monthly Ritual (no more "Sunday note"); the wax guide says the candles are soy (confirmed).
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
+import { readFileSync } from 'node:fs';
+// the saved catalogue: what "live and buyable" means here (in stock, priced, and not one of the -need-pics past seasonals)
+const CAT = JSON.parse(readFileSync(new URL('./products.json', import.meta.url), 'utf8')).products;
+const BUYABLE = new Set(CAT.filter(x => x.inventory?.availabilityStatus === 'IN_STOCK' && Number(x.actualPriceRange?.minValue?.amount) > 0 && !/-need-pics$/.test(x.slug)).map(x => x.slug));
+const slugOf = h => (h.match(/product\/([^?#/]+)/) || [])[1];
 const base = process.env.BASE ?? 'http://localhost:4173/#';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
@@ -19,6 +24,15 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
     const a = await p.evaluate(() => ({ h1: document.querySelector('h1')?.textContent.trim(), shop: [...document.querySelectorAll('.jr-shop a')].map(x => x.getAttribute('href')), src: [...document.querySelectorAll('.jr-sources a')].map(x => x.getAttribute('href')), draft: !!document.querySelector('.jr-body.d') }));
     ok(`${label}: ${slug} has a title, a way to the shop, and is marked as a draft`, a.h1?.length > 10 && a.shop.length >= 1 && a.shop.every(h => /^\/(shop|reset|explore|coaching)/.test(h) || /^#\//.test(h)) && a.draft, JSON.stringify(a.shop));
     if (slug !== 'candle-and-roller') ok(`${label}: ${slug} cites its sources`, a.src.length >= 1 && a.src.every(u => /^https:\/\//.test(u)), a.src.join(' '));
+    // the way back to the shop: real product cards at the foot, and a product link in the text where it names a format
+    await p.waitForSelector('.jr-picks:not([hidden]) .card', { timeout: 10000 }).catch(() => {});
+    const pr = await p.evaluate(() => ({ cards: [...document.querySelectorAll('.jr-picks:not([hidden]) .card')].filter(c => c.offsetParent).map(c => ({ href: c.querySelector('a').getAttribute('href'), f: c.dataset.format, n: c.querySelector('h3').textContent.trim() })),
+      hooks: [...document.querySelectorAll('.jr-body .jr-hook')].map(h => ({ href: h.getAttribute('href'), n: h.querySelector('b').textContent.trim(), price: /\$\d+\.\d\d/.test(h.textContent) })) }));
+    ok(`${label}: ${slug} ends with product cards, each a live product that can be bought`, pr.cards.length >= 2 && pr.cards.every(c => BUYABLE.has(slugOf(c.href))), JSON.stringify(pr.cards));
+    if (slug === 'candle-and-roller') ok(`${label}: ${slug} offers one scent two ways, a candle and its roller`, pr.cards.length === 2 && pr.cards[0].f === 'candle' && pr.cards[1].f === 'roller' && pr.cards[0].n === pr.cards[1].n, JSON.stringify(pr.cards));
+    else ok(`${label}: ${slug} offers candles`, pr.cards.every(c => c.f === 'candle'));
+    if (slug === 'candle-safety') ok(`${label}: the safety checklist carries no product links`, pr.hooks.length === 0);
+    else ok(`${label}: ${slug} links a live product where the text names it, with its price`, pr.hooks.length >= 1 && pr.hooks.every(h => BUYABLE.has(slugOf(h.href)) && h.price), JSON.stringify(pr.hooks));
   }
   await p.goto(base + '/journal/wax-guide'); await p.waitForSelector('.jr-body');
   const text = await p.locator('.jr-body').innerText();
