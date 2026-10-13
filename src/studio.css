@@ -250,6 +250,12 @@
   .sh-tag small { display: none; }
   .ab-l > span { font-size: 12px; padding: 6px 7px; letter-spacing: .08em; }
 }
+/* the four topping labels sit at fixed points in the photo: on a narrow phone they take less room so none leaves the panel */
+@media (max-width: 560px) {
+  .ab-l > span { font-size: 11.5px; padding: 6px 7px; letter-spacing: .04em; }
+  .ab-l.r > span { left: 13px; } .ab-l.lf > span { right: 13px; } .ab-l > span::before { width: 11px; }
+}
+@media (max-width: 400px) { .ab-l > span { padding: 6px; letter-spacing: .02em; } }
 
 /* ---- Moon Drops: the past moons archive ---- */
 .pm { display: flex; flex-direction: column; gap: clamp(28px, 4vw, 44px); position: relative; }
