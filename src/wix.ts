@@ -2,10 +2,8 @@ import { createClient, OAuthStrategy, media } from '@wix/sdk';
 import { productsV3, readOnlyVariantsV3 } from '@wix/stores';
 import { currentCartV2 } from '@wix/ecom';
 import { redirects } from '@wix/redirects';
-import { services, availabilityTimeSlots, bookings } from '@wix/bookings';
-import { createCart, calculateCart, placeOrder } from '@wix/auto_sdk_ecom_cart-v-2';
 import {
-  WIX_CLIENT_ID, SCENT_MOOD, FORMAT_LABEL, BOOKINGS_APP_ID,
+  WIX_CLIENT_ID, SCENT_MOOD, FORMAT_LABEL,
   type Format, type Mood,
 } from './config';
 
@@ -15,10 +13,17 @@ function loadTokens() {
   try { const t = sessionStorage.getItem('dr_tokens'); return t ? JSON.parse(t) : undefined; } catch { return undefined; }
 }
 
+// Only the methods the site calls are bound, so the rest of each SDK module stays out of the bundle. Bookings and the
+// coaching checkout are bound on the same client by wix-bookings.ts, which only the coaching page loads.
 export const wix = createClient({
   modules: {
-    productsV3, readOnlyVariantsV3, currentCartV2, redirects,
-    services, availabilityTimeSlots, bookings, createCart, calculateCart, placeOrder,
+    productsV3: { queryProducts: productsV3.queryProducts, getProductBySlug: productsV3.getProductBySlug },
+    readOnlyVariantsV3: { queryVariants: readOnlyVariantsV3.queryVariants },
+    currentCartV2: {
+      getCurrentCart: currentCartV2.getCurrentCart, addLineItemsToCurrentCart: currentCartV2.addLineItemsToCurrentCart,
+      updateLineItemsInCurrentCart: currentCartV2.updateLineItemsInCurrentCart, removeLineItemsFromCurrentCart: currentCartV2.removeLineItemsFromCurrentCart,
+    },
+    redirects: { createRedirectSession: redirects.createRedirectSession },
   },
   auth: OAuthStrategy({ clientId: WIX_CLIENT_ID, tokens: loadTokens() }),
 });
@@ -148,9 +153,3 @@ export function findLive(items: Item[], scent: string, format: Format): Item | u
   return items.find(i => i.format === format && i.scent.toLowerCase() === s);
 }
 
-// ---------- bookings ----------
-export async function loadServices() {
-  const { items } = await wix.services.queryServices({ conditionalFields: ['STAFF_MEMBER_DETAILS'] as any })
-    .eq('appId', BOOKINGS_APP_ID).limit(100).find();
-  return items.filter((s: any) => !s.hidden);
-}
