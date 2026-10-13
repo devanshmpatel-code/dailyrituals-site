@@ -109,8 +109,8 @@ export function wireCommon(root: HTMLElement) {
 export function lockBackground(dialog: Element): () => void {
   const changed: HTMLElement[] = [];
   for (let n: Element | null = dialog; n && n !== document.body; n = n.parentElement) {
-    const parent = n.parentElement; if (!parent) break;
-    for (const sib of Array.from(parent.children)) {
+    const parent: Element | null = n.parentElement; if (!parent) break;
+    for (const sib of Array.from(parent.children) as Element[]) {
       if (sib === n || !(sib instanceof HTMLElement) || sib.inert) continue;
       if (sib.id === 'toast' || ['SCRIPT', 'STYLE', 'LINK'].includes(sib.tagName)) continue;
       sib.inert = true; changed.push(sib);

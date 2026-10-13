@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
   // Where the site lives, for the share-card address and picture in index.html (src/seo.ts sets the per-route ones at run time).
   const site = (process.env.SITE_URL ?? env.SITE_URL ?? process.env.VITE_SITE_URL ?? env.VITE_SITE_URL ?? 'https://www.dailyritualsco.com').replace(/\/$/, '');
   return {
+    // one stylesheet for the whole site, in the same order as before the pages were split into chunks (a page's styles never
+    // arrive late or in a different cascade order)
+    build: { cssCodeSplit: false },
     plugins: [{
       name: 'launch-robots',
       transformIndexHtml: (html: string) => (launched ? html.replace(/\s*<meta name="robots"[^>]*>/, '') : html).replace(/__SITE_URL__/g, site),

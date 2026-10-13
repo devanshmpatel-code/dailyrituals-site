@@ -16,17 +16,17 @@ import { renderHome } from './pages/home';
 import { unmountJourney, openBreathe } from './pages/journey';
 import { decoratePage } from './pages/calm';
 import { cleanupMotion, mountSay, mountShapes, markMorphTarget } from './pages/motion';
-import { renderJournal } from './pages/journal';
 import { unmountDayScrub, refreshDropBar } from './pages/home';
 import { getSky } from './pages/sky';
 import { treeSVG, lotusDivider } from './pages/symbols';
 import { celestialChrome, celestialPage, shipArc } from './celestial';
-import { renderShop } from './pages/shop';
-import { renderProduct } from './pages/product';
-import { renderCoaching, renderBook } from './pages/coaching';
-import { renderHelp, renderStory, renderAccount, renderExplore, renderReset } from './pages/info';
-import { renderStatic, renderMissing, hasStatic } from './pages/static';
-import { renderLegal } from './pages/legal';
+// the pages split into their own chunks keep their styles in the one stylesheet, at their original place in the cascade
+import './shop.css';
+import './nav.css';
+import './giving.css';
+import './coaching.css';
+import './giftbook.css';
+import './wheel.css';
 import { renderGiving, givingNote } from './pages/giving';
 import { mountNav, navRouteChange } from './nav';
 import { giftLineHTML } from './pages/gift';
@@ -194,7 +194,13 @@ const PAGE_TITLES: Record<string, string> = {
   'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Meet the maker', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset', giving: 'Giving back',
 };
 
+// Every page but home is its own chunk, fetched when it is first visited (home is the landing page and stays in the entry).
+// A visit that has been overtaken by a newer one while its page was still loading is dropped.
+let routeSeq = 0;
+const STALE = Symbol('stale');
 async function route() {
+  const seq = ++routeSeq;
+  const page = async <T>(load: Promise<T>): Promise<T> => { const m = await load; if (seq !== routeSeq) throw STALE; return m; };
   const [path, query = ''] = currentRoute().split('?');
   const [seg, arg] = path.split('/');
   const params = new URLSearchParams(query);
@@ -214,31 +220,35 @@ async function route() {
     return;
   }
   app.classList.remove('pagein'); void app.offsetWidth; app.classList.add('pagein');
+  // while a page loads, #app keeps at least a screen's height, so the footer never rises into view and drops back (layout shift)
+  app.style.minHeight = `${window.innerHeight}px`;
   const view = (async () => {
     switch (seg) {
       case '': return renderHome(app);
-      case 'shop': return renderShop(app, params);
-      case 'product': return renderProduct(app, decodeURIComponent(arg ?? ''));
-      case 'coaching': return renderCoaching(app);
-      case 'help': return renderHelp(app);
-      case 'story': return renderStory(app);
-      case 'journal': return renderJournal(app, arg ? decodeURIComponent(arg) : undefined);
-      case 'account': return renderAccount(app);
-      case 'explore': return renderExplore(app, params);
+      case 'shop': return (await page(import('./pages/shop'))).renderShop(app, params);
+      case 'product': return (await page(import('./pages/product'))).renderProduct(app, decodeURIComponent(arg ?? ''));
+      case 'coaching': return (await page(import('./pages/coaching'))).renderCoaching(app);
+      case 'help': return (await page(import('./pages/info'))).renderHelp(app);
+      case 'story': return (await page(import('./pages/info'))).renderStory(app);
+      case 'journal': return (await page(import('./pages/journal'))).renderJournal(app, arg ? decodeURIComponent(arg) : undefined);
+      case 'account': return (await page(import('./pages/info'))).renderAccount(app);
+      case 'explore': return (await page(import('./pages/info'))).renderExplore(app, params);
       // older links: the quiz is a tab of Find your scent; build a ritual and ritual sets live in the wheel
-      case 'quiz': return renderExplore(app, new URLSearchParams('tab=quiz'));
-      case 'build': case 'sets': return renderExplore(app);
-      case 'reset': return renderReset(app);
+      case 'quiz': return (await page(import('./pages/info'))).renderExplore(app, new URLSearchParams('tab=quiz'));
+      case 'build': case 'sets': return (await page(import('./pages/info'))).renderExplore(app);
+      case 'reset': return (await page(import('./pages/info'))).renderReset(app);
       case 'giving': return renderGiving(app);
-      case 'book': return renderBook(app, arg);
+      case 'book': return (await page(import('./pages/coaching'))).renderBook(app, arg);
       case 'checkout': await renderHome(app); openCart(); return;
-      case 'privacy': case 'terms': case 'accessibility': case 'refund-policy': return renderLegal(app, seg);
-      default:
+      case 'privacy': case 'terms': case 'accessibility': case 'refund-policy': return (await page(import('./pages/legal'))).renderLegal(app, seg);
+      default: {
+        const { hasStatic, renderStatic, renderMissing } = await page(import('./pages/static'));
         if (hasStatic(seg)) return renderStatic(app, seg);
         return renderMissing(app, seg);
+      }
     }
   })();
-  await view;
+  try { await view; } catch (e) { if (e === STALE) return; throw e; } finally { if (seq === routeSeq) app.style.minHeight = ''; }
   if (seg === 'product') markMorphTarget(app);
   decoratePage(app, seg);
   celestialPage(app, seg);
@@ -249,3 +259,14 @@ async function route() {
 installLinkHandling();
 onRoute(route);
 route();
+// Once the page has loaded and the browser is idle, the other pages' chunks are fetched one at a time, so following a link
+// later shows the new page at once, as when every page was in one bundle.
+{
+  const later: (() => Promise<unknown>)[] = [
+    () => import('./pages/product'), () => import('./pages/shop'), () => import('./pages/info'), () => import('./pages/journal'),
+    () => import('./pages/static'), () => import('./pages/legal'), () => import('./pages/coaching'),
+  ];
+  const idle = (f: () => void) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(f, { timeout: 8000 }) : setTimeout(f, 2000));
+  const next = () => { const f = later.shift(); if (f) idle(() => { f().catch(() => {}).finally(next); }); };
+  if (document.readyState === 'complete') next(); else window.addEventListener('load', next, { once: true });
+}

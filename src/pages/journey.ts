@@ -1,6 +1,7 @@
 import { MOMENTS } from '../config';
 import { esc } from '../ui';
 import { ornament } from './symbols';
+import '../flamebreath.css'; // (the breathing pause's styles stay in the one stylesheet, at their place in the cascade)
 
 // The home page as a journey. Scrolling is a day passing: a rail with a sun that travels from dawn to night, a map of all
 // the chapters drawn as a mandala (drill out, then tap a petal to zoom back in), a breathing pause, soft reveals, mandala
@@ -30,9 +31,27 @@ export function overText(card: HTMLElement): boolean {
   return pts.some(([x, y]) => { const el = document.elementsFromPoint(x, y).find(e => !card.contains(e) && !e.closest('.breathorb')); return !!el && hasWords(el); });
 }
 
-// The breathing pause (the flame) lives in ./flamebreath; it is re-exported here so the orb and [data-breathe] keep one import.
-import { openBreathe } from './flamebreath';
-export { openBreathe };
+// The breathing pause (the flame) lives in ./flamebreath, its own chunk: it is fetched when the browser is idle after the page
+// has loaded, or as soon as the visitor reaches for the orb (or any [data-breathe]), whichever comes first. The orb and
+// [data-breathe] keep this one import; once the chunk is in, opening is immediate.
+type Flame = typeof import('./flamebreath');
+let flame: Flame | null = null, flameLoad: Promise<Flame> | null = null;
+export function preloadBreathe(): Promise<Flame> {
+  return flameLoad ??= import('./flamebreath').then(m => (flame = m), err => { flameLoad = null; throw err; });
+}
+export function openBreathe(opener: HTMLElement) {
+  if (flame) { flame.openBreathe(opener); return; }
+  preloadBreathe().then(m => m.openBreathe(opener), err => console.error('The breathing pause could not load', err));
+}
+{
+  const reach = (e: Event) => { if ((e.target as Element | null)?.closest?.('.breathorb, [data-breathe], [data-jbreathe]')) void preloadBreathe().catch(() => {}); };
+  document.addEventListener('pointerover', reach, { passive: true });
+  document.addEventListener('pointerdown', reach, { passive: true });
+  document.addEventListener('focusin', reach);
+  const idle = (f: () => void) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(f, { timeout: 6000 }) : setTimeout(f, 3000));
+  const warm = () => idle(() => void preloadBreathe().catch(() => {}));
+  if (document.readyState === 'complete') warm(); else window.addEventListener('load', warm, { once: true });
+}
 
 export function mountJourney(app: HTMLElement) {
   unmountJourney();
