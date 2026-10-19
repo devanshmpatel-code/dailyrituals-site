@@ -1,59 +1,79 @@
 /* ======================================================================
-   The home page's running order (src/canvas/pages/Main.html): the live, buyable chapters first (moments, Meet Claire and the
-   studio, Send a Sky with the Journal, coaching); then one compact "Opening soon" chapter for everything not open yet
-   (the Ritualists, Ritual on Repeat, Moon Drops, the Ritual Wall) beside the one Monthly Ritual sign-up.
+   The home page's running order (src/canvas/pages/Main.html, owner, October 2026): the opening, then 1 Our candles,
+   2 Meet Claire, 3 Ritual on Repeat (coming soon, with the Monthly Ritual sign-up), 4 coaching, 5 Moon Drops, 6 The
+   Ritualists, 7 Send a Sky, and the Journal row above the footer. The grounds run through a day: sand, rose, eucalyptus,
+   dusk, night, and the next morning's first light for Send a Sky.
    ====================================================================== */
 
-/* the grounds after the Ritual Wall chapter left: Send a Sky now rises out of the sand, and the Opening soon chapter
-   falls from the coaching eucalyptus into the night the lotus and footer continue */
 main .df[data-ground="rose"] { background: linear-gradient(180deg, #EFE9E2 0, #F1DCD2 160px, #F1DCD2 100%) !important; }
 main .df[data-ground="dusk"] { background: linear-gradient(180deg, #2F5249 0, #2B1B33 200px, #191A33 480px, #171A33 100%) !important; }
+main .df[data-ground="night"] { background: linear-gradient(180deg, #171A33 0, #141631 240px, #131530 100%) !important; }
+/* night into the next morning: the sky lightens behind Send a Sky, and the words start where the ground is light */
+main .df[data-ground="daybreak"] { background: linear-gradient(180deg, #131530 0, #3B2A4C 110px, #8A6280 210px, #D3A7A6 300px, #EED3C9 380px, #F1DCD2 440px, #F1DCD2 calc(100% - 200px), #C9A3A6 calc(100% - 130px), #4A3654 calc(100% - 60px), #171A33 100%) !important; padding-top: clamp(300px, 26vw, 360px); padding-bottom: 140px; }
+/* (and back into the night of the footer after the Journal row, so the page ends without a hard edge) */
+main .df[data-ground="daybreak"] > .gift-grid { padding-top: 0 !important; }
 
-/* Chapter 1 leads with candles: a clear "Shop candles" beside "Shop all products" */
+/* Chapter 1, Our candles: the label is the heading people see, so it is bolder and darker than the other chapter labels */
 .moment-shop .head .ms-acts { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.moment-shop .ms-chapter { color: var(--ink, #2B1D2F); opacity: 1; font-weight: 700; font-size: clamp(14px, 1.1vw, 15.5px); letter-spacing: .16em; }
+.moment-shop .head { align-items: center; }
 @media (max-width: 820px) { .moment-shop .head .ms-acts { gap: 18px; margin-top: 4px; } }
 
-/* ---- Opening soon: one compact chapter on the night, after the live chapters ---- */
-.soonflow { position: relative; overflow: hidden; color: var(--moonstone, #EDE6DA); padding-block: clamp(120px, 12vw, 170px) clamp(56px, 7vw, 96px); }
-.soonflow > .stars { position: absolute; inset: 0; pointer-events: none; }
-.soon-in { position: relative; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: clamp(28px, 5vw, 80px); align-items: center; }
-.soon-head { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
-.soonflow .chapter { color: var(--gold-leaf, #C9A35A); opacity: 1; }
-.soon-head h2 { margin: 0 0 6px; font-size: clamp(34px, 4.2vw, 58px); line-height: 1.04; color: var(--moonstone, #EDE6DA); }
-.soon-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.soon-list li + li { border-top: 1px solid rgba(201, 163, 90, .3); }
-.soon-list a { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 15px 6px; min-height: 44px; color: inherit; text-decoration: none; border-radius: 14px;
-  transition: background .4s; }
-.soon-list a:hover { background: rgba(237, 230, 218, .05); }
-.soon-list a:focus-visible { outline: 2px solid var(--gold-light, #E9D4A1); outline-offset: 2px; }
-/* each idea's mark in a soft gold ring: a star for the club, the orbit for a refill that comes round again, tonight's moon for
-   Moon Drops, the flower of life for the wall */
-.soon-ic { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: var(--gold-light, #E9D4A1);
-  box-shadow: inset 0 0 0 1px rgba(201, 163, 90, .45), 0 0 26px -6px rgba(243, 210, 154, .35); }
-.soon-ic > svg, .soon-ic .cel { width: 28px; height: 28px; }
-.soon-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.soon-tx b { font: 500 clamp(20px, 1.8vw, 24px)/1.15 var(--display); color: var(--moonstone, #EDE6DA); }
-.soon-tx > span { font-size: 15px; line-height: 1.5; color: rgba(237, 230, 218, .78); }
-.soon-go { color: var(--gold-light, #E9D4A1); font-size: 20px; transition: translate .4s; }
-.soon-list a:hover .soon-go { translate: 4px 0; }
-/* the side: the Ritualists card over the one sign-up */
-.soon-side { display: flex; flex-direction: column; align-items: center; gap: clamp(18px, 2.4vw, 28px); min-width: 0; }
-.soonflow .soon-card { width: 100%; display: grid; place-items: center; }
-.soonflow .soon-card .rit-card-wrap { width: min(100%, 300px); }
-.soonflow .newsflow { width: 100%; }
-.soonflow .news { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: clamp(22px, 2.6vw, 34px); border-radius: 22px 8px 22px 8px; }
-.soonflow .news h3 { margin: 0; font: 500 clamp(26px, 2.4vw, 32px)/1.1 var(--display); color: var(--moonstone, #EDE6DA); }
-.soonflow .news p { margin: 0; font-size: 15.5px; line-height: 1.55; }
+/* Chapter 2, Meet Claire: the story link is a clear button */
+.claire .tx .claire-story { min-height: 48px; }
+
+/* Chapter 3, Ritual on Repeat: a compact version of the subscribe page */
+.repeatflow { padding-block: clamp(56px, 7vw, 104px); }
+.repeatflow .rp-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px 32px; flex-wrap: wrap; margin-bottom: 0; }
+.repeatflow .rp-head .col { display: flex; flex-direction: column; gap: 10px; max-width: 40rem; }
+.repeatflow .rp-head h2 { margin: 0; font-size: clamp(38px, 4.6vw, 64px); line-height: 1.04; }
+.repeatflow .rp-lead { margin: 0; font-size: 17px; line-height: 1.5; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.repeatflow .ms-acts .tlink { display: inline-flex; align-items: center; min-height: 44px; }
+.repeatflow .rp-plans { margin-top: clamp(22px, 3vw, 34px); align-items: stretch; }
+.repeatflow .rp-plans .plan::before { content: none !important; display: none !important; }
+.repeatflow .rp-plans .plan { padding: clamp(20px, 2.2vw, 28px); gap: 8px; }
+.repeatflow .rp-plans .plan h3 { font-size: clamp(26px, 2.4vw, 30px); margin: 0; }
+.repeatflow .rp-plans .plan p { margin: 0; }
+.repeatflow .rp-plans .plan ul { margin: 4px 0 0; font-size: 15px; }
+.repeatflow .rp-plans .plan.best, .repeatflow .rp-plans .plan.best h3 { color: #F6EEE3; }
+.repeatflow .rp-plans .plan.best .muted { color: rgba(246, 238, 227, .82); }
+.repeatflow .rp-plans .plan.best:hover { transform: translateY(-4px); }
+.repeatflow .rp-notify { margin: clamp(22px, 3vw, 34px) 0 12px; font-size: 16px; }
+.repeatflow .rp-news .news { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px clamp(22px, 3vw, 40px); padding: clamp(22px, 2.6vw, 34px); border-radius: 22px 8px 22px 8px; }
+.repeatflow .rp-news .news h3 { margin: 0; font: 500 clamp(26px, 2.4vw, 32px)/1.1 var(--display); color: var(--moonstone, #EDE6DA); }
+.repeatflow .rp-news .news p { margin: 0; font-size: 15.5px; line-height: 1.55; }
+.repeatflow .rp-news .nform .btn { min-height: 48px; }
+@media (max-width: 900px) { .repeatflow .rp-news .news { grid-template-columns: minmax(0, 1fr); } }
+
+/* Chapter 5, Moon Drops: once a season, the next date from the one drop state (src/drop.ts) */
+.dropflow { position: relative; overflow: hidden; color: var(--moonstone, #EDE6DA); padding-block: clamp(150px, 15vw, 210px) clamp(56px, 7vw, 96px); }
+.dropflow > .stars, .ritflow > .stars { position: absolute; inset: 0; pointer-events: none; }
+.dp-in { position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(26px, 5vw, 80px); align-items: center; }
+.dp-tx { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.dropflow .chapter, .ritflow .chapter { color: var(--gold-leaf, #C9A35A); opacity: 1; }
+.dp-tx h2 { margin: 0; font-size: clamp(40px, 5vw, 70px); line-height: 1.02; color: var(--moonstone, #EDE6DA); }
+.dp-tx p { margin: 0; font-size: 18px; line-height: 1.55; max-width: 44ch; color: rgba(237, 230, 218, .88); }
+.dp-tx p .soon-tag, .ritflow .soon-tag { color: var(--gold-light, #E9D4A1); }
+.dp-when { display: flex; flex-direction: column; gap: 10px; padding: clamp(22px, 2.8vw, 34px); border-radius: 8px 26px 8px 26px; background: rgba(237, 230, 218, .05);
+  border: 1px solid rgba(201, 163, 90, .34); }
+.dp-when .eyebrow { color: var(--gold-leaf, #C9A35A); }
+.dp-when .dp-date { font: 500 clamp(28px, 3vw, 40px)/1.1 var(--display); color: var(--moonstone, #EDE6DA); }
+.dp-when .small { color: rgba(237, 230, 218, .8); line-height: 1.5; }
+.dp-moons { display: block; color: var(--gold-light, #E9D4A1); }
+.dp-moons .cel { width: min(100%, 260px); height: auto; }
+
+/* Chapter 6, The Ritualists (src/ritualists.ts) on the night */
+.ritflow { position: relative; overflow: hidden; color: var(--moonstone, #EDE6DA); padding-block: clamp(56px, 7vw, 104px) clamp(48px, 6vw, 80px); }
+.ritflow .rit-wrap { position: relative; }
+.ritflow .rt-card { display: grid; place-items: center; }
+.ritflow .rt-card .rit-card-wrap { width: min(100%, 280px); }
+
 @media (max-width: 820px) {
-  .soonflow { padding-block: 132px 48px; }
-  .soon-in { grid-template-columns: minmax(0, 1fr); gap: 22px; }
-  .soon-head { gap: 10px; }
-  .soon-list a { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 14px; padding: 11px 2px; }
-  .soon-ic { width: 40px; height: 40px; } .soon-ic > svg, .soon-ic .cel { width: 24px; height: 24px; }
-  .soon-tx b { font-size: 20px; }
-  .soon-tx > span { font-size: 14.5px; line-height: 1.45; }
-  .soon-side { gap: 18px; }
-  .soonflow .soon-card .rit-card-wrap { width: min(72%, 240px); margin: 0 auto; }
-  .soonflow .news { gap: 14px; }
+  main .df[data-ground="daybreak"] { padding-top: 300px; padding-bottom: 120px; }
+  .dropflow { padding-block: 140px 48px; }
+  .dp-in { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .ritflow .rt-card .rit-card-wrap { width: min(72%, 240px); margin: 0 auto; }
 }
-@media (prefers-reduced-motion: reduce) { .soon-list a, .soon-go { transition: none; } }
+
+/* text links on home are at least 44px tall to tap */
+.moment-shop .ms-acts .tlink, .giftsec .jr-teaser .tlink { display: inline-flex; align-items: center; min-height: 44px; }

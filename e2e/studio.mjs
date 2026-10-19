@@ -1,5 +1,5 @@
 // The studio photographs: the opening's candle moons (five of Claire's candles seen from above, on one ring across the sky),
-// Claire's cut-out, From the studio (cut-outs, tins from above, a row of photographs), Ritual on Repeat and Send a Sky on
+// Claire's cut-out, From the studio (cut-outs, tins from above, a row of photographs), Ritual on Repeat and Send a Sunrise on
 // the home page, a bench photograph on candle pages, Claire's portrait on the coaching page,
 // the past-moons archive on Moon Drops (never buyable), and the real format photographs on the shop group heads.
 import { chromium } from 'playwright-core';
@@ -77,41 +77,18 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
     const ph = document.querySelector('.claire-in .claire-cut').getBoundingClientRect(), tx = document.querySelector('.claire-in .tx').getBoundingClientRect();
     return phone ? ph.bottom <= tx.top + 1 && ph.width >= innerWidth * 0.6 && Math.abs((ph.left + ph.right) / 2 - innerWidth / 2) < 12 && tx.width >= innerWidth * 0.75 : ph.right < tx.left;
   }, label === 'phone'));
-  await p.evaluate(() => document.querySelector('.studio .shelf').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500);
-  ok(`${label}: the shelf stands two real cut-outs that link to their products`, await p.evaluate(() => { const a = [...document.querySelectorAll('.studio .shelf a.sh-item')]; return a.length === 2 && a.every(x => { const i = x.querySelector('img'); return /studio\/cut\//.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0 && i.alt.length > 15 && /\/product\//.test(x.getAttribute('href')) && x.querySelector('.sh-tag').textContent.trim(); }); }));
-  ok(`${label}: the shelf names only scents in the catalogue (Verdant, Cabana; the deodorant is hidden)`, await p.evaluate(() => [...document.querySelectorAll('.studio .sh-tag')].map(t => t.textContent).join(' ')).then(t => /Verdant/.test(t) && /Cabana/.test(t) && !/Westcoast/.test(t)));
-  await p.evaluate(() => document.querySelector('.studio .above').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
-  ok(`${label}: seen from above, four toppings are labelled, none cut off by the panel`, await p.evaluate(() => { const box = document.querySelector('.studio .above').getBoundingClientRect(); const ls = [...document.querySelectorAll('.studio .ab-l > span')]; return ls.length === 4 && ls.every(l => { const r = l.getBoundingClientRect(); return r.left >= box.left - 1 && r.right <= box.right + 1 && r.width > 30; }); }));
-  // the strip under "Seen from above": single candle tops (the clean round crops), one per topping, set down at different
-  // heights and angles, each captioned with its topping (a draft), never its scent; the old clusters of tins are gone
-  await p.evaluate(() => document.querySelector('.studio .st-tops').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500);
-  ok(`${label}: the clusters of tins are gone from From the studio`, (await p.locator('.studio .st-strip, .studio .sx, .studio img[src*="/tins/"]:not(.ab-tins img)').count()) === 0);
-  const tops = await p.evaluate(() => [...document.querySelectorAll('.st-tops .tp')].map(f => { const i = f.querySelector('img'), r = f.querySelector('.tp-c').getBoundingClientRect();
-    return { src: i.getAttribute('src'), done: i.complete && i.naturalWidth > 0, alt: i.alt, cap: f.querySelector('figcaption .d')?.textContent.trim() ?? '', rot: getComputedStyle(i).rotate, top: Math.round(r.top + scrollY), w: Math.round(r.width), lazy: i.getAttribute('loading') === 'lazy' }; }));
-  ok(`${label}: seven single candle tops, each a clean round crop of Claire's own photograph`, tops.length === 7 && new Set(tops.map(t => t.src)).size === 7 && tops.every(t => /^\/img\/studio\/moons\/[a-z-]+\.webp$/.test(t.src) && t.lazy), tops.map(t => t.src).join(' '));
-  ok(`${label}: the tops in view load`, tops.slice(0, label === 'phone' ? 2 : 7).every(t => t.done), tops.map(t => t.done).join(','));
-  ok(`${label}: each top is captioned (a draft) with its topping, and described`, tops.every(t => t.cap.length > 3 && t.alt.length > 30) && ['Dried flowers', 'Sprinkles', 'Coffee beans', 'Lavender buds', 'Small stones', 'Citrus and spice', 'Wood chips'].every(c => tops.some(t => t.cap === c)), tops.map(t => t.cap).join(', '));
-  ok(`${label}: the tops sit at different heights and angles, like things set down by hand`, new Set(tops.map(t => t.top)).size >= 5 && new Set(tops.map(t => t.rot)).size === 7 && new Set(tops.map(t => t.w)).size >= 4, JSON.stringify(tops.map(t => [t.top, t.rot, t.w])));
-  ok(`${label}: every top has its contact shadow`, (await p.locator('.st-tops .tp .tp-sh').count()) === 7);
-  if (label === 'desktop') {
-    ok('desktop: all seven tops fit in one row inside the strip', await p.evaluate(() => { const s = document.querySelector('.st-tops').getBoundingClientRect(); return [...document.querySelectorAll('.st-tops .tp-c')].every(e => { const r = e.getBoundingClientRect(); return r.left >= s.left && r.right <= s.right; }); }));
-    const tin = p.locator('.st-tops .tp').nth(3); const bb = await tin.boundingBox(); await p.mouse.move(bb.x + bb.width * 0.5, bb.y + bb.width * 0.5); await p.mouse.move(bb.x + bb.width * 0.8, bb.y + bb.width * 0.3, { steps: 4 });
-    // (waits for the lean to settle: on a busy machine the .6s transition can take longer)
-    ok('desktop: a top leans towards the pointer (3D tilt)', await p.waitForFunction(() => { const t = document.querySelectorAll('.st-tops .tp-tin')[3]; return /matrix3d/.test(getComputedStyle(t).transform) && t.style.getPropertyValue('--ry') !== ''; }, null, { timeout: 5000 }).then(() => true, () => false));
-    await p.mouse.move(5, 5);
-  } else ok('phone: the tops are a swipeable row', await p.evaluate(() => { const s = document.querySelector('.st-tops'); return s.scrollWidth > s.clientWidth + 40 && getComputedStyle(s).overflowX === 'auto'; }));
-  const revealed = await p.waitForFunction(() => [...document.querySelectorAll('.studio .sh-item, .studio .above, .studio .tp')].every(f => Number(getComputedStyle(f).opacity) > .9), null, { timeout: 5000 }).then(() => true, () => false);
-  ok(`${label}: the studio pieces are in view, not hidden by their reveal`, revealed);
-  ok(`${label}: no past scent is named on the home page outside Moon Drops`, !/midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|hello cupcake|irish coffee|mulled wine/i.test(await p.evaluate(() => document.querySelector('.studio').innerText + document.querySelector('.claire').innerText)));
-  ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.studio').innerText + document.querySelector('.claire').innerText + document.querySelector('.soonflow').innerText + document.querySelector('.gift-grid').innerText))));
+  // From the studio is switched off on home by the owner (October 2026); its code stays behind STUDIO_ON in src/moons.ts
+  ok(`${label}: From the studio is switched off on home`, (await p.locator('main .studio, main .st-tops, main .shelf').count()) === 0);
+  ok(`${label}: no past scent is named on the home page outside Moon Drops`, !/midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|hello cupcake|irish coffee|mulled wine/i.test(await p.evaluate(() => document.querySelector('.claire').innerText + document.querySelector('.ritflow').innerText)));
+  ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.claire').innerText + document.querySelector('.repeatflow').innerText + document.querySelector('.dropflow').innerText + document.querySelector('.ritflow').innerText + document.querySelector('.gift-grid').innerText))));
   ok(`${label}: home has no sideways scroll`, (await noScroll(p)) <= 1);
 
   // ---- the Ritualists: a membership card with Claire's logo in place of the mood constellation; it promises nothing. (It sits
-  // above the Monthly Ritual sign-up in the one "Opening soon" chapter now, a little smaller on a phone.)
-  await p.evaluate(() => document.querySelector('.soonflow .soon-card').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
-  const card = await p.evaluate(() => { const w = document.querySelector('.soonflow .rit-card-wrap'), i = w?.querySelector('.rc-logo'); return w && { label: w.getAttribute('role') + ':' + w.getAttribute('aria-label'), logo: i.complete && i.naturalWidth > 0 && /\/img\/brand\/logo-(600|1200)\.webp/.test(i.currentSrc || i.src), text: w.innerText, seal: !!w.querySelector('.rc-seal svg'), wd: w.getBoundingClientRect().width }; });
+  // beside the waitlist in the Ritualists chapter now, a little smaller on a phone.)
+  await p.evaluate(() => document.querySelector('.ritflow .rt-card').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
+  const card = await p.evaluate(() => { const w = document.querySelector('.ritflow .rit-card-wrap'), i = w?.querySelector('.rc-logo'); return w && { label: w.getAttribute('role') + ':' + w.getAttribute('aria-label'), logo: i.complete && i.naturalWidth > 0 && /\/img\/brand\/logo-(600|1200)\.webp/.test(i.currentSrc || i.src), text: w.innerText, seal: !!w.querySelector('.rc-seal svg'), wd: w.getBoundingClientRect().width }; });
   ok(`${label}: the Ritualists show a membership card with the logo and a wax seal`, !!card && card.logo && card.seal && /^img:.*coming soon/i.test(card.label) && card.wd > 200, JSON.stringify(card));
-  ok(`${label}: the mood constellation is gone from the Ritualists`, (await p.locator('.soonflow .cs-const, .soonflow .cel-const').count()) === 0);
+  ok(`${label}: the mood constellation is gone from the Ritualists`, (await p.locator('.ritflow .cs-const, .ritflow .cel-const').count()) === 0);
   ok(`${label}: the card promises no points, tiers or rewards`, !!card && /coming soon/i.test(card.text) && !/\d|points?|reward|tier|member no/i.test(card.text), card?.text);
 
   // ---- the footer: Claire's logo, cut out clean and lit, in place of the star chart and the constellation
@@ -153,7 +130,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
 
   // ---- shop: real format photographs on the candle and deodorant heads, the renders left for rollers and diffusers
   await p.goto(base + '/shop'); await p.waitForSelector('.ghead'); await p.waitForTimeout(600);
-  ok(`${label}: the candle group head carries a studio photograph (the deodorant is hidden)`, await p.evaluate(() => { const h = [...document.querySelectorAll('.grid.grouped .ghead')]; const by = t => h.find(x => new RegExp(t, 'i').test(x.querySelector('h2')?.textContent ?? '')); return !!by('candle')?.querySelector('.ghead-ph[src*="studio"]') && !by('deodorant') && !by('roller')?.querySelector('.ghead-ph') && !by('diffuser')?.querySelector('.ghead-ph'); }));
+  ok(`${label}: candle and deodorant group heads carry a studio photograph`, await p.evaluate(() => { const h = [...document.querySelectorAll('.grid.grouped .ghead')]; const by = t => h.find(x => new RegExp(t, 'i').test(x.querySelector('h2')?.textContent ?? '')); return !!by('candle')?.querySelector('.ghead-ph[src*="studio"]') && !!by('deodorant')?.querySelector('.ghead-ph[src*="studio"]') && !by('roller')?.querySelector('.ghead-ph') && !by('diffuser')?.querySelector('.ghead-ph'); }));
   await p.goto(base + '/shop?f=candle'); await p.waitForTimeout(1500);
   const chref = await p.evaluate(() => document.querySelector('a[href*="/product/"]')?.getAttribute('href'));
   await p.goto(base + chref.replace(/^#?\//, '/')); await p.waitForSelector('.pdp'); await p.waitForTimeout(1200);

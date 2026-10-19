@@ -9,7 +9,7 @@ for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false],
   await p.goto((process.env.BASE ?? 'http://localhost:4173/#') + '/'); await p.waitForSelector('.jhere', { state: 'attached' }); await p.waitForTimeout(600);
   ok(`${label}: no "you are here" card on the opening`, !(await p.locator('.jhere.on').count()));
   const goCh = async k => { await p.evaluate(k => { const c = [...document.querySelectorAll('main .chapter')].find(x => new RegExp('Chapter ' + k + ' ').test(x.textContent)); window.scrollTo(0, window.scrollY + c.closest('section').getBoundingClientRect().top - 60); }, k); await settle(p); };
-  for (const k of [2, 3, 4]) { // (four chapters since the Opening soon chapter took in the Ritual Wall and the Ritualists)
+  for (const k of [2, 3, 4, 5, 6, 7]) { // (seven chapters in the owner's order, October 2026)
     await goCh(k);
     const num = Number(await p.locator('.jh-n').innerText());
     ok(`${label}: the card shows chapter ${k}`, num === k, `${num}`);
@@ -19,7 +19,7 @@ for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false],
   }
   await goCh(2);
   const txt = await p.locator('.jhere').innerText();
-  // (on a phone, chapter 2 is Send a Sky now, all words, so the card has stepped aside by design: it is reached by focus)
+  // (on a phone the card may step aside over words by design: it is then reached by focus)
   if (await p.locator('.jhere.jh-off').count()) { await p.locator('.jhere').focus(); await p.keyboard.press('Enter'); } else await p.locator('.jhere').click();
   await settle(p);
   ok(`${label}: tapping the card goes to the next chapter`, Number(await p.locator('.jh-n').innerText()) === 3, txt.replace(/\s+/g, ' '));

@@ -9,26 +9,49 @@ await p.goto(base + '/'); await p.waitForSelector('.jhere', { state: 'attached' 
 const cs = (sel, prop) => p.evaluate(([s, pr]) => { const e = document.querySelector(s); return e ? getComputedStyle(e)[pr] || getComputedStyle(e).getPropertyValue(pr) : null; }, [sel, prop]);
 // the home page is a day: each chapter's ground blends out of the colour of the one before it, with no hard edge and no see-through fade
 const flow = await p.evaluate(() => [...document.querySelectorAll('main section.df')].map(el => ({ g: el.dataset.ground, bg: getComputedStyle(el).backgroundImage, mask: getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage || 'none', bt: getComputedStyle(el).borderTopWidth })));
-// (the Ritual Wall and Ritualists chapters and the separate newsletter became one "Opening soon" chapter at dusk, October 2026)
-ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,rose,euc,dusk', flow.map(f => f.g).join(','));
+// (the running order the owner approved, October 2026: Our candles, Meet Claire, Ritual on Repeat, coaching, Moon Drops, the
+// Ritualists, Send a Sky; the grounds run sand, rose, eucalyptus, dusk, night and the next morning's first light)
+ok('home: chapters flow through the colours of the day in order', flow.map(f => f.g).join(',') === 'sand,rose,euc,dusk,night,daybreak', flow.map(f => f.g).join(','));
 ok('home: every chapter after the first blends from the previous colour', flow.filter(f => f.g !== 'night-solid').every(f => /linear-gradient/.test(f.bg)), flow.map(f => f.bg.slice(0, 30)).join(' | '));
 ok('home: no see-through fades or hairlines between chapters', flow.every(f => f.mask === 'none' && f.bt === '0px'));
-// the Discovery Kit chapter was removed (owner, October 2026); then everything not open yet (the Ritualists, Ritual on Repeat,
-// Moon Drops, the Ritual Wall) became one compact "Opening soon" chapter after the live ones: the chapters run 1 to 4
-ok('home: chapters are numbered 1 to 4 in journey order, with no gap', (await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => (c.textContent.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join(''))) === '1234');
+const order = await p.evaluate(() => [...document.querySelectorAll('main .chapter')].map(c => c.textContent.replace(/\s+/g, ' ').trim()));
+ok('home: chapters are numbered 1 to 7 in journey order, with no gap', order.map(t => (t.match(/Chapter (\d)/) || [])[1]).filter(Boolean).join('') === '1234567', order.join(' | '));
+ok('home: the new running order: Our candles, Meet Claire, Ritual on Repeat, coaching, Moon Drops, the Ritualists, Send a Sky', await p.evaluate(() => {
+  const at = s => { const e = document.querySelector(s); return e ? e.getBoundingClientRect().top + scrollY : -1; };
+  const ys = ['#day', '.moment-shop', '.claire', '.repeatflow', '.coachflow', '.dropflow', '.ritflow', '.giftsec', '.giftsec .jr-teaser'].map(at);
+  return ys.every(y => y >= 0) && ys.every((y, i) => !i || y > ys[i - 1]) && /Our candles/.test(document.querySelector('.moment-shop .chapter').textContent) && /Meet Claire/.test(document.querySelector('.claire .chapter').textContent)
+    && /Repeat/.test(document.querySelector('.repeatflow h2').textContent) && /Moon Drops/.test(document.querySelector('.dropflow .chapter').textContent) && /Ritualists/.test(document.querySelector('.ritflow .chapter').textContent)
+    && /Send a Sky/.test(document.querySelector('.giftsec h2').textContent) && !document.querySelector('.giftsec .jr-teaser').nextElementSibling;
+}));
 ok('home: the Discovery Kit chapter is gone', await p.evaluate(() => !document.querySelector('main .disc') && !/Discovery Kit/.test(document.querySelector('main').innerText)));
-const soon = await p.evaluate(() => { const s = document.querySelector('main .soonflow');
-  const ch = [...document.querySelectorAll('main .chapter')].filter(c => !s?.contains(c));
-  return s && { after: ch.filter(c => s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_PRECEDING).length, before: ch.filter(c => s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING).length, own: /Chapter 4 · Opening soon/.test(s.querySelector('.chapter')?.textContent ?? ''),
-    notify: s.querySelectorAll('[data-notify]').length, forms: s.querySelectorAll('form.nform #nemail').length, card: !!s.querySelector('.rit-card-wrap'),
-    names: s.innerText, links: [...s.querySelectorAll('a')].map(a => a.getAttribute('href')).join(' '), price: /\$\d/.test(s.innerText), h: s.getBoundingClientRect().height,
-    gone: !document.querySelector('main .rep-grid, main .plans, main #calc, main .drop-grid, main #voteBox, main #cd, main .wall, main .club:not(.confirm)') && document.querySelectorAll('main section.soonflow, main section.newsflow').length === 1 }; });
-ok('home: the Ritualists, Ritual on Repeat, Moon Drops and the Ritual Wall share one "Opening soon" chapter after every live chapter, with the one Monthly Ritual sign-up and the Ritualists card', !!soon && soon.after === 3 && soon.before === 0 && soon.own && soon.notify === 0 && soon.forms === 1 && soon.card && /Ritualists/.test(soon.names) && /Ritual on Repeat/.test(soon.names) && /Moon Drops/.test(soon.names) && /Ritual Wall/.test(soon.names) && /monthly ritual/i.test(soon.names) && /club/.test(soon.links) && /subscribe/.test(soon.links) && /drops/.test(soon.links) && /wall/.test(soon.links) && !soon.price && soon.h < 900 && soon.gone, JSON.stringify({ ...soon, names: undefined }));
-ok('home: the strip gives the next new moon from the one drop state', await p.evaluate(() => /\w+ \d{1,2}/.test(document.querySelector('.soonflow [data-drop-date]')?.textContent ?? '')));
+ok('home: no 7-day reset, no free shipping, no "Send a Sunrise" and no "From first light" below the opening', await p.evaluate(() => { const hero = document.querySelector('#day'); const t = [...document.querySelectorAll('main > *')].filter(e => e !== hero).map(e => e.innerText).join(' ');
+  return !/7-day|reset/i.test(t) && !/free shipping/i.test(t) && !/Send a Sunrise/i.test(t) && !/first light to/i.test(t) && !document.querySelector('main a[href$="/reset"]'); }));
+ok('home: From the studio is switched off', (await p.locator('main .studio').count()) === 0);
+ok('home: Meet Claire has the new paragraph and a clear "Read my story" button', await p.evaluate(() => { const c = document.querySelector('.claire'); const a = c.querySelector('a.btn[href$="/story"]');
+  return /rewire their brains through neuroplasticity/.test(c.innerText) && /how the two are related\?/.test(c.innerText) && !!a && /Read my story/.test(a.textContent) && a.getBoundingClientRect().height >= 44; }));
+const rep = await p.evaluate(() => { const s = document.querySelector('.repeatflow'); return { t: s.innerText, sub: !!s.querySelector('a[href$="/subscribe"]'), form: !!s.querySelector('form.nform #nemail'), plans: [...s.querySelectorAll('.plan h3')].map(h => h.textContent).join(',') }; });
+ok('home: Ritual on Repeat is a compact, coming-soon version of the subscribe page with the Monthly Ritual sign-up', rep.plans === 'Single Refill,Ritual Pair,Solstice Box' && rep.sub && rep.form && /coming soon/i.test(rep.t) && /10% off every delivery/.test(rep.t) && /15% off/.test(rep.t) && /\$79/.test(rep.t) && /\$88 value/.test(rep.t) && !/free shipping/i.test(rep.t), JSON.stringify({ ...rep, t: undefined }));
+ok('home: the coaching chapter opens with the segue line and leads to the free discovery call', await p.evaluate(() => { const c = document.querySelector('.coachflow'); return /The candle is the cue\. What happens next is where real change begins\./.test(c.querySelector('.say').getAttribute('aria-label') ?? c.querySelector('.say').textContent) && !!c.querySelector('a.btn[href$="/book"]'); }));
+ok('home: the hero practice card offers the free discovery call', await p.evaluate(() => { const a = document.querySelector('#dProducts .sp-coach'); return !!a && /\/book$/.test(a.getAttribute('href')) && /discovery call/i.test(a.textContent); }));
+ok('home: Moon Drops give the next seasonal drop from the one drop state', await p.evaluate(() => /\w+ \d{1,2}/.test(document.querySelector('.dropflow [data-drop-date]')?.textContent ?? '') && /once a season/i.test(document.querySelector('.dropflow').innerText)));
+const rit = await p.evaluate(() => { const s = document.querySelector('.ritflow'); const f = s.querySelector('form.rt-form');
+  return { t: s.innerText, email: !!f?.querySelector('input[type=email]'), month: f?.querySelector('select[name=month]')?.options.length, day: f?.querySelector('select[name=day]')?.options.length, year: !!f?.querySelector('[name=year], input[type=date]'),
+    giving: !!s.querySelector('a[href$="/giving"]'), tiers: [...s.querySelectorAll('.tier .tname')].map(e => e.textContent).join(','), card: !!s.querySelector('.rit-card-wrap') }; });
+ok('home: the Ritualists show three tiers, 100 points = $5 off, coming soon, and no free shipping', rit.tiers === 'Dawn,Golden Hour,Midnight' && /100 points = \$5 off/.test(rit.t) && /coming soon/i.test(rit.t) && /300 points a year/.test(rit.t) && /600 points a year/.test(rit.t) && /free roller on your birthday/i.test(rit.t) && /Early access to every Moon Drop/i.test(rit.t) && !/free shipping/i.test(rit.t), rit.t.slice(0, 200));
+ok('home: the Ritualists waitlist asks for an email and a birthday (month and day, never a year), and says why', rit.email && rit.month === 13 && rit.day === 32 && !rit.year && /We'll only use your birthday to send your Solar Return gift\./.test(rit.t), JSON.stringify({ ...rit, t: undefined }));
+ok('home: "Give $10, get $10" is shown as coming soon, and one line links to giving back', /Give \$10, get \$10/.test(rit.t) && rit.giving && rit.card);
+{ // the waitlist goes nowhere while writes are off: it says so, like every other sign-up in the preview
+  const sent = []; p.on('request', r => { if (r.method() === 'POST' && /wix/i.test(r.url())) sent.push(r.url()); });
+  await p.fill('#ritEmail', 'test@example.com'); await p.selectOption('#ritMonth', '3'); await p.selectOption('#ritDay', '14'); await p.click('.ritflow .rt-join'); await p.waitForTimeout(400);
+  ok('home: the waitlist does not submit to Wix in the preview, and says sign-ups are switched off', sent.length === 0 && /switched off/i.test(await p.evaluate(() => document.querySelector('.toast, [role="status"]')?.textContent ?? '')) && /#?\/?$/.test(new URL(p.url()).hash.replace('#', '') || '/'), sent.join(' '));
+}
 ok('home: no link to the missing /discovery page', (await p.locator('main a[href*="discovery"]').count()) === 0);
-// chapter 1 leads with candles: a clear "Shop candles" action, and a candle first in the row
+// chapter 1, Our candles: a clear "Shop candles" action and a fixed row, one card per type (not tied to the time of day)
 ok('home: chapter 1 offers "Shop candles" up front', (await p.locator('.moment-shop .head a.btn[href*="f=candle"]').count()) === 1);
 await p.waitForSelector('#msGrid .card'); ok('home: the first product in chapter 1 is a candle from the catalogue, with its real price', await p.evaluate(() => { const c = document.querySelector('#msGrid .card'); return /Candle/i.test(c.querySelector('.sub')?.textContent ?? '') && /\$\d+\.\d\d/.test(c.querySelector('.meta')?.textContent ?? ''); }));
+const row = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card')].map(c => c.querySelector('a[href*="/product/"]').getAttribute('href').split('/product/')[1]).join(','));
+ok('home: Our candles is the fixed row: Citrus & Sun candle, Windy Beach roller, Citrus & Sun mini diffuser, Campfire Stories candle', row === 'citrus-sun,windy-beach-fragrance-roller,citrus-sun-mini-diffuser,campfire-stories', row);
+ok('home: no time-of-day tabs, no heading "From first light", no deodorant in the row, and the chapter label is bold', await p.evaluate(() => !document.querySelector('.ms-tabs, [data-ms]') && !/first light/i.test(document.querySelector('.moment-shop').innerText) && !/deodorant/i.test(document.querySelector('#msGrid').innerText) && Number(getComputedStyle(document.querySelector('.moment-shop .chapter')).fontWeight) >= 600));
 // the proof ribbon under the opening: a lit band turning round a drum (src/ribbon.ts). Its unconfirmed facts ("[Confirm: …]")
 // are drafts for Claire: never shown to customers, not even as moving copies
 await p.evaluate(() => document.querySelector('.proof-strip').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
@@ -37,16 +60,17 @@ const rib = await p.evaluate(() => { const s = document.querySelector('.proof-st
     seps: s.querySelectorAll('.rb-sep svg').length, n: vis.length, three: vis.some(e => /rotateY\((?!0\.00deg)/.test(e.style.transform) && /translate3d\([^)]*, -?[1-9]/.test(e.style.transform)), hidden: s.getAttribute('aria-label') && s.querySelector('.rb-stage').getAttribute('aria-hidden') }; });
 ok('home: the proof strip is a lit 3D ribbon, its facts on the turning band with glowing star and flame glyphs', rib.on && rib.band && rib.n >= 3 && rib.three && rib.seps >= rib.n, JSON.stringify({ ...rib, text: undefined, copies: undefined }));
 ok('home: the ribbon never shows a "[Confirm: …]" placeholder to customers', !/\[confirm/i.test(rib.text) && !/confirm/i.test(rib.copies) && (await p.locator('.proof-strip .confirm:visible').count()) === 0, rib.copies);
-ok('home: screen readers get each fact once (the moving copies are hidden from them)', rib.hidden === 'true' && (await p.locator('.proof-strip .rb-src > span').count()) === 6);
+ok('home: screen readers get each fact once (the moving copies are hidden from them)', rib.hidden === 'true' && (await p.locator('.proof-strip .rb-src > span').count()) === 4);
+ok('home: the ribbon says the four approved facts, and no stockist or returns line', await p.evaluate(() => [...document.querySelectorAll('.proof-strip .rb-src > span')].map(e => e.textContent).join(' · ')) === 'Hand poured in small batches in BC · 16 years of formulating experience · One scent, every format · Free 20-minute discovery call with Claire' && !/stockist|return/i.test(rib.copies), rib.copies);
 const pos = () => p.evaluate(() => [...document.querySelectorAll('.proof-strip .rb-it')].map(e => e.style.transform).join('|'));
 const pos0 = await pos(); await p.waitForTimeout(700);
 ok('home: the ribbon turns slowly', pos0 !== await pos());
-{ // the drafts toggle: Claire sees the placeholders in the ribbon; switching it off takes them away again
+{ // the drafts toggle: the ribbon is rebuilt from what is shown, the same facts either way (no placeholders are left in it)
   await p.evaluate(() => document.getElementById('draftsToggle')?.click()); await p.waitForTimeout(400);
   const on = await p.evaluate(() => [...document.querySelectorAll('.proof-strip .rb-tx')].map(e => e.textContent).join('|'));
   await p.evaluate(() => document.getElementById('draftsToggle')?.click()); await p.waitForTimeout(400);
   const off = await p.evaluate(() => [...document.querySelectorAll('.proof-strip .rb-tx')].map(e => e.textContent).join('|'));
-  ok('home: with "Show drafts for Claire" the ribbon shows the placeholders, and hides them again when it is off', /\[Confirm/.test(on) && !/Confirm/.test(off));
+  ok('home: with or without "Show drafts for Claire" the ribbon shows the same facts, never a placeholder', /16 years/.test(on) && /16 years/.test(off) && !/Confirm/.test(on + off));
 }
 { // reduced motion: the ribbon is still, lit and legible
   const rc = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', deviceScaleFactor: 2, isMobile: true, hasTouch: true }); const rp = await rc.newPage(); await setupMocks(rp);
@@ -61,8 +85,8 @@ ok('home: the first chapter eases down from the dark opening strip', /gradient/.
 ok('home: the footer rises out of a soft fade', /gradient/.test(await p.evaluate(() => getComputedStyle(document.querySelector('footer'), '::before').backgroundImage)));
 const radii = await p.evaluate(() => [...document.querySelectorAll('#msGrid .card .ph')].map(e => getComputedStyle(e).borderTopLeftRadius));
 ok('home: product pictures alternate arch and soft-window cutouts', new Set(radii).size >= 2 && radii.some(r => parseFloat(r) > 100), radii.join(' '));
-// (the Ritual Wall's studio photographs stay on /wall; on home the wall is one line of the Opening soon chapter)
-ok('home: the Ritual Wall is a line in the Opening soon chapter, not a wall of studio photos', (await p.locator('main .wall .tile').count()) === 0 && (await p.locator('.soonflow a[href*="wall"]').count()) === 1);
+// (the Ritual Wall is not on home; its studio photographs are switched off with From the studio)
+ok('home: no wall of studio photos', (await p.locator('main .wall .tile').count()) === 0);
 const f = () => p.evaluate(() => getComputedStyle(document.querySelector('#msGrid .card .ph img.main, .wall .tile img')).filter);
 ok('photo grade is on by default', /saturate/.test(await f()), await f());
 await p.locator('#gradeToggle').uncheck(); await p.waitForTimeout(200); ok('the Photo grade switch turns it off', (await f()) === 'none', await f());
@@ -91,11 +115,13 @@ ok('headings never skip a level for screen readers', await p.evaluate(() => { le
   const pill = await p.evaluate(() => { const a = document.querySelector('.club-pill'), r = a.getBoundingClientRect(), cs = getComputedStyle(a); return { href: a.getAttribute('href'), text: a.innerText.trim(), h: r.height, bg: cs.backgroundImage, border: cs.borderTopWidth }; });
   ok('desktop header: the Ritualists link is quiet (no "Soon" badge, no pill) and still goes to the club', /club$/.test(pill.href) && pill.text === 'The Ritualists' && pill.h >= 44 && pill.bg === 'none' && pill.border === '0px', JSON.stringify(pill));
   const pc = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const pp = await pc.newPage(); await setupMocks(pp);
-  await pp.goto(base + '/'); await pp.waitForSelector('.soonflow .rit-card-wrap'); await pp.waitForTimeout(1200);
+  await pp.goto(base + '/'); await pp.waitForSelector('.ritflow .rit-card-wrap'); await pp.waitForTimeout(1200);
   const ph = await pp.evaluate(() => { const bar = document.querySelector('#announce'), r = bar.getBoundingClientRect(), row = document.querySelector('.jr-teaser .jr-cards'), cards = [...row.children].map(c => Math.round(c.getBoundingClientRect().top));
-    return { bar: Math.round(r.height), barText: bar.innerText.replace(/\s+/g, ' '), soon: Math.round(document.querySelector('.soonflow').getBoundingClientRect().height), row: new Set(cards).size === 1 && row.scrollWidth > row.clientWidth && getComputedStyle(row).overflowX === 'auto', page: document.documentElement.scrollHeight, sw: document.documentElement.scrollWidth - innerWidth }; });
-  ok('phone bar: two short lines, free shipping first and the new moon short ("Nov 8")', ph.bar <= 80 && /^Free shipping/.test(ph.barText) && /New moon [A-Z][a-z]{2} \d{1,2}/.test(ph.barText), JSON.stringify(ph));
-  ok('phone home: one compact Opening soon chapter, the Journal as a swipe row, and a shorter page than before (12,100px)', ph.soon < 1400 && ph.row && ph.page < 11000 && ph.sw <= 1, JSON.stringify(ph));
+    return { bar: Math.round(r.height), barText: bar.innerText.replace(/\s+/g, ' '), rit: Math.round(document.querySelector('.ritflow').getBoundingClientRect().height), row: new Set(cards).size === 1 && row.scrollWidth > row.clientWidth && getComputedStyle(row).overflowX === 'auto', page: document.documentElement.scrollHeight, sw: document.documentElement.scrollWidth - innerWidth }; });
+  ok('phone bar: two short lines, free shipping first and the next Moon Drop short ("Moon Drop Jan 7")', ph.bar <= 80 && /^Free shipping/.test(ph.barText) && /Moon Drop [A-Z][a-z]{2} \d{1,2}/.test(ph.barText), JSON.stringify(ph));
+  // (the page is longer than the October "Opening soon" version: the owner's order gives Ritual on Repeat, Moon Drops and the
+  // Ritualists a chapter each)
+  ok('phone home: the Ritualists fit in about two and a half screens, the Journal is a swipe row, no sideways scroll', ph.rit < 2300 && ph.row && ph.page < 16000 && ph.sw <= 1, JSON.stringify(ph));
   await pc.close();
 }
 ok('no JS errors', errs.length === 0, errs.join('|'));

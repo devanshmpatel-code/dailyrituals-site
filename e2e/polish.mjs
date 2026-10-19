@@ -3,13 +3,17 @@ import { setupMocks } from './mock.mjs';
 const base = process.env.BASE ?? 'http://localhost:4173/#';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
+// the home page is long: on a busy machine the next page can take a moment to replace it, so wait until it has
+const settleRoute = (p, r) => p.waitForFunction(home => home ? !!document.querySelector('.ritflow') : !document.querySelector('.ritflow'), r === '/', { timeout: 10000 }).catch(() => {});
 const visText = p => p.evaluate(() => document.querySelector('main, #app')?.innerText ?? document.body.innerText);
 for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
-  // no points or referral promises anywhere a customer can see while the Loyalty app is not set up
+  // no points or referral promises anywhere a customer can see while the Loyalty app is not set up, except the planned club
+  // itself (the Ritualists chapter on home and the club page), which the owner approved showing as "coming soon" drafts
   for (const r of ['/', '/shop', '/product/roller-citrus-and-sun', '/club', '/wall', '/subscribe', '/order-confirmed', '/drops', '/account']) {
-    await p.goto(base + r); await p.waitForTimeout(1300);
-    const t = (await visText(p)).replace(/pulse points/gi, '');
+    await p.goto(base + r); await settleRoute(p, r); await p.waitForTimeout(1300);
+    if (r === '/' || r === '/club') ok(`${label} ${r}: the planned club is marked coming soon, its points and perks drafts`, await p.evaluate(() => { const s = document.querySelector('.ritflow, .clubplan'); return !!s && /coming soon/i.test(s.innerText) && [...s.querySelectorAll('.tier li, .rt-value')].every(e => e.querySelector('.d')); }));
+    const t = (await p.evaluate(() => { const club = [...document.querySelectorAll('.ritflow, .clubplan')]; club.forEach(e => { e.style.display = 'none'; }); const t = (document.querySelector('main, #app') ?? document.body).innerText; club.forEach(e => { e.style.display = ''; }); return t; })).replace(/pulse points/gi, '');
     ok(`${label} ${r}: no points or referral promises`, !/\bpoints?\b|\bpts\b|Give \$10/i.test(t), (t.match(/.{0,40}(\bpoints?\b|\bpts\b|Give \$10).{0,20}/i) || [''])[0]);
   }
   await p.goto(base + '/'); await p.waitForTimeout(800);
@@ -37,6 +41,20 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.goto(base + '/club'); await p.waitForSelector('.clubsoon'); await p.evaluate(() => document.body.classList.add('show-drafts'));
   ok('drafts on: the planned club shows for Claire', await p.locator('.club-plan').isVisible()); await ctx.close();
 }
+{ // the club page shows the approved tiers, the points value and the waitlist (email and birthday month and day), as drafts
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const p = await ctx.newPage(); await setupMocks(p);
+  await p.goto(base + '/club'); await p.waitForSelector('.clubplan .rt-form');
+  const c = await p.evaluate(() => { const s = document.querySelector('.clubplan'); const f = s.querySelector('.rt-form');
+    return { t: s.innerText, tiers: [...s.querySelectorAll('.tier .tname')].map(e => e.textContent).join(','), email: !!f.querySelector('#csEmail[type=email]'), m: f.querySelector('select[name=month]').options.length, d: f.querySelector('select[name=day]').options.length,
+      year: !!f.querySelector('[name=year], input[type=date]'), drafts: [...s.querySelectorAll('.tier li')].every(li => li.querySelector('.d')), h1: document.querySelectorAll('main h1, #app h1').length, sw: document.documentElement.scrollWidth - innerWidth }; });
+  ok('club page: three tiers with the approved perks, 100 points = $5 off, coming soon, no free shipping', c.tiers === 'Dawn,Golden Hour,Midnight' && /100 points = \$5 off/.test(c.t) && /coming soon/i.test(c.t) && /300 points a year/.test(c.t) && /Early access to every Moon Drop/.test(c.t) && !/free shipping/i.test(c.t) && c.drafts, c.t.slice(0, 160));
+  ok('club page: the waitlist asks for an email and a birthday month and day (no year), and says why', c.email && c.m === 13 && c.d === 32 && !c.year && /We'll only use your birthday to send your Solar Return gift\./.test(c.t) && /Give \$10, get \$10/.test(c.t) && c.sw <= 1, JSON.stringify({ ...c, t: undefined }));
+  await p.locator('.cs-go').click(); await p.waitForTimeout(700);
+  ok('club page: "Join the waitlist" takes you to the email field', await p.evaluate(() => document.activeElement?.id === 'csEmail'));
+  await p.fill('#csEmail', 'test@example.com'); await p.click('.clubplan .rt-join'); await p.waitForTimeout(400);
+  ok('club page: the waitlist is switched off in the preview (nothing is sent)', /switched off/i.test(await p.evaluate(() => document.getElementById('toast')?.textContent ?? '')) && /\/club$/.test(p.url()));
+  await ctx.close();
+}
 // ---------- trust pass: nothing promised that is not live, the Ritual Wall honest, the drop date real, the orb out of the way ----------
 const CONCEPT_PRICE = /\$(18|28|79|88)(\.00)?\b|\bvalue\b/i;
 for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {
@@ -48,19 +66,19 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label} /wall: no fake posts, points or prizes`, !/Real rituals|Ritualists use|50 points|\+50|wins the next|Moon Drop prize|@customer/i.test(wt) && (await p.locator('#app .heart').count()) === 0, (wt.match(/.{0,30}(Real rituals|50 points|wins the next|@customer).{0,20}/i) || [''])[0]);
   ok(`${label} /wall: an honest empty state`, /opens with your first photo/i.test(await p.locator('.wall-empty').innerText()));
   ok(`${label} /wall: the consent-based upload form sits near the top`, await p.evaluate(() => { const f = document.querySelector('#upForm'); return !!f && f.getBoundingClientRect().top + scrollY < innerHeight * 1.4 && !!f.querySelector('input[type=checkbox][required]'); }));
-  const wallImgs = await p.locator('.wall-studio .studio-tile img').evaluateAll(a => a.map(i => i.getAttribute('src')));
-  ok(`${label} /wall: one row labelled "From the studio", real studio photographs only`, wallImgs.length >= 4 && wallImgs.every(s => s.startsWith('/img/studio/')) && /From the studio/i.test(await p.locator('.wall-studio').innerText()), wallImgs.join(' '));
-  ok(`${label} /wall: the studio photographs link to nothing (no past scent looks buyable)`, (await p.locator('.wall-studio a').count()) === 0);
-  // the home page: the wall is one line of the "Opening soon" chapter (no photo teaser), never presented as proof
+  // (the studio photographs on the wall are switched off with From the studio, owner, October 2026: STUDIO_ON in src/moons.ts)
+  ok(`${label} /wall: the studio tiles are switched off`, (await p.locator('.wall-studio, .studio-tile').count()) === 0);
+  // the home page has no Ritual Wall line or photo teaser in the owner's new order
   await p.goto(base + '/'); await p.waitForTimeout(1500);
-  const teaser = p.locator('.soonflow a[href*="wall"]');
-  ok(`${label} home: the wall line is not presented as proof`, (await teaser.count()) === 1 && /opens with your first photo/i.test(await teaser.innerText()) && !/proof|Ritualists use/i.test(await teaser.innerText()));
+  ok(`${label} home: the wall is not presented as proof`, !/Ritualists use|proof/i.test(await visText(p)));
   ok(`${label} home: no photo teaser of the wall`, (await p.locator('main .wall img').count()) === 0);
   ok(`${label} home: chapter pictures are real studio photographs, not stock mockups`, await p.evaluate(() => [...document.querySelectorAll('.cf-ph img, .plans img, .disc .ph img')].every(i => (i.getAttribute('src') ?? '').startsWith('/img/studio/'))));
   // concepts: no price, no value maths, labelled coming soon, notify only
   for (const r of ['/', '/shop', '/subscribe', '/gift', '/explore', '/drops']) {
-    await p.goto(base + r); await p.waitForTimeout(1300);
-    const t = await visText(p);
+    await p.goto(base + r); await settleRoute(p, r); await p.waitForTimeout(1300);
+    // (home: the owner approved the draft Solstice Box price, "$79 a box ($88 value)", in the compact Ritual on Repeat chapter)
+    const t = r === '/' ? await p.evaluate(() => { const d = [...document.querySelectorAll('.repeatflow .plan .d')]; d.forEach(e => { e.style.display = 'none'; }); const t = document.querySelector('main').innerText; d.forEach(e => { e.style.display = ''; }); return t; }) : await visText(p);
+    if (r === '/') ok(`${label} /: the Solstice Box shows the approved draft price ($79, $88 value) as a draft only`, await p.evaluate(() => [...document.querySelectorAll('.repeatflow .plan .d')].some(e => /\$79 a box \(\$88 value\)/.test(e.textContent))));
     ok(`${label} ${r}: no price or "value" on a concept (Discovery Kit, Moon Drop, Solstice Box, gift card)`, !CONCEPT_PRICE.test(t), (t.match(/.{0,40}(\$(18|28|79|88)|\bvalue\b).{0,20}/i) || [''])[0]);
     ok(`${label} ${r}: no add-to-cart for a concept`, (await p.locator('[data-add="discovery-kit"], [data-add="moon-drop-01"], [data-add="solstice-box"], [data-gr="giftcard"], [data-gr="discovery-kit"]').count()) === 0);
     // the gift sets have no contents or prices from the shop yet, so they are coming soon, never priced or selectable
@@ -69,15 +87,15 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.goto(base + '/shop'); await p.waitForSelector('[data-concept]');
   ok(`${label} /shop: every concept card says Coming soon and offers only "get notified"`, await p.evaluate(() => [...document.querySelectorAll('[data-concept]')].every(c => /Coming soon/i.test(c.textContent) && !/\$\d/.test(c.textContent) && !!c.querySelector('[data-notify]'))) && (await p.locator('[data-concept]').count()) === 3);
   ok(`${label} /shop: touch screens are told to tap`, label === 'desktop' || /Tap a product/.test(await visText(p)));
-  // the drop date: the next new moon, in the future, one state everywhere
+  // the drop date: the next seasonal new moon (once a season), in the future, one state everywhere
   for (const r of ['/', '/drops']) {
-    await p.goto(base + r); await p.waitForTimeout(1300);
+    await p.goto(base + r); await settleRoute(p, r); await p.waitForTimeout(1300);
     const d = await p.evaluate(() => ({ date: document.querySelector('[data-drop-date]')?.textContent ?? '', bar: document.getElementById('announceDrop')?.textContent ?? '', days: Number(document.querySelector('#cd b')?.textContent ?? -1), hidden: document.querySelector('#cd')?.hidden, btn: document.querySelector('[data-notify="drop"]')?.textContent ?? '' }));
     const y = new Date().getFullYear(), today = new Date(); today.setHours(0, 0, 0, 0);
     const when = [y, y + 1].map(yy => new Date(`${d.date.replace(/^Tonight · /, '').replace(/^\w+, /, '')} ${yy}`)).find(x => !isNaN(x) && x >= today);
-    ok(`${label} ${r}: the drop date is the next new moon, not a date that has passed`, !!when && (when - today) / 864e5 <= 31 && !/October 11/.test(d.date), d.date);
-    // (home: Moon Drops is one line of the "Opening soon" strip now, with the date and no countdown; /drops keeps the countdown)
-    if (r === '/') ok(`${label} /: the strip's date and the bar tell the same story, and the drop cannot be bought`, (d.bar.includes(d.date.replace(/^Tonight · /, '')) || /tonight/i.test(d.bar)) && !/\$28|Add to cart/i.test(await p.locator('.soonflow').innerText()), JSON.stringify(d));
+    ok(`${label} ${r}: the drop date is the next seasonal drop, not a date that has passed`, !!when && (when - today) / 864e5 <= 120 && !/October 1[01]/.test(d.date), d.date);
+    // (home: Moon Drops is its own chapter with the date and no countdown; /drops keeps the countdown)
+    if (r === '/') ok(`${label} /: the chapter's date and the bar tell the same story, and the drop cannot be bought`, (d.bar.includes(d.date.replace(/^Tonight · /, '')) || /tonight/i.test(d.bar)) && !/\$28|Add to cart/i.test(await p.locator('.dropflow').innerText()), JSON.stringify(d));
     else {
       ok(`${label} ${r}: date, countdown, bar and button tell the same story`, d.bar.includes(d.date.replace(/^Tonight · /, '')) || /tonight/i.test(d.bar) ? (d.hidden || d.days >= 0) && /get notified/i.test(d.btn) : false, JSON.stringify(d));
       ok(`${label} ${r}: the drop shows no price and cannot be bought`, !/\$28|Add to cart/i.test(await p.locator('.drop-grid').innerText()));
@@ -119,7 +137,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
 { // the breathing orb on a phone: smaller, labelled, focusable, out of the way while scrolling down, never left over a button
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   for (const r of ['/shop', '/product/cabana', '/subscribe', '/gift', '/wall', '/coaching', '/book', '/reset']) {
-    await p.goto(base + r); await p.waitForTimeout(1300);
+    await p.goto(base + r); await settleRoute(p, r); await p.waitForTimeout(1300);
     const orb = p.locator('.breathorb');
     const meta = await orb.evaluate(o => ({ w: o.querySelector('.bo-core').getBoundingClientRect().width, label: o.getAttribute('aria-label'), tab: o.tabIndex }));
     ok(`phone ${r}: the orb is small, labelled and focusable`, meta.w <= 46 && /breath/i.test(meta.label ?? '') && meta.tab >= 0, JSON.stringify(meta));
@@ -158,16 +176,21 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   }
   await ctx.close();
 }
-{ // on the day of a new moon the one drop state says "tonight" everywhere
+{ // Moon Drops come once a season: the first new moon on or after each equinox and solstice (Meeus), one state everywhere
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, timezoneId: 'America/Vancouver' }); const p = await ctx.newPage(); await setupMocks(p);
-  await p.clock.setFixedTime(new Date('2026-11-08T12:00:00-08:00')); // the new moon of 9 Nov 2026 07:02 UTC is 8 Nov, 11:02 pm in White Rock
+  await p.clock.setFixedTime(new Date('2026-10-19T12:00:00-07:00'));
+  await p.goto(base + '/'); await p.waitForTimeout(1500);
+  const a = await p.evaluate(() => ({ date: document.querySelector('.dropflow [data-drop-date]').textContent, season: document.querySelector('.dropflow [data-drop-season]').textContent, bar: document.getElementById('announceDrop').textContent }));
+  // the December 2026 solstice is 21 Dec 20:50 UTC; the next new moon is 7 Jan 2027 20:24 UTC (12:24 pm in White Rock)
+  ok('seasonal drop: from 19 October 2026 the next drop is the winter one, Thursday, January 7 (not the November new moon)', a.date === 'Thursday, January 7' && a.season === 'winter' && /once a season/.test(a.bar) && /January 7/.test(a.bar), JSON.stringify(a));
+  await p.clock.setFixedTime(new Date('2027-01-07T09:00:00-08:00'));
   await p.goto(base + '/drops'); await p.waitForTimeout(1500);
   const s = await p.evaluate(() => ({ date: document.querySelector('[data-drop-date]').textContent, bar: document.getElementById('announceDrop').textContent, cd: document.querySelector('#cd').hidden, btn: document.querySelector('[data-notify="drop"]').textContent }));
-  ok('new-moon day: date, bar, countdown and button all say tonight', /Tonight/.test(s.date) && /November 8/.test(s.date) && /tonight/i.test(s.bar) && s.cd && /tonight/i.test(s.btn), JSON.stringify(s));
-  await p.clock.setFixedTime(new Date('2026-11-09T12:00:00-08:00'));
+  ok('drop day: date, bar, countdown and button all say tonight', /Tonight/.test(s.date) && /January 7/.test(s.date) && /tonight/i.test(s.bar) && s.cd && /tonight/i.test(s.btn), JSON.stringify(s));
+  await p.clock.setFixedTime(new Date('2027-01-08T12:00:00-08:00'));
   await p.goto(base + '/'); await p.waitForTimeout(1500);
   const n = await p.evaluate(() => document.querySelector('[data-drop-date]').textContent);
-  ok('the day after: it moves on to the next new moon (December 8)', /December 8/.test(n), n);
+  ok('the day after: it moves on to the spring drop (the March 2027 equinox, then the new moon of April 6), skipping the new moons between', /April 6/.test(n), n);
   await ctx.close();
 }
 // Send a Sky: one of Claire's candles tucked into the card's bottom corner changes with the sky (citrus and spice at golden hour, lavender at night; dawn is a plain

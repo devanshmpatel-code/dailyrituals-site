@@ -152,7 +152,7 @@ export function hydrate(root: ParentNode) {
 }
 
 // The moon glyph belongs to Moon Drops only (the owner keeps moons to that line); everything else uses the other marks.
-const HOME_GLYPHS: Record<string, Glyph> = { 1: 'sun', 2: 'star', 3: 'sun', 4: 'orbit', 5: 'flower' };
+const HOME_GLYPHS: Record<string, Glyph> = { 1: 'sun', 2: 'flower', 3: 'orbit', 4: 'star', 5: 'moon', 6: 'star', 7: 'sun' };
 function pickGlyph(text: string): Glyph {
   const t = text.toLowerCase();
   const n = t.match(/chapter (\d)/)?.[1];
@@ -165,7 +165,7 @@ function pickGlyph(text: string): Glyph {
   return 'star';
 }
 // Section-level eyebrows only: the small labels inside product notes and cards stay plain.
-const EYEBROWS = ['.head .col > .eyebrow:first-child', '.head .col > .chapter', '.cf-tx > .chapter', '.drop-grid .chapter', '.drop-grid .chapter + h1 ~ *', '.claire .tx > .eyebrow',
+const EYEBROWS = ['.head .col > .eyebrow:first-child', '.head .col > .chapter', '.cf-tx > .chapter', '.drop-grid .chapter', '.drop-grid .chapter + h1 ~ *', '.claire .tx > .eyebrow', '.claire .tx > .chapter', '.dp-tx > .chapter', '.rt-head > .chapter', '.rt-head > .eyebrow',
   '.c-hero .eyebrow', '.split > div > .eyebrow:first-child', '.bk-intro > .eyebrow', '.clubsoon .eyebrow', '.st-path > .eyebrow', '.ghead > .eyebrow', '.missing > .eyebrow',
   '.panel > .eyebrow:first-child', '.news > div > .eyebrow:first-child', '.check-in > div > .eyebrow:first-child', '.rep-grid .chapter', '.gift-grid .chapter', '.vote > .eyebrow', '.calc > .eyebrow',
   '.moonrow .eyebrow', '.soon-head > .eyebrow', '.cs-tx .eyebrow', '.acct-panel > .eyebrow', '.bk-aside > .eyebrow', '.help-contact > .eyebrow', '.night section > .eyebrow'].join(',');
