@@ -2,6 +2,7 @@ import { MOODS, FORMAT_LABEL, type Mood, type Format } from '../config';
 import { loadCatalogue, money, type Item } from '../wix';
 import { esc, errorBox, wireCommon, cardHTML } from '../ui';
 import { wireQuickAdd } from './shared';
+import { mountOffers } from './offers';
 import { mountWheel } from './wheel';
 import { givingStoryHTML, mountGivingStory } from './giving';
 import '../giftbook.css';
@@ -110,6 +111,7 @@ export async function renderExplore(app: HTMLElement, params: URLSearchParams = 
       <a role="tab" href="#/explore?tab=quiz" aria-selected="${tab === 'quiz'}">Take the quiz</a></div>
     <div id="wheelMount"><div class="sk-line"></div><div class="sk-line short"></div></div>
     <div id="exp"></div></div>`;
+  if (tab === 'quiz' || !window.matchMedia('(min-width: 1024px)').matches) mountOffers(app); // (the atlas wants the whole width on a desktop)
   const box = app.querySelector<HTMLElement>('#exp')!;
   let items: Item[];
   try { items = await loadCatalogue(); } catch (e) { app.querySelector('#wheelMount')!.innerHTML = errorBox(String((e as Error).message ?? e)); return; }
@@ -134,49 +136,63 @@ export async function renderExplore(app: HTMLElement, params: URLSearchParams = 
 }
 
 // ---------- Quiz (a tab of Find your scent) ----------
-const QUIZ: { q: string; a: [string, Mood][] }[] = [
-  { q: 'When do you want your scent to do the most?', a: [['First thing, before the day starts', 'fresh'], ['On the way out the door', 'sunny'], ['Midday, to reset', 'grounding'], ['Golden hour, when work ends', 'woody'], ['Late evening, to wind down', 'floral']] },
-  { q: 'Which place feels most like you?', a: [['A cold, clear shoreline', 'fresh'], ['A beach cabana in the sun', 'sunny'], ['A garden in full bloom', 'floral'], ['A cabin with a fire going', 'woody'], ['A quiet room with nothing on', 'grounding']] },
+// An option is [words, mood, draft]: draft marks wording Claire has not confirmed yet (shown highlighted with "Show drafts").
+type QOpt = [string, Mood, boolean?];
+const QUIZ: { q: string; qd?: boolean; a: QOpt[] }[] = [
+  { q: 'When do you want a pick-me-up?', qd: true, a: [['First thing, before the inbox opens', 'fresh', true], ['Heading out the door into the day', 'sunny', true], ['That 3 pm slump', 'grounding', true], ['When work ends and the evening starts', 'woody', true], ['Winding down before bed', 'floral', true]] },
+  { q: 'Which place feels most like you?', a: [['A cold, clear shoreline', 'fresh'], ['A beach cabana in the sun', 'sunny'], ['A garden in full bloom', 'floral'], ['A cabin with a fire going', 'woody'], ['In the middle of a forest', 'grounding', true]] },
   { q: 'Pick a weekend plan', a: [['A swim and a long walk', 'fresh'], ['A patio and something cold to drink', 'sunny'], ['Flowers, a book and a bath', 'floral'], ['A campfire with friends', 'woody'], ['Stretching, tea and no phone', 'grounding']] },
   { q: 'How should it make you feel?', a: [['Bright and clean', 'fresh'], ['Warm and playful', 'sunny'], ['Soft and romantic', 'floral'], ['Cosy and rooted', 'woody'], ['Calm and centred', 'grounding']] },
 ];
+const dspan = (html: string, draft?: boolean) => draft ? `<span class="d">${html}</span>` : html;
+
+/** What the quiz may recommend: real, in stock, priced, in a mood, and never the deodorant or a -need-pics seasonal. */
+export const quizBuyable = (i: Item) => i.inStock && i.priceMin > 0 && !!i.mood && i.format !== 'deodorant' && !/-need-pics$/.test(i.slug);
+
+/** The mood most answers point to; a tie goes to the latest answer among the tied moods (the last question is how it should feel). */
+export function quizMood(answers: Mood[]): Mood {
+  const tally = new Map<Mood, number>();
+  answers.forEach(m => tally.set(m, (tally.get(m) ?? 0) + 1));
+  const most = Math.max(...tally.values());
+  const tied = [...tally].filter(([, n]) => n === most).map(([k]) => k);
+  return [...answers].reverse().find(a => tied.includes(a))!;
+}
 
 function mountQuiz(el: HTMLElement, items: Item[]) {
-  const answers: Mood[] = [];
+  const answers: Mood[] = [], picks: number[] = [];
   const draw = () => {
     const step = answers.length;
     if (step < QUIZ.length) {
-      const { q, a } = QUIZ[step];
+      const { q, qd, a } = QUIZ[step];
       el.innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:16px;max-width:760px">
-          <span class="eyebrow">Question ${step + 1} of ${QUIZ.length}</span><h2 style="font-size:clamp(26px,3.4vw,38px)">${esc(q)}</h2>
-          <div style="display:flex;flex-direction:column;gap:10px">${a.map(([t], i) => `<button class="chip" style="justify-content:flex-start;text-align:left;min-height:48px" data-ans="${i}">${esc(t)}</button>`).join('')}</div>
+          <span class="eyebrow">Question ${step + 1} of ${QUIZ.length}</span><h2 style="font-size:clamp(26px,3.4vw,38px)">${dspan(esc(q), qd)}</h2>
+          <div style="display:flex;flex-direction:column;gap:10px">${a.map(([t, , d], i) => `<button class="chip" style="justify-content:flex-start;text-align:left;min-height:48px" data-ans="${i}">${dspan(esc(t), d)}</button>`).join('')}</div>
           ${step ? '<button class="btn line" id="qBack" style="align-self:flex-start">Back</button>' : ''}</div>`;
-      el.querySelectorAll<HTMLButtonElement>('[data-ans]').forEach(b => b.addEventListener('click', () => { answers.push(a[Number(b.dataset.ans)][1]); draw(); }));
-      el.querySelector('#qBack')?.addEventListener('click', () => { answers.pop(); draw(); });
+      el.querySelectorAll<HTMLButtonElement>('[data-ans]').forEach(b => b.addEventListener('click', () => { picks.push(Number(b.dataset.ans)); answers.push(a[Number(b.dataset.ans)][1]); draw(); }));
+      el.querySelector('#qBack')?.addEventListener('click', () => { answers.pop(); picks.pop(); draw(); });
       return;
     }
-    const tally = new Map<Mood, number>();
-    answers.forEach(m => tally.set(m, (tally.get(m) ?? 0) + 1));
-    // the mood most answers point to; a tie goes to the latest answer among the tied moods
-    const most = Math.max(...tally.values());
-    const tied = [...tally].filter(([, n]) => n === most).map(([k]) => k);
-    const top = [...answers].reverse().find(a => tied.includes(a))!;
+    const top = quizMood(answers);
     // the visitor's own words that led here
-    const why = answers.map((mood, i) => mood === top ? QUIZ[i].a.find(([, m]) => m === mood)![0] : '').filter(Boolean);
-    const quoted = why.map(t => `&ldquo;${esc(t.charAt(0).toLowerCase() + t.slice(1))}&rdquo;`);
+    const why = answers.map((mood, i) => mood === top ? QUIZ[i].a.find(([, m]) => m === mood)! : null).filter((o): o is QOpt => !!o);
+    const quoted = why.map(([t, , d]) => dspan(`&ldquo;${esc(t.charAt(0).toLowerCase() + t.slice(1))}&rdquo;`, d));
     const whyText = quoted.length === 1 ? quoted[0] : `${quoted.slice(0, -1).join(', ')} and ${quoted[quoted.length - 1]}`;
-    // the best match: the scent in this mood that comes in the most formats (one with a candle first), then by name
+    // the scents in the winning mood that can be bought today, the ones that come in the most formats first (one with a candle
+    // first), then by name. The same four answers always lead to the same scent; different answers move through the mood's scents
+    // (the sum of the option positions picks which), so every scent in a mood gets to be the best match for someone.
     const FMT_ORDER: Format[] = ['candle', 'roller', 'diffuser', 'deodorant'];
-    const inMood = items.filter(i => i.mood === top && i.inStock);
+    const inMood = items.filter(i => i.mood === top && quizBuyable(i));
     const byScent = new Map<string, Item[]>();
     inMood.forEach(i => byScent.set(i.scent, [...(byScent.get(i.scent) ?? []), i]));
     const hasCandle = (l: Item[]) => Number(l.some(i => i.format === 'candle'));
-    const best = [...byScent].sort(([a, x], [b, y]) => y.length - x.length || hasCandle(y) - hasCandle(x) || a.localeCompare(b))[0];
+    const scents = [...byScent].sort(([a, x], [b, y]) => y.length - x.length || hasCandle(y) - hasCandle(x) || a.localeCompare(b));
+    const best = scents.length ? scents[picks.reduce((n, p) => n + p, 0) % scents.length] : undefined;
     const bestFormats = best ? [...best[1]].sort((a, b) => FMT_ORDER.indexOf(a.format) - FMT_ORDER.indexOf(b.format)) : [];
     const lead = bestFormats[0];
     const rest = inMood.filter(i => !bestFormats.includes(i)).sort((a, b) => FMT_ORDER.indexOf(a.format) - FMT_ORDER.indexOf(b.format) || a.scent.localeCompare(b.scent));
+    const leadWord = (i: Item) => i.format === 'candle' ? `${i.scent} candle` : i.format === 'roller' ? `${i.scent} roller` : `${i.scent} mini diffuser`;
     let forWho: 'me' | 'gift' = 'me';
-    el.innerHTML = `<div class="qres">
+    el.innerHTML = `<div class="qres" data-mood="${top}" data-scent="${best ? esc(best[0]) : ''}" data-lead="${lead?.slug ?? ''}">
       <div class="qres-head"><span class="eyebrow">Your result</span><h2>Your mood: <span class="it">${MOODS[top].label}</span></h2>
         <p class="qres-why">Because you chose ${whyText}.</p></div>
       ${lead ? `<div class="qbest"><a class="qbest-ph" href="#/product/${lead.slug}" tabindex="-1" aria-hidden="true"><img src="${lead.image}" alt="" loading="lazy"></a>
@@ -191,14 +207,14 @@ function mountQuiz(el: HTMLElement, items: Item[]) {
     const cta = () => {
       el.querySelector('#qCta')!.innerHTML = forWho === 'gift'
         ? `<a class="btn" href="#/gift">Send it as a gift</a><a class="btn line" href="#/shop?f=all&m=${top}&s=featured">Shop this mood</a>`
-        : `${lead ? `<a class="btn" href="#/product/${lead.slug}">See the ${esc(lead.name)}${lead.format === 'candle' ? ' candle' : ''}</a>` : ''}<a class="btn line" href="#/shop?f=all&m=${top}&s=featured">Shop this mood</a><a class="btn line" href="#/explore?mood=${top}">See it in the atlas</a>`;
+        : `${lead ? `<a class="btn" id="qLead" href="#/product/${lead.slug}">See the ${esc(leadWord(lead))}</a>` : ''}<a class="btn line" href="#/shop?f=all&m=${top}&s=featured">Shop this mood</a><a class="btn line" href="#/explore?mood=${top}">See it in the atlas</a>`;
     };
     cta();
     el.querySelectorAll<HTMLButtonElement>('[data-for]').forEach(b => b.addEventListener('click', () => {
       forWho = b.dataset.for as 'me' | 'gift'; el.querySelectorAll('[data-for]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); cta();
     }));
     wireQuickAdd(el.querySelector<HTMLElement>('#qGrid')!, items);
-    el.querySelector('#qAgain')!.addEventListener('click', () => { answers.length = 0; draw(); });
+    el.querySelector('#qAgain')!.addEventListener('click', () => { answers.length = 0; picks.length = 0; draw(); });
     el.scrollIntoView({ block: 'start' });
   };
   draw();

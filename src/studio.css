@@ -35,6 +35,26 @@
 .moonarc .cm-glow { position: absolute; inset: -38%; border-radius: 50%; opacity: calc(var(--glow, 0) * .75); pointer-events: none;
   background: radial-gradient(circle closest-side, rgba(var(--orb-rgb, 255, 241, 198), .55) 34%, rgba(var(--orb-rgb, 255, 241, 198), .18) 62%, rgba(var(--orb-rgb, 255, 241, 198), 0) 100%); }
 .dayhero.sky-dark .moonarc .cm-glow { opacity: calc(var(--glow, 0) * 1); }
+/* each moment's full moon has its own light: dawn a rose-lilac halo, morning a soft clear gold, midday a bright warm white,
+   golden hour a deep amber, night a cool silver-blue round a candle-warm core (the lit wick). Three stops: core, halo, edge */
+.moonarc .cm[data-k] .cm-glow { background: radial-gradient(circle closest-side, rgba(var(--g1), .62) 30%, rgba(var(--g2), .3) 52%, rgba(var(--g3), .1) 74%, rgba(var(--g3), 0) 100%); }
+.moonarc .cm[data-k="dawn"] { --g1: 255, 214, 222; --g2: 238, 170, 206; --g3: 190, 168, 236; }
+.moonarc .cm[data-k="morning"] { --g1: 255, 246, 214; --g2: 255, 226, 150; --g3: 255, 236, 186; }
+.moonarc .cm[data-k="midday"] { --g1: 255, 255, 250; --g2: 255, 248, 228; --g3: 255, 244, 214; }
+.moonarc .cm[data-k="golden"] { --g1: 255, 206, 140; --g2: 255, 158, 66; --g3: 236, 112, 48; }
+.moonarc .cm[data-k="night"] { --g1: 255, 200, 140; --g2: 196, 214, 255; --g3: 150, 176, 240; }
+.moonarc .cm[data-k="midday"] .cm-glow { inset: -30%; }
+.moonarc .cm[data-k="golden"] .cm-glow { inset: -44%; }
+.moonarc .cm[data-k="night"] .cm-glow { inset: -46%; }
+/* the arc's title, over the ring of moons: desktop places it from moonarc.ts (centred over the arc, the ring starts under it);
+   on a phone it is the line above the band of moons. It keeps a soft halo of the sky behind it, light or dark */
+.dayhero .arc-title { margin: 0; font: 400 clamp(26px, 2.4vw, 36px)/1.12 var(--display); letter-spacing: -.01em; text-align: center; color: inherit; text-wrap: balance; pointer-events: none; }
+.dayhero .arc-title .it { font-size: 1.04em; }
+.dayhero:not(.sky-dark) .arc-title { text-shadow: 0 0 18px rgba(255, 248, 240, .85), 0 0 4px rgba(255, 248, 240, .7); }
+.dayhero.sky-dark .arc-title { text-shadow: 0 0 18px rgba(10, 6, 20, .9), 0 0 4px rgba(10, 6, 20, .8); }
+@media (min-width: 821px) { .day-visual .arc-title { position: absolute; left: 0; top: 0; z-index: 2; width: max-content; translate: var(--tx, 0) var(--ty, 0); } }
+@media (max-width: 820px) { .day-visual > .arc-title { order: -2; font-size: clamp(21px, 5.8vw, 26px); margin: 0 0 -12px; position: relative; z-index: 2; } }
+.dayhero.opening .arc-title { animation: openfade calc(1.6s * var(--os)) ease calc(1s * var(--os)) backwards; }
 /* its soft shadow on the sky's haze, away from the light */
 .moonarc .cm-sh { position: absolute; inset: 4%; border-radius: 50%; pointer-events: none; filter: blur(calc(var(--d, 140px) * .07));
   transform: translate(calc(var(--shx, 0) * var(--d, 140px)), calc(var(--shy, .05) * var(--d, 140px)));

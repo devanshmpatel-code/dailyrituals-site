@@ -1,0 +1,83 @@
+/* Live combos and discounts panel (src/pages/offers.ts).
+   Desktop (1024px and up): the left column of the page, sticky under the header.
+   Phones and tablets: a compact bar near the bottom, left of the breathing orb, opening upward into the full ladder. */
+.offers { --of-ink: var(--ink, #231A2B); --of-gold: var(--marigold-text, #9A6420); --of-ok: var(--eucalyptus, #2F5249); --of-line: var(--line, #E5DEE2);
+  box-sizing: border-box; color: var(--of-ink); font-size: 14px; line-height: 1.45; }
+.offers * { box-sizing: border-box; }
+.of-h { margin: 0; font: inherit; }
+.of-tag { font: 500 12px/1 var(--mono, "DM Mono", monospace); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted, #5D5363); border: 1px solid var(--of-line); border-radius: 999px; padding: 4px 8px; align-self: flex-start; }
+.of-live { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.of-money { font: 500 12px/1.2 var(--mono, "DM Mono", monospace); letter-spacing: .06em; color: var(--ink-muted, #5D5363); }
+.of-msg { font-weight: 600; font-size: 15px; line-height: 1.35; }
+.of-toggle { display: none; }
+.of-sub { margin: 18px 0 8px; font: 500 12px/1.2 var(--mono, "DM Mono", monospace); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-muted, #5D5363); }
+.of-sum { margin: 14px 0 0; display: grid; gap: 4px; }
+.of-sum div { display: flex; justify-content: space-between; gap: 12px; }
+.of-sum dt { color: var(--ink-muted, #5D5363); } .of-sum dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.of-save dd { color: var(--of-ok); }
+.of-ladder, .of-combos { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.of-tier { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 10px; row-gap: 2px; padding: 10px 12px; border: 1px solid var(--of-line); border-radius: 12px; background: rgba(255, 255, 255, .6); transition: background .4s, border-color .4s, box-shadow .4s; }
+.of-tier.on { background: var(--eucalyptus-soft, #E1EAE5); border-color: color-mix(in srgb, var(--of-ok) 40%, transparent); }
+.of-dot { grid-row: 1 / span 2; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--of-line); display: grid; place-items: center; color: transparent; background: #fff; transition: background .35s, color .35s, border-color .35s; align-self: start; margin-top: 1px; }
+.of-tier.on .of-dot { background: var(--of-ok); border-color: var(--of-ok); color: #fff; }
+.of-tx { display: flex; flex-wrap: wrap; column-gap: 6px; } .of-tx b { font-weight: 700; } .of-tx span { color: var(--ink-muted, #5D5363); }
+.of-st { font-size: 13px; color: var(--ink-muted, #5D5363); display: flex; align-items: center; gap: 8px; }
+.of-tier.on .of-st { color: var(--of-ok); font-weight: 600; }
+.of-meter { grid-column: 2; height: 4px; border-radius: 4px; background: rgba(35, 26, 43, .1); overflow: hidden; margin-top: 4px; }
+.of-meter i { display: block; height: 100%; border-radius: 4px; background: var(--of-gold); transition: width .5s cubic-bezier(.2, .7, .2, 1); }
+.of-tier.on .of-meter i { background: var(--of-ok); }
+.of-yay { font: normal 700 11px/1 var(--mono, "DM Mono", monospace); letter-spacing: .08em; text-transform: uppercase; color: #fff; background: var(--of-ok); border-radius: 999px; padding: 4px 8px; }
+.of-combo { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid var(--of-line); }
+.of-combo b { font-weight: 700; } .of-combo .muted { color: var(--ink-muted, #5D5363); }
+.of-gem { flex: none; width: 10px; height: 10px; margin-top: 6px; transform: rotate(45deg); background: var(--of-gold); border-radius: 2px; }
+.of-none, .of-nudge, .of-est { margin: 8px 0 0; color: var(--ink-muted, #5D5363); }
+.of-nudge a { color: var(--of-ink); font-weight: 600; text-underline-offset: 3px; }
+.of-est { padding-top: 10px; border-top: 1px dashed var(--of-line); margin-top: 14px; }
+
+/* the unlock: the ring lights, the tick draws itself, and the row glows once */
+@keyframes ofPop { 0% { transform: scale(.6); } 55% { transform: scale(1.22); } 100% { transform: scale(1); } }
+@keyframes ofRing { 0% { box-shadow: 0 0 0 0 rgba(47, 82, 73, .5); } 100% { box-shadow: 0 0 0 14px rgba(47, 82, 73, 0); } }
+@keyframes ofTick { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
+@keyframes ofGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(154, 100, 32, 0); } 35% { box-shadow: 0 6px 24px rgba(154, 100, 32, .28); } }
+@keyframes ofIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+.of-tier.just { animation: ofGlow 1.6s ease-out 1; }
+.of-tier.just .of-dot { animation: ofPop .6s cubic-bezier(.2, .7, .2, 1) 1, ofRing 1.1s ease-out 1; }
+.of-tier.just .of-tick { stroke-dasharray: 20; animation: ofTick .5s .2s ease-out both; }
+.of-tier.just .of-yay { animation: ofIn .5s .25s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .of-tier, .of-dot, .of-meter i { transition: none; }
+  .of-tier.just, .of-tier.just .of-dot, .of-tier.just .of-tick, .of-tier.just .of-yay, .offers { animation: none !important; }
+}
+
+/* ---------- desktop: the left column ---------- */
+@media (min-width: 1024px) {
+  .wrap.has-offers { display: grid; grid-template-columns: 232px minmax(0, 1fr); column-gap: 28px; align-content: start; }
+  .wrap.has-offers > :not(.offers) { grid-column: 2; }
+  .wrap.has-offers > .offers { display: block; grid-column: 1; grid-row: 1 / span 60; align-self: start; position: sticky; top: 104px; z-index: 2; margin-top: clamp(24px, 3vw, 48px); max-height: calc(100vh - 124px); overflow: auto; overscroll-behavior: contain;
+    padding: 18px 16px 16px; border: 1px solid var(--of-line); border-radius: 18px; background: rgba(255, 255, 255, .72); backdrop-filter: blur(8px); }
+  .offers .of-top { display: flex; flex-direction: column; gap: 10px; }
+  .offers .of-tag { order: 3; }
+  .offers .of-money { display: none; }
+}
+@media (min-width: 1280px) { .wrap.has-offers { grid-template-columns: 272px minmax(0, 1fr); column-gap: 36px; } }
+
+/* ---------- phones and tablets: the compact bar ---------- */
+@media (max-width: 1023.98px) {
+  .wrap.has-offers { padding-bottom: 96px; }
+  .offers { position: fixed; left: max(12px, env(safe-area-inset-left)); right: calc(max(16px, env(safe-area-inset-right)) + 58px + 14px); bottom: max(14px, env(safe-area-inset-bottom)); z-index: 44;
+    display: flex; flex-direction: column-reverse; gap: 8px; max-width: 560px; transition: translate .35s cubic-bezier(.2, .7, .2, 1), opacity .25s; }
+  .offers.of-away { translate: 0 140%; opacity: 0; pointer-events: none; }
+  .of-top { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; min-height: 52px; border-radius: 16px; background: rgba(255, 255, 255, .95); backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(35, 26, 43, .2); border: 1px solid var(--of-line); }
+  .of-h { display: none; }
+  .of-live { flex: 1 1 auto; }
+  .of-money { font-size: 12px; }
+  .of-msg { font-size: 13px; line-height: 1.25; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .of-tag { display: none; }
+  .of-toggle { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 44px; min-width: 44px; justify-content: center; padding: 0 12px; border-radius: 12px; border: 1px solid var(--of-line); background: #fff; color: var(--of-ink); font: 600 13px/1 inherit; cursor: pointer; }
+  .of-toggle svg { transition: rotate .3s; } .offers.open .of-toggle svg { rotate: 180deg; }
+  .of-details { display: none; max-height: min(60vh, 460px); overflow: auto; padding: 4px 16px 16px; border-radius: 16px; background: rgba(255, 255, 255, .98); box-shadow: 0 14px 40px rgba(35, 26, 43, .24); border: 1px solid var(--of-line); }
+  .offers.open .of-details { display: block; }
+  .of-sub:first-child { margin-top: 12px; }
+}
+@media (max-width: 400px) { .of-toggle span { display: none; } .of-toggle { padding: 0; } .of-top { padding-left: 12px; } }
+@media (prefers-reduced-motion: reduce) { .offers { transition: none; } }
