@@ -6,6 +6,7 @@ import { add } from '../cart';
 import { cardOrbit } from '../celestial';
 import { navigate } from '../router';
 import { MOODS, FORMAT_LABEL, type Mood, type Format } from '../config';
+import { mountOffers } from './offers';
 import '../shop.css';
 
 // Their pictures sit at the end of the page and show at about 170 to 300 px: lazy, sized, and offered in small widths.
@@ -60,6 +61,7 @@ function shopShell(): string {
 export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   app.innerHTML = shopShell();
   wireCommon(app);
+  mountOffers(app);
   const f = (params.get('f') ?? 'all') as Format | 'all';
   const m = (params.get('m') ?? 'all') as Mood | 'all';
   const s = params.get('s') ?? 'featured';

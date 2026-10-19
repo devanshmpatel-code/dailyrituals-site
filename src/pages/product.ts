@@ -1,4 +1,5 @@
 import { replaceRoute } from '../router';
+import { mountOffers } from './offers';
 import { mountLocalNav } from '../nav';
 import Product from '../canvas/pages/Product.html?raw';
 import { loadCatalogue, loadProduct, toItem, imgSrc, money, type Item } from '../wix';
@@ -70,6 +71,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
 
   app.innerHTML = fixImages(Product);
   wireCommon(app);
+  mountOffers(app);
   const $ = <T extends Element = HTMLElement>(sel: string) => app.querySelector<T>(sel);
 
   // candles: one photograph of Claire's real bench work under the gallery (a past pour, not named, so nothing reads as buyable)
