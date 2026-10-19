@@ -6,6 +6,7 @@ import { add } from '../cart';
 import { cardOrbit } from '../celestial';
 import { navigate } from '../router';
 import { MOODS, FORMAT_LABEL, SHOW_DEODORANT, type Mood, type Format } from '../config';
+import { mountOffers } from './offers';
 import '../shop.css';
 
 // Their pictures sit at the end of the page and show at about 170 to 300 px: lazy, sized, and offered in small widths.
@@ -60,6 +61,7 @@ function shopShell(): string {
 export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   app.innerHTML = shopShell();
   wireCommon(app);
+  mountOffers(app);
   let f = (params.get('f') ?? 'all') as Format | 'all';
   // the natural deodorant is hidden for now (SHOW_DEODORANT in config.ts): no chip for it, and an old ?f=deodorant link shows everything
   if (!SHOW_DEODORANT) { if (f === 'deodorant') f = 'all'; app.querySelectorAll('.toolbar a.chip[href*="f=deodorant"]').forEach(a => a.remove()); }
