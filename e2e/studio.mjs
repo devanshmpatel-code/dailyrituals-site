@@ -128,9 +128,10 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   await p.goto(base + '/drops?moon=jarrah'); await p.waitForSelector('#pm-jarrah'); await p.waitForTimeout(1200);
   ok(`${label}: a deep link lights its card in the archive`, await p.evaluate(() => { const c = document.querySelector('#pm-jarrah'); const r = c.getBoundingClientRect(); return c.classList.contains('on') && r.top >= 0 && r.bottom <= innerHeight; }));
 
-  // ---- shop: real format photographs on the candle and deodorant heads, the renders left for rollers and diffusers
+  // ---- shop: a real format photograph on the candle head, the renders left for rollers and diffusers
+  // (the deodorant is hidden for now, SHOW_DEODORANT in config.ts, so it has no group on the shop)
   await p.goto(base + '/shop'); await p.waitForSelector('.ghead'); await p.waitForTimeout(600);
-  ok(`${label}: candle and deodorant group heads carry a studio photograph`, await p.evaluate(() => { const h = [...document.querySelectorAll('.grid.grouped .ghead')]; const by = t => h.find(x => new RegExp(t, 'i').test(x.querySelector('h2')?.textContent ?? '')); return !!by('candle')?.querySelector('.ghead-ph[src*="studio"]') && !!by('deodorant')?.querySelector('.ghead-ph[src*="studio"]') && !by('roller')?.querySelector('.ghead-ph') && !by('diffuser')?.querySelector('.ghead-ph'); }));
+  ok(`${label}: the candle group head carries a studio photograph, and there is no deodorant group`, await p.evaluate(() => { const h = [...document.querySelectorAll('.grid.grouped .ghead')]; const by = t => h.find(x => new RegExp(t, 'i').test(x.querySelector('h2')?.textContent ?? '')); return !!by('candle')?.querySelector('.ghead-ph[src*="studio"]') && !by('deodorant') && !by('roller')?.querySelector('.ghead-ph') && !by('diffuser')?.querySelector('.ghead-ph'); }));
   await p.goto(base + '/shop?f=candle'); await p.waitForTimeout(1500);
   const chref = await p.evaluate(() => document.querySelector('a[href*="/product/"]')?.getAttribute('href'));
   await p.goto(base + chref.replace(/^#?\//, '/')); await p.waitForSelector('.pdp'); await p.waitForTimeout(1200);
