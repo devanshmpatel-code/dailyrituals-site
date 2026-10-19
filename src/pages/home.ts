@@ -205,7 +205,7 @@ function applyLook(app: HTMLElement, hour: number) {
   const L = look(hour); liveHour = hour;
   sky.style.background = `linear-gradient(160deg, ${L.sky[0]} 0%, ${L.sky[1]} 60%, ${L.sky[2]} 100%)`;
   setLook(app, L);
-  heroLook(L.sky, L.orbRgb, L.night);
+  heroLook(L.sky, L.orbRgb, L.night, hour);
   const stars = app.querySelector<HTMLElement>('#stars'); if (stars) stars.style.opacity = String(L.night);
   const glsky = getSky();
   glsky?.set({ hour, night: L.night, pal: L.sky, orb: L.orbRgb as [number, number, number] });

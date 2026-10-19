@@ -78,15 +78,16 @@ const alt = (slug: string) => ALT[slug] ?? `${byId[slug].name}: a candle seen fr
 // small moon, so the opening shows five of her past pours as moons on one ring, one for each time of day. The moment being
 // shown is the full moon at the front of the ring, the largest, glowing; the others wax and wane round it, and choosing
 // another time of day turns the ring until its candle is full. Florals at dawn, salt and green stones in the morning, a
-// single dried flower at midday, dried orange and cinnamon at golden hour, lavender at night. The faces are clean round
-// crops of her top-down photographs (public/img/studio/moons, made by tools/photo/moon_faces.py). They are past pours:
+// single dried flower at midday, dried orange and cinnamon at golden hour, lavender at night, now shown as plain candle tops:
+// the toppings retouched away, the wax and the wooden wick only (public/img/studio/moons/hero-*.webp, made from the clean
+// round crops by tools/photo/plain_moons.py), so each wick can tell the hour as a sundial. They are past pours:
 // the picture is described in general words, never names a scent and never links to a purchase.
 const HERO: Record<string, { top: string; alt: string }> = {
-  dawn: { top: 'spring-blooms', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the dawn sky. The full moon is a candle topped with dried flowers and petals" },
-  morning: { top: 'sea-salt-sage', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the morning sky. The full moon is a candle topped with salt crystals and green stones" },
-  midday: { top: 'mothers-garden', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the midday sky. The full moon is a candle topped with a single dried flower" },
-  golden: { top: 'apple-cider', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the golden-hour sky. The full moon is a candle topped with dried orange and cinnamon" },
-  night: { top: 'lavender-haze', alt: "Five of Claire's candles seen from above, topped by hand, arranged like the phases of the moon across the night sky. The full moon is a candle topped with dried lavender buds" },
+  dawn: { top: 'hero-dawn', alt: "Five of Claire's candles seen from above, plain wax and a wooden wick, arranged like the phases of the moon across the dawn sky. The wick's long shadow falls across the full moon" },
+  morning: { top: 'hero-morning', alt: "Five of Claire's candles seen from above, plain wax and a wooden wick, arranged like the phases of the moon across the morning sky. The wick's shadow on the full moon shortens as the sun climbs" },
+  midday: { top: 'hero-midday', alt: "Five of Claire's candles seen from above, plain wax and a wooden wick, arranged like the phases of the moon across the midday sky. The full moon's wick casts only a short shadow" },
+  golden: { top: 'hero-golden', alt: "Five of Claire's candles seen from above, plain wax and a wooden wick, arranged like the phases of the moon across the golden-hour sky. The wick's shadow on the full moon stretches long" },
+  night: { top: 'hero-night', alt: "Five of Claire's candles seen from above, plain wax and a wooden wick, arranged like the phases of the moon across the night sky. The full moon's wick is lit and warms the wax" },
 };
 /** The opening's picture: #dStack becomes one described picture (role img). It holds, hidden, the five photographs the moons
  *  are shaded from, one figure per moment; only the starting moment's loads at once, the rest carry data-src and load as soon
@@ -115,7 +116,7 @@ export function showHero(app: HTMLElement, key: string) {
   arc.show(key);
 }
 /** The hour's colours, and the sun's (or moon's) new place, for the moons' light. */
-export const heroLook = (sky: [string, string, string], orb: [number, number, number], night: number) => { lastLook = [sky, orb, night]; arc?.look(sky, orb, night); };
+export const heroLook = (sky: [string, string, string], orb: [number, number, number], night: number, hour?: number) => { lastLook = [sky, orb, night, hour]; arc?.look(sky, orb, night, hour); };
 export const heroLight = () => arc?.light();
 /** Leaving or re-rendering the home page: take the ring down so a fresh hero mounts its own. */
 export const resetHero = () => { arc?.destroy(); arc = null; };
