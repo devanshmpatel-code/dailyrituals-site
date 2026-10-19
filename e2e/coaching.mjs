@@ -47,9 +47,9 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
 
   // ---- both ways in
   const hrefs = await p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#app [data-cta]')].map(a => [a.dataset.cta, a.getAttribute('href')])));
-  ok(`${label}: the main call to action starts the free reset`, /\/reset$/.test(hrefs.reset) && /Start the free 7-day reset/.test(await p.locator('.co-hero [data-cta="reset"]').innerText()), hrefs.reset);
-  ok(`${label}: the second call to action books the free discovery call`, /\/book(\/[\w-]+)?$/.test(hrefs.call) && /discovery call/i.test(await p.locator('.co-hero [data-cta="call"]').innerText()), hrefs.call);
-  ok(`${label}: the reset and the call are offered again further down`, ['reset2', 'reset3', 'call2', 'call3'].every(k => hrefs[k] && /\/(reset|book)/.test(hrefs[k])), JSON.stringify(hrefs));
+  ok(`${label}: the 7-day reset is gone from the page`, !/7-day|7 day|Seven days/i.test(await p.locator('#app').innerText()) && (await p.locator('#app a[href$="/reset"]').count()) === 0);
+  ok(`${label}: the main call to action books the free discovery call`, /\/book(\/[\w-]+)?$/.test(hrefs.call) && /discovery call/i.test(await p.locator('.co-hero [data-cta="call"]').innerText()), hrefs.call);
+  ok(`${label}: the call is offered again further down`, ['call2', 'call3'].every(k => hrefs[k] && /\/book/.test(hrefs[k])), JSON.stringify(hrefs));
   ok(`${label}: one mindful minute is still offered in the opening`, (await p.locator('.c-hero [data-breathe]').count()) === 1);
 
   // ---- phones: the headline comes before Claire's photograph, and the bar never sits over the opening
@@ -206,7 +206,7 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
   ok(`${label}: the meter speaks of the pause light, not a flame`, /pause light: 4 of 4 steps lit/i.test(meter) && !/flame|candle/i.test(meter), meter);
   const fin = await p.evaluate(() => { const f = document.querySelector('.co-final'); return { light: f.querySelectorAll('.co-final-light .pl .pl-core').length, imgs: f.querySelectorAll('img').length, products: f.querySelectorAll('a[href*="/product/"]').length }; });
   ok(`${label}: the last call to action shows the same pause light, not a product`, fin.light === 1 && !fin.imgs && !fin.products, JSON.stringify(fin));
-  ok(`${label}: a completed loop leads to the free reset`, await p.locator('.cue-done').isVisible() && /\/reset$/.test(await p.locator('.cue-done a').getAttribute('href')));
+  ok(`${label}: a completed loop leads to the free discovery call`, await p.locator('.cue-done').isVisible() && /\/book/.test(await p.locator('.cue-done a').getAttribute('href')));
   ok(`${label}: the step text is real text for screen readers`, (await p.locator('.cue-h[aria-live="polite"]').count()) === 1 && (await p.locator('.cue-stage[aria-label]').count()) === 1);
 
   // ---- the cue kit: one section near the end, after the ways to begin and before the last call to action
@@ -232,11 +232,12 @@ for (const [label, vp, touch] of [['desktop', { width: 1440, height: 900 }, fals
   ok(`${label}: pictures below the opening load lazily`, lazy);
   if (touch) {
     await p.evaluate(() => document.querySelector('.co-work').scrollIntoView()); await p.waitForTimeout(700);
-    ok('phone: both free offers stay one tap away while reading', await p.evaluate(() => { const d = document.querySelector('#coDock'); const r = d.getBoundingClientRect(); return d.classList.contains('show') && r.top > innerHeight - 120 && r.bottom <= innerHeight &&/reset$/.test(d.querySelector('a').getAttribute('href')) && /\/book/.test(d.querySelectorAll('a')[1].getAttribute('href')); }));
+    const dk = await p.evaluate(() => { const d = document.querySelector('#coDock'); const r = d.getBoundingClientRect(); return { show: d.classList.contains('show'), top: Math.round(r.top), bottom: Math.round(r.bottom), ih: innerHeight, n: d.querySelectorAll('a').length, href: d.querySelector('a')?.getAttribute('href') }; });
+    ok('phone: the free call stays one tap away while reading', dk.show && dk.top > dk.ih - 120 && dk.bottom <= dk.ih && dk.n === 1 && /\/book/.test(dk.href ?? ''), JSON.stringify(dk));
     ok('phone: while the bar shows, anything scrolled to stops above it', await p.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom) >= document.querySelector('#coDock').offsetHeight + 12));
-    // it never sits over a control: with the loops' buttons, the cue kit or the reset's own button at the foot of the screen, it steps aside
+    // it never sits over a control: with the loops' buttons, the cue kit or the call's own button at the foot of the screen, it steps aside
     const aside = [];
-    for (const sel of ['#loopWrap .loopnav', '.cue-nav', '.co-kit-stage', '.co-reset-card .btn']) {
+    for (const sel of ['#loopWrap .loopnav', '.cue-nav', '.co-kit-stage', '.co-call-in .btn']) {
       await p.evaluate(s => { const r = document.querySelector(s).getBoundingClientRect(); scrollBy(0, r.bottom - innerHeight + 30); }, sel); await p.waitForTimeout(500);
       aside.push([sel, await p.evaluate(() => document.querySelector('#coDock').classList.contains('show'))]);
     }
@@ -333,7 +334,7 @@ for (const w of [1440, 1024, 768, 390, 360]) {
     await ctx.close();
   }
 }
-// ---------- booking: the page is named after what is being booked; with no times, the reset, the way back and the Monthly Ritual ----------
+// ---------- booking: the page is named after what is being booked; with no times, the way back and the Monthly Ritual sign-up ----------
 {
   const DISC = { _id: 'svc-disc', name: 'Discovery Call', mainSlug: { name: 'discovery-call' }, payment: { custom: { description: 'Free' } }, schedule: { availabilityConstraints: { sessionDurations: [20] } } };
   const PROG = { _id: 'svc-prog', name: 'Rewire Program', mainSlug: { name: 'rewire-program' }, payment: { fixed: { price: { value: '150' } } }, schedule: { availabilityConstraints: { sessionDurations: [60] } } };
@@ -344,20 +345,15 @@ for (const w of [1440, 1024, 768, 390, 360]) {
     const h = await p.evaluate(() => ({ h1: document.querySelector('.bk-title').innerText, eb: document.querySelector('.bk-intro > .eyebrow').innerText, title: document.title }));
     ok(`book ${label}: the title is the free discovery call, not "a session"`, /^Book your free discovery call$/.test(h.h1.trim()) && /discovery call/i.test(h.title) && !/session/i.test(h.h1 + h.title), JSON.stringify(h));
     ok(`book ${label}: the eyebrow names a free call with Claire`, /free/i.test(h.eb) && /Claire/i.test(h.eb), h.eb);
-    ok(`book ${label}: with no times, the reset and the way back to coaching stay`, (await p.locator('.bk-empty a[href$="/reset"]').count()) === 1 && (await p.locator('.bk-empty a[href$="/coaching"]').count()) === 1);
+    ok(`book ${label}: with no times, the Monthly Ritual sign-up and the way back to coaching are offered (no reset)`, (await p.locator('.bk-empty a[href$="/reset"]').count()) === 0 && (await p.locator('.bk-empty [data-bk-join]').count()) === 1 && (await p.locator('.bk-empty a[href$="/coaching"]').count()) === 1);
     ok(`book ${label}: and the Monthly Ritual sign-up says it is for hearing when times open`, /Join the Monthly Ritual to hear when times open/.test(await p.locator('.bk-notify').innerText()) && (await p.locator('#bkNform input[type=email]').count()) === 1 && !/@\w+\.\w+/.test(await p.locator('.bk-notify').innerText()));
     await p.fill('#bkEmail', 'someone@example.com'); await p.click('#bkNform button'); await p.waitForTimeout(300);
     ok(`book ${label}: signing up in the preview creates nothing and says so`, /switched off/i.test(await p.locator('#toast').innerText()));
     ok(`book ${label}: no sideways scroll`, (await noScroll(p)) <= 1);
     ok(`book ${label}: no JS errors`, errs.length === 0, errs.join(' | '));
-    // the reset: Claire's round portrait beside the sign-up, and a short look at Day 1 (drafts, no new claims)
-    await p.goto(base + '/reset'); await p.waitForSelector('#resetForm'); await p.waitForTimeout(600);
-    const rs = await p.evaluate(() => { const i = document.querySelector('.reset-join img.reset-claire'); const d = document.querySelector('.reset-day1'); const f = document.querySelector('#resetForm').getBoundingClientRect(), r = i?.getBoundingClientRect();
-      return { src: i?.getAttribute('src'), loaded: !!i && i.complete && i.naturalWidth > 0, round: i && getComputedStyle(i).borderRadius === '50%', near: !!r && Math.abs(r.top - f.top) < 260, items: d ? [...d.querySelectorAll('li')].map(li => !!li.querySelector('.d')) : [], t: d?.innerText ?? '' }; });
-    ok(`reset ${label}: Claire's round portrait sits with the sign-up`, /claire-round\.webp$/.test(rs.src ?? '') && rs.loaded && rs.round && rs.near, JSON.stringify(rs));
-    ok(`reset ${label}: a short look at Day 1, every line a draft for Claire`, rs.items.length === 3 && rs.items.every(Boolean) && /Day 1/.test(rs.t), JSON.stringify(rs.items));
-    ok(`reset ${label}: the Day 1 preview makes no health claims`, !/heal|cure|treat|therap|anxiety|stress relief|diagnos/i.test(rs.t), rs.t);
-    ok(`reset ${label}: no sideways scroll`, (await noScroll(p)) <= 1);
+    // the retired reset: an old link goes to the booking page
+    await p.goto(base + '/reset'); await p.waitForSelector('.bk-title'); await p.waitForTimeout(400);
+    ok(`reset ${label}: the old /reset link lands on the free discovery call`, /book/.test(p.url()), p.url());
     if (services.length) {
       await p.goto(base + '/book/rewire-program'); await p.waitForSelector('.bk-empty'); await p.waitForTimeout(300);
       ok(`book ${label}: another service is titled by its own name`, /^Book Rewire Program$/.test((await p.locator('.bk-title').innerText()).trim()) && /Rewire Program/.test(await p.title()), await p.locator('.bk-title').innerText());

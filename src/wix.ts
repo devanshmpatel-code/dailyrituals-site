@@ -3,7 +3,7 @@ import { productsV3, readOnlyVariantsV3 } from '@wix/stores';
 import { currentCartV2 } from '@wix/ecom';
 import { redirects } from '@wix/redirects';
 import {
-  WIX_CLIENT_ID, SCENT_MOOD, FORMAT_LABEL,
+  WIX_CLIENT_ID, SCENT_MOOD, FORMAT_LABEL, SHOW_DEODORANT,
   type Format, type Mood,
 } from './config';
 
@@ -143,7 +143,7 @@ export function loadCatalogue(): Promise<Item[]> {
       out.push(...res.items.map(toItem));
       while (res.hasNext()) { res = await res.next(); out.push(...res.items.map(toItem)); }
       saveTokens();
-      return out;
+      return SHOW_DEODORANT ? out : out.filter(i => i.format !== 'deodorant');
     })().catch(err => { catalogue = null; throw err; });
   }
   return catalogue;

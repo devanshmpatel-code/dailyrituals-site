@@ -56,10 +56,10 @@ const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :
   ok('phone: "View cart" opens the cart', await p.evaluate(() => !document.getElementById('overlay').hidden));
   // the free-shipping meter
   const ship1 = await p.evaluate(() => ({ t: document.querySelector('.drawer .ship')?.textContent ?? '', v: Number(document.querySelector('.drawer .ship .meter')?.getAttribute('aria-valuenow')), max: Number(document.querySelector('.drawer .ship .meter')?.getAttribute('aria-valuemax')) }));
-  ok('cart: the meter counts toward free shipping at $75', ship1.max === 75 && ship1.v === 12 && /Add \$63\.00 more for free shipping/.test(ship1.t), JSON.stringify(ship1));
-  for (let i = 0; i < 6; i++) { await p.locator('.drawer [data-inc]').first().click(); await p.waitForTimeout(150); }
+  ok('cart: the meter counts toward free shipping at $150', ship1.max === 150 && ship1.v === 12 && /Add \$138\.00 more for free shipping/.test(ship1.t), JSON.stringify(ship1));
+  for (let i = 0; i < 12; i++) { await p.locator('.drawer [data-inc]').first().click(); await p.waitForTimeout(150); }
   const ship2 = await p.evaluate(() => ({ t: document.querySelector('.drawer .ship')?.textContent ?? '', done: document.querySelector('.drawer .ship')?.classList.contains('done'), w: document.querySelector('.drawer .ship .meter div')?.style.width }));
-  ok('cart: past $75 the meter is full and says shipping is free', ship2.done && /Free shipping/i.test(ship2.t) && ship2.w === '100%', JSON.stringify(ship2));
+  ok('cart: past $150 the meter is full and says shipping is free', ship2.done && /Free shipping/i.test(ship2.t) && ship2.w === '100%', JSON.stringify(ship2));
   const cs = await smallTargets(p);
   ok('cart: every control is at least 44px', cs.length === 0, cs.join(' | '));
   ok('cart: a "Keep shopping" way back', (await p.locator('.drawer .df .keep').count()) === 1);
@@ -69,7 +69,7 @@ const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :
   await p.goto(base + '/product/cabana-fragrance-roller'); await p.waitForSelector('.gt-btn');
   ok('phone product: "Send as a gift" starts closed', (await p.getAttribute('.gt-btn', 'aria-expanded')) === 'false' && await p.locator('#giftPanel').isHidden());
   await p.click('.gt-btn');
-  ok('phone product: "Send as a gift" opens and leads to Send a Sunrise', (await p.getAttribute('.gt-btn', 'aria-expanded')) === 'true' && await p.locator('#giftPanel a[href$="/gift"]').isVisible());
+  ok('phone product: "Send as a gift" opens and leads to Send a Sky', (await p.getAttribute('.gt-btn', 'aria-expanded')) === 'true' && await p.locator('#giftPanel a[href$="/gift"]').isVisible());
   // quiz: the best match first, the reason in the visitor's words, and a gift branch
   await p.goto(base + '/explore?tab=quiz'); await p.waitForSelector('[data-ans]');
   for (let i = 0; i < 4; i++) { await p.locator('[data-ans="3"]').click(); await p.waitForTimeout(120); }
@@ -98,7 +98,7 @@ const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :
   ok('phone: no JS errors', errs.length === 0, errs.join(' | ').slice(0, 200));
   await ctx.close();
 }
-{ // Send a Sunrise: a live candle chosen on the gift page goes into the cart with the card details on its line
+{ // Send a Sky: a live candle chosen on the gift page goes into the cart with the card details on its line
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -160,7 +160,7 @@ for (const [w, h] of [[1440, 900], [390, 844]]) { // one card per scent: format 
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(base + '/shop'); await p.waitForSelector('.grid .scard'); await p.waitForTimeout(700);
   const names = await p.locator('.grid .card:not([data-concept]) h3').allInnerTexts();
-  ok(`${w} /shop: one card per scent (no scent twice)`, names.length === 17 && new Set(names).size === names.length, names.join(', '));
+  ok(`${w} /shop: one card per scent (no scent twice)`, names.length === 16 && new Set(names).size === names.length, names.join(', '));
   const cab = p.locator('.scard[data-scent="cabana"]');
   const state = () => cab.evaluate(c => ({ href: c.querySelector('a.sc-link').getAttribute('href'), ph: c.querySelector('a.sc-ph').getAttribute('href'), price: c.querySelector('.sc-price').textContent, sub: c.querySelector('.sc-sub').textContent, img: c.querySelector('img.main')?.getAttribute('src'), add: c.querySelector('.sc-add').textContent.replace(/\s+/g, ' ').trim(), pressed: c.querySelector('.sc-fmt[aria-pressed="true"]').getAttribute('aria-label') }));
   ok(`${w} /shop: Cabana's card offers its candle, roller and diffuser`, (await cab.locator('.sc-fmt').evaluateAll(bs => bs.map(x => x.getAttribute('aria-label')).join())) === 'Candle,Roller,Diffuser');
@@ -179,7 +179,7 @@ for (const [w, h] of [[1440, 900], [390, 844]]) { // one card per scent: format 
   const c1 = await count(p); await cab.locator('button.sc-add').click(); await p.waitForTimeout(600);
   const line = await p.evaluate(() => JSON.parse(localStorage.getItem('dr_cart') ?? '[]').find(l => l.slug === 'cabana'));
   ok(`${w} /shop: quick add on a candle adds the first size at that size's price`, (await count(p)) === c1 + 1 && /Cabana \(2 oz\) added/.test(await p.locator('#toast.on').innerText()) && !!line && line.choice === '2 oz' && line.price === 12, JSON.stringify(line));
-  ok(`${w} /shop: the deodorant (a choice of scent) leads to its page instead of guessing`, (await p.locator('.scard a.sc-add[href*="natural-deodorant"]').count()) === 1 && (await p.locator('.scard button[data-qa]').evaluateAll(bs => bs.some(x => /natural-deodorant/.test(x.closest('.scard').querySelector('a.sc-link').getAttribute('href'))))) === false);
+  ok(`${w} /shop: the natural deodorant is hidden for now (no card, no filter chip)`, (await p.locator('.scard a[href*="deodorant"]').count()) === 0 && (await p.locator('.toolbar a.chip[href*="f=deodorant"]').count()) === 0 && !/natural deodorant/i.test(await p.locator('main, #app').first().innerText()));
   ok(`${w} /shop: sizes read one way ("10 ml", never "10ml")`, !(await p.locator('.grid').innerText()).match(/\d(ml|oz)\b/i));
   const small = await p.locator('.scard :is(.sc-fmt, .sc-add)').evaluateAll(els => els.filter(e => { const r = e.getBoundingClientRect(); return r.width < 43.5 || r.height < 43.5; }).length);
   ok(`${w} /shop: format chips and quick add are at least 44px`, small === 0, String(small));
@@ -209,6 +209,33 @@ for (const [w, h] of [[1440, 900], [390, 844]]) { // one card per scent: format 
   const c0 = await count(p); await card.locator('button[data-qa]').click(); await p.waitForTimeout(500);
   ok('desktop /shop: quick add adds and offers "View cart"', (await count(p)) === c0 + 1 && (await p.locator('#toast.on .t-act').count()) === 2);
   await ctx.close();
+}
+{ // copy changes: the deodorant is hidden, free shipping is Canada over $150 only, no return window on product pages, Send a Sky
+  for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
+    const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
+    await p.goto(base + '/product/natural-deodorant'); await p.waitForSelector('h1'); await p.waitForTimeout(500);
+    const t = await p.locator('#app').innerText();
+    ok(`${label}: the deodorant's own address says it is not available right now, with a way to the shop`, /not available right now/i.test(t) && (await p.locator('#app a[href$="/shop"]').count()) >= 1 && (await p.locator('#addBtn').count()) === 0, t.slice(0, 120));
+    await p.goto(base + '/shop?f=deodorant'); await p.waitForSelector('.scard'); await p.waitForTimeout(400);
+    ok(`${label}: an old ?f=deodorant link shows the whole shop, without the deodorant`, (await p.locator('.scard').count()) > 6 && (await p.locator('.scard a[href*="deodorant"]').count()) === 0);
+    await p.goto(base + '/'); await p.waitForTimeout(600);
+    const bar = await p.locator('#announce').innerText();
+    ok(`${label}: the announcement bar says free shipping on Canadian orders over $150`, /Free shipping on Canadian orders over \$150/.test(bar), bar);
+    await p.goto(base + '/product/cabana'); await p.waitForSelector('#addBtn'); await p.waitForTimeout(500);
+    await p.locator('[data-tab="3"]').click(); await p.waitForTimeout(200);
+    const ship = await p.locator('[data-panel="3"]').innerText();
+    ok(`${label}: the product page's shipping tab has no 10-day return line and no old $75`, !/10 days|\$75/.test(ship) && !/10 days to start a return/i.test(await p.locator('#app').innerText()), ship);
+    const body = await p.locator('#app').innerText();
+    ok(`${label}: the product page offers the discovery call, not the 7-day reset`, !/7-day|reset/i.test(body.replace(/moment to reset/i, '')) && (await p.locator('#app a[href$="/book"]').count()) >= 1);
+    await p.goto(base + '/help'); await p.waitForSelector('.help-faq'); await p.waitForTimeout(300);
+    const help = await p.locator('#app').evaluate(e => e.textContent);
+    ok(`${label}: help says shipping is free on Canadian orders over $150`, /free on Canadian orders over \$150/.test(help) && !/\$75/.test(help));
+    await p.goto(base + '/gift'); await p.waitForSelector('#gCard'); await p.waitForTimeout(400);
+    const g = await p.locator('#app').innerText();
+    ok(`${label}: the gift page is Send a Sky`, /Send a\s+Sky/i.test(g) && !/Sunrise/.test(g), g.slice(0, 100));
+    ok(`${label}: the menus and footer say Send a Sky`, /Send a Sky/.test(await p.locator('footer').innerText()) && !/Sunrise/.test(await p.locator('footer').innerText()));
+    await ctx.close();
+  }
 }
 await b.close();
 console.log(`\n${res.filter(Boolean).length}/${res.length} passed`);

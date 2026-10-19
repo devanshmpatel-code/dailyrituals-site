@@ -8,7 +8,7 @@ const PAGES: Record<string, { title: string; intro: string; outline: string[] }>
   terms: { title: 'Terms of service', intro: 'The terms that apply when you use this website, buy products or book coaching.',
     outline: ['Using the website', 'Orders, pricing and payment', 'Shipping', 'Coaching sessions: booking, rescheduling and cancellation', 'Coaching is not therapy or medical care', 'Limitation of liability', 'Governing law', 'Contact'] },
   'refund-policy': { title: 'Refund policy', intro: 'Returns, exchanges and refunds for products and coaching.',
-    outline: ['How many days you have to start a return (confirm: the banner says 10 days)', 'Which items can be returned (opened candles, rollers, deodorant?)', 'Damaged or wrong items', 'Refund method and timing', 'Coaching session refunds and missed sessions', 'How to start a return'] },
+    outline: ['How many days you have to start a return (Claire to confirm)', 'Which items can be returned (opened candles, rollers, diffusers?)', 'Damaged or wrong items', 'Refund method and timing', 'Coaching session refunds and missed sessions', 'How to start a return'] },
 };
 
 export function renderLegal(app: HTMLElement, seg: string) {

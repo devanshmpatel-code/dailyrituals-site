@@ -17,7 +17,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await p.goto(base + '/shop'); await p.waitForSelector('.ghead');
   ok(`${label}: shop is grouped (scent families, then formats)`, (await p.locator('.grid.grouped .ghead').count()) >= 4);
   ok(`${label}: "Kits and boxes" is marked coming soon`, /Coming soon/i.test(await p.locator('.ghead.soon').innerText()));
-  if (label === 'mobile') ok('mobile: shop filters are one swipeable row', await p.evaluate(() => { const c = document.querySelector('.toolbar .chips'); return getComputedStyle(c).flexWrap === 'nowrap' && c.scrollWidth > c.clientWidth; }));
+  if (label === 'mobile') ok('mobile: shop filters are one swipeable row', await p.evaluate(() => { const c = document.querySelector('.toolbar .chips'); return getComputedStyle(c).flexWrap === 'nowrap' && /auto|scroll/.test(getComputedStyle(c).overflowX); }));
   await p.goto(base + '/club'); await p.waitForSelector('.clubsoon');
   ok(`${label}: Ritualists page says opening soon`, /opening soon/i.test(await p.locator('.clubsoon').innerText()));
   ok(`${label}: planned club details are drafts only`, !(await p.locator('.club-plan').isVisible()));
@@ -88,7 +88,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(`${label} /drops: "The archive" heading appears once`, (dt.match(/The archive/gi) ?? []).length === 1);
   ok(`${label} /drops: no "No caption yet" placeholders`, !/No caption yet/i.test(dt));
   ok(`${label} /drops: no lone grey moon disc`, (await p.locator('.drop-grid .moonrow .moon').count()) === 0);
-  // Send a Sunrise
+  // Send a Sky
   await p.goto(base + '/gift'); await p.waitForSelector('#gAdd');
   ok(`${label} /gift: the gift card and the Discovery Kit are coming soon and cannot be chosen`, await p.evaluate(() => [...document.querySelectorAll('.fmt-pick button')].filter(b => /gift card|Discovery Kit/i.test(b.textContent)).every(b => b.disabled && /Coming soon/i.test(b.textContent))));
   ok(`${label} /gift: the card names nobody until a name is typed`, !/Maya/i.test(await p.locator('#gCardTo').innerText()));
@@ -170,9 +170,9 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok('the day after: it moves on to the next new moon (December 8)', /December 8/.test(n), n);
   await ctx.close();
 }
-// Send a Sunrise: one of Claire's candles tucked into the card's bottom corner changes with the sky (florals at dawn, citrus
-// and spice at golden hour, lavender at night), lit to match, and never covers the note or the recipient line
-const TOPS = { dawn: ['spring-blooms', /dried flowers/], golden: ['mulled-wine', /orange.*star anise/], night: ['lavender-haze', /lavender/] };
+// Send a Sky: one of Claire's candles tucked into the card's bottom corner changes with the sky (citrus and spice at golden hour, lavender at night; dawn is a plain
+// cool sky with no candle), lit to match, and never covers the note or the recipient line
+const TOPS = { dawn: null, golden: ['mulled-wine', /orange.*star anise/], night: ['lavender-haze', /lavender/] };
 const hits = (a, c) => a.left < c.right - 1 && c.left < a.right - 1 && a.top < c.bottom - 1 && c.top < a.bottom - 1;
 for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
   const label = `${w}px${reduce ? ' reduced motion' : ''}`, phone = w < 500;
@@ -187,6 +187,7 @@ for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
     return { t: card.dataset.t, shown: shown.map(i => i.getAttribute('src')), loaded: shown.every(i => i.complete && i.naturalWidth > 0),
       hidden: [...card.querySelectorAll('.gc-tin img')].filter(i => Number(getComputedStyle(i).opacity) < .01).length,
       vis, tin: tin.toJSON(), card: cr.toJSON(), note: [...rng.getClientRects()].map(r => r.toJSON()), to: card.querySelector('#gCardTo').getBoundingClientRect().toJSON(),
+      candleShown: getComputedStyle(card.querySelector('.gc-candle')).visibility !== 'hidden' && Number(getComputedStyle(card.querySelector('.gc-candle')).opacity) > .01, bg: getComputedStyle(card.querySelector('.gc-sky i[data-layer="' + card.dataset.t + '"]')).backgroundImage,
       cap: document.querySelector('#gCandleCap').textContent, live: document.querySelector('#gCandleCap').getAttribute('aria-live'), aria: card.querySelector('.gc-candle').getAttribute('aria-hidden'),
       glow: getComputedStyle(card).getPropertyValue('--gcg').trim(), wick: Number(getComputedStyle(card.querySelector('.gc-wick')).opacity), dur: getComputedStyle(card.querySelector('.gc-tin img')).transitionDuration };
   });
@@ -194,6 +195,11 @@ for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
   for (const sky of ['dawn', 'golden', 'night']) {
     await p.locator(`button[data-sky="${sky}"]`).click(); await p.waitForTimeout(reduce ? 150 : 1500);
     const s = await state(); glows.push(s.glow);
+    if (sky === 'dawn') {
+      ok(`${label} /gift dawn: no candle on the card (the cool sky stands alone), and the line under it says so`, s.t === 'dawn' && !s.candleShown && /no candle/i.test(s.cap), JSON.stringify({ shown: s.candleShown, cap: s.cap }));
+      ok(`${label} /gift dawn: the sky is cool (lilac, blush, light blue), not amber`, /205, 184, 230/.test(s.bg) && /179, 217, 243/.test(s.bg) && !/242, 169, 126|224, 142, 90/.test(s.bg), s.bg);
+      continue;
+    }
     ok(`${label} /gift ${sky}: the card's candle shows its own topping (one candle, the others faded out)`, s.t === sky && s.shown.length === 1 && s.shown[0].includes(`/img/studio/moons/${TOPS[sky][0]}.webp`) && s.loaded && s.hidden === 2, JSON.stringify(s.shown));
     ok(`${label} /gift ${sky}: the line under the card names the topping, never a scent`, TOPS[sky][1].test(s.cap) && !/Spring Blooms|Mulled Wine|Lavender Haze/i.test(s.cap) && s.live === 'polite' && s.aria === 'true', s.cap);
     const cx = (s.vis.left + s.vis.right) / 2, cy = (s.vis.top + s.vis.bottom) / 2;
@@ -202,7 +208,7 @@ for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
     ok(`${label} /gift ${sky}: it covers neither the note nor the recipient line`, !s.note.some(r => hits(r, s.vis)) && !hits(s.to, s.vis));
   }
   const s = await state();
-  ok(`${label} /gift: the candle takes each sky's light (a different glow each time, the wick lit at night)`, new Set(glows).size === 3 && s.wick > .5, JSON.stringify(glows));
+  ok(`${label} /gift: the candle takes each sky's light (a different glow each time, the wick lit at night); golden hour and night keep their candle`, new Set(glows).size === 3 && s.wick > .5, JSON.stringify(glows));
   if (reduce) ok(`${label} /gift: with reduced motion the topping simply swaps`, /^0s(, 0s)*$/.test(s.dur), s.dur);
   else {
     // the longest note and a long name still keep clear of it
@@ -215,10 +221,10 @@ for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
   ok(`${label} /gift: no JS errors`, errs.length === 0, errs.join(' | '));
   await ctx.close();
 }
-{ // the home page's Send a Sunrise card is left as it was (no candle)
+{ // the home page's Send a Sky card is left as it was (no candle)
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); await setupMocks(p);
   await p.goto(base + '/'); await p.waitForTimeout(1200);
-  ok('home: the Send a Sunrise card there is unchanged (no candle in it)', await p.evaluate(() => !!document.querySelector('#gCard') && !document.querySelector('#gCard .gc-candle')));
+  ok('home: the Send a Sky card there is unchanged (no candle in it)', await p.evaluate(() => !!document.querySelector('#gCard') && !document.querySelector('#gCard .gc-candle')));
   await ctx.close();
 }
 await b.close(); process.exit(res.every(Boolean) ? 0 : 1);

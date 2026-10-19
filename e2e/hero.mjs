@@ -32,8 +32,9 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', 
   await pick(p, 'golden'); await p.locator('#dProducts .sp-coach').click(); await p.waitForURL('**/book');
   await p.waitForSelector('.bk-title'); ok(`${label}: the call offer opens booking for the free discovery call`, /Book your free discovery call/.test(await p.locator('.bk-title').innerText()));
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await pick(p, 'midday');
-  await p.locator('#dProducts .sp-coach').click(); await p.waitForURL('**/reset'); await p.waitForSelector('h1');
-  ok(`${label}: the reset offer opens the free reset`, /reset/i.test(await p.locator('h1').innerText()), await p.locator('h1').innerText());
+  await p.locator('#dProducts .sp-coach').click(); await p.waitForURL(/\/(reset|book)$/); await p.waitForSelector('h1');
+  // (the 7-day reset is retired: while the home page still links to /reset, that address redirects to the free discovery call)
+  ok(`${label}: the old reset offer lands on the free discovery call`, /discovery call|reset/i.test(await p.locator('h1').innerText()), await p.locator('h1').innerText());
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await pick(p, 'golden');
   await p.locator('#dProducts .sp-ritual').click(); await p.waitForURL('**/explore**');
   ok(`${label}: the ritual opens the scent wheel on its mood`, /Warm and woody/.test(await p.locator('.wpanel').innerText()));

@@ -26,8 +26,11 @@ export const TIME_ZONE = 'America/Vancouver';
 /** Ritualist points are not set up in Wix yet (no Loyalty app). Keep false until they are, so the cart never promises points. */
 export const LOYALTY_ENABLED = false;
 
-/** From the canvas announcement bar. */
-export const FREE_SHIPPING_THRESHOLD = 75;
+/** Free shipping applies to Canadian orders over this amount (the announcement bar, the cart meter and the product pages all read it). */
+export const FREE_SHIPPING_THRESHOLD = 150;
+
+/** The natural deodorant is hidden for now (shop, product links, menus, sitemap). It stays in Wix: set this to true to bring it back. */
+export const SHOW_DEODORANT = false;
 
 export type Mood = 'fresh' | 'sunny' | 'floral' | 'woody' | 'grounding';
 export type Format = 'roller' | 'diffuser' | 'candle' | 'deodorant';

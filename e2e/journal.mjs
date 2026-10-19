@@ -22,7 +22,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   for (const slug of ['wooden-wick', 'first-burn', 'candle-safety', 'wax-guide', 'candle-and-roller']) {
     await p.goto(base + '/journal/' + slug); await p.waitForSelector('.jr-body'); await p.waitForTimeout(300);
     const a = await p.evaluate(() => ({ h1: document.querySelector('h1')?.textContent.trim(), shop: [...document.querySelectorAll('.jr-shop a')].map(x => x.getAttribute('href')), src: [...document.querySelectorAll('.jr-sources a')].map(x => x.getAttribute('href')), draft: !!document.querySelector('.jr-body.d') }));
-    ok(`${label}: ${slug} has a title, a way to the shop, and is marked as a draft`, a.h1?.length > 10 && a.shop.length >= 1 && a.shop.every(h => /^\/(shop|reset|explore|coaching)/.test(h) || /^#\//.test(h)) && a.draft, JSON.stringify(a.shop));
+    ok(`${label}: ${slug} has a title, a way to the shop, and is marked as a draft`, a.h1?.length > 10 && a.shop.length >= 1 && a.shop.every(h => /^\/(shop|book|explore|coaching)/.test(h) || /^#\//.test(h)) && a.draft, JSON.stringify(a.shop));
     if (slug !== 'candle-and-roller') ok(`${label}: ${slug} cites its sources`, a.src.length >= 1 && a.src.every(u => /^https:\/\//.test(u)), a.src.join(' '));
     // the way back to the shop: real product cards at the foot, and a product link in the text where it names a format
     await p.waitForSelector('.jr-picks:not([hidden]) .card', { timeout: 10000 }).catch(() => {});

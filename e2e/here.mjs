@@ -19,7 +19,7 @@ for (const [label, vp, rm] of [['desktop', { width: 1280, height: 900 }, false],
   }
   await goCh(2);
   const txt = await p.locator('.jhere').innerText();
-  // (on a phone, chapter 2 is Send a Sunrise now, all words, so the card has stepped aside by design: it is reached by focus)
+  // (on a phone, chapter 2 is Send a Sky now, all words, so the card has stepped aside by design: it is reached by focus)
   if (await p.locator('.jhere.jh-off').count()) { await p.locator('.jhere').focus(); await p.keyboard.press('Enter'); } else await p.locator('.jhere').click();
   await settle(p);
   ok(`${label}: tapping the card goes to the next chapter`, Number(await p.locator('.jh-n').innerText()) === 3, txt.replace(/\s+/g, ' '));

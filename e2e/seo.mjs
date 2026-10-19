@@ -7,9 +7,9 @@ const origin = (process.env.BASE ?? 'http://localhost:4173/#').replace(/\/#\/?$/
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 
-const ROUTES = ['/', '/shop', '/explore', '/coaching', '/book', '/reset', '/subscribe', '/drops', '/gift', '/wall', '/club', '/story', '/giving', '/journal',
+const ROUTES = ['/', '/shop', '/explore', '/coaching', '/book', '/subscribe', '/drops', '/gift', '/wall', '/club', '/story', '/giving', '/journal',
   '/journal/wooden-wick', '/journal/first-burn', '/journal/candle-safety', '/journal/wax-guide', '/journal/candle-and-roller',
-  '/help', '/privacy', '/terms', '/accessibility', '/refund-policy', '/product/cabana', '/product/windy-beach-fragrance-roller', '/product/natural-deodorant'];
+  '/help', '/privacy', '/terms', '/accessibility', '/refund-policy', '/product/cabana', '/product/windy-beach-fragrance-roller'];
 
 const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
 const p = await ctx.newPage(); p.setDefaultTimeout(10000); await setupMocks(p);
@@ -65,7 +65,7 @@ ok('every route has a canonical path without a query or hash', bad.canon.length 
 ok('Open Graph title, description and url and the Twitter card match each page', bad.og.length === 0, bad.og.join(' | '));
 ok('og:image is absolute and resolves (200, an image)', bad.ogi.length === 0, bad.ogi.join(' | '));
 ok('Organization JSON-LD (name, url, logo, no invented sameAs) and no Product JSON-LD off product pages', bad.ld.length === 0, bad.ld.join(' | '));
-ok('product pages: Product JSON-LD with a live price, CAD, availability, and no ratings or reviews', productLd === 3, `${productLd} of 3`);
+ok('product pages: Product JSON-LD with a live price, CAD, availability, and no ratings or reviews', productLd === 2, `${productLd} of 2`);
 
 // the home page's own title leads with what the business does
 await p.goto(origin + '/'); await p.waitForTimeout(800);

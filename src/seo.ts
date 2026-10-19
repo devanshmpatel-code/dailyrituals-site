@@ -27,14 +27,13 @@ const HOME_DESC = 'Hand-poured scents and mindful rituals for every part of your
 // Copy below is taken from each page's own introduction (see the pages in src/pages and src/canvas/pages).
 const PAGES: Record<string, Page> = {
   '': { title: HOME_TITLE, description: HOME_DESC },
-  shop: { title: `Shop candles, rollers, diffusers & deodorant · ${SITE}`, description: 'Every scent comes in more than one format, so you can wear it, diffuse it and light it. Explore by scent, build a ritual or browse everything.' },
+  shop: { title: `Shop candles, rollers & diffusers · ${SITE}`, description: 'Every scent comes in more than one format, so you can wear it, diffuse it and light it. Explore by scent, build a ritual or browse everything.' },
   explore: { title: `Find your scent · ${SITE}`, description: 'Two ways in: read the scent atlas, where every mood is a constellation and every star a scent, or answer four quick questions.' },
   coaching: { title: `Neuro coaching with Claire · ${SITE}`, description: 'Neuro coaching helps you build new responses through small, repeatable daily practice. The first call is free.' },
-  book: { title: `Book your free discovery call · ${SITE}`, description: 'The free 7-day reset is ten minutes a day with Claire, self-paced, and a gentle way to see whether coaching is for you.' },
-  reset: { title: `Free 7-day reset · ${SITE}`, description: 'Ten minutes a day with Claire. A light, self-paced way to try the practices. Join with your email and the first day arrives in your inbox.' },
+  book: { title: `Book your free discovery call · ${SITE}`, description: 'A free 20-minute call with Claire to talk about your goals and whether neuro coaching is a fit.' },
   subscribe: { title: `Ritual on Repeat · ${SITE}`, description: 'Coming soon: the scents that shape your day, sent before you run out. It is not open yet.' },
   drops: { title: `Moon Drops · ${SITE}`, description: 'Moon Drop No. 01: a quiet, resinous scent for long nights, with smoked cedar, black tea and a little vanilla. An idea we are getting ready, not in the store yet.' },
-  gift: { title: `Send a Sunrise, a candle gift with a note · ${SITE}`, description: 'Choose a ritual, pick a sky for the card, write a note and choose the day it arrives. Any of Claire\'s candles can be sent as a gift.' },
+  gift: { title: `Send a Sky, a candle gift with a note · ${SITE}`, description: 'Choose a ritual, pick a sky for the card, write a note and choose the day it arrives. Any of Claire\'s candles can be sent as a gift.' },
   wall: { title: `Ritual Wall · ${SITE}`, description: 'Your rituals, in your own photos: a candle on the desk, a roller in your bag, a diffuser by the bed.' },
   club: { title: `The Ritualists · ${SITE}`, description: 'Our rewards club is opening soon. Join the Monthly Ritual to be first to hear, with a short practice from Claire each month.' },
   story: { title: `Meet the maker, Claire · ${SITE}`, description: 'Hi, I\'m Claire. I make clean products with intention, hand poured in small batches in British Columbia, and I coach people through the habits behind their days.' },
@@ -50,7 +49,7 @@ const PAGES: Record<string, Page> = {
   'order-confirmed': { title: `Order confirmed · ${SITE}`, description: HOME_DESC },
 };
 /** Older addresses that show another page: they point search engines at that page. */
-const ALIAS: Record<string, string> = { quiz: 'explore', build: 'explore', sets: 'explore' };
+const ALIAS: Record<string, string> = { quiz: 'explore', build: 'explore', sets: 'explore', reset: 'book' };
 
 /** Tidy and shorten to about 155 characters, at a word end. */
 export const clip = (s: string, max = 155) => {
@@ -98,7 +97,7 @@ async function resolve(): Promise<Resolved> {
     let items: Item[] = [];
     try { items = await loadCatalogue(); } catch { /* no catalogue: the page is generic */ }
     const it = items.find(i => i.slug === slug);
-    if (!it) return { ...base, title: `Product · ${SITE}`, description: HOME_DESC, path: `/product/${encodeURIComponent(slug)}` };
+    if (!it) return { ...base, title: /deodorant/i.test(slug) ? `Not available right now · ${SITE}` : `Product · ${SITE}`, description: HOME_DESC, path: `/product/${encodeURIComponent(slug)}` };
     const about = it.description.trim() || aboutOnPage();
     const description = clip(about ? (about.toLowerCase().includes(it.scent.toLowerCase()) ? about : `${it.name}. ${about}`) : `${it.name}${it.sizeLabel ? `, ${it.sizeLabel}` : ''}. Made in small batches in British Columbia.`);
     return { ...base, title: `${it.name} · ${SITE}`, description, path: `/product/${encodeURIComponent(it.slug)}`, image: it.image || base.image, imageAlt: it.name, product: it };

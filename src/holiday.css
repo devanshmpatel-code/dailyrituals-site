@@ -88,7 +88,7 @@ body.show-drafts .hol-stub .d { box-shadow: none; }
 .hol-flag > .d { position: relative; padding: 7px 14px 7px 20px; color: #fbf3e6; font: 700 10.5px/1.1 var(--body); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
 .hol-flag::after { content: ""; position: absolute; right: 0; top: 100%; width: 8px; height: 6px; background: #3a0d0d; clip-path: polygon(0 0, 100% 0, 0 100%); }
 body.show-drafts .hol-flag > .d { background: none; box-shadow: none; color: #fbf3e6; outline: 1px dashed rgba(247, 228, 198, .8); outline-offset: -4px; }
-/* on the home Send a Sunrise card the flag straddles the card's top edge, clear of the words printed on the card */
+/* on the home Send a Sky card the flag straddles the card's top edge, clear of the words printed on the card */
 .hol-flag.on-card { top: -11px; }
 /* on the dark Opening soon chapter the flag is gold */
 .soon-list .hol-flag { top: 10px; right: -6px; }

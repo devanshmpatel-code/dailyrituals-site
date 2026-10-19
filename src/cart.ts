@@ -12,11 +12,11 @@ export interface Line {
   price: number;
   image: string;
   qty: number;
-  gift?: GiftDetails;   // Send a Sunrise: the card and delivery details travel with the line
+  gift?: GiftDetails;   // Send a Sky: the card and delivery details travel with the line
 }
 
 /**
- * What the buyer wrote on Send a Sunrise. Kept on the local cart line (this browser only while checkout is off).
+ * What the buyer wrote on Send a Sky. Kept on the local cart line (this browser only while checkout is off).
  * Before checkout is switched on, these need a home in the live Wix cart (e.g. custom text fields on the candles, or a
  * buyer note at checkout): addToLiveCart below does not send them yet.
  */

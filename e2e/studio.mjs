@@ -1,5 +1,5 @@
 // The studio photographs: the opening's candle moons (five of Claire's candles seen from above, on one ring across the sky),
-// Claire's cut-out, From the studio (cut-outs, tins from above, a row of photographs), Ritual on Repeat and Send a Sunrise on
+// Claire's cut-out, From the studio (cut-outs, tins from above, a row of photographs), Ritual on Repeat and Send a Sky on
 // the home page, a bench photograph on candle pages, Claire's portrait on the coaching page,
 // the past-moons archive on Moon Drops (never buyable), and the real format photographs on the shop group heads.
 import { chromium } from 'playwright-core';
@@ -64,7 +64,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: the old moons panel is gone from home`, (await p.locator('#moons, .moons-arc').count()) === 0);
   ok(`${label}: no moon-phase rows on the home seams`, (await p.locator('.cel-div .cel-moonrow').count()) === 0 && (await p.locator('.cel-div').count()) > 0);
   ok(`${label}: footer and cart carry a star, not a moon`, (await p.locator('.foot-moon .cel-glyph, .dh-moon .cel-glyph').count()) === 2 && (await p.locator('.foot-moon [aria-label*="moon" i], .dh-moon [aria-label*="moon" i]').count()) === 0);
-  for (const [sel, name] of [['.gift-grid .ph-gift', 'Send a Sunrise']]) {
+  for (const [sel, name] of [['.gift-grid .ph-gift', 'Send a Sky']]) {
     await p.evaluate(s => document.querySelector(s).scrollIntoView({ block: 'center' }), sel); await p.waitForTimeout(900);
     const f = await p.evaluate(s => { const f = document.querySelector(s); const i = f.querySelector('img'); const r = f.getBoundingClientRect(); return { ok: i.complete && i.naturalWidth > 0 && i.alt.length > 15 && !!f.querySelector('figcaption .d'), w: r.width }; }, sel);
     ok(`${label}: ${name} carries a studio photograph with a draft caption`, f.ok && f.w > 150, JSON.stringify(f));
@@ -78,8 +78,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
     return phone ? ph.bottom <= tx.top + 1 && ph.width >= innerWidth * 0.6 && Math.abs((ph.left + ph.right) / 2 - innerWidth / 2) < 12 && tx.width >= innerWidth * 0.75 : ph.right < tx.left;
   }, label === 'phone'));
   await p.evaluate(() => document.querySelector('.studio .shelf').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500);
-  ok(`${label}: the shelf stands three real cut-outs that link to their products`, await p.evaluate(() => { const a = [...document.querySelectorAll('.studio .shelf a.sh-item')]; return a.length === 3 && a.every(x => { const i = x.querySelector('img'); return /studio\/cut\//.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0 && i.alt.length > 15 && /\/product\//.test(x.getAttribute('href')) && x.querySelector('.sh-tag').textContent.trim(); }); }));
-  ok(`${label}: the shelf names only scents in the catalogue (Verdant, Cabana, Westcoast)`, await p.evaluate(() => [...document.querySelectorAll('.studio .sh-tag')].map(t => t.textContent).join(' ')).then(t => /Verdant/.test(t) && /Cabana/.test(t) && /Westcoast/.test(t)));
+  ok(`${label}: the shelf stands two real cut-outs that link to their products`, await p.evaluate(() => { const a = [...document.querySelectorAll('.studio .shelf a.sh-item')]; return a.length === 2 && a.every(x => { const i = x.querySelector('img'); return /studio\/cut\//.test(i.currentSrc || i.src) && i.complete && i.naturalWidth > 0 && i.alt.length > 15 && /\/product\//.test(x.getAttribute('href')) && x.querySelector('.sh-tag').textContent.trim(); }); }));
+  ok(`${label}: the shelf names only scents in the catalogue (Verdant, Cabana; the deodorant is hidden)`, await p.evaluate(() => [...document.querySelectorAll('.studio .sh-tag')].map(t => t.textContent).join(' ')).then(t => /Verdant/.test(t) && /Cabana/.test(t) && !/Westcoast/.test(t)));
   await p.evaluate(() => document.querySelector('.studio .above').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
   ok(`${label}: seen from above, four toppings are labelled, none cut off by the panel`, await p.evaluate(() => { const box = document.querySelector('.studio .above').getBoundingClientRect(); const ls = [...document.querySelectorAll('.studio .ab-l > span')]; return ls.length === 4 && ls.every(l => { const r = l.getBoundingClientRect(); return r.left >= box.left - 1 && r.right <= box.right + 1 && r.width > 30; }); }));
   // the strip under "Seen from above": single candle tops (the clean round crops), one per topping, set down at different
@@ -153,7 +153,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
 
   // ---- shop: real format photographs on the candle and deodorant heads, the renders left for rollers and diffusers
   await p.goto(base + '/shop'); await p.waitForSelector('.ghead'); await p.waitForTimeout(600);
-  ok(`${label}: candle and deodorant group heads carry a studio photograph`, await p.evaluate(() => { const h = [...document.querySelectorAll('.grid.grouped .ghead')]; const by = t => h.find(x => new RegExp(t, 'i').test(x.querySelector('h2')?.textContent ?? '')); return !!by('candle')?.querySelector('.ghead-ph[src*="studio"]') && !!by('deodorant')?.querySelector('.ghead-ph[src*="studio"]') && !by('roller')?.querySelector('.ghead-ph') && !by('diffuser')?.querySelector('.ghead-ph'); }));
+  ok(`${label}: the candle group head carries a studio photograph (the deodorant is hidden)`, await p.evaluate(() => { const h = [...document.querySelectorAll('.grid.grouped .ghead')]; const by = t => h.find(x => new RegExp(t, 'i').test(x.querySelector('h2')?.textContent ?? '')); return !!by('candle')?.querySelector('.ghead-ph[src*="studio"]') && !by('deodorant') && !by('roller')?.querySelector('.ghead-ph') && !by('diffuser')?.querySelector('.ghead-ph'); }));
   await p.goto(base + '/shop?f=candle'); await p.waitForTimeout(1500);
   const chref = await p.evaluate(() => document.querySelector('a[href*="/product/"]')?.getAttribute('href'));
   await p.goto(base + chref.replace(/^#?\//, '/')); await p.waitForSelector('.pdp'); await p.waitForTimeout(1200);

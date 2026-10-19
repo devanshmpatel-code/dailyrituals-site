@@ -65,7 +65,7 @@ const dayKey = (s: string) => s.slice(0, 10);
 const fmtDay = (k: string) => new Date(`${k}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' });
 const fmtTime = (s: string) => new Date(s).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }).replace('a.m.', 'am').replace('p.m.', 'pm');
 
-// The page is named after what is being booked. Nearly every way in ("Book a free discovery call", the menus, the reset page)
+// The page is named after what is being booked. Nearly every way in ("Book a free discovery call", the menus)
 // promises the free 20-minute discovery call, so that is the title until a service says otherwise. (New titles are drafts.)
 const isDiscovery = (s: any) => !s || /discovery/i.test(s.name ?? '');
 const isFree = (s: any) => !s || /free/i.test(priceLabel(s)) || Number(s.payment?.fixed?.price?.value ?? NaN) === 0 || (!s.payment?.fixed && !s.payment?.custom);
@@ -85,16 +85,17 @@ function setBookHead(app: HTMLElement, s: any) {
   document.title = `${t} · Daily Rituals Co.`;
 }
 
-/** No times to book: the reset, the way back, and the Monthly Ritual sign-up (the site's newsletter form) to hear when times open. */
+/** No times to book: the way back, and the Monthly Ritual sign-up (the site's newsletter form) to hear when times open. */
 function bookEmptyHTML(heading: string) {
   return `<div class="bk-empty"><h3>${heading}</h3><p>New times are added as Claire's calendar opens up. Please check back soon.</p>
-    <div class="cta"><a class="btn euc" href="#/reset">Start the free 7-day reset</a><a class="btn line" href="#/coaching">Back to coaching</a></div>
+    <div class="cta"><a class="btn euc" href="#/book" data-bk-join>Join the Monthly Ritual</a><a class="btn line" href="#/coaching">Back to coaching</a></div>
     <div class="bk-notify" id="bkNotify"><b class="bk-notify-h"><span class="d">Join the Monthly Ritual to hear when times open</span></b>
       <p class="small muted"><span class="d">One email a month from Claire, with first word when new call times are added.</span> <span class="d confirm">[Confirm: will the Monthly Ritual announce new call times?]</span></p>
       <form class="nform" id="bkNform"><label for="bkEmail" hidden>Email address</label><input id="bkEmail" type="email" placeholder="Email address" autocomplete="email" required><button class="btn" type="submit">Join</button></form>
       <label class="small bk-consent"><input type="checkbox" required> Yes, email me rituals, drops and offers. Unsubscribe any time.</label></div></div>`;
 }
 function wireBookEmpty(app: HTMLElement) {
+  app.querySelector<HTMLAnchorElement>('[data-bk-join]')?.addEventListener('click', e => { e.preventDefault(); const b = app.querySelector<HTMLElement>('#bkNotify'); b?.scrollIntoView({ behavior: 'smooth', block: 'center' }); app.querySelector<HTMLInputElement>('#bkEmail')?.focus({ preventScroll: true }); });
   app.querySelector('#bkNform')?.addEventListener('submit', e => { e.preventDefault(); previewOff('Newsletter sign-up')(); });
 }
 
@@ -114,7 +115,7 @@ export async function renderBook(app: HTMLElement, slug?: string) {
     setBookHead(app, null);
     app.querySelector('#slots')!.innerHTML = bookEmptyHTML('No open times right now');
     wireBookEmpty(app);
-    app.querySelector('#svcInfo')!.innerHTML = `<div class="bk-aside"><span class="eyebrow">While you wait</span><h2>Try one practice <span class="it">today</span></h2><p>The free 7-day reset is ten minutes a day with Claire, self-paced, and a gentle way to see whether coaching is for you.</p></div>`;
+    app.querySelector('#svcInfo')!.innerHTML = `<div class="bk-aside"><span class="eyebrow">While you wait</span><h2><span class="d">Be first to hear <span class="it">when times open</span></span></h2><p><span class="d">Join the Monthly Ritual and Claire will let you know as soon as new call times are added.</span></p></div>`;
     return;
   }
 

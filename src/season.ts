@@ -81,7 +81,7 @@ export function decorateHoliday(root: ParentNode = document) {
     el.innerHTML = stubHTML(inner, 'cream');
   });
   tidyBarSeps();
-  // ribbon flags: the Moon Drops row in the Opening soon chapter (the next drop's date), and the home Send a Sunrise card
+  // ribbon flags: the Moon Drops row in the Opening soon chapter (the next drop's date), and the home Send a Sky card
   root.querySelectorAll<HTMLElement>('.soon-list a[href$="drops"]').forEach(a => {
     a.querySelector(':scope > .hol-flag')?.remove();
     host(a); a.insertAdjacentHTML('beforeend', flagHTML(dropShort()));

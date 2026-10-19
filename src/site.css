@@ -531,12 +531,18 @@ button.soon { background: transparent !important; color: inherit !important; bor
 .gcard[data-candle][data-t="golden"] { --gcg: rgba(255, 176, 96, 0); --gcr: rgba(255, 204, 128, .95); --gct: #FFE2BC; }
 .gcard[data-candle][data-t="night"] { --gcg: rgba(255, 176, 104, .3); --gcr: rgba(200, 208, 255, .7); --gct: #C9C3E4; }
 .gcard[data-candle] .sunarc { display: none; }
+/* dawn has no candle: the cool pre-sunrise sky stands alone, so the corner is clear and the note and name may run the full width
+   (golden hour and night keep their candle) */
+.gc-candle { transition: opacity .6s ease, visibility 0s; }
+.gcard[data-t="dawn"] .gc-candle { opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s .6s; }
+.gcard[data-candle][data-t="dawn"] .note { margin-bottom: 0; }
+.gcard[data-candle][data-t="dawn"] #gCardTo { max-width: none; }
 .gcard[data-candle] .note { margin-bottom: max(0px, calc(var(--cd) + var(--gci) - var(--gpad) - 4px)); }
 .gcard[data-candle] #gCardTo { max-width: calc(100% + var(--gpad) - var(--cd) - var(--gci) - 12px); }
 /* the sky: three layers that cross-fade (the card's own background is the one in view) */
 .gc-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .gc-sky i { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; }
-.gc-sky i[data-layer="dawn"] { background: linear-gradient(160deg, #2E2A4A 0%, #F2A97E 70%, #F8DCC0 100%); }
+.gc-sky i[data-layer="dawn"] { background: linear-gradient(160deg, #CDB8E6 0%, #F5C8D8 50%, #B3D9F3 100%); }
 .gc-sky i[data-layer="golden"] { background: linear-gradient(160deg, #6B4A6E 0%, #E08E5A 60%, #F4C98E 100%); }
 .gc-sky i[data-layer="night"] { background: linear-gradient(160deg, #0F0D1C 0%, #2A1F3D 60%, #4A2D4F 100%); }
 .gcard[data-t="dawn"] .gc-sky i[data-layer="dawn"], .gcard[data-t="golden"] .gc-sky i[data-layer="golden"], .gcard[data-t="night"] .gc-sky i[data-layer="night"] { opacity: 1; }

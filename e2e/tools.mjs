@@ -19,8 +19,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   // old links still land on Find your scent
   for (const r of ['/build', '/sets', '/explore']) { await p.goto(base + r); await p.waitForSelector('.wheel svg'); ok(`${label}: ${r} opens the scent wheel`, /Find your scent/.test(await p.locator('h1').innerText())); }
   await p.goto(base + '/explore'); await p.waitForSelector('.findtabs'); await p.locator('.findtabs a:has-text("Take the quiz")').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: the Take the quiz tab opens the quiz`, true);
-  await p.goto(base + '/reset'); await p.waitForSelector('#resetForm'); ok(`${label}: /reset is a real page with a sign-up`, /7-day/i.test(await p.locator('h1').innerText()));
-  await p.locator('#resetForm button').click(); await p.waitForTimeout(300); ok(`${label}: reset sign-up is safely off in preview`, /switched off/i.test(await p.locator('#toast').innerText()));
+  await p.goto(base + '/reset'); await p.waitForSelector('.bk-title'); await p.waitForTimeout(300); ok(`${label}: the retired /reset link goes to the free discovery call`, /book/.test(p.url()) && /discovery/i.test(await p.locator('h1').innerText()), p.url());
   // dead ends
   for (const r of ['/discovery', '/learn']) {
     await p.goto(base + r); await p.waitForTimeout(300); const t = await p.locator('main').innerText();

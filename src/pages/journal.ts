@@ -60,7 +60,7 @@ export const ARTICLES: Article[] = [
       <h2>Make the first burn a ritual</h2>
       <p>Choose an evening when you will be home for a while. Light it, take three slow breaths, and let it set the pace of the evening.</p>`,
     picks: { kind: 'candles', title: 'For your <span class="it">first burn</span>' }, hook: { afterP: 1, kind: 'candle' },
-    shop: [{ label: 'Shop candles', href: '#/shop?f=candle' }, { label: 'Try the free 7-day reset', href: '#/reset' }],
+    shop: [{ label: 'Shop candles', href: '#/shop?f=candle' }, { label: 'Book a free discovery call', href: '#/book' }],
     sources: [NCA_GUIDE, { label: 'Good Light Candles: candle 101', url: 'https://goodlightcandles.com/blogs/news/burning-a-candle' }],
   },
   {
@@ -110,7 +110,7 @@ export const ARTICLES: Article[] = [
       <p>A scent becomes a cue when you meet it again and again at the same moment. A candle sets that moment at home. A roller in the same scent family lets you bring it with you: to your desk, the school run, a hard conversation.</p>
       <h2>How to start</h2>
       <p>Pick one moment you want to feel different, such as the first ten minutes after work. Light the candle then, and take three slow breaths. Through the day, roll the matching scent on your wrists when you want to come back to that feeling.</p>
-      <p>Not sure where to start? <a href="#/explore">Find your scent</a>, or try the <a href="#/reset">free 7-day reset</a>.</p>`,
+      <p>Not sure where to start? <a href="#/explore">Find your scent</a>, or <span class="d">talk it through on a <a href="#/book">free 20-minute discovery call</a></span>.</p>`,
     picks: { kind: 'pair', title: 'One scent, <span class="it">two ways</span>' }, hook: { afterP: 1, kind: 'pair' },
     shop: [{ label: 'Shop rollers', href: '#/shop?f=roller' }, { label: 'Shop candles', href: '#/shop?f=candle' }, { label: 'Ritual pairs', href: '#/shop' }],
     sources: [],

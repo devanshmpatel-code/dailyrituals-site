@@ -1,7 +1,7 @@
 // The studio photographs: Claire's real past candle work, placed across the site.
 //
 // - home: the opening shows five of Claire's candles, seen from above, as moons across the sky (HERO below, pages/moonarc.ts);
-// - home: the studio collage after "Meet Claire", one photograph with Ritual on Repeat and one with Send a Sunrise;
+// - home: the studio collage after "Meet Claire", one photograph with Ritual on Repeat and one with Send a Sky;
 // - product pages: a "From the studio" photograph with the candle information;
 // - Moon Drops (/drops): the past moons archive. The circular "moons" in /img/studio/moons/ are cut from her own top-down
 //   photographs (the toppings are laid in a crescent along the rim). The opening's candle moons use the same faces.
@@ -13,7 +13,7 @@
 import { esc } from './ui';
 import { glyph, moonRow, tonightName } from './celestial';
 import { currentRoute } from './router';
-import { MOMENTS } from './config';
+import { MOMENTS, SHOW_DEODORANT } from './config';
 import { dropState } from './drop';
 import { mountMoonArc, type MoonArc } from './pages/moonarc';
 import { previewOff } from './pages/shared';
@@ -120,7 +120,7 @@ export const heroLight = () => arc?.light();
 /** Leaving or re-rendering the home page: take the ring down so a fresh hero mounts its own. */
 export const resetHero = () => { arc?.destroy(); arc = null; };
 
-// ---------- the extra photographs: Ritual on Repeat, Send a Sunrise, the product page ----------
+// ---------- the extra photographs: Ritual on Repeat, Send a Sky, the product page ----------
 // Each is a past pour shown as Claire's craft. The captions use only verified facts (topped by hand with real botanicals,
 // wooden wicks, White Rock, BC) and never name the scent, so nothing reads as buyable. The lines are drafts for Claire.
 // Every one is a cut-out (public/img/studio/tins): whole tins, no table or paper behind them.
@@ -128,7 +128,7 @@ const tinFigure = (file: string, w: number, h: number, altText: string, sizes: s
   `<figure class="studio-cut ${cls}"><img src="/img/studio/tins/${file}-900.webp" srcset="/img/studio/tins/${file}-480.webp 480w, /img/studio/tins/${file}-900.webp ${w}w" sizes="${sizes}" alt="${esc(altText)}" width="${w}" height="${h}" loading="lazy" decoding="async"><figcaption><span class="d">${cap}</span></figcaption></figure>`;
 /** Ritual on Repeat (its own page): a batch of tins. */
 export const repeatPhotoHTML = () => tinFigure('jarrah-top', 900, 745, 'A batch of candles in black tins seen from above, each topped by hand with wood chips beside its wooden wick', '(max-width: 900px) 90vw, 36vw', 'ph-repeat', 'Poured, topped and lidded by hand in White Rock, BC');
-/** Chapter 3, Send a Sunrise: a petal-topped pour tucked behind the gift card. */
+/** Chapter 3, Send a Sky: a petal-topped pour tucked behind the gift card. */
 export const giftPhotoHTML = () => tinFigure('sweet-romance', 532, 535, 'A candle seen from above, topped by hand with dried rose petals and small purple flowers', '(max-width: 820px) 50vw, 20vw', 'ph-gift', 'Finished by hand with dried petals');
 /** Product page (candles): tins from the bench beside the candle information. */
 export const productStudioHTML = () => tinFigure('mothers-day-florals', 900, 754, 'Candles in black tins seen from above, each topped by hand with a dried flower beside its wooden wick', '(max-width: 820px) 90vw, 40vw', 'ph-product', 'From the studio · wooden wicks, and every tin finished by hand');
@@ -173,11 +173,11 @@ export function studioHTML(): string {
       </ul>
     </div>
     <div class="st-show">
-      <div class="shelf" role="group" aria-label="Verdant and Cabana candles and Westcoast natural deodorant">
+      <div class="shelf" role="group" aria-label="Verdant and Cabana candles">
         <span class="sh-glow" aria-hidden="true"></span><span class="sh-top" aria-hidden="true"></span>
         <a class="sh-item sh-verdant" href="#/product/verdant">${cut('verdant', 900, 841, 'Verdant: a lit candle in a white glass tumbler with a black Daily Rituals label, a small lit black tin in front')}<span class="sh-flame f1" aria-hidden="true"></span><span class="sh-flame f2" aria-hidden="true"></span><span class="sh-tag">Verdant <small>candle</small></span></a>
         <a class="sh-item sh-cabana" href="#/product/cabana">${cut('cabana', 900, 900, 'Cabana: a lit candle in a white glass tumbler with a black Daily Rituals label, a small lit black tin and its labelled lid in front')}<span class="sh-flame f1" aria-hidden="true"></span><span class="sh-flame f2" aria-hidden="true"></span><span class="sh-tag">Cabana <small>candle</small></span></a>
-        <a class="sh-item sh-west" href="#/product/natural-deodorant">${cut('westcoast', 242, 462, 'Westcoast natural deodorant: an open jar on top of its black-labelled tin', false)}<span class="sh-tag">Westcoast <small>deodorant</small></span></a>
+        ${SHOW_DEODORANT ? `<a class="sh-item sh-west" href="#/product/natural-deodorant">${cut('westcoast', 242, 462, 'Westcoast natural deodorant: an open jar on top of its black-labelled tin', false)}<span class="sh-tag">Westcoast <small>deodorant</small></span></a>` : ''}
       </div>
       <figure class="above">
         <div class="ab-tins"><img src="/img/studio/tins/christmas-eve-900.webp" srcset="/img/studio/tins/christmas-eve-480.webp 480w, /img/studio/tins/christmas-eve-900.webp 766w" sizes="(max-width: 960px) 80vw, 28vw" alt="Two candles in black tins seen from above, topped by hand with a dried orange slice, star anise and pink peppercorns" width="766" height="890" loading="lazy" decoding="async">
