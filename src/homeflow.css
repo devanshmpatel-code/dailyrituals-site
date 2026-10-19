@@ -1,10 +1,10 @@
 /* ======================================================================
    The home page's running order (src/canvas/pages/Main.html): the live, buyable chapters first (moments, Meet Claire and the
-   studio, Send a Sunrise with the Journal, coaching); then one compact "Opening soon" chapter for everything not open yet
+   studio, Send a Sky with the Journal, coaching); then one compact "Opening soon" chapter for everything not open yet
    (the Ritualists, Ritual on Repeat, Moon Drops, the Ritual Wall) beside the one Monthly Ritual sign-up.
    ====================================================================== */
 
-/* the grounds after the Ritual Wall chapter left: Send a Sunrise now rises out of the sand, and the Opening soon chapter
+/* the grounds after the Ritual Wall chapter left: Send a Sky now rises out of the sand, and the Opening soon chapter
    falls from the coaching eucalyptus into the night the lotus and footer continue */
 main .df[data-ground="rose"] { background: linear-gradient(180deg, #EFE9E2 0, #F1DCD2 160px, #F1DCD2 100%) !important; }
 main .df[data-ground="dusk"] { background: linear-gradient(180deg, #2F5249 0, #2B1B33 200px, #191A33 480px, #171A33 100%) !important; }

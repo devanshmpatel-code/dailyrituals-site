@@ -12,7 +12,7 @@
 // Timing lives in CSS custom properties (nav.css) so reduced motion is one override and JS reads the same values.
 // Every route used here exists in main.ts's switch, static.ts's PAGES or the pages' own query handling.
 import './nav.css';
-import { MOODS, type Mood } from './config';
+import { MOODS, SHOW_DEODORANT, type Mood } from './config';
 import { esc, lockBackground } from './ui';
 
 const MOOD_KEYS = Object.keys(MOODS) as Mood[];
@@ -33,9 +33,9 @@ const moodLinks = (href: (m: Mood) => string): Link[] => MOOD_KEYS.map(m => ({ l
 const MENU: Entry[] = [
   {
     id: 'shop', label: 'Shop', href: '#/shop', constellation: true, columns: [
-      { kind: 'elevated', links: [{ label: 'Shop all', href: '#/shop' }, { label: 'Fragrance rollers', href: '#/shop?f=roller' }, { label: 'Mini diffusers', href: '#/shop?f=diffuser' }, { label: 'Candles', href: '#/shop?f=candle' }, { label: 'Natural deodorant', href: '#/shop?f=deodorant' }] },
+      { kind: 'elevated', links: [{ label: 'Shop all', href: '#/shop' }, { label: 'Fragrance rollers', href: '#/shop?f=roller' }, { label: 'Mini diffusers', href: '#/shop?f=diffuser' }, { label: 'Candles', href: '#/shop?f=candle' }, ...(SHOW_DEODORANT ? [{ label: 'Natural deodorant', href: '#/shop?f=deodorant' }] : [])] },
       { title: 'By mood', kind: 'moods', links: moodLinks(m => `#/shop?f=all&m=${m}&s=featured`) },
-      { title: 'More', phone: false, links: [{ label: 'Ritual on Repeat', href: '#/subscribe' }, { label: 'Moon Drops', href: '#/drops' }, { label: 'Send a Sunrise', href: '#/gift' }, { label: 'The Journal', href: '#/journal' }, { label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }] },
+      { title: 'More', phone: false, links: [{ label: 'Ritual on Repeat', href: '#/subscribe' }, { label: 'Moon Drops', href: '#/drops' }, { label: 'Send a Sky', href: '#/gift' }, { label: 'The Journal', href: '#/journal' }, { label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }] },
     ],
   },
   {
@@ -47,7 +47,7 @@ const MENU: Entry[] = [
   },
   {
     id: 'coaching', label: 'Coaching', href: '#/coaching', columns: [
-      { kind: 'elevated', links: [{ label: 'Free 7-day reset', href: '#/reset' }, { label: 'Free 20-minute discovery call', href: '#/book' }, { label: 'Neuro coaching', href: '#/coaching' }] },
+      { kind: 'elevated', links: [{ label: 'Free 20-minute discovery call', href: '#/book' }, { label: 'Neuro coaching', href: '#/coaching' }] },
       { title: 'About', links: [{ label: 'Meet the maker', href: '#/story' }, { label: 'Help and contact', href: '#/help' }] },
     ],
   },
@@ -192,7 +192,6 @@ function mountPhone(header: HTMLElement) {
     <div class="mm-scroll">
       <nav aria-label="Menu"><ul class="mm-rows">${phoneRows()}</ul></nav>
       <div class="mm-coach mm-row" style="--i:7"><span class="mm-eyebrow">Coaching with Claire</span>
-        <a href="#/reset"><b>Free 7-day reset</b><span>Self-paced, about 10 minutes a day</span></a>
         <a href="#/book"><b>Free 20-minute discovery call</b><span>See if coaching is a fit for you</span></a></div>
       <div class="mm-row" style="--i:8">${constellationHTML('mm-cst')}</div>
       <div class="mm-small mm-row" style="--i:9">${PHONE_SMALL.map(l => `<a href="${l.href}">${esc(l.label)}</a>`).join('')}</div>

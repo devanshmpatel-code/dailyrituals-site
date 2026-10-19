@@ -63,20 +63,20 @@ for (const [at, want, label] of [
     dust: !!document.querySelector('.hol-dust, #day canvas.hol'), stubs: document.querySelectorAll('.hol-stub').length,
     labels: [...document.querySelectorAll('.preview-bar .drafts-toggle')].map(l => l.textContent.trim()),
   }));
-  ok('off: the announcement bar is the plain line, buttons keep their ink, no stubs, flags, seal or dust', o.bar === 'Free shipping on Canadian orders over $75' && o.btn !== 'rgb(122, 31, 31)' && !o.dust && o.stubs === 0, JSON.stringify(o));
+  ok('off: the announcement bar is the plain line, buttons keep their ink, no stubs, flags, seal or dust', o.bar === 'Free shipping on Canadian orders over $150' && o.btn !== 'rgb(122, 31, 31)' && !o.dust && o.stubs === 0, JSON.stringify(o));
   ok('preview: the bar has a third toggle, "Holiday look", after the two that were there', o.labels.join('|') === 'Photo grade|Show drafts for Claire|Holiday look', o.labels.join('|'));
   ok('off: no sideways scroll', (await noScroll(p)) <= 1);
 
   // the toggle turns it on and back off, and remembers it
   await p.check('#seasonToggle'); await p.waitForTimeout(500);
   const on = await p.evaluate(() => ({ on: document.body.classList.contains('season-holiday'), stub: document.querySelector('.announce .an-live .hol-stub')?.textContent.trim(), dust: document.querySelector('.hol-dust')?.dataset.state, seal: !!document.querySelector('.claire-cut .hol-seal') }));
-  ok('toggle on: the layer appears at once (bar stub, seal, gold dust running)', on.on && /^Free shipping on Canadian orders over \$75/.test(on.stub ?? '') && on.seal && on.dust === 'running', JSON.stringify(on));
+  ok('toggle on: the layer appears at once (bar stub, seal, gold dust running)', on.on && /^Free shipping on Canadian orders over \$150/.test(on.stub ?? '') && on.seal && on.dust === 'running', JSON.stringify(on));
   await p.reload(); await p.waitForTimeout(1300);
   ok('toggle on: it is remembered in this browser after a reload', (await state(p)).on);
   await p.uncheck('#seasonToggle'); await p.waitForTimeout(400);
   const off = await state(p);
   const bar = await p.evaluate(() => document.querySelector('.announce .an-live').innerHTML);
-  ok('toggle off: every holiday piece is taken out and the bar is restored', !off.on && off.hol === 0 && bar === 'Free shipping on Canadian orders over $75', `${JSON.stringify(off)} ${bar}`);
+  ok('toggle off: every holiday piece is taken out and the bar is restored', !off.on && off.hol === 0 && bar === 'Free shipping on Canadian orders over $150', `${JSON.stringify(off)} ${bar}`);
   await p.reload(); await p.waitForTimeout(1200);
   ok('toggle off in October: back to following the calendar (off)', !(await state(p)).on);
   await ctx.close();
@@ -117,11 +117,11 @@ for (const at of ['2026-11-20T18:00:00', '2026-12-20T18:00:00']) {
       rot: getComputedStyle(document.querySelector('.announce .hol-stub')).rotate, fs: getComputedStyle(document.querySelector('.announce .hol-stub')).fontSize,
     };
   });
-  ok('on: free shipping sits in a ticket stub in the announcement bar, in its own words', d.bar === 'Free shipping on Canadian orders over $75', d.bar);
+  ok('on: free shipping sits in a ticket stub in the announcement bar, in its own words', d.bar === 'Free shipping on Canadian orders over $150', d.bar);
   ok('on: the bar\'s ticket sits level at 13.5px', (d.rot === 'none' || d.rot === '0deg') && d.fs === '13.5px', `${d.rot} ${d.fs}`);
   ok('on: the Moon Drops row has a ribbon flag with the computed next drop date (the seal\'s date), a draft', !!d.moon && d.moon.t === d.sealDay && /^([A-Z][a-z]{2} \d{1,2}|Tonight)$/.test(d.moon.t) && d.moon.d && d.moon.pe === 'none', `${JSON.stringify(d.moon)} ${d.sealDay}`);
   ok('on: the seal reads NEXT MOON DROP over the date', /^next moon drop$/i.test(d.sealLabel ?? ''), d.sealLabel);
-  ok('on: the home Send a Sunrise card has a "Gift it" ribbon flag, a draft', d.gift?.t === 'Gift it' && d.gift.d && d.gift.pe === 'none', JSON.stringify(d.gift));
+  ok('on: the home Send a Sky card has a "Gift it" ribbon flag, a draft', d.gift?.t === 'Gift it' && d.gift.d && d.gift.pe === 'none', JSON.stringify(d.gift));
   ok('on: the seal\'s words are drafts and it takes no taps', d.seal && d.sealPe === 'none');
 
   const cover = await coverHits(p);

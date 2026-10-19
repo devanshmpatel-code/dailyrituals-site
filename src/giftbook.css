@@ -1,6 +1,6 @@
-/* Send a Sunrise (a live candle chosen on the page), the booking page's empty state, and the 7-day reset's Day 1 and portrait. */
+/* Send a Sky (a live candle chosen on the page) and the booking page's empty state. */
 
-/* ---------- Send a Sunrise: the candle list under "Gift a candle" ---------- */
+/* ---------- Send a Sky: the candle list under "Gift a candle" ---------- */
 .gr-livebox { display: flex; flex-direction: column; gap: 10px; margin-bottom: -6px; }
 .gr-live.on { cursor: default; }
 .gr-live.on:hover { transform: none; }
@@ -58,17 +58,3 @@
 .bk-consent { display: flex; gap: 8px; align-items: flex-start; min-height: 44px; }
 .bk-consent input { margin-top: 4px; }
 @media (max-width: 560px) { .bk-notify .nform .btn { flex: 1 1 100%; } }
-
-/* ---------- the 7-day reset: Claire beside the sign-up, and a look at Day 1 ---------- */
-.reset-who { display: flex; gap: 16px; align-items: center; }
-.reset-claire { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(201, 163, 90, .6), 0 0 0 7px rgba(201, 163, 90, .14); }
-.reset-who > span { display: flex; flex-direction: column; gap: 4px; }
-.reset-by { font-size: 14px; color: var(--ink-2, #5E5361); }
-.reset-day1 { margin-top: 18px; padding: clamp(18px, 2.4vw, 26px); border-radius: 28px 8px 28px 8px; background: #E9EFE9; display: flex; flex-direction: column; gap: 10px; }
-.reset-day1-h { font-size: clamp(24px, 2.4vw, 30px); margin: 0; }
-.reset-day1 ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.reset-day1 li { display: flex; flex-direction: column; gap: 2px; padding-left: 16px; border-left: 2px solid var(--euc, #2F5B4E); }
-.reset-day1 li b { font-weight: 600; }
-.reset-day1 li > span { color: var(--ink-2, #5E5361); }
-.reset-day1 p { margin: 0; }
-@media (max-width: 400px) { .reset-claire { width: 68px; height: 68px; } }

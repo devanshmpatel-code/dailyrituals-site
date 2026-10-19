@@ -2,7 +2,7 @@
    The studio photographs (src/moons.ts): Claire's real candles across the site.
    - home: the hero arch shows her past candle work for the hour (pictures in config MOMENTS);
    - home: Claire's cut-out in Meet Claire; From the studio (cut-outs on a lit shelf, tins from above, a strip of candle tops);
-     one photograph each with Ritual on Repeat and Send a Sunrise;
+     one photograph each with Ritual on Repeat and Send a Sky;
    - product pages: a "From the studio" photograph beside the candle information;
    - Moon Drops: the past moons archive (never buyable), the only place the moon idea lives;
    - coaching and story: Claire's portrait; shop: real format photographs on the group heads.
@@ -104,7 +104,7 @@
 /* Ritual on Repeat: a batch of tins under the chapter's words, leaning a little */
 .ph-repeat { width: min(78%, 300px); margin: 18px 0 8px 6%; }
 .ph-repeat img { transform: rotate(-4deg); }
-/* Send a Sunrise: a single pour tucked against the gift card, like a candle set down beside the note */
+/* Send a Sky: a single pour tucked against the gift card, like a candle set down beside the note */
 .gift-grid > div:has(.ph-gift) { position: relative; padding: 0 0 clamp(170px, 14vw, 210px) clamp(28px, 4vw, 56px); }
 .gift-grid .gcard { position: relative; z-index: 1; }
 .ph-gift { position: absolute; left: -6px; bottom: 0; width: clamp(150px, 28%, 200px); z-index: 2; }

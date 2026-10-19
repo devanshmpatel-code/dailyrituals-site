@@ -1,4 +1,4 @@
-// Send a Sunrise: gift a candle without leaving the page.
+// Send a Sky: gift a candle without leaving the page.
 // The candle list is the live catalogue (candles that are on sale and in stock, with their real sizes and prices); the gift
 // sets stay "coming soon". "Add gift to cart" puts the chosen candle in the cart with the card details on the line (the
 // note, who it is for, the day it should arrive on or after, the card's sky and "hide prices"), and the cart drawer shows
@@ -31,6 +31,16 @@ export function giftLineHTML(g: GiftDetails): string {
     g.sky && SKY_NAME[g.sky] ? `<span><span class="d">${SKY_NAME[g.sky]} card</span></span>` : '',
   ].filter(Boolean);
   return `<div class="li-gift"><span class="li-gift-tag"><span class="d">Gift</span></span><span class="li-gift-meta">${bits.join('<span aria-hidden="true"> · </span>')}</span>${g.note ? `<q class="li-gift-note">${esc(g.note)}</q>` : ''}</div>`;
+}
+
+/** Dawn is a plain, cool sky with no candle on the card, so the line under the card says so; the other skies keep theirs (wired in home.ts). */
+export function wireSkyCaption(app: HTMLElement) {
+  const cap = app.querySelector<HTMLElement>('#gCandleCap');
+  const card = app.querySelector<HTMLElement>('#gCard');
+  if (!cap || !card?.hasAttribute('data-candle')) return;
+  app.querySelectorAll<HTMLButtonElement>('button[data-sky]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.sky === 'dawn') cap.innerHTML = '<span class="d">Dawn is the quiet sky before sunrise, with no candle on the card.</span>';
+  }));
 }
 
 export function wireGift(app: HTMLElement, items: Item[]) {

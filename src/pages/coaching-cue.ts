@@ -5,7 +5,7 @@
 // six out), until the loop is complete and it glows in full. Through the glass the ring shows upside down, as it would
 // through a real glass ball, its lit quarters included. With reduced motion the same four steps are shown flat, all at once,
 // around a still, fully lit sphere.
-// The step names and most lines come from the page's habit loop (loop.ts) and Day 3 of the reset; every line is a draft for Claire.
+// The step names and most lines come from the page's habit loop (loop.ts) and the method Claire teaches; every line is a draft for Claire.
 
 type Icon = 'scent' | 'pause' | 'lotus' | 'sprout';
 type Step = { label: string; title: string; text: string; icon: Icon; hue: string };
@@ -52,8 +52,8 @@ function staticView(root: HTMLElement) {
     <ol class="cue-list" aria-label="The calm cue loop, four steps">${CUE_STEPS.map((s, i) => `<li style="--hue:${s.hue}">
       <span class="cue-n">${String(i + 1).padStart(2, '0')}</span>${icon(s.icon, 'cue-ic')}
       <h3>${s.label}<small>${s.title}</small></h3><p><span class="d">${s.text}</span></p></li>`).join('')}</ol></div>
-    <div class="cue-done cue-done-static"><p><span class="d">Practised daily, the scent becomes the start of a calm pause. Day 3 of the free reset walks you through it.</span></p>
-      <a class="btn co-gold" href="#/reset">Try it in the free 7-day reset</a></div>`;
+    <div class="cue-done cue-done-static"><p><span class="d">Practised daily, the scent becomes the start of a calm pause. Claire can walk you through it on a free call.</span></p>
+      <a class="btn co-gold" href="#/book">Book a free discovery call</a></div>`;
 }
 
 export function mountCue(root: HTMLElement | null) {
@@ -93,8 +93,8 @@ export function mountCue(root: HTMLElement | null) {
         <button class="cue-arrow" type="button" data-go="1" aria-label="Next step"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <div class="cue-meter"><span class="cue-bar"><i></i></span><span class="cue-mtx" aria-live="polite"><span class="d">The pause light:</span> <b>1</b> of ${N} steps lit</span></div>
-      <div class="cue-done" hidden><p><span class="d">That is one full loop. Practised daily, the scent becomes the start of a calm pause. Day 3 of the free reset walks you through it.</span></p>
-        <a class="btn co-gold" href="#/reset" data-cta="cue-reset">Try it in the free 7-day reset</a></div>
+      <div class="cue-done" hidden><p><span class="d">That is one full loop. Practised daily, the scent becomes the start of a calm pause. Claire can walk you through it on a free call.</span></p>
+        <a class="btn co-gold" href="#/book" data-cta="cue-call">Book a free discovery call</a></div>
     </div></div>`;
 
   const stage = root.querySelector<HTMLElement>('.cue-stage')!;

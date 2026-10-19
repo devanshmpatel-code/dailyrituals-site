@@ -153,7 +153,7 @@ function reveal(app: HTMLElement) {
 
 /** Phones: a small bar with both free offers once the opening's buttons have been scrolled past (not before: on the first
  * screen it would sit over the opening's own words), hidden again at the last call to action. It also steps aside while the
- * foot of the screen holds something to work (the two loops and their controls, the cue kit, the reset's and the call's own
+ * foot of the screen holds something to work (the two loops and their controls, the cue kit, the call's own
  * buttons), so it never sits over a control. While it shows, the page keeps room for it: anything scrolled to or focused
  * stops above it rather than under it. */
 function dock(app: HTMLElement) {
@@ -166,7 +166,7 @@ function dock(app: HTMLElement) {
   document.body.appendChild(bar);
   bar.hidden = false;
   let heroOut = false, atEnd = false, busy = false;
-  const work = [...app.querySelectorAll<HTMLElement>('.loopcard, .lp3-stage, .cue-stage, .cue-panel, .cue-flat, .co-kit-stage, .co-reset-card, .co-call-in')];
+  const work = [...app.querySelectorAll<HTMLElement>('.loopcard, .lp3-stage, .cue-stage, .cue-panel, .cue-flat, .co-kit-stage, .co-call-in')];
   const sync = () => {
     if (!heroCta.isConnected) { gone(); return; }
     const show = heroOut && !atEnd && !busy;

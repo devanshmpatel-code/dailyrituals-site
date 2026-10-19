@@ -5,7 +5,7 @@ import { loadCatalogue, loadProduct, toItem, imgSrc, money, type Item } from '..
 import { cardHTML, fixImages, errorBox, wireCommon, toast, toastAdded, esc } from '../ui';
 import { add } from '../cart';
 import { canvasSlugToLive, wireQuickAdd, previewOff } from './shared';
-import { MOODS, LOYALTY_ENABLED, type Format } from '../config';
+import { MOODS, LOYALTY_ENABLED, SHOW_DEODORANT, FREE_SHIPPING_THRESHOLD, type Format } from '../config';
 import { productStudioHTML } from '../moons';
 import { givingNote } from './giving';
 
@@ -60,6 +60,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   if (!item) {
     const live = canvasSlugToLive(items, slug);
     if (live) { replaceRoute(`/product/${live.slug}`); return; }
+    if (!SHOW_DEODORANT && /deodorant/i.test(slug)) return renderUnavailable(app);
     return renderNotInStore(app, slug);
   }
 
@@ -218,10 +219,10 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   if (!it.inStock && !it.choices.some(c => c.inStock) && siblings.some(x => x.id !== it.id && x.inStock))
     addBtn.parentElement!.insertAdjacentHTML('afterend', `<p class="var-note small">${esc(it.name)} is sold out right now. <a class="tlink" href="#p-also" data-scrollto="p-also">See ${esc(it.scent)} in another format</a></p>`);
 
-  // Send as a gift: product pages have no recipient or note fields, so the toggle explains gift wrap and leads to Send a Sunrise
+  // Send as a gift: product pages have no recipient or note fields, so the toggle explains gift wrap and leads to Send a Sky
   addBtn.parentElement!.insertAdjacentHTML('afterend', `<div class="gift-tog">
     <button type="button" class="gt-btn" aria-expanded="false" aria-controls="giftPanel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="16" height="4" rx="1"/><path d="M5.5 13v6.5A1.5 1.5 0 007 21h10a1.5 1.5 0 001.5-1.5V13M12 9v12"/><path d="M12 9c-1.5-3.5-5-4-5-1.8C7 9 12 9 12 9zM12 9c1.5-3.5 5-4 5-1.8C17 9 12 9 12 9z"/></svg><span>Send as a gift</span><span class="gt-sw" aria-hidden="true"></span></button>
-    <div class="gt-panel" id="giftPanel" hidden><p><span class="d">Gift wrap is available on every order. To send it straight to someone with a note in Claire's card, use Send a Sunrise.</span></p><a class="btn line" href="#/gift">Send a Sunrise</a></div></div>`);
+    <div class="gt-panel" id="giftPanel" hidden><p><span class="d">Gift wrap is available on every order. To send it straight to someone with a note in Claire's card, use Send a Sky.</span></p><a class="btn line" href="#/gift">Send a Sky</a></div></div>`);
   const gt = $<HTMLButtonElement>('.gt-btn')!;
   gt.addEventListener('click', () => { const on = gt.getAttribute('aria-expanded') !== 'true'; gt.setAttribute('aria-expanded', String(on)); $('#giftPanel')!.hidden = !on; });
   // sticky local nav under the header: name + mood mark, the page's sections, and an add pill that drives #addBtn.
@@ -234,7 +235,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
       sectionOf($('.pdp'), 'p-scent', 'Scent'),
       sectionOf($('.tabsbar')?.parentElement, 'p-details', 'Details'),
       sectionOf($('#p-also'), 'p-also', 'Also in'),
-      sectionOf([...pageSections].find(s => s.querySelector('a[href$="/reset"]')), 'p-practice', 'Practice'),
+      sectionOf([...pageSections].find(s => s.querySelector('a[href$="/book"]')), 'p-practice', 'Practice'),
       sectionOf([...pageSections].find(s => s.querySelector('.grid') && !s.classList.contains('also')), 'p-more', 'More like this'),
     ].filter((s): s is { id: string; label: string } => !!s),
     addBtn,
@@ -262,10 +263,10 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     : '') + paras(useParas) + (copy?.links ? `<div class="tab-links"><span class="eyebrow">From the Journal</span>${copy.links.map(([t, h]) => `<a href="${h}">${esc(t)}</a>`).join('')}</div>` : '') || '<p><span class="d confirm">[Confirm: how to use]</span></p>';
   panel(2).innerHTML = (aboutParas.length ? `${paras(aboutParas)}<p class="small muted">From the product information in the store.</p>` : '')
     + '<p><span class="d">Full ingredient list to be added by Claire.</span></p>';
-  // Shipping: the store's own policy text, then the canvas lines. They disagree, so both stay visible for Claire.
+  // the store's own policy text is the only shipping and returns information; the fallback only states the shipping threshold
   panel(3).innerHTML = shipParas.length
-    ? `${paras(shipParas)}<p class="small muted">From the product information in the store.</p><p><span class="d confirm">[Confirm: the canvas says "Ships in 2 to 3 business days. Free over $75 in Canada" and "10 days to start a return"; the store text above says otherwise. Which is current?]</span></p>`
-    : `<p><span class="d">Ships in 2 to 3 business days. Free over $75 in Canada.</span></p><p>If something isn't right, you have 10 days from the date your order arrives to reach out and start the return process.</p>`;
+    ? `${paras(shipParas)}<p class="small muted">From the product information in the store.</p>`
+    : `<p><span class="d">Ships in 2 to 3 business days. Free shipping on Canadian orders over ${money(FREE_SHIPPING_THRESHOLD).replace(/\.00$/, '')}.</span></p>`;
 
   // You may also like: same scent family, then same format (the same scent's other formats have their own row above)
   const grid = app.querySelectorAll<HTMLElement>('section .grid');
@@ -280,9 +281,18 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   document.title = `${it.name} · Daily Rituals Co.`;
 }
 
+/** A product that is switched off for now (the natural deodorant, while SHOW_DEODORANT is false): a friendly page, not an error. */
+function renderUnavailable(app: HTMLElement) {
+  document.title = 'Not available right now · Daily Rituals Co.';
+  app.innerHTML = `<div class="wrap" style="padding-block:clamp(64px,8vw,112px);display:flex;flex-direction:column;gap:16px;max-width:640px">
+    <span class="eyebrow">Not available right now</span><h1 style="font-size:clamp(36px,5vw,56px)"><span class="d">This one is <span class="it">resting for now</span></span></h1>
+    <p class="muted"><span class="d">The natural deodorant is not available right now. Our candles, fragrance rollers and mini diffusers are all in the shop.</span></p>
+    <a class="btn" href="#/shop" style="align-self:flex-start">Browse the shop</a></div>`;
+}
+
 function renderNotInStore(app: HTMLElement, slug: string) {
   const name = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  app.innerHTML = `<div class="wrap" style="padding:clamp(64px,8vw,112px) 0;display:flex;flex-direction:column;gap:16px;max-width:640px">
+  app.innerHTML = `<div class="wrap" style="padding-block:clamp(64px,8vw,112px);display:flex;flex-direction:column;gap:16px;max-width:640px">
     <span class="eyebrow">Concept product</span><h1 style="font-size:clamp(36px,5vw,56px)">${esc(name)}</h1>
     <p class="muted">This product appears in the design canvas but is not in the live store yet. <span class="d confirm">[Confirm: add to the store or remove from the design]</span></p>
     <a class="btn" href="#/shop" style="align-self:flex-start">Browse the shop</a></div>`;

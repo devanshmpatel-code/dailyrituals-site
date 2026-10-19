@@ -1,7 +1,7 @@
 import { MOODS, FORMAT_LABEL, type Mood, type Format } from '../config';
 import { loadCatalogue, money, type Item } from '../wix';
 import { esc, errorBox, wireCommon, cardHTML } from '../ui';
-import { wireQuickAdd, previewOff } from './shared';
+import { wireQuickAdd } from './shared';
 import { mountWheel } from './wheel';
 import { givingStoryHTML, mountGivingStory } from './giving';
 import '../giftbook.css';
@@ -9,9 +9,9 @@ import '../giftbook.css';
 // Placeholder copy for pages that were not in the final canvas. Anything Claire has not
 // confirmed is wrapped in <span class="d"> so "Show drafts for Claire" highlights it.
 // Only facts already in the canvas are stated plainly: hand poured in small batches in
-// British Columbia, free shipping over $75 in Canada, tax and shipping at checkout, hand packed.
+// British Columbia, free shipping over $150 in Canada, tax and shipping at checkout, hand packed.
 
-// solo = true on narrow pages (account, reset): the title and lead stack in one column instead of squeezing side by side.
+// solo = true on narrow pages (account): the title and lead stack in one column instead of squeezing side by side.
 const head = (crumb: string, title: string, lead: string, solo = false) => `
   <div class="phead${solo ? ' solo' : ''}"><div class="crumbs"><a href="#/">Home</a> / ${esc(crumb)}</div>
   <div class="cat-hero"><h1>${title}</h1><p class="muted" style="font-size:18px;max-width:56ch">${lead}</p></div></div>`;
@@ -25,7 +25,7 @@ export function renderHelp(app: HTMLElement) {
     <div class="split help-split" style="align-items:start">
       <div class="help-faq"><span class="eyebrow">Shipping</span>
         <h2 class="help-h">Shipping and <span class="it">returns</span></h2>
-        ${faq('What does shipping cost?', 'Shipping is free on Canadian orders over $75. GST, PST and shipping are calculated at checkout. <span class="d confirm">Rates for orders under $75 to be confirmed by Claire.</span>')}
+        ${faq('What does shipping cost?', 'Shipping is free on Canadian orders over $150. GST, PST and shipping are calculated at checkout. <span class="d confirm">Rates for orders under $150 to be confirmed by Claire.</span>')}
         ${faq('How long will my order take?', '<span class="d">Processing and delivery times to be confirmed by Claire. Every order is packed by hand.</span>', true)}
         ${faq('Do you ship outside Canada?', '<span class="d">To be confirmed by Claire.</span>', true)}
         ${faq('What is your return policy?', '<span class="d">Return and refund terms to be confirmed by Claire before launch.</span>', true)}
@@ -34,7 +34,7 @@ export function renderHelp(app: HTMLElement) {
         <h2 class="help-h">Scents and <span class="it">candles</span></h2>
         ${faq('Which scent should I choose?', 'Start with a mood. The <a href="#/explore?tab=quiz">scent quiz</a> takes four quick questions, or read the <a href="#/explore">scent atlas</a> to see every scent by mood. Each scent comes in more than one format, so you can wear it, diffuse it and light it.')}
         ${faq('How do I care for a wooden-wick candle?', 'Trim the wick short before each light, and let the first burn melt the wax right to the edge. The Journal has the details: <a href="#/journal/wooden-wick">how to burn a wooden-wick candle</a>, <a href="#/journal/first-burn">your first burn</a> and <a href="#/journal/candle-safety">candle safety</a>.')}
-        ${faq('Can I send something as a gift?', 'Gift wrap is available. <a href="#/gift">Send a Sunrise</a> shows the gifts we are getting ready, with a note in Claire\'s card.')}
+        ${faq('Can I send something as a gift?', 'Gift wrap is available. <a href="#/gift">Send a Sky</a> shows the gifts we are getting ready, with a note in Claire\'s card.')}
         ${faq('Is there a refill subscription?', '<span class="d">Not yet. Ritual on Repeat is coming soon: when it opens, the plan is that you can skip, change the date or swap scents before the next order ships.</span> <a href="#/subscribe">How it will work</a>.')}
       </div>
       <div class="panel help-contact" style="display:flex;flex-direction:column;gap:12px">
@@ -70,7 +70,7 @@ export function renderStory(app: HTMLElement) {
       <p class="small muted d confirm">Draft from the coaching page text. Claire to add dates, detail and photos.</p></section>
     <section class="st-quote"><div class="wrap"><img class="st-claire" src="/img/studio/web/claire-round.webp" alt="Claire, founder of Daily Rituals Co." width="360" height="360" loading="lazy" decoding="async"><blockquote>&ldquo;Others deserved access to the brain-change knowledge that transformed my life.&rdquo;<cite>Claire, neuro coach</cite></blockquote></div></section>
     <section class="wrap st-vals"><div class="ways three">
-      <div class="st-v v1"><span class="eyebrow">Made with intention</span><h3>Clean, simple products</h3><p class="muted">Rollers, mini diffusers, candles and deodorant, each one made to mark a moment in your day.</p></div>
+      <div class="st-v v1"><span class="eyebrow">Made with intention</span><h3>Clean, simple products</h3><p class="muted">Rollers, mini diffusers and candles, each one made to mark a moment in your day.</p></div>
       <div class="st-v v2"><span class="eyebrow">Small batch</span><h3>Hand poured in BC</h3><p class="muted">Made in small batches in British Columbia.</p></div>
       <div class="st-v v3"><span class="eyebrow">Habits, made easier</span><h3>Coaching alongside</h3><p class="muted">The scents create a moment. Coaching with Claire helps you change what happens next.</p></div>
     </div>
@@ -94,7 +94,7 @@ export function renderAccount(app: HTMLElement) {
     <span class="eyebrow acct-while">While you are here</span>
     <div class="ways three acct-ways">
       <a class="way" href="#/explore?tab=quiz"><span class="eyebrow">Four questions</span><h3>Find your scent</h3><p class="muted small">A quick quiz that leads you to a mood and the scents in it.</p></a>
-      <a class="way" href="#/reset"><span class="eyebrow">Free · Self-paced</span><h3>The free 7-day reset</h3><p class="muted small">Ten minutes a day with Claire.</p></a>
+      <a class="way" href="#/book"><span class="eyebrow">Free · <span class="d">20 min</span></span><h3>Free discovery call</h3><p class="muted small">Talk with Claire about your goals.</p></a>
       <a class="way" href="#/journal"><span class="eyebrow">The Journal</span><h3>Candle care</h3><p class="muted small">How to burn a wooden-wick candle, and the rituals around it.</p></a>
     </div></div>`;
 }
@@ -202,45 +202,4 @@ function mountQuiz(el: HTMLElement, items: Item[]) {
     el.scrollIntoView({ block: 'start' });
   };
   draw();
-}
-
-// ---------- Free 7-day reset ----------
-// A short look at Day 1, beside the sign-up. Every line restates what the site already says about the reset (it arrives by
-// email, short daily videos and practices of about ten minutes, self-paced) and the coaching page's "why patterns repeat";
-// what Day 1 really holds is Claire's to confirm, so all of it is a draft.
-function day1HTML() {
-  return `<div class="reset-day1" aria-labelledby="day1H"><span class="eyebrow">A look at Day 1</span><h2 id="day1H" class="reset-day1-h"><span class="d">What the first ten minutes <span class="it">look like</span></span></h2>
-    <ul>
-      <li><b><span class="d">In your inbox</span></b><span><span class="d">Day 1 arrives as soon as you join: a short video from Claire and one practice to try.</span></span></li>
-      <li><b><span class="d">About ten minutes</span></b><span><span class="d">Watch, then try the practice, at your own pace.</span></span></li>
-      <li><b><span class="d">Where it starts</span></b><span><span class="d">Why patterns repeat: most habits are not a lack of willpower, but a loop your brain has practised many times.</span></span></li>
-    </ul>
-    <p class="small muted d confirm">[Confirm: is this what Day 1 covers, and is it a video?]</p></div>`;
-}
-
-export function renderReset(app: HTMLElement) {
-  // the steps restate what the page already says (ten minutes a day, self-paced, by email); the day-by-day content is Claire's to add
-  app.innerHTML = `<div class="wrap reset-page" style="padding-bottom:clamp(48px,6vw,96px);max-width:1080px">
-    ${head('Free 7-day reset', 'The free 7-day <span class="it">reset</span>', 'Ten minutes a day with Claire. A light, self-paced way to try the practices before anything else.', true)}
-    <div class="reset-grid">
-      <div class="panel reset-join" style="display:flex;flex-direction:column;gap:14px">
-        <div class="reset-who"><img class="reset-claire" src="/img/studio/web/claire-round.webp" alt="Claire, founder of Daily Rituals Co." width="360" height="360" decoding="async"><span><span class="eyebrow">Free · Self-paced</span><span class="reset-by">With Claire, neuro coach · White Rock, BC</span></span></div>
-        <h2>Start with <span class="it">Day 1</span></h2>
-        <p>Join with your email and the first day arrives in your inbox. <span class="d confirm">Claire to confirm what is in each day and how it is delivered.</span></p>
-        <form id="resetForm" class="reset-form" novalidate>
-          <label for="resetEmail" hidden>Email</label><input id="resetEmail" type="email" placeholder="you@example.com" autocomplete="email" required>
-          <button class="btn euc" type="submit">Start Day 1</button></form>
-        <p class="small muted">Free. You can unsubscribe any time. Coaching is not therapy or medical care. <span class="d confirm">Claire to confirm wording.</span></p></div>
-      <div class="reset-side"><ol class="reset-steps">
-        <li><b>Join with your email</b><span>Day 1 arrives in your inbox.</span></li>
-        <li><b>Ten minutes a day</b><span>One short practice from Claire, at your own pace.</span></li>
-        <li><b>Seven days</b><span class="d">On Day 3, a familiar scent becomes the cue for a calm, intentional pause.</span></li>
-      </ol>
-      ${day1HTML()}</div>
-    </div>
-    <div class="reset-pair"><div><span class="eyebrow">Pair it with a scent</span><h2>A scent you love makes the <span class="it">pause easier to find</span></h2>
-      <p class="muted"><span class="d">Any scent you enjoy will do. If you would like one to keep for the reset, a roller goes everywhere with you.</span></p></div>
-      <div class="cta"><a class="btn" href="#/explore?tab=quiz">Find your scent</a><a class="btn line" href="#/shop?f=roller&m=all&s=featured">Shop rollers</a></div></div>
-    <div class="cta" style="margin-top:24px"><a class="btn line btn-wrap" href="#/book">Book a free 20-minute discovery call instead</a></div></div>`;
-  app.querySelector('#resetForm')!.addEventListener('submit', e => { e.preventDefault(); previewOff('Sign-ups')(); });
 }

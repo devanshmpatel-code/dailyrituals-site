@@ -737,13 +737,15 @@ header.top{background:rgba(248,245,240,.9)}
 .giftsec{background:linear-gradient(160deg,#F1DCD2,#F7E9E1)}
 .gift-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,64px);align-items:center}
 .gcard{aspect-ratio:7/5;border-radius:14px;padding:clamp(20px,3vw,34px);display:flex;flex-direction:column;justify-content:space-between;color:#fff;box-shadow:0 40px 80px -40px rgba(35,26,43,.55);position:relative;overflow:hidden;transition:background .6s;max-width:100%}
-.gcard[data-t="dawn"]{background:linear-gradient(160deg,#2E2A4A 0%,#F2A97E 70%,#F8DCC0 100%)}
+/* dawn is the cool hour before the sun is up: pale lilac, blush, light sky blue (golden hour is the warm amber one); its words are dark plum */
+.gcard[data-t="dawn"]{background:linear-gradient(160deg,#CDB8E6 0%,#F5C8D8 50%,#B3D9F3 100%);color:#2A1F3D}
 .gcard[data-t="golden"]{background:linear-gradient(160deg,#6B4A6E 0%,#E08E5A 60%,#F4C98E 100%)}
 .gcard[data-t="night"]{background:linear-gradient(160deg,#0F0D1C 0%,#2A1F3D 60%,#4A2D4F 100%)}
 /* the home preview's note sits on the light dawn and golden skies: a soft plum haze across the band the words sit in (white text, contrast), the glow stays */
 .gcard:not([data-candle]){isolation:isolate}
 .gcard:not([data-candle]) .note::before{content:"";position:absolute;inset:-46px -40px;z-index:-1;background:linear-gradient(to bottom,rgba(38,24,52,0),rgba(38,24,52,.54) 26%,rgba(38,24,52,.54) 74%,rgba(38,24,52,0));pointer-events:none;transition:opacity .6s}
-.gcard:not([data-candle])[data-t="night"] .note::before{opacity:0}
+.gcard:not([data-candle])[data-t="night"] .note::before,.gcard:not([data-candle])[data-t="dawn"] .note::before{opacity:0}
+.gcard[data-t="dawn"] .sunarc{background:radial-gradient(circle,rgba(255,255,255,.9) 0%,rgba(255,255,255,.3) 45%,transparent 70%)}
 .gcard .sunarc{position:absolute;right:-40px;bottom:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,#FFE2B0 0%,rgba(255,226,176,.3) 45%,transparent 70%)}
 .gcard .note{font-family:var(--display);font-size:clamp(20px,2.4vw,30px);line-height:1.2;white-space:pre-wrap;word-break:break-word;position:relative}
 .gcard .from{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;position:relative}

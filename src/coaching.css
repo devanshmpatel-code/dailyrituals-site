@@ -1,8 +1,8 @@
 /* Coaching page. One journey from Claire's opening to the free first step: a sunrise arch in a plum night, the problem in
-   plain words and the 3D habit loop, Claire's story, the 3D calm-cue loop round its pause light, ways to begin, the free
-   reset, the discovery call, how a familiar scent can be the cue (and an optional cue kit), questions and a last word. Everything is scoped under .co so no other page changes.
+   plain words and the 3D habit loop, Claire's story, the 3D calm-cue loop round its pause light, ways to begin, the
+   discovery call, how a familiar scent can be the cue (and an optional cue kit), questions and a last word. Everything is scoped under .co so no other page changes.
    Colours: the brand's plum and nocturne for the night, gold leaf hairlines, sunrise rose and apricot behind Claire,
-   eucalyptus for the reset and blush for the call. */
+   blush for the call. */
 
 .co {
   --co-night: #1B1834; --co-night-2: #2A2147; --co-plum: #4A2C52; --co-wine: #6B3A58;
@@ -438,6 +438,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 /* ---------------- 6 · ways to begin, the first 90 days ---------------- */
 .co-work { background: linear-gradient(180deg, #251A38 0, var(--ground, #F7F2EA) 2px); }
 .co-work .ways .way { min-height: 230px; }
+@media (min-width: 1081px) { .co-work .ways { grid-template-columns: repeat(3, minmax(0, 1fr)); } } /* three ways in now: the free call, the program, the workshop */
 /* the next step on a way in that has no booking of its own yet: the free discovery call */
 .co-work .way-next { margin-top: auto; padding-top: 12px; font-size: 14px; font-weight: 600; color: var(--co-plum); text-decoration: underline; text-decoration-color: rgba(74, 44, 82, .35); text-underline-offset: 4px; }
 .co-work .way:hover .way-next { text-decoration-color: currentColor; }
@@ -452,31 +453,8 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
 .co-step-dot { position: absolute; left: 0; top: 0; width: 14px; height: 14px; border-radius: 50%; background: var(--ground, #F7F2EA); border: 2px solid var(--co-leaf); }
 .co-steps b { font-family: var(--display); font-weight: 400; font-size: 24px; line-height: 1.1; }
 
-/* ---------------- 7 · the free reset ---------------- */
-.co-reset { padding-top: 0; }
-.co-reset-card { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(28px, 4vw, 64px); align-items: center; padding: clamp(32px, 5vw, 72px); color: var(--co-cream);
-  border-radius: 64px 14px 64px 14px;
-  background: radial-gradient(60% 80% at 92% 10%, rgba(232, 184, 103, .3), transparent 70%), radial-gradient(50% 70% at 0% 100%, rgba(169, 205, 190, .25), transparent 70%), linear-gradient(150deg, #2F5249 0%, #24443D 55%, #1C3631 100%);
-  box-shadow: 0 40px 80px -46px rgba(31, 59, 53, .9); }
-.co-reset-card::after { content: ""; position: absolute; right: -80px; bottom: -120px; width: 380px; height: 380px; border-radius: 50%; border: 1px solid rgba(233, 212, 161, .25); box-shadow: 0 0 0 40px rgba(233, 212, 161, .04), 0 0 0 80px rgba(233, 212, 161, .03); pointer-events: none; }
-.co-reset-tx { display: flex; flex-direction: column; gap: 18px; position: relative; z-index: 1; }
-.co-reset-tx .eyebrow { color: var(--co-gold-2); }
-.co-reset-tx h2 { font-size: clamp(38px, 4.6vw, 64px); color: var(--co-cream); }
-.co-reset-tx h2 .it { color: var(--co-gold-2); }
-.co-reset-tx p { font-size: 18px; color: rgba(251, 243, 234, .86); max-width: 42ch; }
-.co-reset-tx .co-note { font-size: 14px; color: rgba(251, 243, 234, .8); }
-.co-days { list-style: none; margin: 0; padding: 0 0 52px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: end; position: relative; z-index: 1; }
-.co-days li { position: relative; height: 128px; border-radius: 999px 999px 12px 12px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 14px; background: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .04)); border: 1px solid rgba(233, 212, 161, .3); }
-.co-days li:nth-child(2) { height: 140px; } .co-days li:nth-child(4) { height: 150px; } .co-days li:nth-child(5) { height: 160px; } .co-days li:nth-child(6) { height: 170px; } .co-days li:nth-child(7) { height: 182px; }
-.co-days span { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; opacity: .75; }
-.co-days b { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1; }
-.co-days li.on { height: 196px; background: linear-gradient(180deg, #F3D29A, #E8A957); color: #2A1F33; border-color: transparent; box-shadow: 0 0 40px -6px rgba(243, 210, 154, .75); }
-.co-days li.on span { opacity: .8; }
-.co-days em { position: absolute; top: calc(100% + 12px); left: 50%; translate: -50% 0; white-space: nowrap; font-style: normal; font-size: 13px; font-weight: 600; color: var(--co-gold-2); }
-.co-days li.on::before { content: ""; position: absolute; top: 18px; left: 50%; width: 10px; height: 16px; margin-left: -5px; border-radius: 50% 50% 50% 50% / 64% 64% 36% 36%; background: radial-gradient(circle at 50% 70%, #fff, #FFE2A8 50%, #F08A2C); filter: drop-shadow(0 0 6px #FFC45C); }
 
 /* ---------------- 8 · the discovery call ---------------- */
-.co-call { padding-top: 0; }
 .co-call-in { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(28px, 4vw, 72px); align-items: center; padding: clamp(32px, 5vw, 72px); border-radius: 14px 64px 14px 64px; background: radial-gradient(60% 70% at 10% 20%, rgba(255, 255, 255, .6), transparent 70%), linear-gradient(150deg, #F6E2DA 0%, #F0CFC4 60%, #E8BDB3 100%); box-shadow: var(--lift); }
 .co-call-art { position: relative; width: min(320px, 100%); aspect-ratio: 1; justify-self: center; display: grid; place-items: center; }
 .co-call-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(74, 44, 82, .35); background: conic-gradient(from -90deg, rgba(74, 44, 82, .85) 0 120deg, transparent 120deg); -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 7px), #000 calc(100% - 6px)); mask: radial-gradient(closest-side, transparent calc(100% - 7px), #000 calc(100% - 6px)); animation: coSpin 30s linear infinite; }
@@ -584,7 +562,6 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
   .co-dock[hidden] { display: none; }
   .co-dock.show { transform: none; opacity: 1; }
   .co-dock .btn { flex: 1; min-height: 46px; padding: 0 14px; font-size: 14.5px; }
-  .co-dock .co-dock-call { flex: .8; background: transparent; border: 1px solid rgba(251, 243, 234, .45); color: var(--co-cream); }
   body.co-docked .breathorb { bottom: calc(max(18px, env(safe-area-inset-bottom)) + 74px); }
   /* while the bar shows, the orb steps aside by fading where it stands: sliding down out of sight and back up, it would
      pass over the bar's buttons */
@@ -616,7 +593,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
   .co-path { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 900px) {
-  .co-reset-card, .co-call-in { grid-template-columns: minmax(0, 1fr); }
+  .co-call-in { grid-template-columns: minmax(0, 1fr); }
   .co-kit-in { grid-template-columns: minmax(0, 1fr); }
   .co-faq-in { grid-template-columns: minmax(0, 1fr); }
   .co-faq-head { position: static; }
@@ -641,6 +618,7 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
   .co-facts-in { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: rgba(201, 163, 90, .25); border-radius: 22px; overflow: hidden; padding: 0; margin-inline: 16px; filter: drop-shadow(0 14px 24px rgba(74, 48, 80, .14)); }
   .co-facts-in span, .co-facts-in span:first-child, .co-facts-in span:last-child { border-radius: 0; padding: 14px 12px; justify-content: center; text-align: center; font-size: 13.5px; flex-wrap: wrap; gap: 4px; }
   .co-facts-in span + span::before { display: none; }
+  .co-facts-in span:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .co-pains { grid-template-columns: minmax(0, 1fr); }
   .co-pains { gap: 22px; }
   .co-pain, .co-pain:nth-child(1) { padding: 24px 26px 30px; }
@@ -672,12 +650,6 @@ body:not(.no-grade) .c-hero .ph.co-arch img { filter: none; }
   .cue-flat-orb { grid-column: 1; grid-row: auto; height: 240px; margin-bottom: 10px; }
   .cue-flat-orb .pl { --orb: 150px; }
   .cue-list li:nth-child(n) { grid-column: 1; grid-row: auto; }
-  .co-days { gap: 5px; }
-  .co-days li { height: 96px; padding-bottom: 10px; } .co-days li:nth-child(2) { height: 104px; } .co-days li:nth-child(4) { height: 112px; } .co-days li:nth-child(5) { height: 118px; } .co-days li:nth-child(6) { height: 124px; } .co-days li:nth-child(7) { height: 132px; }
-  .co-days li.on { height: 148px; }
-  .co-days b { font-size: 22px; } .co-days span { font-size: 11.5px; letter-spacing: .06em; }
-  .co-days li.on::before { top: 14px; }
-  .co-reset-card { border-radius: 44px 12px 44px 12px; padding: 32px 22px; }
   .co-call-in { border-radius: 12px 44px 12px 44px; padding: 32px 22px; }
   .co-call-art { width: 220px; }
   .co-final { padding-bottom: 120px; }

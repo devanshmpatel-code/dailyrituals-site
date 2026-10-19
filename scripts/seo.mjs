@@ -8,15 +8,17 @@ const get = k => process.env[k] ?? env[k];
 const launched = get('VITE_LAUNCH') === 'true';
 const origin = (get('SITE_URL') || get('VITE_SITE_URL') || 'https://www.dailyritualsco.com').replace(/\/$/, '');
 const clientId = get('VITE_WIX_CLIENT_ID');
+// the natural deodorant is hidden for now: one flag, SHOW_DEODORANT in src/config.ts, brings it (and its sitemap entry) back
+const showDeodorant = /SHOW_DEODORANT\s*=\s*true/.test(readFileSync('src/config.ts', 'utf8'));
 
-const pages = ['', 'shop', 'explore', 'coaching', 'reset', 'subscribe', 'drops', 'gift', 'wall', 'club', 'story', 'giving', 'journal', 'journal/wooden-wick', 'journal/first-burn', 'journal/candle-safety', 'journal/wax-guide', 'journal/candle-and-roller', 'help', 'privacy', 'terms', 'accessibility', 'refund-policy'];
+const pages = ['', 'shop', 'explore', 'coaching', 'subscribe', 'drops', 'gift', 'wall', 'club', 'story', 'giving', 'journal', 'journal/wooden-wick', 'journal/first-burn', 'journal/candle-safety', 'journal/wax-guide', 'journal/candle-and-roller', 'help', 'privacy', 'terms', 'accessibility', 'refund-policy'];
 
 async function productSlugs() {
   if (!clientId) return [];
   try {
     const tok = await fetch('https://www.wixapis.com/oauth2/token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ clientId, grantType: 'anonymous' }) }).then(r => r.json());
     const res = await fetch('https://www.wixapis.com/stores/v3/products/query', { method: 'POST', headers: { 'content-type': 'application/json', authorization: tok.access_token }, body: JSON.stringify({ query: { cursorPaging: { limit: 100 } } }) }).then(r => r.json());
-    return (res.products ?? []).filter(p => p.visible !== false && p.slug).map(p => p.slug);
+    return (res.products ?? []).filter(p => p.visible !== false && p.slug && (showDeodorant || !/deodorant/i.test(`${p.slug} ${p.name ?? ''}`))).map(p => p.slug);
   } catch (e) { console.warn(`seo: could not read the Wix catalogue (${e.message}); sitemap lists main pages only`); return []; }
 }
 

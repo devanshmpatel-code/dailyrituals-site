@@ -2,7 +2,7 @@ import MoonDrops from '../canvas/pages/MoonDrops.html?raw';
 import RitualOnRepeat from '../canvas/pages/RitualOnRepeat.html?raw';
 import RitualWall from '../canvas/pages/RitualWall.html?raw';
 import Ritualists from '../canvas/pages/Ritualists.html?raw';
-import SendASunrise from '../canvas/pages/SendASunrise.html?raw';
+import SendASky from '../canvas/pages/SendASky.html?raw';
 import OrderConfirmed from '../canvas/pages/OrderConfirmed.html?raw';
 import { fixImages, wireCommon, esc } from '../ui';
 import { LOYALTY_ENABLED } from '../config';
@@ -11,10 +11,10 @@ import { loadCatalogue } from '../wix';
 import { bindCanvasProductLinks, previewOff } from './shared';
 import { wireVote, wireCountdown, wireSunrise, wireClub, wireRepeatCalc } from './home';
 import { pastMoonsHTML, wirePastMoons } from '../moons';
-import { wireGift } from './gift';
+import { wireGift, wireSkyCaption } from './gift';
 
 const PAGES: Record<string, string> = {
-  drops: MoonDrops, subscribe: RitualOnRepeat, wall: RitualWall, club: Ritualists, gift: SendASunrise, 'order-confirmed': OrderConfirmed,
+  drops: MoonDrops, subscribe: RitualOnRepeat, wall: RitualWall, club: Ritualists, gift: SendASky, 'order-confirmed': OrderConfirmed,
 };
 
 export function hasStatic(route: string) { return route in PAGES; }
@@ -28,7 +28,7 @@ export async function renderStatic(app: HTMLElement, route: string) {
     wirePastMoons(app);
   }
   wireCommon(app);
-  wireVote(app); wireCountdown(app); wireSunrise(app); wireClub(app); wireRepeatCalc(app, null);
+  wireVote(app); wireCountdown(app); wireSunrise(app); if (route === 'gift') wireSkyCaption(app); wireClub(app); wireRepeatCalc(app, null);
   app.querySelectorAll('#upForm').forEach(f => f.addEventListener('submit', e => { e.preventDefault(); previewOff('Photo uploads')(); }));
   app.querySelectorAll('[data-pair], [data-wf], [data-gr]').forEach(b => b.addEventListener('click', () => {
     b.parentElement?.querySelectorAll(':scope > [aria-pressed]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -43,7 +43,7 @@ export async function renderStatic(app: HTMLElement, route: string) {
     const upP = app.querySelector<HTMLSelectElement>('#upP');
     if (upP && items.length) upP.innerHTML = [...items].sort((a, b) => a.name.localeCompare(b.name)).map(i => `<option value="${esc(i.slug)}">${esc(i.name)}</option>`).join('') + '<option value="other">Something else</option>';
     if (route === 'subscribe') wireRepeatCalc(app, items);
-    // Send a Sunrise: choose a live candle on the page and add it to the cart with the card details
+    // Send a Sky: choose a live candle on the page and add it to the cart with the card details
     if (route === 'gift') wireGift(app, items);
   } catch { /* static page still renders without live data */ }
 }

@@ -11,7 +11,7 @@ import { WRITES_ENABLED, LOYALTY_ENABLED, FREE_SHIPPING_THRESHOLD, LAUNCHED } fr
 import { hasClient, money, loadCatalogue } from './wix';
 import { fixImages, esc, toast, initToast, lockBackground, trapTab } from './ui';
 import { getLines, count, subtotal, setQty, onCart, checkout, add } from './cart';
-import { currentRoute, onRoute, installLinkHandling } from './router';
+import { currentRoute, onRoute, installLinkHandling, replaceRoute } from './router';
 import { renderHome } from './pages/home';
 import { unmountJourney, openBreathe } from './pages/journey';
 import { decoratePage } from './pages/calm';
@@ -190,8 +190,8 @@ updateCount();
 // Product pages set their own title; routes not listed here keep the site name.
 const PAGE_TITLES: Record<string, string> = {
   shop: 'Shop', coaching: 'Coaching', book: 'Book your free discovery call', subscribe: 'Ritual on Repeat',
-  drops: 'Moon Drops', gift: 'Send a Sunrise', wall: 'Ritual Wall', club: 'The Ritualists',
-  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Meet the maker', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', reset: 'Free 7-day reset', giving: 'Giving back',
+  drops: 'Moon Drops', gift: 'Send a Sky', wall: 'Ritual Wall', club: 'The Ritualists',
+  'order-confirmed': 'Order confirmed', privacy: 'Privacy policy', terms: 'Terms of service', accessibility: 'Accessibility', 'refund-policy': 'Refund policy', help: 'Help', story: 'Meet the maker', journal: 'Journal', account: 'My account', explore: 'Find your scent', quiz: 'Find your scent', build: 'Find your scent', sets: 'Find your scent', giving: 'Giving back',
 };
 
 // Every page but home is its own chunk, fetched when it is first visited (home is the landing page and stays in the entry).
@@ -236,7 +236,8 @@ async function route() {
       // older links: the quiz is a tab of Find your scent; build a ritual and ritual sets live in the wheel
       case 'quiz': return (await page(import('./pages/info'))).renderExplore(app, new URLSearchParams('tab=quiz'));
       case 'build': case 'sets': return (await page(import('./pages/info'))).renderExplore(app);
-      case 'reset': return (await page(import('./pages/info'))).renderReset(app);
+      // the free 7-day reset is retired: old links go to the free discovery call
+      case 'reset': replaceRoute('/book'); return;
       case 'giving': return renderGiving(app);
       case 'book': return (await page(import('./pages/coaching'))).renderBook(app, arg);
       case 'checkout': await renderHome(app); openCart(); return;
