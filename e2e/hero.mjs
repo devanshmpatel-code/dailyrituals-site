@@ -13,7 +13,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', 
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await p.waitForTimeout(600);
   ok(`${label}: the hero shows exactly two offers, a ritual and a practice`, (await p.locator('#dProducts .sp').count()) === 2 && (await p.locator('#dProducts .sp-ritual').count()) === 1 && (await p.locator('#dProducts .sp-coach').count()) === 1);
-  const expect = { dawn: '/reset', morning: '/book', midday: '/reset', golden: '/book', night: '/reset' };
+  // (the free 7-day reset is gone: owner, October 2026; every moment offers the free 20-minute discovery call)
+  const expect = { dawn: '/book', morning: '/book', midday: '/book', golden: '/book', night: '/book' };
   // the mood of each ritual's lead scent (night leads with Campfire Stories, which is woody)
   const MOOD = { dawn: 'fresh', morning: 'sunny', midday: 'grounding', golden: 'woody', night: 'woody' };
   for (const k of Object.keys(expect)) {
@@ -26,14 +27,11 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', 
     const shopHref = await p.locator('#dCta a.btn.line').getAttribute('href');
     ok(`${label} ${k}: the Shop button follows the same mood as the ritual`, shopHref.includes(`m=${MOOD[k]}`), shopHref);
     const coach = p.locator('#dProducts .sp-coach');
-    ok(`${label} ${k}: the practice offers a free way into coaching`, (await coach.getAttribute('href')) === expect[k] && /Free/.test(await coach.innerText()), await coach.getAttribute('href'));
+    ok(`${label} ${k}: the practice offers the free discovery call`, (await coach.getAttribute('href')) === expect[k] && /Free 20-minute discovery call/.test(await coach.innerText()) && !/reset/i.test(await coach.innerText()), await coach.getAttribute('href'));
   }
   // following the offers
   await pick(p, 'golden'); await p.locator('#dProducts .sp-coach').click(); await p.waitForURL('**/book');
   await p.waitForSelector('.bk-title'); ok(`${label}: the call offer opens booking for the free discovery call`, /Book your free discovery call/.test(await p.locator('.bk-title').innerText()));
-  await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await pick(p, 'midday');
-  await p.locator('#dProducts .sp-coach').click(); await p.waitForURL('**/reset'); await p.waitForSelector('h1');
-  ok(`${label}: the reset offer opens the free reset`, /reset/i.test(await p.locator('h1').innerText()), await p.locator('h1').innerText());
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await pick(p, 'golden');
   await p.locator('#dProducts .sp-ritual').click(); await p.waitForURL('**/explore**');
   ok(`${label}: the ritual opens the scent wheel on its mood`, /Warm and woody/.test(await p.locator('.wpanel').innerText()));

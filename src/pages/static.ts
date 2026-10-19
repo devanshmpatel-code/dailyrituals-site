@@ -79,7 +79,7 @@ function clubSoon(app: HTMLElement) {
       <button type="button" class="btn cs-go"><span class="d">Join the waitlist</span></button></div>
     ${ritualistsCardHTML()}
   </div></section>
-  <section class="clubplan" id="csWait"><div class="wrap">${ritualistsHTML({ id: 'cs', heading: 'h2' })}</div></section>`;
+  <section class="clubplan" id="csWait"><div class="wrap">${ritualistsHTML({ id: 'cs', heading: 'h2', title: '<span class="d">How the club <span class="it goldtext">will work</span></span>' })}</div></section>`;
   app.appendChild(plan);
   wireRitualistsCard(app);
   wireRitualists(app);

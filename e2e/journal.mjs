@@ -44,8 +44,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: home shows three Journal cards`, (await p.locator('.jr-teaser .jr-card').count()) === 3);
   const news = await p.locator('.newsflow').innerText();
   ok(`${label}: the newsletter is the Monthly Ritual, not the Sunday note`, /monthly ritual/i.test(news) && !/sunday/i.test(news), news.slice(0, 80));
-  // (the sign-up sits in the "Opening soon" chapter now, beside its Ritual on Repeat line)
-  ok(`${label}: the newsletter sits beside Ritual on Repeat`, (await p.locator('.soonflow .newsflow').count()) === 1 && (await p.locator('.soonflow a[href*="subscribe"]').count()) === 1);
+  // (the sign-up is the notify-me of the coming-soon Ritual on Repeat chapter now)
+  ok(`${label}: the newsletter sits in Ritual on Repeat`, (await p.locator('.repeatflow .newsflow').count()) === 1 && (await p.locator('.repeatflow a[href*="subscribe"]').count()) === 1);
   ok(`${label}: home has one Monthly Ritual sign-up`, (await p.locator('main form.nform').count()) === 1 && (await p.locator('main #nemail').count()) === 1);
   ok(`${label}: the footer links to the Journal`, (await p.locator('footer a[href*="journal"]').count()) >= 1);
   ok(`${label}: no JS errors`, errs.length === 0, errs.join(' | ').slice(0, 200));

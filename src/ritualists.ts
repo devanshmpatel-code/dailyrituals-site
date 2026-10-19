@@ -41,12 +41,12 @@ export function waitlistHTML(id = 'rit'): string {
 }
 
 /** The home chapter / club page body: intro, tiers, points value, waitlist, the referral idea and the giving line. */
-export function ritualistsHTML(opts: { id?: string; heading?: 'h1' | 'h2'; chapter?: string } = {}): string {
+export function ritualistsHTML(opts: { id?: string; heading?: 'h1' | 'h2'; chapter?: string; title?: string } = {}): string {
   const id = opts.id ?? 'rit', H = opts.heading ?? 'h2';
   return `<div class="rt-in">
     <div class="rt-head">
       ${opts.chapter ? `<span class="chapter">${esc(opts.chapter)}</span>` : '<span class="eyebrow">Free rewards club</span>'}
-      <${H} id="${id}H">The <span class="it goldtext">Ritualists</span></${H}>
+      <${H} id="${id}H">${opts.title ?? 'The <span class="it goldtext">Ritualists</span>'}</${H}>
       <span class="soon-tag rt-soon"><span class="d">Coming soon</span></span>
       <p class="rt-lead"><span class="d">Every ritual counts. Earn points, rise through the day from Dawn to Midnight, and unlock perks that make your rituals easier.</span></p>
       <p class="rt-value"><b><span class="d">100 points = $5 off</span></b></p>

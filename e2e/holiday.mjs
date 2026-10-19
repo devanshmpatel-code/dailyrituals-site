@@ -35,7 +35,7 @@ const coverHits = p => p.evaluate(async () => {
   const textRects = root => { const out = []; const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = tw.nextNode(); t; t = tw.nextNode()) { if (!t.textContent.trim() || t.parentElement.closest('.hol-flag, .hol-seal, .hol-stub')) continue; const r = document.createRange(); r.selectNodeContents(t); out.push(...r.getClientRects()); } return out; };
   const hit = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
   const hits = [];
-  for (const [sel, host] of [['.soon-list a[href$="drops"] > .hol-flag', '.soon-list'], ['.gift-grid .hol-flag', '.gift-grid'], ['.hol-seal', '.claire']]) {
+  for (const [sel, host] of [['.dropflow .dp-when > .hol-flag', '.dropflow'], ['.gift-grid .hol-flag', '.gift-grid'], ['.hol-seal', '.claire']]) {
     const el = document.querySelector(sel); if (!el) continue; // (presence is checked on its own)
     el.scrollIntoView({ block: 'center' }); await new Promise(r => setTimeout(r, 50));
     const r = el.getBoundingClientRect(); textRects(document.querySelector(host)).forEach(t => { if (hit(r, t)) hits.push(`${sel} over text at ${Math.round(t.left)},${Math.round(t.top)}`); });
@@ -97,9 +97,11 @@ for (const [at, q, want, label] of [['2026-10-20T12:00:00', '?season=holiday', t
 // ---- on (December): the pieces, the seal's date, the dust
 for (const at of ['2026-11-20T18:00:00', '2026-12-20T18:00:00']) {
   const { ctx, p } = await open(at);
+  // (the pieces are added once the page has its catalogue: on a busy machine that can take longer than the first wait)
+  await p.waitForSelector('.claire-cut .hol-seal', { state: 'attached', timeout: 10000 }).catch(() => {});
   const s = await p.evaluate(() => {
     const seal = document.querySelector('.claire-cut .hol-seal');
-    return { label: seal?.getAttribute('aria-label'), day: seal?.querySelector('b')?.textContent, draft: !!seal?.querySelector('.d b'), row: document.querySelector('.soon-list [data-drop-date]')?.textContent, iso: seal?.dataset.date };
+    return { label: seal?.getAttribute('aria-label'), day: seal?.querySelector('b')?.textContent, draft: !!seal?.querySelector('.d b'), row: document.querySelector('.dropflow [data-drop-date]')?.textContent, iso: seal?.dataset.date };
   });
   const short = s.row ? new Date(`${s.iso}T12:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }).replace('.', '') : '';
   ok(`${at.slice(0, 10)}: the seal on Claire's arch shows the computed next Moon Drop (the same date as the Moon Drops row), as a draft`, s.label === `Next Moon Drop: ${s.row}` && s.day === short && s.draft, JSON.stringify(s));
@@ -107,11 +109,12 @@ for (const at of ['2026-11-20T18:00:00', '2026-12-20T18:00:00']) {
 }
 {
   const { ctx, p } = await open('2026-12-10T19:00:00');
+  await p.waitForSelector('.claire-cut .hol-seal', { state: 'attached', timeout: 10000 }).catch(() => {});
   const d = await p.evaluate(() => {
     const leafD = el => [...el.querySelectorAll('*')].filter(x => x.children.length === 0 && x.textContent.trim()).every(x => x.closest('.d'));
     const flag = sel => { const f = document.querySelector(sel); return f ? { t: f.textContent.trim(), d: leafD(f), pe: getComputedStyle(f).pointerEvents } : null; };
     return {
-      bar: document.querySelector('.announce .an-live .hol-stub .hol-stub-t')?.textContent, moon: flag('.soon-list a[href$="drops"] > .hol-flag'), gift: flag('.gift-grid .hol-flag'),
+      bar: document.querySelector('.announce .an-live .hol-stub .hol-stub-t')?.textContent, moon: flag('.dropflow .dp-when > .hol-flag'), gift: flag('.gift-grid .hol-flag'),
       seal: leafD(document.querySelector('.hol-seal')), sealPe: getComputedStyle(document.querySelector('.hol-seal')).pointerEvents,
       sealDay: document.querySelector('.hol-seal b')?.textContent, sealLabel: document.querySelector('.hol-seal i')?.innerText.replace(/\s+/g, ' ').trim(),
       rot: getComputedStyle(document.querySelector('.announce .hol-stub')).rotate, fs: getComputedStyle(document.querySelector('.announce .hol-stub')).fontSize,
@@ -121,7 +124,7 @@ for (const at of ['2026-11-20T18:00:00', '2026-12-20T18:00:00']) {
   ok('on: the bar\'s ticket sits level at 13.5px', (d.rot === 'none' || d.rot === '0deg') && d.fs === '13.5px', `${d.rot} ${d.fs}`);
   ok('on: the Moon Drops row has a ribbon flag with the computed next drop date (the seal\'s date), a draft', !!d.moon && d.moon.t === d.sealDay && /^([A-Z][a-z]{2} \d{1,2}|Tonight)$/.test(d.moon.t) && d.moon.d && d.moon.pe === 'none', `${JSON.stringify(d.moon)} ${d.sealDay}`);
   ok('on: the seal reads NEXT MOON DROP over the date', /^next moon drop$/i.test(d.sealLabel ?? ''), d.sealLabel);
-  ok('on: the home Send a Sunrise card has a "Gift it" ribbon flag, a draft', d.gift?.t === 'Gift it' && d.gift.d && d.gift.pe === 'none', JSON.stringify(d.gift));
+  ok('on: the home Send a Sky card has a "Gift it" ribbon flag, a draft', d.gift?.t === 'Gift it' && d.gift.d && d.gift.pe === 'none', JSON.stringify(d.gift));
   ok('on: the seal\'s words are drafts and it takes no taps', d.seal && d.sealPe === 'none');
 
   const cover = await coverHits(p);
