@@ -11,8 +11,11 @@
 // Each face is shaded here, per pixel, on a small canvas: a slightly domed disc lit from where the sun (or the moon) of the
 // moment really is in the sky, a soft lit rim on that side, ambient occlusion where the wax meets the edge, and a phase:
 // a soft, realistic terminator as if a sphere of that face were lit from the front of the ring, so moons before the full
-// one wax and moons after it wane. A soft shadow falls on the sky haze away from the light. The faces are Claire's own
-// photographs (public/img/studio/moons: clean round crops made by tools/photo/moon_faces.py).
+// one wax and moons after it wane, with a little earthshine on the dark side. A soft shadow falls on the sky haze away from
+// the light. The faces are Claire's own photographs as plain candle tops, wax and the wooden wick only
+// (public/img/studio/moons/hero-*.webp, made by tools/photo/plain_moons.py), and each wick is a sundial: its shadow falls
+// across the wax the way the sun would at that moment (long at dawn and golden hour, short at midday); the full moon's
+// follows the hour on the dial as the sun is dragged. At night the wick is lit and warms the wax round it.
 //
 // The shading is only recomputed when something changes (the ring turning, the light moving, the hour's colours), so
 // nothing runs while the opening is still; reduced motion turns the ring without the glide and stills the drift.
@@ -21,8 +24,9 @@ import { getSky } from './sky';
 
 export interface MoonArc {
   show(key: string): void;
-  /** the hour's colours: the sky (top, middle, horizon), the sun or moon colour, how much it is night */
-  look(sky: [string, string, string], orb: [number, number, number], night: number): void;
+  /** the hour's colours: the sky (top, middle, horizon), the sun or moon colour, how much it is night; and the hour itself
+   *  (the full moon's wick tells it, as a sundial) */
+  look(sky: [string, string, string], orb: [number, number, number], night: number, hour?: number): void;
   /** the sun or moon moved: relight the faces */
   light(): void;
   destroy(): void;
@@ -46,6 +50,29 @@ export function phaseName(off: number): string {
   return `${off < 0 ? 'waxing' : 'waning'} ${a < 1.5 ? 'gibbous' : 'crescent'}`;
 }
 
+// Each face's wooden wick, as tools/photo/plain_moons.py measured it: its centre (x, y) and half its length, as fractions of
+// the face's radius. The wick is a sundial: it stands a little above the wax and casts its shadow across it.
+const WICK: Record<string, [number, number, number]> = {
+  dawn: [-0.046, 0.033, 0.208], morning: [-0.044, -0.054, 0.217], midday: [0.035, -0.048, 0.204], golden: [-0.035, -0.012, 0.223], night: [-0.035, -0.040, 0.223],
+};
+/** The sun over a candle at an hour, seen from above: which way the wick's shadow falls (a unit vector on the face, in screen
+ *  terms: the sun comes up on the left of the sky and sets on the right, so dawn's shadow reaches right and golden hour's left,
+ *  and towards the viewer while the sun is high), how long it is (in radii) and how dark. After sunset the wick is lit: the
+ *  shadow is only a faint one from the moon and the flame warms the wax round it. */
+export function sundial(hour: number): { dx: number; dy: number; len: number; k: number; flame: number } {
+  const RISE = 6, SET = 19.6, WICK_H = 0.2;
+  const x = (hour - RISE) / (SET - RISE);
+  const up = x > 0 && x < 1 ? Math.sin(Math.PI * x) : 0;
+  const elev = Math.max(0.03, up) * (58 * Math.PI / 180);
+  // the sun's place over the face: from the left at sunrise to the right at sunset, behind the candle (up the screen) at noon
+  const az = Math.PI * (0.12 + 0.76 * clamp(x, 0, 1));
+  let sx = -Math.cos(az), sy = -0.55 * Math.sin(az);
+  const day = smooth(-0.03, 0.02, x) * smooth(1.04, 0.97, x);
+  if (day < 1) { const m = 1 - day; sx = sx * day + 0.45 * m; sy = sy * day - 0.8 * m; } // the moon, high on the right
+  const l = Math.hypot(sx, sy) || 1;
+  return { dx: -sx / l, dy: -sy / l, len: clamp(day > 0.5 ? WICK_H / Math.tan(elev) : 0.22, 0.1, 0.95), k: 0.34 * day + 0.1 * (1 - day), flame: 1 - day };
+}
+
 interface Face {
   key: string; i: number; el: HTMLElement; cv: HTMLCanvasElement; cap: HTMLElement; img: HTMLImageElement;
   /** the photograph's pixels at the canvas's size (null until loaded) */
@@ -60,6 +87,7 @@ interface Face {
 
 export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key: string) => HTMLImageElement | null): MoonArc {
   const scene = hero.querySelector<HTMLElement>('#scene')!;
+  const title = hero.querySelector<HTMLElement>('.arc-title');
   const arc = document.createElement('div');
   arc.className = 'moonarc'; arc.setAttribute('aria-hidden', 'true');
   const keys = MOMENTS.map(m => m.key);
@@ -76,7 +104,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
   let alive = true, key = '', phi = 0, raf = 0, tween: { from: number; to: number; t0: number; ms: number } | null = null;
   let D = 140, N = 280, dpr = 1, phone = false;
   let cx = 0, top = 0, RX = 200, RY = 90, arcW = 0;
-  let sky: RGB[] = [[120, 150, 200], [180, 200, 230], [230, 220, 210]], orb: RGB = [255, 240, 200], night = 0;
+  let sky: RGB[] = [[120, 150, 200], [180, 200, 230], [230, 220, 210]], orb: RGB = [255, 240, 200], night = 0, hour: number | null = null;
 
   // ---------- the shared geometry of a face at N x N: its radius, the sphere's normal (phase) and the dome's (light) ----------
   let geo: { r: Float32Array; nx: Float32Array; ny: Float32Array; nz: Float32Array; dx: Float32Array; dy: Float32Array; dz: Float32Array; ao: Float32Array; rim: Float32Array } | null = null;
@@ -165,6 +193,15 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       // the birds keep to a high band of the sky (studio.css): the ring starts below it
       const birds = [...scene.querySelectorAll<HTMLElement>('.bird')].map(b => b.offsetTop + b.offsetHeight);
       top = Math.max(28, vis * 0.06, (birds.length ? Math.max(...birds) : 0) + 16);
+      // the arc's title ("From first light to lights out") stands over the arc, centred on it, and the ring starts under it
+      if (title) {
+        const tb = rel(title.offsetParent, box);
+        title.style.maxWidth = `${Math.round(W)}px`;
+        const tw = title.offsetWidth, th = title.offsetHeight;
+        const tl = clamp(left + W / 2 - tw / 2, left, box.width - 24 - tw), tt = Math.max(14, top - 24);
+        if (tb) { title.style.setProperty('--tx', `${(tl - tb.l).toFixed(1)}px`); title.style.setProperty('--ty', `${(tt - tb.t).toFixed(1)}px`); }
+        top = tt + th + 14;
+      }
       // the lowest any moon's foot may reach: the two round the back stand on the far ridges, half set behind them
       const low = Math.min(box.height * 0.54, (offers ? offers.t : vis * 0.7) - 12, ridge(left, left + W) - 40); // (with the captions under the ends)
       H = low - top;
@@ -330,10 +367,13 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       if (pl < 1) { px = -Math.sign(off) || 1; py = 0; } else { px /= pl; py /= pl; }
       const P = [px * Math.sin(alpha), py * Math.sin(alpha), Math.cos(alpha)];
       const hz = (1 - f.s) * (0.4 * day + 0.2 * night); // the haze of distance
-      const sig = [Math.round(L[0] * 60), Math.round(L[1] * 60), Math.round(P[0] * 200), Math.round(P[1] * 200), Math.round(P[2] * 200), Math.round(hz * 100), haze.join(), Math.round(night * 50), N].join(',');
+      // the wick as a sundial: the full moon tells the hour on the dial (so its shadow swings as the sun is dragged), the
+      // others their own moment's
+      const dial = sundial(Math.abs(off) < 0.5 && hour != null ? hour : MOMENTS[f.i].hour);
+      const sig = [Math.round(dial.dx * 40), Math.round(dial.dy * 40), Math.round(dial.len * 60), Math.round(L[0] * 60), Math.round(L[1] * 60), Math.round(P[0] * 200), Math.round(P[1] * 200), Math.round(P[2] * 200), Math.round(hz * 100), haze.join(), Math.round(night * 50), N].join(',');
       if (sig === f.sig) continue;
       f.sig = sig;
-      shade(f, L, Hh, P, hz, haze, shadowTint, lit); shaded++;
+      shade(f, L, Hh, P, hz, haze, shadowTint, lit, dial); shaded++;
       f.cv.getContext('2d')!.putImageData(f.out!, 0, 0);
       // its shadow on the haze falls away from the light
       f.el.style.setProperty('--shx', (-lx * 0.09).toFixed(3));
@@ -343,19 +383,31 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     if (faces.every(f => f.px) && !tween && !pending) stack.dataset.shown = key;
   }
 
-  function shade(f: Face, L: number[], H: number[], P: number[], hz: number, haze: RGB, dark: RGB, lit: RGB) {
+  function shade(f: Face, L: number[], H: number[], P: number[], hz: number, haze: RGB, dark: RGB, lit: RGB, dial: ReturnType<typeof sundial>) {
     const g = geo!, src = f.px!, out = f.out!.data, R = N / 2;
     const px3 = [0, 0, 0], KNEE = 210, TOP = 243, sum = [0, 0, 0, 0];
     const night01 = night, spec = 0.2 * (1 - 0.6 * night01), sharp = 26;
     const rimC = [lit[0], lit[1], lit[2]];
     const lxy = Math.hypot(L[0], L[1]) || 1, rlx = L[0] / lxy, rly = L[1] / lxy;
+    // the wick's shadow: the wick (a thin plank, a little above the wax) swept away from the sun, its edges softening with
+    // distance from the wick (the penumbra), fading towards its tip; a touch cool, as shade is lit by the blue sky
+    const [wx, wy, hl] = WICK[f.key] ?? [0, 0, 0.21], hw = 0.03;
+    const ux = dial.dx, uy = dial.dy, len = dial.len;
+    // its outline: the wick's footprint swept along the shadow (a convex polygon), as edges with outward normals
+    const edges = sweptHull(hl, hw, ux * len, uy * len);
+    const shC = [1, 0.95, 0.86], shK = dial.k;
+    // the flame after dark: warm light on the wax round the wick (seen through the wax on the dark side too) and its small
+    // bright core seen from above
+    const fl = dial.flame, FL = [255, 172, 96];
+    // earthshine: the dark side keeps a faint cool view of the wax, more of it at night
+    const es = 0.07 + 0.1 * night01, EARTH = [0.8, 0.87, 1];
     for (let k = 0, n = N * N; k < n; k++) {
       const r = g.r[k], o = k * 4;
       const a = clamp((1 - r) * R + 0.5, 0, 1);
       if (a <= 0) { out[o + 3] = 0; continue; }
       // the phase: a soft terminator on the sphere of this face
       const pd = g.nx[k] * P[0] + g.ny[k] * P[1] + g.nz[k] * P[2];
-      const ph = smooth(-0.16, 0.17, pd);
+      const ph = Math.pow(smooth(-0.24, 0.28, pd), 1.15);
       // the dome in the light of the sun or moon: diffuse, a broad satin sheen, a lit rim on the light's side
       const nd = g.dx[k] * L[0] + g.dy[k] * L[1] + g.dz[k] * L[2];
       const diff = 0.74 + 0.36 * Math.max(0, nd);
@@ -366,11 +418,24 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       // earthshine: the photograph's brightness only (no colour), so the toppings show faintly in the shadow, never brown
       const lum = (src[o] * 0.3 + src[o + 1] * 0.59 + src[o + 2] * 0.11) / 255;
       const shine = (0.58 + 0.5 * lum) * (0.88 + 0.12 * ao);
+      const qx = g.nx[k] - wx, qy = g.ny[k] - wy;
+      let sh = 0;
+      if (shK > 0) {
+        let sd = -9;
+        for (let e = 0; e < edges.length; e += 4) sd = Math.max(sd, (qx - edges[e]) * edges[e + 2] + (qy - edges[e + 1]) * edges[e + 3]);
+        const t = clamp(qx * ux + qy * uy, 0, len), soft = 0.006 + 0.075 * t;
+        if (sd < soft) {
+          sh = shK * (1 - smooth(-soft, soft, sd)) * (1 - 0.45 * t / len);
+          // (not on the wick itself)
+          sh *= 1 - (1 - smooth(hl - 0.01, hl + 0.01, Math.abs(qx))) * (1 - smooth(hw - 0.01, hw + 0.01, Math.abs(qy)));
+        }
+      }
+      const wr2 = fl > 0 ? (qx * qx + qy * qy) : 9, glow = fl * (0.26 * Math.exp(-wr2 / 0.16) + 0.85 * Math.exp(-wr2 / 0.005));
       for (let c = 0; c < 3; c++) {
         const base = src[o + c];
-        const l = base * diff * ao * (lit[c] / 255) + 255 * sp + rimC[c] * rim * ph;
-        const d = dark[c] * shine;
-        let v = d + (l - d) * ph;
+        const l = (base * diff * ao * (lit[c] / 255) + 255 * sp + rimC[c] * rim * ph) * (1 - sh * shC[c]);
+        const d = dark[c] * shine * (1 - es) + base * es * EARTH[c];
+        let v = d + (l - d) * ph + FL[c] * glow;
         v = v + (haze[c] - v) * hz;
         px3[c] = v;
       }
@@ -443,14 +508,29 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       faces.forEach(f => imgFor(f.key)); // make sure every face is on its way
       kick();
     },
-    look(s, o, n) {
+    look(s, o, n, h) {
       const next = s.map(parse) as RGB[];
-      if (next.join() === sky.join() && o.join() === orb.join() && Math.abs(n - night) < 0.01) return;
-      sky = next; orb = o; night = n; kick();
+      if (next.join() === sky.join() && o.join() === orb.join() && Math.abs(n - night) < 0.01 && (h == null || h === hour)) return;
+      sky = next; orb = o; night = n; if (h != null) hour = h; kick();
     },
     light() { kick(); },
     destroy,
   };
   function mixc(a: number, b: number, t: number) { return a + (b - a) * t; }
+  /** the wick's footprint (half length hl, half thickness hw) swept by (sx, sy): its convex outline as [x, y, nx, ny] per edge */
+  function sweptHull(hl: number, hw: number, sx: number, sy: number) {
+    const pts = [[-hl, -hw], [hl, -hw], [hl, hw], [-hl, hw]].flatMap(([x, y]) => [[x, y], [x + sx, y + sy]]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o: number[], a: number[], b: number[]) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo: number[][] = [], hi: number[][] = [];
+    for (const p of pts) { while (lo.length > 1 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+    for (const p of [...pts].reverse()) { while (hi.length > 1 && cross(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+    const hull = [...lo.slice(0, -1), ...hi.slice(0, -1)], out: number[] = [];
+    for (let i = 0; i < hull.length; i++) {
+      const a = hull[i], b = hull[(i + 1) % hull.length], ex = b[0] - a[0], ey = b[1] - a[1], l = Math.hypot(ex, ey) || 1;
+      // (counter-clockwise in x-right, y-down space turns the outward normal to (ey, -ex))
+      out.push(a[0], a[1], ey / l, -ex / l);
+    }
+    return out;
+  }
   function norm3(x: number, y: number, z: number) { const l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }
 }
