@@ -1,6 +1,7 @@
 import Main from '../canvas/pages/Main.html?raw';
-import { MOMENTS, MOODS, LOYALTY_ENABLED, type Moment, type MomentKey } from '../config';
+import { MOMENTS, MOODS, type Moment, type MomentKey } from '../config';
 import { ritualistsCardHTML, wireRitualistsCard } from '../brand';
+import { ritualistsHTML, wireRitualists } from '../ritualists';
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
 import { add } from '../cart';
@@ -15,7 +16,7 @@ import { bindCanvasProductLinks, previewOff, wireQuickAdd, wireNotify } from './
 import { journalTeaserHTML } from './journal';
 import { mountRibbon } from '../ribbon';
 import '../homeflow.css';
-import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHero, heroLook, heroLight, giftPhotoHTML } from '../moons';
+import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHero, heroLook, heroLight, giftPhotoHTML, STUDIO_ON } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -48,25 +49,30 @@ export async function renderHome(app: HTMLElement) {
   useRealClock = true;
   app.innerHTML = fixImages(Main);
   // the studio photographs: the hero arch shows Claire's past candle work for the hour (set here, before swapRenders, so the
-  // canvas renders it replaces are never swapped for Wix photos); Claire's cut-out in "Meet Claire", then From the studio; one
-  // photograph each sits with Ritual on Repeat and Send a Sunrise
+  // canvas renders it replaces are never swapped for Wix photos); Claire's cut-out in "Meet Claire"; one photograph sits with
+  // Send a Sky. ("From the studio" is switched off by the owner, October 2026: STUDIO_ON in src/moons.ts brings it back.)
   const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) { stack.innerHTML = heroStackHTML(momentForHour(hourNow()).key); stack.classList.add('moons'); }
   resetHero();
   app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
-  app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
-  // the Journal teaser closes the gifting chapter, on its rose ground (it used to sit between two night sections near the end)
+  if (STUDIO_ON) app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
+  // The Ritualists (chapter 6): the planned club, "coming soon", with its waitlist (src/ritualists.ts, shared with #/club).
+  // The embossed membership card (Claire's logo and a wax seal) stands beside the waitlist. Put in before the journey reads
+  // the chapters.
+  const rit = app.querySelector<HTMLElement>('.ritflow .rit-wrap');
+  if (rit) {
+    rit.innerHTML = ritualistsHTML({ id: 'rit', chapter: 'Chapter 6 · The Ritualists' });
+    rit.querySelector('.rt-side')?.insertAdjacentHTML('afterbegin', `<div class="rt-card">${ritualistsCardHTML()}</div>`);
+    wireRitualistsCard(rit); wireRitualists(rit);
+  }
+  // the Journal row closes the page, on Send a Sky's ground, just above the footer
   app.querySelector('section.giftsec')?.insertAdjacentHTML('beforeend', journalTeaserHTML());
   app.querySelector('.gift-grid > div:has(.gcard)')?.insertAdjacentHTML('beforeend', giftPhotoHTML());
   swapRenders(app);
-  wireStudio(app);
+  if (STUDIO_ON) wireStudio(app);
   wireCommon(app);
   mountRibbon(app); // the proof ribbon under the opening: a lit band turning slowly round a drum
   wireHeroStatic(app);
-  // Everything not open yet (the Ritualists, Ritual on Repeat, Moon Drops, the Ritual Wall) shares the one "Opening soon"
-  // chapter near the end, beside the one Monthly Ritual sign-up; the Moon Drop line takes the next new moon from the one drop
-  // state. The Ritualists keep their embossed membership card (Claire's logo and a wax seal, the owner preferred it to the mood
-  // constellation) above the sign-up. The club is not open: the card says "coming soon" and promises nothing.
-  if (!LOYALTY_ENABLED) { app.querySelector('.soonflow .soon-card')?.insertAdjacentHTML('beforeend', ritualistsCardHTML()); wireRitualistsCard(app.querySelector('.soonflow') ?? app); }
+  // Moon Drops (chapter 5) take the next seasonal drop from the one drop state (src/drop.ts)
   wireNotify(app);
   wireCountdown(app);
   wireSunrise(app);
@@ -100,14 +106,15 @@ function pairFor(m: Moment) {
   };
 }
 
-// Coaching offers shown with each moment. Only the two free ways in from the coaching page ("Free · Self-paced 7-Day Ritual Reset,
-// about 10 minutes" and "Free · 20 min Discovery call"); the wording per moment is a draft for Claire.
+// The practice shown with each moment: the free 20-minute discovery call (owner, October 2026: the 7-day reset is gone).
+// The line under it alternates between two ways of saying what the call is for (drafts for Claire).
+const CALL = { title: 'Free 20-minute discovery call', href: '#/book' };
 const PRACTICE: Record<MomentKey, { title: string; sub: string; href: string }> = {
-  dawn: { title: 'Free 7-day reset', sub: 'Self-paced, about 10 minutes a day', href: '#/reset' },
-  morning: { title: 'Free 20-minute discovery call', sub: 'Talk about what you want to change', href: '#/book' },
-  midday: { title: 'Free 7-day reset', sub: 'Turn a scent into a calm cue', href: '#/reset' },
-  golden: { title: 'Free 20-minute discovery call', sub: 'See if coaching is a fit for you', href: '#/book' },
-  night: { title: 'Free 7-day reset', sub: 'Short daily practices, about 10 minutes', href: '#/reset' },
+  dawn: { ...CALL, sub: 'Talk about what you want to change' },
+  morning: { ...CALL, sub: 'See if coaching is a fit for you' },
+  midday: { ...CALL, sub: 'Talk about what you want to change' },
+  golden: { ...CALL, sub: 'See if coaching is a fit for you' },
+  night: { ...CALL, sub: 'Talk about what you want to change' },
 };
 
 /** While the catalogue loads, an invisible stand-in of the same size keeps the ritual's place (from the moment's own
@@ -163,7 +170,7 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
     const c = PRACTICE[m.key];
     const practice = `<a class="sp sp-coach" href="${c.href}" aria-label="${esc(c.title)}: ${esc(c.sub)}">
         <span class="sp-ico" aria-hidden="true"><svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M16 25c-3.2-3.4-3.2-9.6 0-15 3.2 5.4 3.2 11.6 0 15z"/><path d="M16 25c-5-1-8.6-5-8.6-11 4.6 1.2 7.4 4.6 8.6 11z"/><path d="M16 25c5-1 8.6-5 8.6-11-4.6 1.2-7.4 4.6-8.6 11z"/></svg></span>
-        <span><small>The practice</small><b>${esc(c.title)}</b><em>${esc(c.sub)}</em></span><span class="sp-go" aria-hidden="true">&rarr;</span></a>`;
+        <span><small>The practice</small><b>${esc(c.title)}</b><em><span class="d">${esc(c.sub)}</span></em></span><span class="sp-go" aria-hidden="true">&rarr;</span></a>`;
     prods.innerHTML = ritual + practice;
   }
   const cta = app.querySelector<HTMLElement>('#dCta');
@@ -296,25 +303,30 @@ function wireHero(app: HTMLElement, items: Item[]) {
   setMoment(app, MOMENTS.find(m => m.key === key) ?? MOMENTS[3], false, liveHour);
 }
 
-// ---------- Chapter 1: moment shop ----------
+// ---------- Chapter 1: Our candles ----------
+// A fixed row (owner, October 2026), not tied to the time of day: one card per type, from the live catalogue by its Wix
+// address. If one is missing, the same scent in the same format stands in, then any other in-stock piece of that format.
+export const OUR_CANDLES: { slug: string; scent: string; format: Item['format'] }[] = [
+  { slug: 'citrus-sun', scent: 'citrus & sun', format: 'candle' },
+  { slug: 'windy-beach-fragrance-roller', scent: 'windy beach', format: 'roller' },
+  { slug: 'citrus-sun-mini-diffuser', scent: 'citrus & sun', format: 'diffuser' },
+  { slug: 'campfire-stories', scent: 'campfire stories', format: 'candle' },
+];
+export function pickOurCandles(items: Item[]): Item[] {
+  const picked: Item[] = [];
+  for (const w of OUR_CANDLES) {
+    const free = (i: Item) => !picked.includes(i);
+    const x = items.find(i => i.slug === w.slug && free(i)) ?? [findLive(items, w.scent, w.format)].find(i => i && free(i))
+      ?? items.find(i => i.format === w.format && i.inStock && free(i) && !/-need-pics$/.test(i.slug));
+    if (x) picked.push(x);
+  }
+  return picked;
+}
 function wireMomentShop(app: HTMLElement, items: Item[]) {
   const grid = app.querySelector<HTMLElement>('#msGrid');
   if (!grid) return;
-  const show = (key: MomentKey) => {
-    const m = MOMENTS.find(x => x.key === key)!;
-    const pool = items.filter(i => i.mood === m.mood && i.inStock);
-    // one of each format first (a candle leads: Claire's candles are what most people come for), then fill
-    const picked: Item[] = [];
-    for (const f of ['candle', 'roller', 'diffuser', 'deodorant'] as const) { const x = pool.find(i => i.format === f); if (x) picked.push(x); }
-    for (const x of pool) if (picked.length < 4 && !picked.includes(x)) picked.push(x);
-    grid.innerHTML = picked.slice(0, 4).map(i => cardHTML(i)).join('') || `<p class="muted">No ${MOODS[m.mood].label.toLowerCase()} scents in stock right now.</p>`;
-    wireQuickAdd(grid, items);
-  };
-  app.querySelectorAll<HTMLButtonElement>('.ms-tabs [data-ms]').forEach(b => b.addEventListener('click', () => {
-    app.querySelectorAll('.ms-tabs [data-ms]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
-    show(b.dataset.ms as MomentKey);
-  }));
-  show('dawn');
+  grid.innerHTML = pickOurCandles(items).map(i => cardHTML(i)).join('') || '<p class="muted">Our candles are not in the shop right now.</p>';
+  wireQuickAdd(grid, items);
 }
 
 // ---------- the refill calculator (Ritual on Repeat's page uses it) ----------
@@ -412,7 +424,7 @@ export function refreshDropBar() {
   if (el) el.innerHTML = dropBarHTML();
 }
 
-// ---------- Send a Sunrise ----------
+// ---------- Send a Sky ----------
 // The gift page's card carries one of Claire's past pours in its bottom corner (public/img/studio/moons), a different topping
 // for each sky: florals at dawn, citrus and spice at golden hour, lavender at night. They are past pours, so the line under
 // the card names only the topping, never a scent. The wording is a draft for Claire.
@@ -442,7 +454,7 @@ export function wireSunrise(app: HTMLElement) {
     const top = SKY_TOPPING[b.dataset.sky!];
     if (cap && card?.hasAttribute('data-candle') && top) cap.innerHTML = `<span class="d">On the card: a candle Claire topped by hand with ${top}.</span>`;
   }));
-  app.querySelector('#gAdd')?.addEventListener('click', previewOff('Send a Sunrise gifting'));
+  app.querySelector('#gAdd')?.addEventListener('click', previewOff('Send a Sky gifting'));
 }
 
 // ---------- Ritualists, Pass the Light, newsletter ----------

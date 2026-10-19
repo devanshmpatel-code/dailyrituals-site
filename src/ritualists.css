@@ -1,0 +1,52 @@
+/* The Ritualists (src/ritualists.ts): the home chapter and the club page share this. It sits on the night. */
+.rt-in { position: relative; display: flex; flex-direction: column; gap: clamp(26px, 3.4vw, 40px); color: var(--moonstone, #EDE6DA); }
+.rt-head { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; max-width: 46rem; }
+.rt-head .chapter, .rt-head .eyebrow { color: var(--gold-leaf, #C9A35A); opacity: 1; }
+.rt-head h1, .rt-head h2 { margin: 0; font-size: clamp(40px, 5vw, 72px); line-height: 1.02; color: var(--moonstone, #EDE6DA); }
+.rt-head h1 { font-size: clamp(46px, 6vw, 92px); }
+.rt-soon { color: var(--gold-light, #E9D4A1); }
+.rt-lead { margin: 0; font-size: 18px; line-height: 1.55; max-width: 46ch; color: rgba(237, 230, 218, .88); }
+.rt-value { margin: 0; font: 500 clamp(22px, 2.2vw, 28px)/1.2 var(--display); color: var(--gold-light, #E9D4A1); }
+.rt-value b { font-weight: 500; }
+
+.rt-tiers { list-style: none; margin: 0; padding: 0; }
+.rt-tiers .tier { border: 1px solid rgba(201, 163, 90, .34); background: rgba(237, 230, 218, .04); border-radius: 22px 6px 22px 6px; }
+.rt-tiers .tier.rt-golden { background: rgba(226, 160, 74, .09); }
+.rt-tiers .rt-when { color: var(--gold-light, #E9D4A1); font-weight: 600; letter-spacing: .02em; }
+.rt-tiers .tier ul { margin: 0; font-size: 15px; line-height: 1.45; opacity: 1; color: rgba(237, 230, 218, .9); }
+
+.rt-foot { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: clamp(20px, 3vw, 40px); align-items: start; }
+.rt-wait { border-radius: 22px 8px 22px 8px; padding: clamp(20px, 2.6vw, 32px); background: var(--deep-sky, #231B36); border: 1px solid rgba(201, 163, 90, .3); display: flex; flex-direction: column; gap: 14px; }
+.rt-wait-h { margin: 0; font: 500 clamp(24px, 2.2vw, 30px)/1.1 var(--display); color: var(--moonstone, #EDE6DA); }
+.rt-form { display: flex; flex-direction: column; gap: 14px; }
+.rt-form label, .rt-form legend { font-size: 14px; font-weight: 600; color: var(--gold-light, #E9D4A1); }
+.rt-form .rt-opt { font-weight: 400; opacity: .85; }
+.rt-field { display: flex; flex-direction: column; gap: 6px; }
+.rt-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rt-form legend { padding: 0; margin-bottom: 6px; }
+.rt-row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 10px; }
+.rt-form input, .rt-form select { min-height: 48px; width: 100%; box-sizing: border-box; border-radius: 12px; padding: 0 14px; font: inherit; font-size: 16px;
+  background: var(--nocturne, #120F1F); color: var(--moonstone, #EDE6DA); border: 1px solid rgba(237, 230, 218, .32); }
+.rt-form input::placeholder { color: rgba(237, 230, 218, .6); }
+.rt-form input:focus-visible, .rt-form select:focus-visible, .rt-form .btn:focus-visible { outline: 2px solid var(--gold-light, #E9D4A1); outline-offset: 2px; }
+.rt-why { margin: 2px 0 0; font-size: 14px; line-height: 1.45; color: rgba(237, 230, 218, .82); }
+.rt-form .rt-join { align-self: flex-start; min-height: 48px; background: var(--gold-light, #E9D4A1); color: var(--nocturne, #120F1F); border: 0; }
+.rt-side { display: flex; flex-direction: column; gap: 18px; }
+.rt-refer { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: clamp(18px, 2.2vw, 26px); border-radius: 8px 22px 8px 22px; border: 1px dashed rgba(201, 163, 90, .5); }
+.rt-refer .soon-tag { color: var(--gold-light, #E9D4A1); }
+.rt-refer-h { font: 500 clamp(24px, 2.2vw, 30px)/1.1 var(--display); color: var(--moonstone, #EDE6DA); }
+.rt-refer .small { color: rgba(237, 230, 218, .82); }
+.rt-give { margin: 0; font-size: 15.5px; line-height: 1.5; color: rgba(237, 230, 218, .88); }
+.rt-give .tlink { color: var(--gold-light, #E9D4A1); display: inline-flex; align-items: center; min-height: 44px; }
+body.show-drafts .rt-in .d { color: #231A2B; }
+
+@media (max-width: 820px) {
+  .rt-foot { grid-template-columns: minmax(0, 1fr); }
+  .rt-tiers .tier { padding: 20px; }
+  .rt-form .rt-join { align-self: stretch; }
+}
+
+/* the club page (#/club): the opening card above, then the club on one continuous night */
+.clubsoon:has(+ .clubplan) { -webkit-mask-image: none !important; mask-image: none !important; }
+.clubsoon .cs-go { background: linear-gradient(120deg, var(--gold), var(--gold-2)); color: #231A2B; border: 0; min-height: 48px; }
+.clubplan { background: linear-gradient(180deg, #231A2B 0, #171A33 320px, #131530 100%); color: var(--moonstone, #EDE6DA); padding-block: clamp(40px, 6vw, 88px) clamp(64px, 8vw, 112px); }

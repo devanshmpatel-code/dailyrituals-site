@@ -134,6 +134,9 @@ export const giftPhotoHTML = () => tinFigure('sweet-romance', 532, 535, 'A candl
 export const productStudioHTML = () => tinFigure('mothers-day-florals', 900, 754, 'Candles in black tins seen from above, each topped by hand with a dried flower beside its wooden wick', '(max-width: 820px) 90vw, 40vw', 'ph-product', 'From the studio · wooden wicks, and every tin finished by hand');
 
 // ---------- home: From the studio ----------
+/** "From the studio" on home and the studio photographs on the Ritual Wall: switched off by the owner (October 2026). The code
+ *  stays; set this to true to bring both back. */
+export const STUDIO_ON = false;
 // Real cut-outs (backgrounds removed from Claire's own photographs, /img/studio/cut/): Verdant and Cabana, both in the
 // current catalogue, stand on a lit shelf and link to their pages; Westcoast deodorant sits in front. Beside them, a pour seen
 // from above with its toppings labelled. Below, a strip of single candle tops, one for each kind of topping.

@@ -10,7 +10,8 @@ import { ritualistsCardHTML, wireRitualistsCard } from '../brand';
 import { loadCatalogue } from '../wix';
 import { bindCanvasProductLinks, previewOff } from './shared';
 import { wireVote, wireCountdown, wireSunrise, wireClub, wireRepeatCalc } from './home';
-import { pastMoonsHTML, wirePastMoons } from '../moons';
+import { pastMoonsHTML, wirePastMoons, STUDIO_ON } from '../moons';
+import { ritualistsHTML, wireRitualists } from '../ritualists';
 import { wireGift } from './gift';
 
 const PAGES: Record<string, string> = {
@@ -22,6 +23,8 @@ export function hasStatic(route: string) { return route in PAGES; }
 export async function renderStatic(app: HTMLElement, route: string) {
   app.innerHTML = fixImages(LOYALTY_ENABLED ? PAGES[route] : noPoints(PAGES[route]));
   if (route === 'club' && !LOYALTY_ENABLED) clubSoon(app);
+  // the Ritual Wall's studio photographs are switched off with From the studio (STUDIO_ON in src/moons.ts); the code stays
+  if (route === 'wall' && !STUDIO_ON) app.querySelector('.wall-studio')?.remove();
   if (route === 'drops') {
     // the past moons: every named candle from the studio photographs, as an archive at the foot of the night page (never buyable)
     app.querySelector('.night > .wrap')?.insertAdjacentHTML('beforeend', pastMoonsHTML());
@@ -58,22 +61,33 @@ export function renderMissing(app: HTMLElement, route: string) {
     <p class="small muted d confirm">Draft page: not designed yet. Claire to provide content.</p></div>`;
 }
 
-/** The rewards club is not set up in Wix yet. Customers see an honest "opening soon" page; the planned details stay as a draft for Claire. */
+/**
+ * The rewards club is not set up in Wix yet. Customers see the club as the owner approved it (October 2026), marked
+ * "coming soon": the three tiers, the points value and a waitlist (email and birthday), from src/ritualists.ts, the same as
+ * the home chapter. The rest of the canvas page (calculator, ways to earn, redeeming) stays a draft for Claire below it.
+ */
 function clubSoon(app: HTMLElement) {
   const plan = document.createElement('div'); plan.className = 'confirm club-plan';
-  plan.innerHTML = '<p class="d" style="margin:24px auto;max-width:1180px;padding:0 24px">Draft: the planned club below. Shown to Claire only until the Wix Loyalty app is set up.</p>';
+  plan.innerHTML = '<p class="d" style="margin:24px auto;max-width:1180px;padding:0 24px">Draft: more of the planned club below (calculator, ways to earn, redeeming). Shown to Claire only until the Wix Loyalty app is set up.</p>';
   while (app.firstChild) plan.appendChild(app.firstChild);
+  // (the tiers and the referral idea are shown above to everyone; the draft keeps the rest)
+  plan.querySelectorAll('.tiers, .refer').forEach(n => n.remove());
   app.innerHTML = `<section class="clubsoon"><div class="wrap">
     <div class="cs-tx"><div class="crumbs cs-crumbs"><a href="#/">Home</a> / The Ritualists</div><span class="eyebrow">Free rewards club</span>
       <h1>The <span class="it goldtext">Ritualists</span> are gathering.</h1>
-      <p>Our rewards club is opening soon. Join the Monthly Ritual and you will be first to hear when the doors open, along with a short practice from Claire each month and first notice of every Moon Drop.</p>
-      <form class="nform" id="csForm"><label for="csEmail" hidden>Email address</label><input id="csEmail" type="email" placeholder="Email address" required><button class="btn" type="submit">Tell me first</button></form>
-      <span class="small" style="opacity:.75">You can unsubscribe any time.</span></div>
+      <p>Our rewards club is opening soon. <span class="d">Join the waitlist below and you will be first to hear when the doors open.</span></p>
+      <button type="button" class="btn cs-go"><span class="d">Join the waitlist</span></button></div>
     ${ritualistsCardHTML()}
-  </div></section>`;
+  </div></section>
+  <section class="clubplan" id="csWait"><div class="wrap">${ritualistsHTML({ id: 'cs', heading: 'h2' })}</div></section>`;
   app.appendChild(plan);
   wireRitualistsCard(app);
-  app.querySelector('#csForm')?.addEventListener('submit', e => { e.preventDefault(); previewOff('Sign-ups')(); });
+  wireRitualists(app);
+  app.querySelector<HTMLButtonElement>('.cs-go')?.addEventListener('click', () => {
+    const f = app.querySelector<HTMLInputElement>('#csEmail');
+    f?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    f?.focus({ preventScroll: true });
+  });
 }
 
 /** Until the Loyalty and referral apps exist, take points and referral promises out of the customer-facing pages. */
