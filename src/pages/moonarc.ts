@@ -120,7 +120,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     const el = document.createElement('span'); el.className = 'cm'; el.dataset.k = key;
     // (the flame stands on the wick of the lit candle, the full moon: a small overlay animated in CSS, studio.css, so the
     // textured wax under it is never redrawn for the flicker)
-    el.innerHTML = '<span class="cm-sh"></span><span class="cm-in"><span class="cm-glow"></span><canvas></canvas><span class="cm-flame"><i class="cmf-h"></i><i class="cmf-f"><i class="cmf-o"></i><i class="cmf-c"></i><i class="cmf-b"></i></i></span></span><span class="cm-cap"></span>';
+    el.innerHTML = '<span class="cm-sh"></span><span class="cm-in"><span class="cm-glow"></span><canvas></canvas><span class="cm-flame"><i class="cmf-h"></i><i class="cmf-r"></i><i class="cmf-f"><i class="cmf-o"></i><i class="cmf-c"></i><i class="cmf-b"></i></i></span></span><span class="cm-cap"></span>';
     const w = WICK[key]; if (w) { el.style.setProperty('--wx', String(w[0])); el.style.setProperty('--wy', String(w[1])); }
     arc.append(el);
     return { key, i, el, cv: el.querySelector('canvas')!, cap: el.querySelector('.cm-cap')!, img: null as unknown as HTMLImageElement, px: null, out: null, tex: null, th: 0, x: 0, y: 0, s: 1, sig: '' };
@@ -436,7 +436,9 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     // the wick to the rim: darker and more translucent than the solid wax, smooth and flat (no grain, no dome), glossy (it
     // mirrors the light as a soft broad band on the side away from it and the sky a little), with a meniscus at the tin.
     // The flame (drawn over it, .cm-flame) warms it, more after dark
-    const POOL = [0.83, 0.81, 0.77];
+    // (liquid soy wax is deeper and warmer than solid: it lets the light in; darker still towards the rim, where it is deepest
+    // to look into; a narrow ring of solid wax stays just inside the tin, and the liquid meets it with a bright meniscus)
+    const POOL = [0.87, 0.81, 0.7], EDGE = 0.918, SKY = sky[0];
     // the tin: a thin metal rim round the wax (pewter, brushed), bright where it faces the light; inside it, a fine dark line
     // where the wax meets the metal
     const TIN0 = 0.962, METAL = [176, 172, 168];
@@ -470,16 +472,19 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
         }
       }
       const t3 = k * 3, mot = tex[t3], frost = tex[t3 + 1], grain = tex[t3 + 2];
-      let pl = 0, gloss = 0, lip = 0, warm = 0;
+      let pl = 0, gloss = 0, lip = 0, warm = 0, depth = 0, band = 0;
       if (pool > 0) {
-        pl = pool * (1 - smooth(TIN0 - 0.03, TIN0 - 0.006, r));
-        lip = pool * Math.exp(-(((r - TIN0 + 0.022) / 0.012) ** 2));
+        pl = pool * (1 - smooth(EDGE - 0.004, EDGE + 0.004, r));
+        lip = pool * Math.exp(-(((r - EDGE + 0.006) / 0.0065) ** 2));
+        depth = pl * smooth(0.15, EDGE, r);
         // the mirror band: across the pool, brightest on the far side from the light, fading before the rim
         const across = -(g.nx[k] * rlx + g.ny[k] * rly);
-        const gx = g.nx[k] + 0.42 * rlx, gy = g.ny[k] + 0.42 * rly; // (the light's reflection: a soft spot mirrored across the wick)
-        gloss = pl * (0.35 * smooth(0.0, 0.62, across) * (1 - smooth(0.72, 0.9, r)) + 0.65 * Math.exp(-(gx * gx * 1.6 + gy * gy) / 0.06));
+        // a broad faint sheen on the far side, and the sky's reflection: a band across the liquid with crisp edges
+        gloss = pl * 0.3 * smooth(0.0, 0.62, across) * (1 - smooth(0.72, 0.9, r));
+        const bv = across - 0.12 * (g.nx[k] * rly - g.ny[k] * rlx) ** 2;
+        band = pl * smooth(0.34, 0.41, bv) * (1 - smooth(0.58, 0.66, bv)) * (1 - smooth(0.8, 0.88, r));
         // the flame's light on the liquid wax, falling off from the wick
-        warm = pl * (0.55 + 0.45 * night01) * Math.exp(-(qx * qx + qy * qy) / 0.42);
+        warm = pl * (0.7 + 0.5 * night01) * Math.exp(-(qx * qx + qy * qy) / 0.32);
       }
       const tin = smooth(TIN0 - 0.006, TIN0 + 0.006, r), seam = Math.exp(-(((r - TIN0 + 0.012) / 0.008) ** 2));
       const facing = Math.max(0, g.nx[k] * rlx + g.ny[k] * rly);
@@ -492,10 +497,12 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
         base = base + (238 - base) * frost * 0.25 * (1 - pl);
         // the pool mirrors the sky a little
         base = base + (haze[c] - base) * pl * 0.12; // (frost is whiter, a touch less saturated)
-        base = base * (1 - pl * (1 - POOL[c])) * (1 - seam * 0.35) * (1 - lip * 0.06);
+        base = base * (1 - pl * (1 - POOL[c])) * (1 - 0.12 * depth) * (1 - seam * 0.35);
+        // the sky in the liquid
+        base = base + (Math.max(SKY[c], haze[c]) * 1.05 - base) * band * 0.3;
         // the tin's rim: brushed metal lit from the light's side, with a bright edge on that side
         base = base * (1 - tin) + tin * METAL[c] * (0.55 + 0.6 * facing + 0.25 * grain);
-        const l = (base * (diff + (0.9 - diff) * pl) * ao * (lit[c] / 255) + 255 * (sp * (1 - tin) + 0.1 * lip * facing) + lit[c] * 0.5 * gloss + haze[c] * 0.16 * gloss + rimC[c] * rim * ph * (1 - tin) + tin * 255 * 0.35 * facing ** 6) * (1 - sh * shC[c]);
+        const l = (base * (diff + (0.9 - diff) * pl) * ao * (lit[c] / 255) + 255 * (sp * (1 - tin) * (1 - pl) + 0.34 * lip * (0.5 + 0.5 * facing) + 0.12 * band) + lit[c] * 0.4 * gloss + haze[c] * 0.12 * gloss + rimC[c] * rim * ph * (1 - tin) + tin * 255 * 0.35 * facing ** 6) * (1 - sh * shC[c]);
         const d = dark[c] * shine * (1 - es) + base * es * EARTH[c];
         let v = d + (l - d) * ph + FL[c] * glow;
         v = v + (haze[c] - v) * hz;
