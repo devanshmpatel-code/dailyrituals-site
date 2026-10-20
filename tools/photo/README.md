@@ -41,6 +41,9 @@ objects' real shapes instead of a mask's outline. Run them from the repository r
   through the small tin and the lid; it reuses `picker_foot.py` (same photographs, same geometry). Run once.
 - `westcoast_cut.py public/img/studio` (with `U2NET_HOME=/root/.rembg`): re-cuts the Westcoast deodorant jars from a crop of
   the photograph, keeps the one shape, fills its holes (the black label had gone), smooths and decontaminates the edge.
+- `journal_singles.py public/img/studio`: the Journal's article pictures (`journal/<slug>.webp`), one whole tin each, a
+  different tin per article, cut with `tin_cutouts.py`'s method from its bench photographs (the rim width measured over the
+  whole group). Written at the cut-out's own size, about 440 to 500 px (never enlarged).
 
 The masters are `/tmp/retouch/master/<name>.png` (grade.py); when one is missing `moon_faces.master()` grades it on the fly.
 The flawed whole-tin cut-outs that no page showed (apple-cider, candy-cane-lane, easter-bread, mulled-wine, sea-salt-sage)

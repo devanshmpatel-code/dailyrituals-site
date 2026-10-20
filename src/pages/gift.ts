@@ -33,16 +33,6 @@ export function giftLineHTML(g: GiftDetails): string {
   return `<div class="li-gift"><span class="li-gift-tag"><span class="d">Gift</span></span><span class="li-gift-meta">${bits.join('<span aria-hidden="true"> · </span>')}</span>${g.note ? `<q class="li-gift-note">${esc(g.note)}</q>` : ''}</div>`;
 }
 
-/** Dawn is a plain, cool sky with no candle on the card, so the line under the card says so; the other skies keep theirs (wired in home.ts). */
-export function wireSkyCaption(app: HTMLElement) {
-  const cap = app.querySelector<HTMLElement>('#gCandleCap');
-  const card = app.querySelector<HTMLElement>('#gCard');
-  if (!cap || !card?.hasAttribute('data-candle')) return;
-  app.querySelectorAll<HTMLButtonElement>('button[data-sky]').forEach(b => b.addEventListener('click', () => {
-    if (b.dataset.sky === 'dawn') cap.innerHTML = '<span class="d">Dawn is the quiet sky before sunrise, with no candle on the card.</span>';
-  }));
-}
-
 export function wireGift(app: HTMLElement, items: Item[]) {
   const candles = giftableCandles(items);
   const live = app.querySelector<HTMLAnchorElement>('a.gr-live');
@@ -63,8 +53,8 @@ export function wireGift(app: HTMLElement, items: Item[]) {
     <div class="gp-size" id="gSizeRow" hidden><span class="eyebrow" id="gSizeLbl">Size</span><div class="chips" id="gSizes" role="group" aria-labelledby="gSizeLbl"></div></div>
     <p class="g-err" id="gPickErr" hidden></p></div>`);
 
-  // what is in the box, beside the card preview: the chosen candle's own photograph
-  $('#gCandleCap')?.insertAdjacentHTML('beforebegin', `<div class="g-sum" id="gSum" hidden aria-live="polite"><img alt="" width="64" height="80"><div><span class="eyebrow"><span class="d">In the box</span></span><b id="gSumName"></b><span id="gSumSize" class="small muted"></span></div></div>`);
+  // what is in the box, under the card preview: the chosen candle's own photograph
+  $('#gCard')?.insertAdjacentHTML('afterend', `<div class="g-sum" id="gSum" hidden aria-live="polite"><img alt="" width="64" height="80"><div><span class="eyebrow"><span class="d">In the box</span></span><b id="gSumName"></b><span id="gSumSize" class="small muted"></span></div></div>`);
 
   // a fresh button (the page's old one only said gifting was switched off)
   const btn = oldBtn.cloneNode(false) as HTMLButtonElement;

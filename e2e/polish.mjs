@@ -193,61 +193,56 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok('the day after: it moves on to the spring drop (the March 2027 equinox, then the new moon of April 6), skipping the new moons between', /April 6/.test(n), n);
   await ctx.close();
 }
-// Send a Sky: one of Claire's candles tucked into the card's bottom corner changes with the sky (citrus and spice at golden hour, lavender at night; dawn is a plain
-// cool sky with no candle), lit to match, and never covers the note or the recipient line
-const TOPS = { dawn: null, golden: ['mulled-wine', /orange.*star anise/], night: ['lavender-haze', /lavender/] };
-const hits = (a, c) => a.left < c.right - 1 && c.left < a.right - 1 && a.top < c.bottom - 1 && c.top < a.bottom - 1;
+// Send a Sky: the card is the sky, the note and the names only. The owner had the candle photograph taken off the card
+// (October 2026) on every sky, on /gift and on home; the candle being sent shows under the card once one is chosen.
+const inside = (a, c) => a.left >= c.left - 1 && a.right <= c.right + 1 && a.top >= c.top - 1 && a.bottom <= c.bottom + 1;
 for (const [w, reduce] of [[1440], [1024], [768], [390], [360], [390, true]]) {
   const label = `${w}px${reduce ? ' reduced motion' : ''}`, phone = w < 500;
   const ctx = await b.newContext({ viewport: { width: w, height: phone ? 844 : 900 }, hasTouch: phone, isMobile: phone, reducedMotion: reduce ? 'reduce' : 'no-preference' }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto(base + '/gift'); await p.waitForSelector('#gCard .gc-candle');
+  await p.goto(base + '/gift'); await p.waitForSelector('#gCard .gc-sky');
   const state = () => p.evaluate(() => {
-    const card = document.querySelector('#gCard'), cr = card.getBoundingClientRect(), tin = card.querySelector('.gc-tin').getBoundingClientRect();
-    const vis = { left: Math.max(cr.left, tin.left), right: Math.min(cr.right, tin.right), top: Math.max(cr.top, tin.top), bottom: Math.min(cr.bottom, tin.bottom) };
+    const card = document.querySelector('#gCard'), cr = card.getBoundingClientRect();
     const rng = document.createRange(); rng.selectNodeContents(card.querySelector('#gCardNote'));
-    const shown = [...card.querySelectorAll('.gc-tin img')].filter(i => Number(getComputedStyle(i).opacity) > .99);
-    return { t: card.dataset.t, shown: shown.map(i => i.getAttribute('src')), loaded: shown.every(i => i.complete && i.naturalWidth > 0),
-      hidden: [...card.querySelectorAll('.gc-tin img')].filter(i => Number(getComputedStyle(i).opacity) < .01).length,
-      vis, tin: tin.toJSON(), card: cr.toJSON(), note: [...rng.getClientRects()].map(r => r.toJSON()), to: card.querySelector('#gCardTo').getBoundingClientRect().toJSON(),
-      candleShown: getComputedStyle(card.querySelector('.gc-candle')).visibility !== 'hidden' && Number(getComputedStyle(card.querySelector('.gc-candle')).opacity) > .01, bg: getComputedStyle(card.querySelector('.gc-sky i[data-layer="' + card.dataset.t + '"]')).backgroundImage,
-      cap: document.querySelector('#gCandleCap').textContent, live: document.querySelector('#gCandleCap').getAttribute('aria-live'), aria: card.querySelector('.gc-candle').getAttribute('aria-hidden'),
-      glow: getComputedStyle(card).getPropertyValue('--gcg').trim(), wick: Number(getComputedStyle(card.querySelector('.gc-wick')).opacity), dur: getComputedStyle(card.querySelector('.gc-tin img')).transitionDuration };
+    return { t: card.dataset.t, imgs: card.querySelectorAll('img').length, candle: card.querySelectorAll('.gc-candle, .gc-tin, .gc-flame').length, card: cr.toJSON(),
+      note: [...rng.getClientRects()].map(r => r.toJSON()), to: card.querySelector('#gCardTo').getBoundingClientRect().toJSON(),
+      bg: getComputedStyle(card.querySelector('.gc-sky i[data-layer="' + card.dataset.t + '"]')).backgroundImage, op: Number(getComputedStyle(card.querySelector('.gc-sky i[data-layer="' + card.dataset.t + '"]')).opacity),
+      cap: !!document.querySelector('#gCandleCap'), text: card.parentElement.innerText, dur: getComputedStyle(card.querySelector('.gc-sky i')).transitionDuration };
   });
-  const glows = [];
   for (const sky of ['dawn', 'golden', 'night']) {
-    await p.locator(`button[data-sky="${sky}"]`).click(); await p.waitForTimeout(reduce ? 150 : 1500);
-    const s = await state(); glows.push(s.glow);
-    if (sky === 'dawn') {
-      ok(`${label} /gift dawn: no candle on the card (the cool sky stands alone), and the line under it says so`, s.t === 'dawn' && !s.candleShown && /no candle/i.test(s.cap), JSON.stringify({ shown: s.candleShown, cap: s.cap }));
-      ok(`${label} /gift dawn: the sky is cool (lilac, blush, light blue), not amber`, /205, 184, 230/.test(s.bg) && /179, 217, 243/.test(s.bg) && !/242, 169, 126|224, 142, 90/.test(s.bg), s.bg);
-      continue;
-    }
-    ok(`${label} /gift ${sky}: the card's candle shows its own topping (one candle, the others faded out)`, s.t === sky && s.shown.length === 1 && s.shown[0].includes(`/img/studio/moons/${TOPS[sky][0]}.webp`) && s.loaded && s.hidden === 2, JSON.stringify(s.shown));
-    ok(`${label} /gift ${sky}: the line under the card names the topping, never a scent`, TOPS[sky][1].test(s.cap) && !/Spring Blooms|Mulled Wine|Lavender Haze/i.test(s.cap) && s.live === 'polite' && s.aria === 'true', s.cap);
-    const cx = (s.vis.left + s.vis.right) / 2, cy = (s.vis.top + s.vis.bottom) / 2;
-    // (the whole tin, a little in from the corner: cut off by the card's edges it read as a cropped photograph)
-    ok(`${label} /gift ${sky}: the candle sits in the bottom-right corner, whole, inside the card`, cx > (s.card.left + s.card.right) / 2 && cy > (s.card.top + s.card.bottom) / 2 && s.tin.right <= s.card.right - 8 && s.tin.bottom <= s.card.bottom - 8 && s.card.right - s.tin.right <= 32 && s.card.bottom - s.tin.bottom <= 32 && (s.vis.right - s.vis.left) >= 80, JSON.stringify({ tin: s.tin, card: s.card }));
-    ok(`${label} /gift ${sky}: it covers neither the note nor the recipient line`, !s.note.some(r => hits(r, s.vis)) && !hits(s.to, s.vis));
+    await p.locator(`button[data-sky="${sky}"]`).click(); await p.waitForTimeout(reduce ? 150 : 1200);
+    const s = await state();
+    ok(`${label} /gift ${sky}: no candle photograph on the card, only the sky, the note and the names`, s.t === sky && s.imgs === 0 && s.candle === 0 && s.op > .99, JSON.stringify({ imgs: s.imgs, candle: s.candle, op: s.op }));
+    ok(`${label} /gift ${sky}: no line about a candle on the card under it`, !s.cap && !/on the card: a candle|no candle on the card|quiet sky before sunrise/i.test(s.text), s.text.slice(0, 200));
+    ok(`${label} /gift ${sky}: the note and the recipient line sit inside the card`, s.note.length > 0 && s.note.every(r => inside(r, s.card)) && inside(s.to, s.card));
+    if (sky === 'dawn') ok(`${label} /gift dawn: the sky is cool (lilac, blush, light blue), not amber`, /205, 184, 230/.test(s.bg) && /179, 217, 243/.test(s.bg) && !/242, 169, 126|224, 142, 90/.test(s.bg), s.bg);
   }
-  const s = await state();
-  ok(`${label} /gift: the candle takes each sky's light (a different glow each time, the wick lit at night); golden hour and night keep their candle`, new Set(glows).size === 3 && s.wick > .5, JSON.stringify(glows));
-  if (reduce) ok(`${label} /gift: with reduced motion the topping simply swaps`, /^0s(, 0s)*$/.test(s.dur), s.dur);
+  if (reduce) ok(`${label} /gift: with reduced motion the sky simply swaps`, /^0s(, 0s)*$/.test((await state()).dur), (await state()).dur);
   else {
-    // the longest note and a long name still keep clear of it
     await p.fill('#gNote', 'Happy birthday to my favourite person. Light this tonight, put your feet up and take a quiet moment that is all yours.'.slice(0, 140));
     await p.fill('#gTo', 'Alexandra Montgomery-Fitzwilliam'); await p.waitForTimeout(300);
     const l = await state();
-    ok(`${label} /gift: a long note and a long name still keep clear of the candle`, !l.note.some(r => hits(r, l.vis)) && !hits(l.to, l.vis), JSON.stringify({ to: l.to, vis: l.vis }));
+    ok(`${label} /gift: a long note and a long name still fit inside the card`, l.note.every(r => inside(r, l.card)) && inside(l.to, l.card), JSON.stringify({ to: l.to, card: l.card }));
+  }
+  // the candle being bought (not the card) still shows under the card once one is chosen
+  const pick = p.locator('#gPick .gp-c').first();
+  if (await pick.count()) {
+    await pick.click(); await p.waitForTimeout(300);
+    const sum = await p.evaluate(() => { const g = document.querySelector('#gSum'), c = document.querySelector('#gCard'); return { shown: !!g && !g.hidden, after: !!g && c.nextElementSibling === g, name: document.querySelector('#gSumName')?.textContent.trim() }; });
+    ok(`${label} /gift: the chosen candle shows under the card ("In the box")`, sum.shown && sum.after && !!sum.name, JSON.stringify(sum));
   }
   ok(`${label} /gift: no sideways scroll`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 1);
   ok(`${label} /gift: no JS errors`, errs.length === 0, errs.join(' | '));
   await ctx.close();
 }
-{ // the home page's Send a Sky card is left as it was (no candle)
+{ // home: the Send a Sky card has no candle, and no candle tin photograph sits beside it, on any sky
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const p = await ctx.newPage(); await setupMocks(p);
   await p.goto(base + '/'); await p.waitForTimeout(1200);
-  ok('home: the Send a Sky card there is unchanged (no candle in it)', await p.evaluate(() => !!document.querySelector('#gCard') && !document.querySelector('#gCard .gc-candle')));
+  for (const sky of ['dawn', 'golden', 'night']) {
+    const btn = p.locator(`.giftsec button[data-sky="${sky}"]`).first();
+    if (await btn.count()) { await btn.scrollIntoViewIfNeeded(); await btn.click(); await p.waitForTimeout(300); }
+    ok(`home ${sky}: the Send a Sky card has no candle, and no tin photograph beside it`, await p.evaluate(() => !!document.querySelector('#gCard') && !document.querySelector('#gCard img, #gCard .gc-candle, .gift-grid .ph-gift, .gift-grid .studio-cut, .gift-grid figure')));
+  }
   await ctx.close();
 }
 await b.close(); process.exit(res.every(Boolean) ? 0 : 1);

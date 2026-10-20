@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 // the saved catalogue: what "live and buyable" means here (in stock, priced, and not one of the -need-pics past seasonals)
 const CAT = JSON.parse(readFileSync(new URL('./products.json', import.meta.url), 'utf8')).products;
 const BUYABLE = new Set(CAT.filter(x => x.inventory?.availabilityStatus === 'IN_STOCK' && Number(x.actualPriceRange?.minValue?.amount) > 0 && !/-need-pics$/.test(x.slug)).map(x => x.slug));
+const PAST = /midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|hello cupcake|irish coffee|mulled wine|apple cider|candy cane|christmas eve|easter bread|mother'?s garden|pumpkin spice|crystal mushroom/i;
 const slugOf = h => (h.match(/product\/([^?#/]+)/) || [])[1];
 const base = process.env.BASE ?? 'http://localhost:4173/#';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
@@ -17,10 +18,17 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   await p.goto(base + '/journal'); await p.waitForSelector('.jr-grid .jr-card'); await p.waitForTimeout(800);
   const cards = await p.evaluate(() => [...document.querySelectorAll('.jr-grid .jr-card')].map(a => [a.getAttribute('href'), a.querySelector('b').textContent.trim()]));
   ok(`${label}: the Journal lists five articles`, cards.length === 5 && cards.every(([h, t]) => /\/journal\//.test(h) && t.length > 10), cards.map(c => c[1]).join(' | '));
-  ok(`${label}: the lead picture loads (a cut-out, no background)`, await p.evaluate(() => { const i = document.querySelector('.jr-card.lead img'); return i.complete && i.naturalWidth > 0 && /studio\/tins\//.test(i.currentSrc || i.src); }));
+  // each article's picture is ONE candle (owner, October 2026): a whole tin cut out of Claire's own photographs, a different
+  // one per article, described by what is in it and never by a past scent's name
+  await p.evaluate(() => document.querySelectorAll('.jr-grid img').forEach(i => { i.loading = 'eager'; })); await p.waitForTimeout(600); // (lazy below the fold on a phone)
+  const pics = await p.evaluate(() => [...document.querySelectorAll('.jr-grid .jr-card')].map(a => { const i = a.querySelector('.jr-pic img'); return { href: a.getAttribute('href'), src: new URL(i.currentSrc || i.src).pathname, alt: i.alt, ok: i.complete && i.naturalWidth > 0 && i.naturalWidth <= 520 }; }));
+  ok(`${label}: every Journal picture is one candle of Claire's, loaded, a different one for each article`, pics.length === 5 && pics.every(x => x.ok && /^\/img\/studio\/journal\/[a-z-]+\.webp$/.test(x.src) && /^A single candle in a black tin/.test(x.alt)) && new Set(pics.map(x => x.src)).size === 5, JSON.stringify(pics));
+  ok(`${label}: no Journal picture's alt text names a past or seasonal scent`, !pics.some(x => PAST.test(x.alt)), pics.map(x => x.alt).join(' | '));
+  const picOf = Object.fromEntries(pics.map(x => [x.href.split('/').pop(), x.src]));
   ok(`${label}: the Journal has no sideways scroll`, (await noScroll(p)) <= 1);
   for (const slug of ['wooden-wick', 'first-burn', 'candle-safety', 'wax-guide', 'candle-and-roller']) {
     await p.goto(base + '/journal/' + slug); await p.waitForSelector('.jr-body'); await p.waitForTimeout(300);
+    ok(`${label}: ${slug} opens with the same single-candle picture as its card`, await p.evaluate(src => { const i = document.querySelector('.jr-apic img'); return !!i && new URL(i.currentSrc || i.src).pathname === src && document.querySelectorAll('.jr-apic img').length === 1; }, picOf[slug]));
     const a = await p.evaluate(() => ({ h1: document.querySelector('h1')?.textContent.trim(), shop: [...document.querySelectorAll('.jr-shop a')].map(x => x.getAttribute('href')), src: [...document.querySelectorAll('.jr-sources a')].map(x => x.getAttribute('href')), draft: !!document.querySelector('.jr-body.d') }));
     ok(`${label}: ${slug} has a title, a way to the shop, and is marked as a draft`, a.h1?.length > 10 && a.shop.length >= 1 && a.shop.every(h => /^\/(shop|book|explore|coaching)/.test(h) || /^#\//.test(h)) && a.draft, JSON.stringify(a.shop));
     if (slug !== 'candle-and-roller') ok(`${label}: ${slug} cites its sources`, a.src.length >= 1 && a.src.every(u => /^https:\/\//.test(u)), a.src.join(' '));
@@ -42,6 +50,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   // home: teaser and the Monthly Ritual
   await p.goto(base + '/'); await p.waitForSelector('.jr-teaser'); await p.waitForTimeout(500);
   ok(`${label}: home shows three Journal cards`, (await p.locator('.jr-teaser .jr-card').count()) === 3);
+  ok(`${label}: the home Journal row uses each article's own single-candle picture`, await p.evaluate(m => [...document.querySelectorAll('.jr-teaser .jr-card')].every(a => { const i = a.querySelector('img'); return new URL(i.currentSrc || i.src).pathname === m[a.getAttribute('href').split('/').pop()]; }), picOf));
   const news = await p.locator('.newsflow').innerText();
   ok(`${label}: the newsletter is the Monthly Ritual, not the Sunday note`, /monthly ritual/i.test(news) && !/sunday/i.test(news), news.slice(0, 80));
   // (the sign-up is the notify-me of the coming-soon Ritual on Repeat chapter now)

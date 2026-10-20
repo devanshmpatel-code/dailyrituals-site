@@ -742,9 +742,9 @@ header.top{background:rgba(248,245,240,.9)}
 .gcard[data-t="golden"]{background:linear-gradient(160deg,#6B4A6E 0%,#E08E5A 60%,#F4C98E 100%)}
 .gcard[data-t="night"]{background:linear-gradient(160deg,#0F0D1C 0%,#2A1F3D 60%,#4A2D4F 100%)}
 /* the home preview's note sits on the light dawn and golden skies: a soft plum haze across the band the words sit in (white text, contrast), the glow stays */
-.gcard:not([data-candle]){isolation:isolate}
-.gcard:not([data-candle]) .note::before{content:"";position:absolute;inset:-46px -40px;z-index:-1;background:linear-gradient(to bottom,rgba(38,24,52,0),rgba(38,24,52,.54) 26%,rgba(38,24,52,.54) 74%,rgba(38,24,52,0));pointer-events:none;transition:opacity .6s}
-.gcard:not([data-candle])[data-t="night"] .note::before,.gcard:not([data-candle])[data-t="dawn"] .note::before{opacity:0}
+.gcard:not([data-layers]){isolation:isolate}
+.gcard:not([data-layers]) .note::before{content:"";position:absolute;inset:-46px -40px;z-index:-1;background:linear-gradient(to bottom,rgba(38,24,52,0),rgba(38,24,52,.54) 26%,rgba(38,24,52,.54) 74%,rgba(38,24,52,0));pointer-events:none;transition:opacity .6s}
+.gcard:not([data-layers])[data-t="night"] .note::before,.gcard:not([data-layers])[data-t="dawn"] .note::before{opacity:0}
 .gcard[data-t="dawn"] .sunarc{background:radial-gradient(circle,rgba(255,255,255,.9) 0%,rgba(255,255,255,.3) 45%,transparent 70%)}
 .gcard .sunarc{position:absolute;right:-40px;bottom:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,#FFE2B0 0%,rgba(255,226,176,.3) 45%,transparent 70%)}
 .gcard .note{font-family:var(--display);font-size:clamp(20px,2.4vw,30px);line-height:1.2;white-space:pre-wrap;word-break:break-word;position:relative}
