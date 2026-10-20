@@ -31,7 +31,7 @@ export const ARTICLES: Article[] = [
     slug: 'wooden-wick', tag: 'Candle care', minutes: 3,
     title: 'How to burn a wooden-wick candle',
     dek: 'Every Daily Rituals candle burns on a wooden wick. A few small habits give you an even burn and a steady flame.',
-    pic: { file: 'jarrah-top', w: 900, h: 745, alt: 'Candles in black tins seen from above, each with a flat wooden wick' },
+    pic: { file: 'wooden-wick', w: 436, h: 450, alt: 'A single candle in a black tin seen from above, its flat wooden wick beside a scatter of small wood chips' },
     body: `
       <p>A wooden wick is a flat strip of wood rather than a braided cotton string. It lights a little differently and asks for slightly different care, but the habits are simple.</p>
       <h2>Light it along its length</h2>
@@ -50,7 +50,7 @@ export const ARTICLES: Article[] = [
     slug: 'first-burn', tag: 'Candle care', minutes: 3,
     title: 'Your first burn, and the memory ring',
     dek: 'The first time you light a candle decides how it burns for the rest of its life. Here is how to get it right.',
-    pic: { file: 'mothers-garden', w: 900, h: 865, alt: 'Candles in black tins seen from above, each topped with a dried flower' },
+    pic: { file: 'first-burn', w: 437, h: 442, alt: 'A single candle in a black tin seen from above, topped with one dried orange and yellow flower' },
     body: `
       <p>Wax has a memory. If the first burn stops before the melted wax reaches the edge of the tin, the next burn tends to stop at the same place, and the candle starts to "tunnel" down the middle, leaving wax unused around the sides.</p>
       <h2>A simple rule of thumb</h2>
@@ -67,7 +67,7 @@ export const ARTICLES: Article[] = [
     slug: 'candle-safety', tag: 'Candle care', minutes: 2,
     title: 'Candle safety, the short version',
     dek: 'Six habits that keep a calm candle calm.',
-    pic: { file: 'black-crescent', w: 900, h: 960, alt: 'Candles in black tins seen from above, each with a curve of small black stones' },
+    pic: { file: 'candle-safety', w: 497, h: 501, alt: 'A single candle in a black tin seen from above, a curve of small black stones along its edge' },
     body: `
       <ol class="jr-list">
         <li><b>Never leave it alone.</b> Blow out every candle before you leave the room or go to sleep.</li>
@@ -86,7 +86,7 @@ export const ARTICLES: Article[] = [
     slug: 'wax-guide', tag: 'Candle making', minutes: 4,
     title: 'Soy, coconut and paraffin: an honest guide',
     dek: 'What the common candle waxes are, and what actually changes how a candle smells and burns.',
-    pic: { file: 'tuscan-sandalwood', w: 900, h: 635, alt: 'Candles in black tins seen from above, freshly poured' },
+    pic: { file: 'wax-guide', w: 461, h: 469, alt: 'A single candle in a black tin seen from above, smooth white wax with pale crystals along one side' },
     body: `
       <p><b>Our candles are poured with soy wax</b>, on wooden wicks, and topped by hand in White Rock, BC. Here is how soy compares with the other common waxes.</p>
       <h2>Soy</h2>
@@ -105,7 +105,7 @@ export const ARTICLES: Article[] = [
     slug: 'candle-and-roller', tag: 'Rituals', minutes: 2,
     title: 'Pair a candle with a roller',
     dek: 'Light it at home, wear it when you leave. One scent, two ways, a cue you can carry.',
-    pic: { file: 'spring-blooms', w: 900, h: 860, alt: 'Candles in black tins seen from above, topped with dried flowers' },
+    pic: { file: 'candle-and-roller', w: 437, h: 440, alt: 'A single candle in a black tin seen from above, topped with a dried pink rose, blue petals and small white buds' },
     body: `
       <p>A scent becomes a cue when you meet it again and again at the same moment. A candle sets that moment at home. A roller in the same scent family lets you bring it with you: to your desk, the school run, a hard conversation.</p>
       <h2>How to start</h2>
@@ -121,11 +121,14 @@ export const ARTICLES: Article[] = [
 const endCTA = (h: string) => `<section class="jr-end" aria-label="Next steps"><div><span class="eyebrow">From the studio</span><h2>${h}</h2></div>
   <div class="cta"><a class="btn" href="#/shop?f=candle&m=all&s=featured">Shop candles</a><a class="btn line" href="#/explore?tab=quiz">Take the scent quiz</a></div></section>`;
 
-const pic = (a: Article, sizes: string, eager = false) => `<img src="/img/studio/tins/${a.pic.file}-900.webp" srcset="/img/studio/tins/${a.pic.file}-480.webp 480w, /img/studio/tins/${a.pic.file}-900.webp 900w" sizes="${sizes}" alt="${esc(a.pic.alt)}" width="${a.pic.w}" height="${a.pic.h}" ${eager ? '' : 'loading="lazy" '}decoding="async">`;
+// Each article has its own picture: ONE whole tin seen from above, a different candle for each, cut from Claire's bench
+// photographs (public/img/studio/journal/<slug>.webp, made by tools/photo/journal_singles.py at the cut-out's own size). They
+// are past pours, so the alt text describes what is in the photograph and never names a scent.
+const pic = (a: Article, eager = false) => `<img src="/img/studio/journal/${a.pic.file}.webp" alt="${esc(a.pic.alt)}" width="${a.pic.w}" height="${a.pic.h}" ${eager ? '' : 'loading="lazy" '}decoding="async">`;
 
 /** Three journal cards for other pages (home). */
 export function journalTeaserHTML(): string {
-  const cards = ARTICLES.slice(0, 3).map(a => `<a class="jr-card" href="#/journal/${a.slug}"><span class="jr-pic">${pic(a, '(max-width: 820px) 60vw, 18vw')}</span><span class="jr-tag">${esc(a.tag)} · ${a.minutes} min</span><b>${esc(a.title)}</b><span class="d jr-dek">${esc(a.dek)}</span></a>`).join('');
+  const cards = ARTICLES.slice(0, 3).map(a => `<a class="jr-card" href="#/journal/${a.slug}"><span class="jr-pic">${pic(a)}</span><span class="jr-tag">${esc(a.tag)} · ${a.minutes} min</span><b>${esc(a.title)}</b><span class="d jr-dek">${esc(a.dek)}</span></a>`).join('');
   return `<section class="wrap jr-teaser" aria-labelledby="jrH"><div class="jr-head"><div><span class="eyebrow">The Journal</span><h2 id="jrH"><span class="d">Candle care, <span class="it">and the rituals around it.</span></span></h2></div><a class="tlink" href="#/journal">Read the Journal</a></div><div class="jr-cards">${cards}</div></section>`;
 }
 
@@ -135,7 +138,7 @@ export function renderJournal(app: HTMLElement, slug?: string) {
   if (!a) {
     app.innerHTML = `<div class="wrap jr-index"><div class="crumbs"><a href="#/">Home</a> / Journal</div>
       <header class="jr-hero"><span class="eyebrow">The Journal</span><h1><span class="d">Candle care, <span class="it">and the rituals around it.</span></span></h1><p class="muted d">Short, useful reads from the studio in White Rock, BC: how to burn a candle well, how candles are made, and how to make a scent part of your day.</p></header>
-      <div class="jr-grid">${ARTICLES.map((x, i) => `<a class="jr-card${i === 0 ? ' lead' : ''}" href="#/journal/${x.slug}"><span class="jr-pic">${pic(x, i === 0 ? '(max-width: 820px) 80vw, 40vw' : '(max-width: 820px) 60vw, 22vw', i === 0)}</span><span class="jr-tag">${esc(x.tag)} · ${x.minutes} min read</span><b>${esc(x.title)}</b><span class="d jr-dek">${esc(x.dek)}</span></a>`).join('')}</div>
+      <div class="jr-grid">${ARTICLES.map((x, i) => `<a class="jr-card${i === 0 ? ' lead' : ''}" href="#/journal/${x.slug}"><span class="jr-pic">${pic(x, i === 0)}</span><span class="jr-tag">${esc(x.tag)} · ${x.minutes} min read</span><b>${esc(x.title)}</b><span class="d jr-dek">${esc(x.dek)}</span></a>`).join('')}</div>
       ${endCTA('Ready to <span class="it">light one?</span>')}
     </div>`;
     document.title = 'Journal · Daily Rituals Co.';
@@ -143,7 +146,7 @@ export function renderJournal(app: HTMLElement, slug?: string) {
   }
   const i = ARTICLES.indexOf(a), next = ARTICLES[(i + 1) % ARTICLES.length];
   app.innerHTML = `<article class="wrap jr-article" data-slug="${a.slug}"><div class="crumbs"><a href="#/">Home</a> / <a href="#/journal">Journal</a> / ${esc(a.title)}</div>
-    <header class="jr-ahead"><div><span class="jr-tag">${esc(a.tag)} · ${a.minutes} min read</span><h1><span class="d">${esc(a.title)}</span></h1><p class="jr-lede d">${esc(a.dek)}</p></div><figure class="jr-apic">${pic(a, '(max-width: 820px) 80vw, 36vw', true)}</figure></header>
+    <header class="jr-ahead"><div><span class="jr-tag">${esc(a.tag)} · ${a.minutes} min read</span><h1><span class="d">${esc(a.title)}</span></h1><p class="jr-lede d">${esc(a.dek)}</p></div><figure class="jr-apic">${pic(a, true)}</figure></header>
     <div class="jr-body d">${a.body}</div>
     <section class="jr-picks" aria-labelledby="jrPicksH" hidden><span class="eyebrow"><span class="d">In the shop</span></span><h2 id="jrPicksH"><span class="d">${a.picks.title}</span></h2><div class="jr-picks-grid"></div></section>
     <aside class="jr-shop" aria-label="Shop"><span class="eyebrow">From the studio</span><p class="d">Hand-poured in White Rock, BC, on wooden wicks.</p><div class="cta">${a.shop.map((s, k) => `<a class="btn${k ? ' line' : ''}" href="${s.href}">${esc(s.label)}</a>`).join('')}</div></aside>

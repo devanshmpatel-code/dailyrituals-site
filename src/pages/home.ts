@@ -1,6 +1,5 @@
 import Main from '../canvas/pages/Main.html?raw';
 import { MOMENTS, MOODS, type Moment, type MomentKey } from '../config';
-import { ritualistsCardHTML, wireRitualistsCard } from '../brand';
 import { ritualistsHTML, wireRitualists } from '../ritualists';
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
@@ -16,7 +15,7 @@ import { bindCanvasProductLinks, previewOff, wireQuickAdd, wireNotify } from './
 import { journalTeaserHTML } from './journal';
 import { mountRibbon } from '../ribbon';
 import '../homeflow.css';
-import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHero, heroLook, heroLight, giftPhotoHTML, STUDIO_ON } from '../moons';
+import { studioHTML, claireCutHTML, wireStudio, heroStackHTML, showHero, resetHero, heroLook, heroLight, STUDIO_ON } from '../moons';
 
 // The hero opens at the moment nearest the visitor's local time, showing their real clock. Once they
 // move the sun or pick a moment, it shows that moment's own time instead.
@@ -49,24 +48,20 @@ export async function renderHome(app: HTMLElement) {
   useRealClock = true;
   app.innerHTML = fixImages(Main);
   // the studio photographs: the hero arch shows Claire's past candle work for the hour (set here, before swapRenders, so the
-  // canvas renders it replaces are never swapped for Wix photos); Claire's cut-out in "Meet Claire"; one photograph sits with
-  // Send a Sky. ("From the studio" is switched off by the owner, October 2026: STUDIO_ON in src/moons.ts brings it back.)
+  // canvas renders it replaces are never swapped for Wix photos); Claire's cut-out in "Meet Claire". ("From the studio" is switched off by the owner, October 2026: STUDIO_ON in src/moons.ts brings it back.)
   const stack = app.querySelector<HTMLElement>('#dStack'); if (stack) { stack.innerHTML = heroStackHTML(momentForHour(hourNow()).key); stack.classList.add('moons'); }
   resetHero();
   app.querySelector('.claire-in .ph')?.replaceWith(Object.assign(document.createElement('div'), { innerHTML: claireCutHTML() }).firstElementChild!);
   if (STUDIO_ON) app.querySelector('.claire')?.insertAdjacentHTML('afterend', studioHTML());
   // The Ritualists (chapter 6): the planned club, "coming soon", with its waitlist (src/ritualists.ts, shared with #/club).
-  // The embossed membership card (Claire's logo and a wax seal) stands beside the waitlist. Put in before the journey reads
-  // the chapters.
+  // Put in before the journey reads the chapters.
   const rit = app.querySelector<HTMLElement>('.ritflow .rit-wrap');
   if (rit) {
     rit.innerHTML = ritualistsHTML({ id: 'rit', chapter: 'Chapter 6 · The Ritualists' });
-    rit.querySelector('.rt-side')?.insertAdjacentHTML('afterbegin', `<div class="rt-card">${ritualistsCardHTML()}</div>`);
-    wireRitualistsCard(rit); wireRitualists(rit);
+    wireRitualists(rit);
   }
   // the Journal row closes the page, on Send a Sky's ground, just above the footer
   app.querySelector('section.giftsec')?.insertAdjacentHTML('beforeend', journalTeaserHTML());
-  app.querySelector('.gift-grid > div:has(.gcard)')?.insertAdjacentHTML('beforeend', giftPhotoHTML());
   swapRenders(app);
   if (STUDIO_ON) wireStudio(app);
   wireCommon(app);
@@ -425,15 +420,6 @@ export function refreshDropBar() {
 }
 
 // ---------- Send a Sky ----------
-// The gift page's card carries one of Claire's past pours in its bottom corner (public/img/studio/moons), a different topping
-// for each sky: florals at dawn, citrus and spice at golden hour, lavender at night. They are past pours, so the line under
-// the card names only the topping, never a scent. The wording is a draft for Claire.
-const SKY_TOPPING: Record<string, string> = {
-  dawn: 'dried flowers and petals',
-  golden: 'dried orange, star anise and pink peppercorns',
-  night: 'dried lavender buds',
-};
-
 export function wireSunrise(app: HTMLElement) {
   const note = app.querySelector<HTMLTextAreaElement>('#gNote');
   const out = app.querySelector<HTMLElement>('#gCardNote');
@@ -445,14 +431,9 @@ export function wireSunrise(app: HTMLElement) {
     to.addEventListener('input', () => { const n = to.value.trim(); if (n) toOut.textContent = `For ${n}`; else toOut.innerHTML = blank; });
   }
   const card = app.querySelector<HTMLElement>('#gCard');
-  const cap = app.querySelector<HTMLElement>('#gCandleCap');
   app.querySelectorAll<HTMLButtonElement>('button[data-sky]').forEach(b => b.addEventListener('click', () => {
     b.parentElement!.querySelectorAll('[data-sky]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-    if (card) card.dataset.t = b.dataset.sky!;
-    // the gift page's card (data-candle): the candle in its corner changes with the sky, and the line under it says what it
-    // is topped with (CSS does the cross-fade)
-    const top = SKY_TOPPING[b.dataset.sky!];
-    if (cap && card?.hasAttribute('data-candle') && top) cap.innerHTML = `<span class="d">On the card: a candle Claire topped by hand with ${top}.</span>`;
+    if (card) card.dataset.t = b.dataset.sky!; // (on /gift the card's sky layers cross-fade in CSS)
   }));
   app.querySelector('#gAdd')?.addEventListener('click', previewOff('Send a Sky gifting'));
 }

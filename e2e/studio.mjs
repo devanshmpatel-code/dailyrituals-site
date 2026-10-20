@@ -64,11 +64,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: the old moons panel is gone from home`, (await p.locator('#moons, .moons-arc').count()) === 0);
   ok(`${label}: no moon-phase rows on the home seams`, (await p.locator('.cel-div .cel-moonrow').count()) === 0 && (await p.locator('.cel-div').count()) > 0);
   ok(`${label}: footer and cart carry a star, not a moon`, (await p.locator('.foot-moon .cel-glyph, .dh-moon .cel-glyph').count()) === 2 && (await p.locator('.foot-moon [aria-label*="moon" i], .dh-moon [aria-label*="moon" i]').count()) === 0);
-  for (const [sel, name] of [['.gift-grid .ph-gift', 'Send a Sky']]) {
-    await p.evaluate(s => document.querySelector(s).scrollIntoView({ block: 'center' }), sel); await p.waitForTimeout(900);
-    const f = await p.evaluate(s => { const f = document.querySelector(s); const i = f.querySelector('img'); const r = f.getBoundingClientRect(); return { ok: i.complete && i.naturalWidth > 0 && i.alt.length > 15 && !!f.querySelector('figcaption .d'), w: r.width }; }, sel);
-    ok(`${label}: ${name} carries a studio photograph with a draft caption`, f.ok && f.w > 150, JSON.stringify(f));
-  }
+  // Send a Sky: the owner had the candle tin photograph taken out of the gift section (October 2026)
+  ok(`${label}: Send a Sky shows the card only, with no candle tin photograph beside it`, await p.evaluate(() => !document.querySelector('.giftsec .ph-gift, .giftsec .studio-cut, #gCard .gc-candle') && !!document.querySelector('.giftsec #gCard')));
 
   // ---- home: Claire's cut-out and From the studio
   await p.evaluate(() => document.querySelector('.claire-cut').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
@@ -83,13 +80,14 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.claire').innerText + document.querySelector('.repeatflow').innerText + document.querySelector('.dropflow').innerText + document.querySelector('.ritflow').innerText + document.querySelector('.gift-grid').innerText))));
   ok(`${label}: home has no sideways scroll`, (await noScroll(p)) <= 1);
 
-  // ---- the Ritualists: a membership card with Claire's logo in place of the mood constellation; it promises nothing. (It sits
-  // beside the waitlist in the Ritualists chapter now, a little smaller on a phone.)
-  await p.evaluate(() => document.querySelector('.ritflow .rt-card').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1200);
-  const card = await p.evaluate(() => { const w = document.querySelector('.ritflow .rit-card-wrap'), i = w?.querySelector('.rc-logo'); return w && { label: w.getAttribute('role') + ':' + w.getAttribute('aria-label'), logo: i.complete && i.naturalWidth > 0 && /\/img\/brand\/logo-(600|1200)\.webp/.test(i.currentSrc || i.src), text: w.innerText, seal: !!w.querySelector('.rc-seal svg'), wd: w.getBoundingClientRect().width }; });
-  ok(`${label}: the Ritualists show a membership card with the logo and a wax seal`, !!card && card.logo && card.seal && /^img:.*coming soon/i.test(card.label) && card.wd > 200, JSON.stringify(card));
+  // ---- the Ritualists: the membership card was taken out by the owner (October 2026); the waitlist and "Give $10, get $10"
+  // sit side by side on a desktop, stacked on a phone, with nothing empty beside them
+  await p.evaluate(() => document.querySelector('.ritflow .rt-foot').scrollIntoView({ block: 'center' })); await p.waitForTimeout(800);
+  const rf = await p.evaluate(() => { const w = document.querySelector('.ritflow .rt-wait').getBoundingClientRect(), r = document.querySelector('.ritflow .rt-refer').getBoundingClientRect(), g = document.querySelector('.ritflow .rt-give').getBoundingClientRect();
+    return { card: document.querySelectorAll('.rit-card-wrap, .rt-card, .rc-seal').length, side: r.left > w.right, top: Math.round(r.top - w.top), stacked: r.top >= w.bottom - 1, give: g.top >= r.bottom - 1 && g.left >= r.left - 1 }; });
+  ok(`${label}: the Ritualists have no membership card`, rf.card === 0, JSON.stringify(rf));
+  ok(`${label}: "Give $10, get $10" ${label === 'phone' ? 'follows the waitlist' : 'stands beside the waitlist, level with its top'}, the giving line under it`, (label === 'phone' ? rf.stacked : rf.side && Math.abs(rf.top) <= 2) && rf.give, JSON.stringify(rf));
   ok(`${label}: the mood constellation is gone from the Ritualists`, (await p.locator('.ritflow .cs-const, .ritflow .cel-const').count()) === 0);
-  ok(`${label}: the card promises no points, tiers or rewards`, !!card && /coming soon/i.test(card.text) && !/\d|points?|reward|tier|member no/i.test(card.text), card?.text);
 
   // ---- the footer: Claire's logo, cut out clean and lit, in place of the star chart and the constellation
   await p.evaluate(() => document.querySelector('footer .foot-sign').scrollIntoView({ block: 'center' })); await p.waitForTimeout(1000);

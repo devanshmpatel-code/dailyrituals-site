@@ -27,6 +27,7 @@ import './giving.css';
 import './coaching.css';
 import './giftbook.css';
 import './wheel.css';
+import './brand.css'; // the footer's signature (the logo, lit by candlelight)
 import { renderGiving, givingNote } from './pages/giving';
 import { mountNav, navRouteChange } from './nav';
 import { giftLineHTML } from './pages/gift';

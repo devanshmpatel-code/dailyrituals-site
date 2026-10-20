@@ -6,13 +6,12 @@ import SendASky from '../canvas/pages/SendASky.html?raw';
 import OrderConfirmed from '../canvas/pages/OrderConfirmed.html?raw';
 import { fixImages, wireCommon, esc } from '../ui';
 import { LOYALTY_ENABLED } from '../config';
-import { ritualistsCardHTML, wireRitualistsCard } from '../brand';
 import { loadCatalogue } from '../wix';
 import { bindCanvasProductLinks, previewOff } from './shared';
 import { wireVote, wireCountdown, wireSunrise, wireClub, wireRepeatCalc } from './home';
 import { pastMoonsHTML, wirePastMoons, STUDIO_ON } from '../moons';
 import { ritualistsHTML, wireRitualists } from '../ritualists';
-import { wireGift, wireSkyCaption } from './gift';
+import { wireGift } from './gift';
 
 const PAGES: Record<string, string> = {
   drops: MoonDrops, subscribe: RitualOnRepeat, wall: RitualWall, club: Ritualists, gift: SendASky, 'order-confirmed': OrderConfirmed,
@@ -31,7 +30,7 @@ export async function renderStatic(app: HTMLElement, route: string) {
     wirePastMoons(app);
   }
   wireCommon(app);
-  wireVote(app); wireCountdown(app); wireSunrise(app); if (route === 'gift') wireSkyCaption(app); wireClub(app); wireRepeatCalc(app, null);
+  wireVote(app); wireCountdown(app); wireSunrise(app); wireClub(app); wireRepeatCalc(app, null);
   app.querySelectorAll('#upForm').forEach(f => f.addEventListener('submit', e => { e.preventDefault(); previewOff('Photo uploads')(); }));
   app.querySelectorAll('[data-pair], [data-wf], [data-gr]').forEach(b => b.addEventListener('click', () => {
     b.parentElement?.querySelectorAll(':scope > [aria-pressed]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -77,11 +76,9 @@ function clubSoon(app: HTMLElement) {
       <h1>The <span class="it goldtext">Ritualists</span> are gathering.</h1>
       <p>Our rewards club is opening soon. <span class="d">Join the waitlist below and you will be first to hear when the doors open.</span></p>
       <button type="button" class="btn cs-go"><span class="d">Join the waitlist</span></button></div>
-    ${ritualistsCardHTML()}
   </div></section>
   <section class="clubplan" id="csWait"><div class="wrap">${ritualistsHTML({ id: 'cs', heading: 'h2', title: '<span class="d">How the club <span class="it goldtext">will work</span></span>' })}</div></section>`;
   app.appendChild(plan);
-  wireRitualistsCard(app);
   wireRitualists(app);
   app.querySelector<HTMLButtonElement>('.cs-go')?.addEventListener('click', () => {
     const f = app.querySelector<HTMLInputElement>('#csEmail');
