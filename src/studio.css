@@ -67,6 +67,12 @@
   box-shadow: 0 0 calc(var(--d, 140px) * .05) calc(var(--d, 140px) * .02) rgba(255, 130, 40, .55), 0 0 calc(var(--d, 140px) * .14) rgba(255, 170, 80, .45);
   animation: cmf-crackle 2.7s steps(1, end) infinite; }
 .moonarc .cm-flame .cmf-c { left: 27%; right: 27%; top: 30%; bottom: 6%; background: radial-gradient(ellipse 50% 60% at 50% 66%, #ffffff 0 30%, #fff8dc 55%, rgba(255, 236, 170, 0) 100%); }
+/* the flame's reflection in the liquid wax: a soft, bright, elongated highlight falling towards the viewer from the wick,
+   swaying and flickering with the flame (the wax under it is never redrawn) */
+.moonarc .cm-flame .cmf-r { left: calc(var(--d, 140px) * -.045); top: calc(var(--d, 140px) * .018); width: calc(var(--d, 140px) * .09); height: calc(var(--d, 140px) * .26);
+  border-radius: 50%; transform-origin: 50% 0; opacity: .9;
+  background: radial-gradient(ellipse 50% 50% at 50% 34%, rgba(255, 252, 236, .95), rgba(255, 226, 150, .62) 34%, rgba(255, 176, 90, .22) 64%, rgba(255, 160, 80, 0) 100%);
+  animation: cmf-sway 3.1s ease-in-out infinite reverse, cmf-crackle 2.7s steps(1, end) infinite; }
 .moonarc .cm-flame .cmf-b { left: 22%; right: 22%; bottom: -2%; height: 16%; border-radius: 50%; background: radial-gradient(ellipse closest-side, rgba(110, 150, 255, .7), rgba(110, 150, 255, 0)); }
 @keyframes cmf-sway { 0% { transform: rotate(-1.6deg) skewX(.8deg); } 18% { transform: rotate(2.2deg) skewX(-1.4deg); } 31% { transform: rotate(-.6deg) skewX(.4deg); }
   47% { transform: rotate(3deg) skewX(-2deg); } 63% { transform: rotate(-2.4deg) skewX(1.2deg); } 79% { transform: rotate(1deg) skewX(-.6deg); } 100% { transform: rotate(-1.6deg) skewX(.8deg); } }
