@@ -46,6 +46,33 @@
 .moonarc .cm[data-k="midday"] .cm-glow { inset: -30%; }
 .moonarc .cm[data-k="golden"] .cm-glow { inset: -44%; }
 .moonarc .cm[data-k="night"] .cm-glow { inset: -46%; }
+/* the lit candle: a flame standing on the wooden wick of the full moon (only there; it fades in as the ring brings a candle
+   to the front). Sized from the moon (--d), placed on the wick (--wx, --wy from moonarc.ts). A warm halo on the melted wax,
+   then the flame: a deep amber outer envelope (so it reads on the pale wax and on light skies), a bright yellow-white core
+   and a little blue at its foot. A wooden wick burns wide and crackles: the flame sways and breathes on uneven loops, the
+   halo with it; only transform and opacity move, so the wax under it is never redrawn */
+.moonarc .cm-flame { position: absolute; left: calc(50% + var(--wx, 0) * 50%); top: calc(50% + var(--wy, 0) * 50% + var(--d, 140px) * .012);
+  width: 0; height: 0; opacity: 0; transition: opacity .9s ease; pointer-events: none; }
+.moonarc .cm.full .cm-flame { opacity: 1; }
+.moonarc[data-mode="phone"] .cm-flame { scale: 1.2; } /* (a phone's moons are small: the flame reads at a glance) */
+.moonarc .cm-flame i { position: absolute; display: block; }
+.moonarc .cm-flame .cmf-h { left: calc(var(--d, 140px) * -.36); top: calc(var(--d, 140px) * -.42); width: calc(var(--d, 140px) * .72); height: calc(var(--d, 140px) * .72); border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgba(255, 196, 120, .62), rgba(255, 156, 70, .3) 42%, rgba(255, 140, 60, .1) 70%, rgba(255, 140, 60, 0));
+  animation: cmf-halo 2.3s ease-in-out infinite alternate; }
+.moonarc .cm-flame .cmf-f { left: calc(var(--d, 140px) * -.1); bottom: 0; width: calc(var(--d, 140px) * .2); height: calc(var(--d, 140px) * .4); transform-origin: 50% 100%;
+  animation: cmf-sway 3.1s ease-in-out infinite, cmf-breathe 1.9s ease-in-out infinite alternate; }
+/* the envelope and the core are teardrops: a rounded foot, a soft point at the tip */
+.moonarc .cm-flame .cmf-o, .moonarc .cm-flame .cmf-c { left: 0; right: 0; bottom: 0; top: 0; border-radius: 50% 50% 46% 46% / 72% 72% 28% 28%; }
+.moonarc .cm-flame .cmf-o { background: radial-gradient(ellipse 50% 62% at 50% 70%, #fff6d8 0 22%, #ffd36a 40%, #ff9a2e 62%, rgba(214, 84, 22, .92) 80%, rgba(170, 54, 16, 0) 100%);
+  box-shadow: 0 0 calc(var(--d, 140px) * .05) calc(var(--d, 140px) * .02) rgba(255, 130, 40, .55), 0 0 calc(var(--d, 140px) * .14) rgba(255, 170, 80, .45);
+  animation: cmf-crackle 2.7s steps(1, end) infinite; }
+.moonarc .cm-flame .cmf-c { left: 27%; right: 27%; top: 30%; bottom: 6%; background: radial-gradient(ellipse 50% 60% at 50% 66%, #ffffff 0 30%, #fff8dc 55%, rgba(255, 236, 170, 0) 100%); }
+.moonarc .cm-flame .cmf-b { left: 22%; right: 22%; bottom: -2%; height: 16%; border-radius: 50%; background: radial-gradient(ellipse closest-side, rgba(110, 150, 255, .7), rgba(110, 150, 255, 0)); }
+@keyframes cmf-sway { 0% { transform: rotate(-1.6deg) skewX(.8deg); } 18% { transform: rotate(2.2deg) skewX(-1.4deg); } 31% { transform: rotate(-.6deg) skewX(.4deg); }
+  47% { transform: rotate(3deg) skewX(-2deg); } 63% { transform: rotate(-2.4deg) skewX(1.2deg); } 79% { transform: rotate(1deg) skewX(-.6deg); } 100% { transform: rotate(-1.6deg) skewX(.8deg); } }
+@keyframes cmf-breathe { 0% { scale: 1 1; } 23% { scale: .96 1.06; } 41% { scale: 1.03 .95; } 58% { scale: .98 1.04; } 77% { scale: 1.04 .97; } 100% { scale: .97 1.05; } }
+@keyframes cmf-crackle { 0% { opacity: 1; } 37% { opacity: .9; } 39% { opacity: 1; } 61% { opacity: .94; } 62% { opacity: 1; } 84% { opacity: .88; } 86% { opacity: 1; } }
+@keyframes cmf-halo { 0% { opacity: .82; scale: .97; } 34% { opacity: 1; scale: 1.02; } 52% { opacity: .9; scale: .99; } 100% { opacity: 1; scale: 1.03; } }
 /* the arc's title, over the ring of moons: desktop places it from moonarc.ts (centred over the arc, the ring starts under it);
    on a phone it is the line above the band of moons. It keeps a soft halo of the sky behind it, light or dark */
 .dayhero .arc-title { margin: 0; font: 400 clamp(26px, 2.4vw, 36px)/1.12 var(--display); letter-spacing: -.01em; text-align: center; color: inherit; text-wrap: balance; pointer-events: none; }
@@ -114,7 +141,7 @@
   /* a full-width offer keeps its words beside its pictures (two "auto" columns shared the spare width and pushed them apart) */
   .day-visual > .stack.moons ~ .stack-products .sp-ritual { grid-template-columns: auto minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .moonarc .cm-in { animation: none !important; } .dayhero .moonarc, .moonarc .cm { translate: none !important; } }
+@media (prefers-reduced-motion: reduce) { .moonarc .cm-in, .moonarc .cm-flame i { animation: none !important; } .dayhero .moonarc, .moonarc .cm { translate: none !important; } }
 
 /* ---- the extra photographs: a soft frame, the caption in small caps on a dark gradient ---- */
 /* cut-outs (whole tins, no background): they sit on the page with a soft shadow, the caption underneath */
