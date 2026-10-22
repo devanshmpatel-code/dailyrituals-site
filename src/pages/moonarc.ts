@@ -21,8 +21,23 @@
 //
 // The shading is only recomputed when something changes (the ring turning, the light moving, the hour's colours), so
 // nothing runs while the opening is still; reduced motion turns the ring without the glide and stills the drift.
-import { MOMENTS } from '../config';
+import { LAUNCHED, MOMENTS } from '../config';
+import { currentRoute } from '../router';
 import { getSky } from './sky';
+
+// PREVIEW ONLY (never on the launched build): ?flame=A|B|C|D shows the owner the lit-candle options side by side.
+// A: no flame, the wick's shadow only (an unlit candle, solid wax); B: a real flame seen from directly above (a tiny bright
+// point on the wick, a warm bloom, light falling across the melt pool); C: a small true-to-scale flame seen from a slight
+// three-quarter angle; D: like A, with the wick's tip glowing as an ember and a faint wisp of smoke. Unset: the current
+// flame. Read from the address (and kept for the visit), so moving between moments keeps it.
+type FlameOpt = '' | 'A' | 'B' | 'C' | 'D';
+function flameOption(): FlameOpt {
+  if (LAUNCHED) return '';
+  const ok = (v: string | null | undefined): v is FlameOpt => !!v && /^[ABCD]$/.test(v);
+  const q = new URLSearchParams(currentRoute().split('?')[1] ?? location.search).get('flame')?.toUpperCase();
+  try { if (ok(q)) sessionStorage.setItem('dr_flame', q); else if (q) sessionStorage.removeItem('dr_flame'); const s = sessionStorage.getItem('dr_flame'); return ok(s) ? s : ''; }
+  catch { return ok(q) ? q : ''; }
+}
 
 export interface MoonArc {
   show(key: string): void;
@@ -115,12 +130,14 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
   const title = hero.querySelector<HTMLElement>('.arc-title');
   const arc = document.createElement('div');
   arc.className = 'moonarc'; arc.setAttribute('aria-hidden', 'true');
+  const FLAME = flameOption(), UNLIT = FLAME === 'A' || FLAME === 'D';
+  arc.dataset.flame = FLAME || 'cur';
   const keys = MOMENTS.map(m => m.key);
   const faces: Face[] = keys.map((key, i) => {
     const el = document.createElement('span'); el.className = 'cm'; el.dataset.k = key;
     // (the flame stands on the wick of the lit candle, the full moon: a small overlay animated in CSS, studio.css, so the
     // textured wax under it is never redrawn for the flicker)
-    el.innerHTML = '<span class="cm-sh"></span><span class="cm-in"><span class="cm-glow"></span><canvas></canvas><span class="cm-flame"><i class="cmf-h"></i><i class="cmf-r"></i><i class="cmf-f"><i class="cmf-o"></i><i class="cmf-c"></i><i class="cmf-b"></i></i></span></span><span class="cm-cap"></span>';
+    el.innerHTML = '<span class="cm-sh"></span><span class="cm-in"><span class="cm-glow"></span><canvas></canvas><span class="cm-flame"><i class="cmf-h"></i><i class="cmf-r"></i><i class="cmf-g"></i><i class="cmf-f"><i class="cmf-o"></i><i class="cmf-c"></i><i class="cmf-b"></i></i><i class="cmf-k"></i><i class="cmf-w"></i><i class="cmf-e"></i><i class="cmf-s"></i><i class="cmf-s s2"></i></span></span><span class="cm-cap"></span>';
     const w = WICK[key]; if (w) { el.style.setProperty('--wx', String(w[0])); el.style.setProperty('--wy', String(w[1])); }
     arc.append(el);
     return { key, i, el, cv: el.querySelector('canvas')!, cap: el.querySelector('.cm-cap')!, img: null as unknown as HTMLImageElement, px: null, out: null, tex: null, th: 0, x: 0, y: 0, s: 1, sig: '' };
@@ -400,7 +417,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       // others their own moment's
       const dial = sundial(Math.abs(off) < 0.5 && hour != null ? hour : MOMENTS[f.i].hour);
       // the lit candle (the full moon) has a soft melt pool round its wick
-      const pool = 1 - smooth(0.3, 0.85, Math.abs(off));
+      const pool = UNLIT ? 0 : 1 - smooth(0.3, 0.85, Math.abs(off));
       const sig = [Math.round(pool * 20), Math.round(dial.dx * 40), Math.round(dial.dy * 40), Math.round(dial.len * 60), Math.round(L[0] * 60), Math.round(L[1] * 60), Math.round(P[0] * 200), Math.round(P[1] * 200), Math.round(P[2] * 200), Math.round(hz * 100), haze.join(), Math.round(night * 50), N].join(',');
       if (sig === f.sig) continue;
       f.sig = sig;
@@ -484,11 +501,11 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
         const bv = across - 0.12 * (g.nx[k] * rly - g.ny[k] * rlx) ** 2;
         band = pl * smooth(0.34, 0.41, bv) * (1 - smooth(0.58, 0.66, bv)) * (1 - smooth(0.8, 0.88, r));
         // the flame's light on the liquid wax, falling off from the wick
-        warm = pl * (0.7 + 0.5 * night01) * Math.exp(-(qx * qx + qy * qy) / 0.32);
+        warm = pl * (0.7 + 0.5 * night01) * Math.exp(-(qx * qx + qy * qy) / (FLAME === 'B' ? 0.22 : 0.32));
       }
       const tin = smooth(TIN0 - 0.006, TIN0 + 0.006, r), seam = Math.exp(-(((r - TIN0 + 0.012) / 0.008) ** 2));
       const facing = Math.max(0, g.nx[k] * rlx + g.ny[k] * rly);
-      const wr2 = fl > 0 ? (qx * qx + qy * qy) : 9, glow = fl * 0.26 * Math.exp(-wr2 / 0.16) * (1 - pool) + 0.3 * warm;
+      const wr2 = fl > 0 ? (qx * qx + qy * qy) : 9, glow = fl * (UNLIT ? 0.1 : 0.26) * Math.exp(-wr2 / 0.16) * (1 - pool) + (FLAME === 'B' ? 0.42 : 0.3) * warm;
       // the wax's own surface: soft mottling, paler frosted patches (soy wax blooms), a fine matte grain (applied after the
       // highlights are eased, so the brightest wax keeps it)
       const wax = (1 + (0.05 * mot + 0.035 * frost + 0.02 * grain - 0.02) * (1 - 0.85 * pl)) * (1 - tin) + tin; // (the liquid pool is smooth)

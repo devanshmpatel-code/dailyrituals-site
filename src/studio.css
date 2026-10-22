@@ -79,6 +79,55 @@
 @keyframes cmf-breathe { 0% { scale: 1 1; } 23% { scale: .96 1.06; } 41% { scale: 1.03 .95; } 58% { scale: .98 1.04; } 77% { scale: 1.04 .97; } 100% { scale: .97 1.05; } }
 @keyframes cmf-crackle { 0% { opacity: 1; } 37% { opacity: .9; } 39% { opacity: 1; } 61% { opacity: .94; } 62% { opacity: 1; } 84% { opacity: .88; } 86% { opacity: 1; } }
 @keyframes cmf-halo { 0% { opacity: .82; scale: .97; } 34% { opacity: 1; scale: 1.02; } 52% { opacity: .9; scale: .99; } 100% { opacity: 1; scale: 1.03; } }
+/* PREVIEW ONLY: the lit-candle options (?flame=A|B|C|D, moonarc.ts flameOption). The extra pieces are hidden unless an
+   option asks for them; the current flame is unchanged */
+.moonarc .cm-flame .cmf-g, .moonarc .cm-flame .cmf-k, .moonarc .cm-flame .cmf-w, .moonarc .cm-flame .cmf-e, .moonarc .cm-flame .cmf-s { display: none; }
+/* A: no flame at all; the wick's shadow is the only cue */
+.moonarc[data-flame="A"] .cm-flame { display: none; }
+/* D: an unlit candle whose wick was just blown out: its tip an orange ember, a faint wisp of smoke rising and fading */
+.moonarc[data-flame="D"] .cm-flame .cmf-h, .moonarc[data-flame="D"] .cm-flame .cmf-r, .moonarc[data-flame="D"] .cm-flame .cmf-f { display: none; }
+.moonarc[data-flame="D"] .cm-flame .cmf-e { display: block; left: calc(var(--d, 140px) * -.05); top: calc(var(--d, 140px) * -.03); width: calc(var(--d, 140px) * .1); height: calc(var(--d, 140px) * .026);
+  border-radius: 50%; background: radial-gradient(ellipse closest-side, rgba(255, 226, 160, 1), rgba(255, 128, 40, .95) 40%, rgba(220, 70, 20, .5) 70%, rgba(190, 50, 20, 0));
+  box-shadow: 0 0 calc(var(--d, 140px) * .04) calc(var(--d, 140px) * .01) rgba(255, 110, 40, .55), 0 0 calc(var(--d, 140px) * .1) rgba(255, 140, 60, .3); animation: cmf-ember 3.4s ease-in-out infinite alternate; }
+.moonarc[data-flame="D"] .cm-flame .cmf-s { display: block; left: calc(var(--d, 140px) * -.02); top: calc(var(--d, 140px) * -.13); width: calc(var(--d, 140px) * .04); height: calc(var(--d, 140px) * .13);
+  border-radius: 50%; background: radial-gradient(ellipse closest-side, rgba(200, 196, 204, .55), rgba(170, 166, 176, .2) 60%, rgba(170, 166, 176, 0)); transform-origin: 50% 100%; opacity: 0; animation: cmf-smoke 5.2s linear infinite; }
+.moonarc[data-flame="D"] .cm-flame .cmf-s.s2 { animation-delay: -2.6s; animation-name: cmf-smoke2; }
+@keyframes cmf-ember { 0% { opacity: .62; } 40% { opacity: .9; } 55% { opacity: .78; } 100% { opacity: 1; } }
+@keyframes cmf-smoke { 0% { opacity: 0; translate: 0 0; scale: .5 .7; rotate: 0deg; } 15% { opacity: .8; } 55% { opacity: .4; rotate: 10deg; } 100% { opacity: 0; translate: calc(var(--d, 140px) * .05) calc(var(--d, 140px) * -.26); scale: 1.8 1.6; rotate: -14deg; } }
+@keyframes cmf-smoke2 { 0% { opacity: 0; translate: 0 0; scale: .5 .7; rotate: 0deg; } 15% { opacity: .7; } 55% { opacity: .35; rotate: -12deg; } 100% { opacity: 0; translate: calc(var(--d, 140px) * -.05) calc(var(--d, 140px) * -.24); scale: 1.7 1.5; rotate: 16deg; } }
+/* B: a real flame seen from directly above: no teardrop; a tiny, intensely bright white-gold point on the wick (its dark
+   line crossing the point's lower edge, a breath of blue round its foot), a soft warm bloom fading out, a faint glint on
+   the liquid wax. It only breathes: the bloom's size and brightness, and a pixel or two of drift */
+.moonarc[data-flame="B"] .cm-flame .cmf-f, .moonarc[data-flame="B"] .cm-flame .cmf-r { display: none; }
+.moonarc[data-flame="B"] .cm-flame .cmf-h { left: calc(var(--d, 140px) * -.3); top: calc(var(--d, 140px) * -.31); width: calc(var(--d, 140px) * .6); height: calc(var(--d, 140px) * .6);
+  background: radial-gradient(circle closest-side, rgba(255, 246, 220, .95), rgba(255, 214, 140, .7) 12%, rgba(255, 170, 84, .3) 34%, rgba(255, 150, 70, .08) 62%, rgba(255, 150, 70, 0));
+  animation: cmf-bloom 2.6s ease-in-out infinite alternate; }
+.moonarc[data-flame="B"] .cm-flame .cmf-k { display: block; left: calc(var(--d, 140px) * -.021); top: calc(var(--d, 140px) * -.025); width: calc(var(--d, 140px) * .042); height: calc(var(--d, 140px) * .042);
+  border-radius: 50%; background: radial-gradient(circle closest-side, #ffffff 0 45%, #fff4cc 70%, rgba(255, 222, 140, 0));
+  box-shadow: 0 0 calc(var(--d, 140px) * .02) calc(var(--d, 140px) * .008) rgba(255, 246, 214, .95), 0 0 calc(var(--d, 140px) * .06) rgba(255, 196, 110, .7), 0 calc(var(--d, 140px) * .006) calc(var(--d, 140px) * .012) rgba(110, 150, 255, .35);
+  animation: cmf-drift 1.9s ease-in-out infinite alternate, cmf-crackle 2.7s steps(1, end) infinite; }
+.moonarc[data-flame="B"] .cm-flame .cmf-w { display: block; left: calc(var(--d, 140px) * -.024); top: calc(var(--d, 140px) * .003); width: calc(var(--d, 140px) * .048); height: max(1px, calc(var(--d, 140px) * .007));
+  background: linear-gradient(90deg, rgba(40, 22, 12, 0), rgba(40, 22, 12, .5) 30%, rgba(40, 22, 12, .5) 70%, rgba(40, 22, 12, 0)); }
+.moonarc[data-flame="B"] .cm-flame .cmf-g { display: block; left: calc(var(--d, 140px) * -.03); top: calc(var(--d, 140px) * .1); width: calc(var(--d, 140px) * .06); height: calc(var(--d, 140px) * .02);
+  border-radius: 50%; background: radial-gradient(ellipse closest-side, rgba(255, 252, 238, .75), rgba(255, 236, 190, .25) 60%, rgba(255, 236, 190, 0)); animation: cmf-bloom 2.6s ease-in-out infinite alternate; }
+@keyframes cmf-bloom { 0% { opacity: .86; scale: .96; } 45% { opacity: 1; scale: 1.03; } 70% { opacity: .92; scale: .99; } 100% { opacity: 1; scale: 1.04; } }
+@keyframes cmf-drift { 0% { translate: 0 0; } 33% { translate: 1px -.5px; } 66% { translate: -.5px .5px; } 100% { translate: .5px 1px; } }
+/* C: a small, slim, true-to-scale flame seen from a slight three-quarter angle (a wooden wick's flame stands about a quarter
+   of the tin's width): a soft yellow body with translucent edges and no outline, a bluish foot, a faint dark wick tip
+   inside, a soft glow and its reflection in the liquid wax. The flicker is small and organic */
+.moonarc[data-flame="C"] .cm-flame .cmf-h { left: calc(var(--d, 140px) * -.24); top: calc(var(--d, 140px) * -.33); width: calc(var(--d, 140px) * .48); height: calc(var(--d, 140px) * .48);
+  background: radial-gradient(circle closest-side, rgba(255, 220, 150, .5), rgba(255, 170, 84, .2) 40%, rgba(255, 150, 70, 0)); }
+.moonarc[data-flame="C"] .cm-flame .cmf-f { left: calc(var(--d, 140px) * -.034); width: calc(var(--d, 140px) * .068); height: calc(var(--d, 140px) * .25);
+  animation: cmf-sway-s 3.3s ease-in-out infinite, cmf-breathe-s 2.1s ease-in-out infinite alternate; }
+.moonarc[data-flame="C"] .cm-flame .cmf-o { box-shadow: none; border-radius: 50% 50% 46% 46% / 74% 74% 26% 26%; filter: blur(.4px);
+  background: radial-gradient(ellipse 50% 60% at 50% 74%, rgba(255, 252, 232, .98) 0 16%, rgba(255, 230, 150, .9) 36%, rgba(255, 186, 86, .58) 60%, rgba(255, 150, 60, .16) 82%, rgba(255, 150, 60, 0) 100%); }
+.moonarc[data-flame="C"] .cm-flame .cmf-c { left: 30%; right: 30%; top: 42%; bottom: 8%; background: radial-gradient(ellipse 50% 60% at 50% 70%, rgba(255, 255, 248, .95) 0 30%, rgba(255, 250, 220, .5) 60%, rgba(255, 240, 190, 0)); }
+.moonarc[data-flame="C"] .cm-flame .cmf-b { left: 18%; right: 18%; bottom: -1%; height: 13%; background: radial-gradient(ellipse closest-side, rgba(100, 140, 255, .55), rgba(100, 140, 255, 0)); }
+.moonarc[data-flame="C"] .cm-flame .cmf-w { display: block; left: calc(var(--d, 140px) * -.005); top: calc(var(--d, 140px) * -.034); width: calc(var(--d, 140px) * .01); height: calc(var(--d, 140px) * .03);
+  border-radius: 40%; background: linear-gradient(rgba(30, 16, 8, 0), rgba(30, 16, 8, .5)); }
+.moonarc[data-flame="C"] .cm-flame .cmf-r { left: calc(var(--d, 140px) * -.025); width: calc(var(--d, 140px) * .05); height: calc(var(--d, 140px) * .15); opacity: .7; animation: cmf-sway-s 3.3s ease-in-out infinite reverse; }
+@keyframes cmf-sway-s { 0% { transform: rotate(-.8deg); } 22% { transform: rotate(1.1deg) skewX(-.6deg); } 47% { transform: rotate(-.4deg); } 71% { transform: rotate(1.4deg) skewX(-.8deg); } 100% { transform: rotate(-.8deg); } }
+@keyframes cmf-breathe-s { 0% { scale: 1 1; } 30% { scale: .97 1.04; } 60% { scale: 1.02 .97; } 100% { scale: .98 1.03; } }
 /* the arc's title, over the ring of moons: desktop places it from moonarc.ts (centred over the arc, the ring starts under it);
    on a phone it is the line above the band of moons. It keeps a soft halo of the sky behind it, light or dark */
 .dayhero .arc-title { margin: 0; font: 400 clamp(26px, 2.4vw, 36px)/1.12 var(--display); letter-spacing: -.01em; text-align: center; color: inherit; text-wrap: balance; pointer-events: none; }
