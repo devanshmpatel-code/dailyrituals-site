@@ -4,11 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Daily Rituals Co.</title>
+    <!-- Defaults for the home page and for readers that do not run scripts; src/seo.ts sets each route's own tags once the app starts. -->
+    <title>Daily Rituals Co. · Hand-poured candles &amp; neuro coaching, White Rock BC</title>
+    <meta name="description" content="Hand-poured scents and mindful rituals for every part of your day. Small batches, made in British Columbia." />
+    <meta property="og:site_name" content="Daily Rituals Co." />
+    <meta property="og:locale" content="en_CA" />
+    <meta property="og:title" content="Daily Rituals Co. · Hand-poured candles &amp; neuro coaching, White Rock BC" />
+    <meta property="og:description" content="Hand-poured scents and mindful rituals for every part of your day. Small batches, made in British Columbia." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="__SITE_URL__/" />
+    <meta property="og:image" content="__SITE_URL__/img/brand/og-1200x630.jpg" />
+    <meta property="og:image:alt" content="Daily Rituals Co.: hand-poured candles, made in White Rock, BC" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#4A3050" />
     <link rel="icon" href="/sunrise-mark.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" />
+    <!-- the fonts load without holding up the first paint: the text shows at once in the fallback face, then swaps (display=swap) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" /></noscript>
   </head>
   <body>
     <div id="root"></div>

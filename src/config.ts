@@ -11,21 +11,34 @@ export const WIX_CLIENT_ID: string = import.meta.env.VITE_WIX_CLIENT_ID ?? '';
  */
 export const WRITES_ENABLED: boolean = import.meta.env.VITE_ENABLE_WRITES === 'true';
 
+/**
+ * Launch switch. While false the site shows the private-preview bar (photo grade and drafts toggles)
+ * and asks search engines not to index it. Set VITE_LAUNCH=true only for the production build on the real domain.
+ */
+export const LAUNCHED: boolean = import.meta.env.VITE_LAUNCH === 'true';
+
 export const STORES_APP_ID = '215238eb-22a5-4c36-9e7b-e7c08025e04e';
 export const BOOKINGS_APP_ID = '13d21c63-b5ec-5912-8397-c3a5ddb27a97';
-export const STAFF_RESOURCE_TYPE_ID = '1cd44cf8-756f-41c3-bd90-3e2ffcaf1155';
+/** Staff resource type of the Bookings app on the site being read. Probably site-specific: override per Wix project. */
+export const STAFF_RESOURCE_TYPE_ID: string = import.meta.env.VITE_STAFF_RESOURCE_TYPE_ID || '1cd44cf8-756f-41c3-bd90-3e2ffcaf1155';
 export const TIME_ZONE = 'America/Vancouver';
 
-/** From the canvas announcement bar. */
-export const FREE_SHIPPING_THRESHOLD = 75;
+/** Ritualist points are not set up in Wix yet (no Loyalty app). Keep false until they are, so the cart never promises points. */
+export const LOYALTY_ENABLED = false;
+
+/** Free shipping applies to Canadian orders over this amount (the announcement bar, the cart meter and the product pages all read it). */
+export const FREE_SHIPPING_THRESHOLD = 150;
+
+/** The natural deodorant is hidden for now (shop, product links, menus, sitemap). It stays in Wix: set this to true to bring it back. */
+export const SHOW_DEODORANT = false;
 
 export type Mood = 'fresh' | 'sunny' | 'floral' | 'woody' | 'grounding';
 export type Format = 'roller' | 'diffuser' | 'candle' | 'deodorant';
 
 export const MOODS: Record<Mood, { label: string; swatch: string; backdrop: string }> = {
-  fresh: { label: 'Fresh and coastal', swatch: '#6E9E99', backdrop: '/img/mood-fresh.jpg' },
-  sunny: { label: 'Sunny and tropical', swatch: '#C9962E', backdrop: '/img/mood-sunny.jpg' },
-  floral: { label: 'Soft and floral', swatch: '#C27C73', backdrop: '/img/mood-floral.jpg' },
+  fresh: { label: 'Fresh and coastal', swatch: '#7FA8A0', backdrop: '/img/mood-fresh.jpg' },
+  sunny: { label: 'Sunny and tropical', swatch: '#D9953A', backdrop: '/img/mood-sunny.jpg' },
+  floral: { label: 'Soft and floral', swatch: '#A8574A', backdrop: '/img/mood-floral.jpg' },
   woody: { label: 'Warm and woody', swatch: '#9C6B45', backdrop: '/img/mood-woody.jpg' },
   grounding: { label: 'Grounding', swatch: '#5E7A58', backdrop: '/img/mood-grounding.jpg' },
 };
@@ -65,24 +78,34 @@ export interface Moment {
   line: string;
   /** true when the line or product pairing is not from the approved canvas */
   draft: boolean;
-  image: string;
-  imageAlt: string;
   mood: Mood;
   /** the "ritual" pairing: scent of the diffuser and scent of the roller */
   pair: { diffuser: string; roller: string };
   sky: [string, string, string];
+  /** mountain colours, far to near, and the sun or moon colour for the hero landscape */
+  land: [string, string, string];
+  orb: string;
   dark: boolean;
 }
 
 // Golden hour is the approved canvas state. The other four moments only exist in
 // the canvas as image titles, so their lines and pairings are drafts for Claire.
+// The arch pictures are Claire's past candle work, one per moment: a top-down floral for dawn (Spring Blooms: "that fresh
+// April morning"), salt and green stones for the salt-air morning (Sea Salt & Sage), wood chips for the grounding midday
+// (Jarrah: "grounded and centred"), the lit Cabana tumbler for golden hour (Cabana is in the golden ritual) and the lit
+// Midnight Forest tin for night. Past scents are shown as craft, never as buyable: the alt text names what is in the picture.
 export const MOMENTS: Moment[] = [
-  { key: 'dawn', name: 'Dawn', time: '6:30 am', hour: 6.5, title: 'Wake up bright', line: 'Bright and clean. Citrus & Sun opens the day before the inbox does.', draft: true, image: '/img/morning.jpg', imageAlt: 'Wake up bright', mood: 'fresh', pair: { diffuser: 'citrus & sun', roller: 'windy beach' }, sky: ['#2E2A4A', '#F2A97E', '#F8DCC0'], dark: false },
-  { key: 'morning', name: 'Morning', time: '9:00 am', hour: 9, title: 'Head out lighter', line: 'Salt air on your wrists for the walk, the commute or the school run.', draft: true, image: '/img/mood-fresh.jpg', imageAlt: 'Head out lighter', mood: 'sunny', pair: { diffuser: 'cabana', roller: 'sea foam' }, sky: ['#8FBCD4', '#CFE4EC', '#F3F1EA'], dark: false },
-  { key: 'midday', name: 'Midday', time: '1:00 pm', hour: 13, title: 'Reset at your desk', line: 'A grounding scent between meetings. One breath, then back to it.', draft: true, image: '/img/midday.jpg', imageAlt: 'Reset at your desk', mood: 'grounding', pair: { diffuser: 'inner sanctum', roller: 'golden meridian' }, sky: ['#6FA7C6', '#B9D8E3', '#EEF1EA'], dark: false },
-  { key: 'golden', name: 'Golden hour', time: '6:00 pm', hour: 18, title: 'Come home to yourself', line: 'Warm, dry and glowing. Desert Vesper or Cabana marks the line between work and the rest of your evening.', draft: false, image: '/img/mood-woody.jpg', imageAlt: 'Come home to yourself', mood: 'woody', pair: { diffuser: 'desert vesper', roller: 'cabana' }, sky: ['#6B4A6E', '#E08E5A', '#F4C98E'], dark: false },
-  { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, image: '/img/evening.jpg', imageAlt: 'Wind down', mood: 'floral', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2A1F3D', '#4A2D4F'], dark: true },
+  { key: 'dawn', name: 'Dawn', time: '6:30 am', hour: 6.5, title: 'Wake up bright', line: 'Bright and clean. Citrus & Sun opens the day before the inbox does.', draft: true, mood: 'fresh', pair: { diffuser: 'citrus & sun', roller: 'windy beach' }, sky: ['#6E5A8C', '#F2A58E', '#FCE5CE'], land: ['#C7A9BE', '#A07FA4', '#6F5690'], orb: '#FFD9B0', dark: false },
+  { key: 'morning', name: 'Morning', time: '9:00 am', hour: 9, title: 'Head out lighter', line: 'Salt air on your wrists for the walk, the commute or the school run.', draft: true, mood: 'sunny', pair: { diffuser: 'cabana', roller: 'sea foam' }, sky: ['#7FB2D6', '#CFE6EE', '#FBF3E0'], land: ['#B5D1D0', '#86B0AA', '#5A8A82'], orb: '#FFF1C6', dark: false },
+  { key: 'midday', name: 'Midday', time: '1:00 pm', hour: 13, title: 'Reset at your desk', line: 'A grounding scent between meetings. One breath, then back to it.', draft: true, mood: 'grounding', pair: { diffuser: 'inner sanctum', roller: 'golden meridian' }, sky: ['#5FA3CB', '#B7DCE8', '#EEF4EA'], land: ['#A9CABD', '#78A595', '#4A7A69'], orb: '#FFFBE3', dark: false },
+  { key: 'golden', name: 'Golden hour', time: '6:00 pm', hour: 18, title: 'Come home to yourself', line: 'Warm, dry and glowing. Desert Vesper or Cabana marks the line between work and the rest of your evening.', draft: false, mood: 'woody', pair: { diffuser: 'desert vesper', roller: 'cabana' }, sky: ['#7A4F78', '#E9955B', '#F7CF94'], land: ['#C98597', '#9A6283', '#5A3A5C'], orb: '#FFB66E', dark: false },
+  { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, mood: 'floral', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2B2145', '#4A2D4F'], land: ['#4A3F73', '#33295A', '#1E1838'], orb: '#F5EBD3', dark: true },
 ];
 
-/** Moon Drop release date shown on the canvas ("Sunday, October 11"). Unconfirmed. */
-export const NEXT_DROP_ISO = '2026-10-11T00:00:00-07:00';
+/**
+ * Moon Drop date. By default the site shows the next new moon, computed in src/drop.ts, so it never counts down to a
+ * date that has passed. To pin a real release date, set it here (or as VITE_DROP_DATE at build time) as an ISO date
+ * such as '2026-11-08T19:00:00-08:00'. A pinned date is used while it is today or later; after it, the computed new
+ * moon takes over again. Moon Drops are still a concept: the site shows no price and only offers "notify me".
+ */
+export const DROP_DATE_OVERRIDE: string = import.meta.env.VITE_DROP_DATE || '';

@@ -1,0 +1,110 @@
+/* Trust pass: honest states for things that are not live yet, the studio photographs on the Ritual Wall, a breathing orb
+   that steps aside on phones, and tidier page edges. Loaded last. */
+
+/* ---------- "Coming soon" in place of a price ---------- */
+.soon-tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px dashed currentColor; font: 600 12px/1.4 var(--body); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; opacity: .85; }
+.plan .price .soon-tag { font-size: 12px; }
+.plan.best .soon-tag { color: #F3D29A; }
+.card .meta .soon-tag { font-size: 12px; padding: 2px 8px; }
+.btn.soon { border-style: dashed; }
+/* Send a Sky: the gift card and the Discovery Kit are shown but cannot be chosen */
+.fmt-pick .gr-soon { opacity: .62; cursor: not-allowed; border-style: dashed; }
+.fmt-pick .gr-soon .soon-tag { font-size: 12px; }
+/* in two columns the tag sits under the name, so a name like "The Morning Ritual" keeps to one line */
+@media (min-width: 601px) {
+  .fmt-pick .gr-soon { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; row-gap: 4px; align-items: center; justify-items: start; padding: 10px 14px; }
+  .fmt-pick .gr-soon > span:first-child { display: contents !important; }
+  .fmt-pick .gr-soon > span:first-child > :first-child { grid-row: span 2; }
+  .fmt-pick .gr-soon b { align-self: end; line-height: 1.25; }
+  .fmt-pick .gr-soon .soon-tag { align-self: start; }
+}
+.gr-ic { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; background: rgba(35, 26, 43, .06); font: 500 18px var(--display); color: var(--muted, #6B5F6E); flex: none; }
+/* product page: the refill choice is coming soon */
+.po label.po-soon { opacity: .6; cursor: not-allowed; }
+.po label.po-soon select { pointer-events: none; }
+
+/* ---------- the Ritual Wall ---------- */
+.wall-top { margin-bottom: clamp(36px, 5vw, 64px); }
+@media (min-width: 821px) { .wallsplit.wall-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.wall-empty { display: flex; flex-direction: column; gap: 14px; border-style: dashed; }
+.wall-empty h2 { font-size: clamp(30px, 3.4vw, 46px); line-height: 1.08; margin: 0; }
+#upForm h2 { margin: 0; }
+.wall-studio .head { margin-bottom: 18px; }
+.wall-studio h2 { font-size: clamp(28px, 3.2vw, 42px); }
+.wall.studio-row .tile { margin: 0 0 12px; }
+.wall .studio-tile .cap { opacity: 1; padding-top: 34px; }
+/* the label sits on its own line above the caption with a little air, over a deeper scrim that holds on bright photos */
+.wall .studio-tile .cap { padding-top: 48px; line-height: 1.35; text-shadow: 0 1px 3px rgba(12, 6, 16, .55);
+  background: linear-gradient(to top, rgba(20, 12, 24, .88) 0%, rgba(20, 12, 24, .68) 45%, rgba(20, 12, 24, .28) 75%, transparent 100%); }
+.wall .studio-tile .cap br { display: none; }
+.wall .studio-tile .cap .studio-tag { display: block; margin-bottom: 5px; opacity: .92; }
+.wall .studio-tile img { height: auto; aspect-ratio: 4 / 5 !important; object-fit: cover; }
+.wall .studio-tile { margin: 0 0 12px; }
+.studio-tag { font: 500 12px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .16em; text-transform: uppercase; opacity: .85; }
+.studio-tile:hover { transform: none; }
+
+/* ---------- Send a Sky on a phone: the card preview sits just above "Add gift to cart" ---------- */
+@media (max-width: 820px) {
+  body[data-page="gift"] .giftsec .gift-grid { display: flex; flex-direction: column; align-items: stretch !important; gap: 18px; }
+  body[data-page="gift"] .giftsec .gsteps { display: contents; }
+  body[data-page="gift"] .giftsec .gift-grid > .stick { order: 1; position: static; }
+  body[data-page="gift"] .giftsec #gAdd { order: 2; }
+}
+
+/* ---------- the breathing orb on phones: smaller, and out of the way while you scroll down ---------- */
+.breathorb { transition: bottom .4s cubic-bezier(.2, .7, .2, 1), opacity .35s ease, translate .35s cubic-bezier(.2, .7, .2, 1); }
+@media (max-width: 820px) {
+  /* a 44px button round a 40px orb, tucked further into the corner; no ripples spreading over the page, a tight glow */
+  .bo-orb { width: 44px; height: 44px; }
+  .bo-core { width: 40px; height: 40px; }
+  .bo-core svg { width: 17px; height: 17px; }
+  .bo-orb::before { inset: -5px; }
+  .bo-orb .r { display: none; }
+  .breathorb { right: max(10px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
+  .breathorb.bo-tucked { opacity: 0; translate: 0 calc(100% + 24px); pointer-events: none; }
+  .breathorb.bo-tucked:focus-visible { opacity: 1; translate: 0 0; pointer-events: auto; }
+  /* the last lines of the footer stay clear of the orb */
+  footer .legal { padding-right: 64px; padding-bottom: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .breathorb { transition: none; } }
+
+/* ---------- page edges ---------- */
+/* the hour's colour wash fades out downwards instead of ending in a line (it is fixed, so a full-page capture or a phone
+   whose toolbar collapses could show its bottom edge) */
+.jwash, .treebg { -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 45%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0, #000 45%, transparent 100%); }
+/* the space above the footer: one short lotus divider and a short fade, instead of about 200px of empty gradient */
+.lotusdiv { margin: 0 !important; padding: 24px 16px 36px; }
+body[data-page] .lotusdiv { padding-block: 24px 36px; }
+footer, footer.cel-night { margin-top: 0 !important; }
+footer::before { top: -36px !important; height: 36px !important; }
+
+/* ---------- the Journal: sources and the disclaimer, readable ---------- */
+.jr-sources { margin-top: clamp(20px, 3vw, 32px); color: var(--ink, #231A2B); }
+.jr-sources a { color: var(--ink, #231A2B); text-underline-offset: 3px; }
+.jr-sources .small.muted { color: #54485A; }
+
+/* ---------- the cart drawer on a phone: a tighter footer, so more of the order shows above it ---------- */
+@media (max-width: 560px) {
+  /* one column of notes, then Checkout with Keep shopping beside it on one row */
+  .drawer .df { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 14px; row-gap: 4px; padding: 10px 20px max(10px, env(safe-area-inset-bottom)); }
+  .drawer .df > * { grid-column: 1 / -1; }
+  .drawer .df > #checkoutBtn { grid-column: 1; min-height: 48px; margin-top: 4px; }
+  .drawer .df > .keep { grid-column: 2; align-self: center; margin-top: 4px; }
+  .drawer .df > .small.muted { font-size: 12px; line-height: 1.4; }
+  .drawer .df .gv-note { font-size: 12px; line-height: 1.35; }
+}
+
+/* ---------- phone and tablet tap targets: at least 44px tall, without making anything look bigger ---------- */
+@media (max-width: 820px) {
+  /* footer columns: each link is a 44px row (the words stay the same size) */
+  footer .foot a:not(.foot-mark) { display: flex; align-items: center; min-height: 44px; padding-block: 0; }
+  /* inline text links (and the legal row): an invisible hit area round the words, so the underline stays where it is */
+  .tlink, footer .legal a { position: relative; }
+  .tlink::after, footer .legal a::after { content: ""; position: absolute; inset: -14px -6px; }
+  /* coaching: the questions, the loop's two-way switch and the cue pills */
+  .co-faq-list details:not(.x) { padding-block: 13px; } /* (the row keeps its height: the extra goes inside the question) */
+  .co-faq-list summary { min-height: 44px; align-items: center; }
+  .loopcard .toggle { padding: 3px; }
+  .loopcard .toggle button { min-height: 44px; }
+  .cue-pills .cue-pill { min-height: 44px; } /* (coaching.css loads after this sheet) */
+}

@@ -1,0 +1,117 @@
+/* ==========================================================================================================
+   The holiday layer (src/season.ts): cranberry, warm cream and antique gold laid over the usual design.
+   Every rule is scoped to body.season-holiday or to the .hol-* pieces, which exist only while the layer is on,
+   so with the layer off nothing here applies. Contextual rules use :where() so they lose to the site's own
+   rules for dark grounds (night, eucalyptus, the hero after dark), which keep their colours.
+   ========================================================================================================== */
+body.season-holiday {
+  --hol-cran: #431414; --hol-cran-2: #7a1f1f; --hol-cran-3: #5e1717;
+  --hol-cream: #f8f0e3; --hol-gold: #d9a84e; --hol-gold-2: #e8c47c; --hol-gold-ink: #8a5a12;
+}
+
+/* ---- chrome: the announcement bar, a gold hairline under the header, the footer's warm glow ---- */
+body.season-holiday .announce {
+  background: radial-gradient(60% 180% at 50% 0%, rgba(217, 168, 78, .16), rgba(217, 168, 78, 0) 70%), linear-gradient(90deg, #3a1012, #511719 50%, #3a1012);
+  color: var(--hol-cream); box-shadow: inset 0 -1px 0 rgba(217, 168, 78, .38);
+}
+body.season-holiday header.top { border-bottom-color: rgba(201, 149, 63, .45); }
+body.season-holiday footer {
+  background: radial-gradient(70% 60% at 50% 8%, rgba(217, 168, 78, .14), rgba(217, 168, 78, 0) 72%), linear-gradient(180deg, #2a1220 0, #3e1218 180px, #2c0e14 100%);
+}
+body.season-holiday footer::before { background: linear-gradient(to bottom, transparent, #2a1220); }
+body.season-holiday[data-page="home"] footer::before { background: linear-gradient(to bottom, rgba(42, 18, 32, 0), #2a1220); }
+body.season-holiday footer .foot h4 { color: var(--hol-gold-2); }
+
+/* ---- buttons: the solid ones turn cranberry with a fine gold edge (outlined and on-dark buttons are left alone) ---- */
+body.season-holiday :where(.btn:not(.line, .white, .ghost-w, .euc, [disabled])) {
+  background: var(--hol-cran-2); border-color: var(--hol-cran-2); color: #fff8ee;
+  box-shadow: inset 0 0 0 1px rgba(232, 196, 124, .55), 0 10px 22px -14px rgba(67, 20, 20, .7);
+}
+body.season-holiday :where(.btn:not(.line, .white, .ghost-w, .euc, [disabled])):hover { background: var(--hol-cran-3); border-color: var(--hol-cran-3); }
+body.season-holiday .lnav-add:not([disabled]) { background: var(--hol-cran-2); border-color: var(--hol-cran-2); color: #fff8ee; box-shadow: inset 0 0 0 1px rgba(232, 196, 124, .55); }
+body.season-holiday .lnav-add:not([disabled]):hover { background: var(--hol-cran-3); border-color: var(--hol-cran-3); }
+body.season-holiday :where(.btn.line):hover { background: var(--hol-cran-2); border-color: var(--hol-cran-2); color: #fff8ee; }
+
+/* ---- eyebrows and chapter labels on light grounds ---- */
+body.season-holiday :where(.eyebrow, .chapter) { color: var(--hol-cran-2); opacity: 1; }
+
+/* ---- section dividers: the seams between home chapters, and the lotus above the footer ---- */
+body.season-holiday .cel-div.light { color: #b07a28; }
+body.season-holiday .cel-div.light i { opacity: .6; }
+body.season-holiday .cel-div.light .cel-glyph { color: var(--hol-cran-2); opacity: .9; }
+body.season-holiday .lotusdiv i { background: linear-gradient(90deg, transparent, var(--hol-gold)); }
+body.season-holiday .lotusdiv svg { color: var(--hol-gold-2); }
+
+/* ---- the home hero: a warm gold glow in the sky (the time-of-day sky itself is untouched) ---- */
+.hol-dust { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.hol-dust::before { content: ""; position: absolute; inset: 0; mix-blend-mode: screen;
+  background: radial-gradient(36% 46% at 50% 30%, rgba(255, 200, 120, .26), rgba(255, 200, 120, 0) 72%); }
+.hol-dust canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+@media (max-width: 979px) { .hol-dust::before { background: radial-gradient(60% 34% at 22% 12%, rgba(255, 200, 120, .26), rgba(255, 200, 120, 0) 72%); } }
+
+/* ---- the ticket stub: notched ends, a dashed inner border, a perforation before a small star, a slight tilt ---- */
+.hol-stub {
+  --stub-bg: linear-gradient(100deg, #6b1a1a 0%, #8a2622 42%, #a7493a 58%, #7a1f1f 76%, #6b1a1a 100%);
+  --stub-ink: #fbf3e6; --stub-line: rgba(240, 206, 140, .72); --stub-end: var(--hol-gold-2, #e8c47c);
+  position: relative; display: inline-flex; align-items: stretch; vertical-align: middle; max-width: 100%;
+  background: var(--stub-bg); color: var(--stub-ink);
+  font-family: var(--accent); font-size: 13.5px; line-height: 1.2; letter-spacing: .03em; white-space: nowrap;
+  -webkit-mask: radial-gradient(circle 5px at 0 50%, #0000 96%, #000) left / 51% 100% no-repeat, radial-gradient(circle 5px at 100% 50%, #0000 96%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 5px at 0 50%, #0000 96%, #000) left / 51% 100% no-repeat, radial-gradient(circle 5px at 100% 50%, #0000 96%, #000) right / 51% 100% no-repeat;
+}
+.hol-stub::before { content: ""; position: absolute; inset: 3px; border: 1px dashed var(--stub-line); pointer-events: none; }
+.hol-stub-t { padding: 4px 10px 4px 14px; overflow: hidden; text-overflow: ellipsis; }
+.hol-stub-end { display: flex; align-items: center; padding: 0 12px 0 9px; margin-block: 3px; border-left: 1px dashed var(--stub-line); color: var(--stub-end); }
+.hol-stub.cream {
+  --stub-bg: linear-gradient(100deg, #f7ecd8 0%, #fbf4e7 40%, #efdcb6 62%, #f8efdf 100%);
+  --stub-ink: #6a1a1a; --stub-line: rgba(122, 31, 31, .42); --stub-end: #a8741f;
+}
+body.show-drafts .hol-stub .d { box-shadow: none; }
+
+/* the announcement bar: "Free shipping" sits in a cream ticket */
+.announce .an-live[data-hol-wrap] { padding-block: 0; min-height: 44px; display: inline-flex; align-items: center; }
+.announce .an-sep.hol-sep-off { display: none; }
+@media (max-width: 600px) {
+  .announce .an-live[data-hol-wrap] { padding-block: 6px 0; min-height: 0; justify-content: center; display: flex; }
+  .announce .an-live[data-hol-wrap] .hol-stub { font-size: 13px; }
+  .announce .an-live[data-hol-wrap] .hol-stub-end { padding-inline: 7px 10px; }
+}
+
+/* ---- ribbon flags hanging off a card's right corner, folded under at the back ---- */
+.hol-host { position: relative; }
+.hol-flag { position: absolute; top: 18px; right: -8px; z-index: 4; pointer-events: none; filter: drop-shadow(0 4px 5px rgba(40, 8, 8, .28)); }
+.hol-flag-b, .hol-flag > .d { display: block; }
+.hol-flag::before { content: ""; display: block; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, #922b24, #6e1a18);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 9px 50%);
+  box-shadow: inset 0 1px 0 rgba(240, 206, 140, .55); }
+.hol-flag > .d { position: relative; padding: 7px 14px 7px 20px; color: #fbf3e6; font: 700 10.5px/1.1 var(--body); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
+.hol-flag::after { content: ""; position: absolute; right: 0; top: 100%; width: 8px; height: 6px; background: #3a0d0d; clip-path: polygon(0 0, 100% 0, 0 100%); }
+body.show-drafts .hol-flag > .d { background: none; box-shadow: none; color: #fbf3e6; outline: 1px dashed rgba(247, 228, 198, .8); outline-offset: -4px; }
+/* on the home Send a Sky card the flag straddles the card's top edge, clear of the words printed on the card */
+.hol-flag.on-card { top: -11px; }
+/* on the dark Opening soon chapter the flag is gold */
+.soon-list .hol-flag { top: 10px; right: -6px; }
+/* the Moon Drops row makes room above its title for the flag, so it never meets the words or the arrow */
+.soon-list a:has(> .hol-flag) { padding-top: 40px; }
+.soon-list .hol-flag > .d { padding-block: 6px; }
+@media (max-width: 420px) { .soon-list .hol-flag > .d { font-size: 9.5px; letter-spacing: .12em; padding: 5px 10px 5px 17px; } }
+.soon-list .hol-flag::before { background: linear-gradient(180deg, #ecc77f, #c9953f); box-shadow: inset 0 1px 0 rgba(255, 246, 222, .7); }
+.soon-list .hol-flag > .d { color: #3a0d0d; }
+.soon-list .hol-flag::after { width: 6px; background: #7a5418; }
+body.show-drafts .soon-list .hol-flag > .d { color: #3a0d0d; outline-color: rgba(58, 13, 13, .5); }
+
+/* ---- the round cream seal on Claire's arch ---- */
+.hol-seal {
+  position: absolute; right: -1%; top: 9%; z-index: 3; width: clamp(104px, 28%, 128px); aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center; pointer-events: none; rotate: -8deg;
+  background: radial-gradient(circle at 34% 28%, #fffbf3 0%, #f8f0e3 52%, #efdfc2 100%); color: var(--hol-cran-2, #7a1f1f);
+  box-shadow: 0 14px 28px -12px rgba(67, 20, 20, .45), 0 2px 6px rgba(67, 20, 20, .12);
+}
+.hol-seal-ring { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #c9953f; stroke-width: .9; }
+.hol-seal-ring circle + circle { stroke-width: 1.4; opacity: .7; }
+.hol-seal-in { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; color: #b07a28; }
+.hol-seal-in .d { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hol-seal i { font: 600 9.5px/1.25 var(--body); font-style: normal; text-transform: uppercase; letter-spacing: .14em; margin-right: -.14em; color: #5a4636; }
+.hol-seal b { font-family: var(--display); font-weight: 400; font-size: clamp(22px, 2.1vw, 28px); line-height: 1; color: var(--hol-cran-2, #7a1f1f); letter-spacing: -.01em; }
+body.show-drafts .hol-seal .d { background: none; box-shadow: none; }

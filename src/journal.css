@@ -1,0 +1,94 @@
+/* The Journal: an index of cards and simple, readable articles. Each article's picture is one whole tin, cut out, with a soft
+   shadow (shown no larger than the cut-out itself, about 460 px, so it stays sharp). */
+.jr-index, .jr-article { padding-block: clamp(28px, 4vw, 56px) clamp(48px, 6vw, 96px); }
+.jr-hero { max-width: 62ch; margin: 18px 0 clamp(26px, 4vw, 48px); display: flex; flex-direction: column; gap: 12px; }
+.jr-hero h1 { font-size: clamp(40px, 5.6vw, 80px); line-height: 1.02; margin: 0; }
+.jr-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.4vw, 34px); }
+.jr-card { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; padding: 18px; border-radius: 26px; background: rgba(255, 255, 255, .45); border: 1px solid rgba(201, 163, 90, .25); transition: transform .5s cubic-bezier(.2, .7, .2, 1), box-shadow .5s; }
+.jr-card:hover, .jr-card:focus-visible { transform: translateY(-4px); box-shadow: var(--lift); }
+.jr-card.lead { grid-column: span 2; grid-row: span 2; }
+.jr-pic { display: block; position: relative; aspect-ratio: 4 / 3; margin-bottom: 6px; }
+.jr-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 18px 18px rgba(42, 31, 51, .24)); transition: transform 1s cubic-bezier(.2, .7, .2, 1); }
+.jr-card:hover .jr-pic img { transform: rotate(4deg) scale(1.03); }
+.jr-card.lead .jr-pic img { max-width: 480px; max-height: 480px; margin: auto; }
+.jr-tag { font: 500 12px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #6B5F6E); }
+.jr-card b { font-family: var(--display, serif); font-weight: 400; font-size: clamp(22px, 2vw, 28px); line-height: 1.15; }
+.jr-card.lead b { font-size: clamp(28px, 3vw, 42px); }
+.jr-dek { color: var(--muted, #6B5F6E); font-size: 15px; line-height: 1.5; }
+
+.jr-ahead { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: clamp(20px, 4vw, 56px); align-items: center; margin: 18px 0 clamp(20px, 3vw, 40px); }
+.jr-ahead h1 { font-size: clamp(38px, 5vw, 70px); line-height: 1.04; margin: 10px 0; }
+.jr-lede { font-size: 19px; line-height: 1.55; color: var(--muted, #6B5F6E); max-width: 46ch; }
+.jr-apic { margin: 0; }
+.jr-apic img { display: block; width: 100%; max-width: 480px; height: auto; margin-inline: auto; filter: drop-shadow(0 24px 24px rgba(42, 31, 51, .26)); }
+.jr-body { max-width: 66ch; font-size: 18px; line-height: 1.7; }
+.jr-body h2 { font-size: clamp(24px, 2.4vw, 32px); margin: 1.6em 0 .4em; }
+.jr-body p { margin: 0 0 1em; }
+.jr-body a { color: inherit; text-decoration-color: var(--gold-leaf, #C9A35A); text-underline-offset: 3px; }
+.jr-list { padding-left: 1.2em; display: flex; flex-direction: column; gap: 12px; }
+.jr-shop { max-width: 66ch; margin: clamp(26px, 4vw, 44px) 0; padding: clamp(20px, 3vw, 30px); border-radius: 28px 28px 28px 84px; background: linear-gradient(135deg, #2E2238, #4A3146 60%, #7A4C55); color: #FBF3E6; display: flex; flex-direction: column; gap: 10px; }
+.jr-shop .eyebrow { color: #F3D29A; }
+.jr-shop .btn { background: #FBF3E6; color: #2A1F33; border-color: #FBF3E6; }
+.jr-shop .btn.line { background: transparent; color: #FBF3E6; border-color: rgba(251, 243, 230, .6); }
+.jr-shop .cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.jr-sources { max-width: 66ch; border-top: 1px solid rgba(201, 163, 90, .45); padding-top: 14px; }
+.jr-sources ul { margin: 8px 0; padding-left: 1.1em; font-size: 14px; line-height: 1.6; }
+.jr-next { display: inline-flex; flex-direction: column; gap: 4px; margin-top: 26px; text-decoration: none; color: inherit; }
+.jr-next b { font-family: var(--display, serif); font-weight: 400; font-size: 24px; }
+
+/* the way back to the shop: a small product link in the text where an article names a format the shop sells, and the
+   candles (or the candle and roller of one scent) at the foot, as the shop's own cards */
+.jr-hooks { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 1.4em; }
+.jr-hook { display: inline-grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 64px; padding: 8px 14px 8px 8px; max-width: 100%;
+  border-radius: 18px 6px 18px 6px; border: 1px solid rgba(201, 163, 90, .45); background: rgba(255, 255, 255, .55); color: inherit; text-decoration: none; line-height: 1.25;
+  transition: border-color .3s, box-shadow .3s; }
+.jr-body .jr-hook { text-decoration: none; }
+.jr-hook:hover { border-color: var(--gold-leaf, #C9A35A); box-shadow: var(--lift); }
+.jr-hook:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.jr-hook img { width: 44px; height: 55px; object-fit: cover; border-radius: 10px 3px 10px 3px; }
+.jr-hook > span:not(.jr-hook-go) { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.jr-hook small { font: 500 12px/1.3 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #6B5F6E); }
+.jr-hook b { font: 400 19px/1.15 var(--display, serif); }
+.jr-hook em { font-style: normal; font-size: 14px; color: var(--muted, #6B5F6E); }
+.jr-hook-go { color: var(--gold-leaf, #C9A35A); font-size: 18px; }
+.jr-picks { max-width: 920px; margin: clamp(30px, 4vw, 48px) 0 0; }
+.jr-picks h2 { margin: 8px 0 clamp(16px, 2vw, 24px); font-size: clamp(28px, 3vw, 40px); line-height: 1.08; }
+.jr-picks-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 18px; }
+.jr-picks-grid:has(> .card:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 620px; }
+@media (max-width: 620px) {
+  .jr-picks-grid, .jr-picks-grid:has(> .card:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }
+  .jr-picks-grid > .card:nth-child(3) { display: none; } /* two side by side on a phone */
+}
+@media (prefers-reduced-motion: reduce) { .jr-hook { transition: none; } }
+
+/* home teaser */
+.jr-teaser { padding-block: clamp(36px, 5vw, 72px); }
+.giftsec > .jr-teaser { padding-top: 0; } /* (on home it closes the Send a Sky chapter) */
+.jr-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: clamp(18px, 2.4vw, 30px); }
+.jr-head h2 { margin: 8px 0 0; font-size: clamp(32px, 4vw, 56px); line-height: 1.05; }
+.jr-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 2vw, 26px); }
+
+@media (max-width: 900px) {
+  .jr-grid { grid-template-columns: 1fr 1fr; }
+  .jr-card.lead { grid-column: span 2; grid-row: auto; }
+  .jr-ahead { grid-template-columns: 1fr; }
+  .jr-apic { max-width: 360px; }
+}
+@media (max-width: 620px) {
+  .jr-grid, .jr-cards { grid-template-columns: 1fr; }
+  .jr-card.lead { grid-column: auto; }
+  .jr-head { flex-direction: column; align-items: flex-start; }
+}
+/* the home teaser on phones: the three cards in a row you swipe (the page itself never scrolls sideways), so the Journal
+   takes one card's height instead of three; the next card peeks in at the edge */
+@media (max-width: 620px) {
+  .jr-teaser .jr-cards { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 80%; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+    /* the row runs to the screen's edges; its first card still lines up with the words above */
+    margin-inline: calc(50% - 50vw); padding: 4px calc(50vw - 50%) 12px; }
+  .jr-teaser .jr-cards::-webkit-scrollbar { display: none; }
+  .giftsec:has(> .jr-teaser) { overflow-x: clip; } /* (100vw counts a desktop scrollbar: never let the row widen the page) */
+  .jr-teaser .jr-card { scroll-snap-align: center; } /* (centred, an 80% card sits about one gutter in from the edge) */
+  .jr-teaser .jr-card:hover, .jr-teaser .jr-card:focus-visible { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .jr-card, .jr-pic img { transition: none; } }

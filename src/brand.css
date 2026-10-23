@@ -1,0 +1,20 @@
+/* ======================================================================
+   The logo as a picture: the footer's signature (src/canvas/footer.html, Claire's logo from public/img/brand/, lifted off its
+   black square by tools/photo/logo_cut.py).
+   ====================================================================== */
+
+/* ---- the footer's signature: the logo, lit by candlelight, closing the site ---- */
+footer.cel-night { overflow-x: clip; }
+.foot-sign { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: clamp(16px, 3vw, 40px); padding-block: clamp(4px, 1vw, 12px) clamp(26px, 3vw, 40px); }
+.foot-sign::before, .foot-sign::after { content: ""; flex: 1 1 0; max-width: 320px; height: 1px; background: linear-gradient(90deg, rgba(201, 163, 90, 0), rgba(201, 163, 90, .55)); }
+.foot-sign::after { background: linear-gradient(90deg, rgba(201, 163, 90, .55), rgba(201, 163, 90, 0)); }
+.foot-logo { position: relative; display: block; flex: 0 1 auto; width: min(460px, 64vw); text-decoration: none; isolation: isolate; border-radius: 12px; }
+/* the warm glow behind it breathes slowly, like a flame in a still room */
+@keyframes rcBreathe { from { opacity: .75; scale: .97; } to { opacity: 1; scale: 1.03; } }
+.foot-logo::before { content: ""; position: absolute; inset: -40% -14%; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(243, 190, 120, .2), rgba(226, 160, 74, .07) 60%, rgba(226, 160, 74, 0)); animation: rcBreathe 7s ease-in-out infinite alternate; }
+.foot-logo img { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 1px rgba(0, 0, 0, .6)) drop-shadow(0 0 16px rgba(243, 210, 154, .22)); transition: filter .6s; }
+.foot-logo:hover img { filter: drop-shadow(0 0 1px rgba(0, 0, 0, .6)) drop-shadow(0 0 22px rgba(243, 210, 154, .4)); }
+footer.cel-night .foot-logo:focus-visible { outline: 2px solid var(--gold-light, #E9D4A1); outline-offset: 8px; }
+@media (max-width: 620px) { .foot-sign::before, .foot-sign::after { display: none; } .foot-logo { width: min(320px, 86vw); } }
+@media (prefers-reduced-motion: reduce) { .foot-logo::before { animation: none; } .foot-logo img { transition: none; } }

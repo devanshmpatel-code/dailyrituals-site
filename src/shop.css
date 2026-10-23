@@ -1,0 +1,39 @@
+/* ---------- the shop: one card per scent, format chips, a quick add that is always there ---------- */
+.scard { container-type: inline-size; gap: 10px; }
+.scard .sc-link { text-decoration: none; display: flex; flex-direction: column; gap: 4px; color: inherit; }
+.scard .sub { display: flex; gap: 8px; align-items: center; }
+.scard .sc-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
+
+/* format chips: a line glyph and the format's name; on a narrow card the glyph alone (its name is the button's label) */
+.sc-fmts { display: flex; flex-wrap: wrap; gap: 6px; }
+.sc-fmt { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0 12px 0 8px; border-radius: 999px;
+  border: 1px solid rgba(42, 31, 51, .16); background: rgba(255, 255, 255, .7); color: var(--ink, #2A1F33); font: 600 13px/1 var(--body); cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s; -webkit-tap-highlight-color: transparent; }
+.sc-fmt svg { flex: none; }
+.sc-fmt:hover { border-color: rgba(42, 31, 51, .4); background: #fff; }
+.sc-fmt[aria-pressed="true"] { background: var(--ink, #2A1F33); border-color: var(--ink, #2A1F33); color: #fff; }
+.sc-fmt:focus-visible, .sc-add:focus-visible { outline: 2px solid var(--plum, #4A3050); outline-offset: 2px; }
+@container (max-width: 259px) {
+  .sc-fmt { padding: 0; width: 44px; }
+  .sc-fmt .sc-fl { display: none; }
+}
+
+/* quick add: always shown under the card (not only on hover), naming the size it adds and, once known, its price */
+.sc-add { min-height: 44px; width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0 .3em; padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--ink, #2A1F33); background: transparent; color: var(--ink, #2A1F33); font: 600 13.5px/1.25 var(--body); text-align: center; text-decoration: none; cursor: pointer;
+  transition: background .2s, color .2s; -webkit-tap-highlight-color: transparent; }
+.sc-add:hover { background: var(--ink, #2A1F33); color: #fff; }
+.sc-add:active { transform: scale(.98); }
+.sc-add[aria-busy="true"] { opacity: .6; cursor: progress; }
+.sc-add.soft { border-color: rgba(42, 31, 51, .22); font-weight: 500; }
+.sc-add .sa-b { font-weight: 500; white-space: nowrap; }
+@container (max-width: 259px) {
+  .sc-add { flex-direction: column; font-size: 12.5px; padding: 5px 10px; }
+  .sc-add .sa-dot { display: none; }
+}
+
+/* scent-family heads: the family's own colour, washed out */
+.grid.grouped .ghead.gmood { background: linear-gradient(160deg, color-mix(in srgb, var(--mw) 16%, #FBF6EE), color-mix(in srgb, var(--mw) 40%, #F4ECDF)); color: var(--ink, #2A1F33); }
+.ghead.gmood .eyebrow { display: inline-flex; align-items: center; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) { .sc-fmt, .sc-add { transition: none; } .sc-add:active { transform: none; } }
