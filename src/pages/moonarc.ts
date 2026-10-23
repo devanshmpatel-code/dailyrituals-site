@@ -15,29 +15,14 @@
 // the light. The faces are Claire's own photographs as plain candle tops, wax and the wooden wick only
 // (public/img/studio/moons/hero-*.webp, made by tools/photo/plain_moons.py), and each wick is a sundial: its shadow falls
 // across the wax the way the sun would at that moment (long at dawn and golden hour, short at midday); the full moon's
-// follows the hour on the dial as the sun is dragged. At night the wick is lit and warms the wax round it. The wax has its
-// own matte surface (mottling, frosting and grain, made once per face), the lit candle (the full moon) a glossy melt pool
-// round its wick, and each sits in a thin metal tin rim.
+// follows the hour on the dial as the sun is dragged; at night only a faint one from the moon. The candles are unlit (the
+// owner's choice): matte solid wax with its own surface (mottling, frosting and grain, made once per face), the wooden wick
+// with its lightly charred tip, each in a thin metal tin rim.
 //
 // The shading is only recomputed when something changes (the ring turning, the light moving, the hour's colours), so
 // nothing runs while the opening is still; reduced motion turns the ring without the glide and stills the drift.
-import { LAUNCHED, MOMENTS } from '../config';
-import { currentRoute } from '../router';
+import { MOMENTS } from '../config';
 import { getSky } from './sky';
-
-// PREVIEW ONLY (never on the launched build): ?flame=A|B|C|D shows the owner the lit-candle options side by side.
-// A: no flame, the wick's shadow only (an unlit candle, solid wax); B: a real flame seen from directly above (a tiny bright
-// point on the wick, a warm bloom, light falling across the melt pool); C: a small true-to-scale flame seen from a slight
-// three-quarter angle; D: like A, with the wick's tip glowing as an ember and a faint wisp of smoke. Unset: the current
-// flame. Read from the address (and kept for the visit), so moving between moments keeps it.
-type FlameOpt = '' | 'A' | 'B' | 'C' | 'D';
-function flameOption(): FlameOpt {
-  if (LAUNCHED) return '';
-  const ok = (v: string | null | undefined): v is FlameOpt => !!v && /^[ABCD]$/.test(v);
-  const q = new URLSearchParams(currentRoute().split('?')[1] ?? location.search).get('flame')?.toUpperCase();
-  try { if (ok(q)) sessionStorage.setItem('dr_flame', q); else if (q) sessionStorage.removeItem('dr_flame'); const s = sessionStorage.getItem('dr_flame'); return ok(s) ? s : ''; }
-  catch { return ok(q) ? q : ''; }
-}
 
 export interface MoonArc {
   show(key: string): void;
@@ -74,9 +59,9 @@ const WICK: Record<string, [number, number, number]> = {
 };
 /** The sun over a candle at an hour, seen from above: which way the wick's shadow falls (a unit vector on the face, in screen
  *  terms: the sun comes up on the left of the sky and sets on the right, so dawn's shadow reaches right and golden hour's left,
- *  and towards the viewer while the sun is high), how long it is (in radii) and how dark. After sunset the wick is lit: the
- *  shadow is only a faint one from the moon and the flame warms the wax round it. */
-export function sundial(hour: number): { dx: number; dy: number; len: number; k: number; flame: number } {
+ *  and towards the viewer while the sun is high), how long it is (in radii) and how dark. After sunset the shadow is only
+ *  a faint one from the moon. */
+export function sundial(hour: number): { dx: number; dy: number; len: number; k: number } {
   const RISE = 6, SET = 19.6, WICK_H = 0.2;
   const x = (hour - RISE) / (SET - RISE);
   const up = x > 0 && x < 1 ? Math.sin(Math.PI * x) : 0;
@@ -87,7 +72,7 @@ export function sundial(hour: number): { dx: number; dy: number; len: number; k:
   const day = smooth(-0.03, 0.02, x) * smooth(1.04, 0.97, x);
   if (day < 1) { const m = 1 - day; sx = sx * day + 0.45 * m; sy = sy * day - 0.8 * m; } // the moon, high on the right
   const l = Math.hypot(sx, sy) || 1;
-  return { dx: -sx / l, dy: -sy / l, len: clamp(day > 0.5 ? WICK_H / Math.tan(elev) : 0.22, 0.1, 0.95), k: 0.34 * day + 0.1 * (1 - day), flame: 1 - day };
+  return { dx: -sx / l, dy: -sy / l, len: clamp(day > 0.5 ? WICK_H / Math.tan(elev) : 0.22, 0.1, 0.95), k: 0.34 * day + 0.1 * (1 - day) };
 }
 
 /** A candle's wax surface at n x n, made once per face (seeded, so each candle has its own): per pixel, a soft mottling
@@ -130,15 +115,10 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
   const title = hero.querySelector<HTMLElement>('.arc-title');
   const arc = document.createElement('div');
   arc.className = 'moonarc'; arc.setAttribute('aria-hidden', 'true');
-  const FLAME = flameOption(), UNLIT = FLAME === 'A' || FLAME === 'D';
-  arc.dataset.flame = FLAME || 'cur';
   const keys = MOMENTS.map(m => m.key);
   const faces: Face[] = keys.map((key, i) => {
     const el = document.createElement('span'); el.className = 'cm'; el.dataset.k = key;
-    // (the flame stands on the wick of the lit candle, the full moon: a small overlay animated in CSS, studio.css, so the
-    // textured wax under it is never redrawn for the flicker)
-    el.innerHTML = '<span class="cm-sh"></span><span class="cm-in"><span class="cm-glow"></span><canvas></canvas><span class="cm-flame"><i class="cmf-h"></i><i class="cmf-r"></i><i class="cmf-g"></i><i class="cmf-f"><i class="cmf-o"></i><i class="cmf-c"></i><i class="cmf-b"></i></i><i class="cmf-k"></i><i class="cmf-w"></i><i class="cmf-e"></i><i class="cmf-s"></i><i class="cmf-s s2"></i></span></span><span class="cm-cap"></span>';
-    const w = WICK[key]; if (w) { el.style.setProperty('--wx', String(w[0])); el.style.setProperty('--wy', String(w[1])); }
+    el.innerHTML = '<span class="cm-sh"></span><span class="cm-in"><span class="cm-glow"></span><canvas></canvas></span><span class="cm-cap"></span>';
     arc.append(el);
     return { key, i, el, cv: el.querySelector('canvas')!, cap: el.querySelector('.cm-cap')!, img: null as unknown as HTMLImageElement, px: null, out: null, tex: null, th: 0, x: 0, y: 0, s: 1, sig: '' };
   });
@@ -416,12 +396,12 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
       // the wick as a sundial: the full moon tells the hour on the dial (so its shadow swings as the sun is dragged), the
       // others their own moment's
       const dial = sundial(Math.abs(off) < 0.5 && hour != null ? hour : MOMENTS[f.i].hour);
-      // the lit candle (the full moon) has a soft melt pool round its wick
-      const pool = UNLIT ? 0 : 1 - smooth(0.3, 0.85, Math.abs(off));
-      const sig = [Math.round(pool * 20), Math.round(dial.dx * 40), Math.round(dial.dy * 40), Math.round(dial.len * 60), Math.round(L[0] * 60), Math.round(L[1] * 60), Math.round(P[0] * 200), Math.round(P[1] * 200), Math.round(P[2] * 200), Math.round(hz * 100), haze.join(), Math.round(night * 50), N].join(',');
+      // (where the shadow falls, for anyone checking the sundial: direction and length)
+      f.el.dataset.shadow = `${dial.dx.toFixed(2)},${dial.dy.toFixed(2)},${dial.len.toFixed(2)}`;
+      const sig = [Math.round(dial.dx * 40), Math.round(dial.dy * 40), Math.round(dial.len * 60), Math.round(L[0] * 60), Math.round(L[1] * 60), Math.round(P[0] * 200), Math.round(P[1] * 200), Math.round(P[2] * 200), Math.round(hz * 100), haze.join(), Math.round(night * 50), N].join(',');
       if (sig === f.sig) continue;
       f.sig = sig;
-      shade(f, L, Hh, P, hz, haze, shadowTint, lit, dial, pool); shaded++;
+      shade(f, L, Hh, P, hz, haze, shadowTint, lit, dial); shaded++;
       f.cv.getContext('2d')!.putImageData(f.out!, 0, 0);
       // its shadow on the haze falls away from the light
       f.el.style.setProperty('--shx', (-lx * 0.09).toFixed(3));
@@ -431,7 +411,7 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     if (faces.every(f => f.px) && !tween && !pending) stack.dataset.shown = key;
   }
 
-  function shade(f: Face, L: number[], H: number[], P: number[], hz: number, haze: RGB, dark: RGB, lit: RGB, dial: ReturnType<typeof sundial>, pool: number) {
+  function shade(f: Face, L: number[], H: number[], P: number[], hz: number, haze: RGB, dark: RGB, lit: RGB, dial: ReturnType<typeof sundial>) {
     const g = geo!, src = f.px!, out = f.out!.data, R = N / 2, tex = f.tex!;
     const px3 = [0, 0, 0], KNEE = 210, TOP = 243, sum = [0, 0, 0, 0];
     const night01 = night, spec = 0.07 * (1 - 0.6 * night01), sharp = 10; // (wax is matte: only a broad, faint sheen)
@@ -444,18 +424,8 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
     // its outline: the wick's footprint swept along the shadow (a convex polygon), as edges with outward normals
     const edges = sweptHull(hl, hw, ux * len, uy * len);
     const shC = [1, 0.95, 0.86], shK = dial.k;
-    // the lit wick after dark: warm light on the wax round it (seen through the wax on the dark side too); on the full moon
-    // the flame itself is drawn over the wax (.cm-flame) and lights its melt pool
-    const fl = dial.flame, FL = [255, 172, 96];
     // earthshine: the dark side keeps a faint cool view of the wax, more of it at night
     const es = 0.07 + 0.1 * night01, EARTH = [0.8, 0.87, 1];
-    // the melt pool: the lit candle (the full moon) has melted all the way to the tin, a full, even pool of liquid wax from
-    // the wick to the rim: darker and more translucent than the solid wax, smooth and flat (no grain, no dome), glossy (it
-    // mirrors the light as a soft broad band on the side away from it and the sky a little), with a meniscus at the tin.
-    // The flame (drawn over it, .cm-flame) warms it, more after dark
-    // (liquid soy wax is deeper and warmer than solid: it lets the light in; darker still towards the rim, where it is deepest
-    // to look into; a narrow ring of solid wax stays just inside the tin, and the liquid meets it with a bright meniscus)
-    const POOL = [0.87, 0.81, 0.7], EDGE = 0.918, SKY = sky[0];
     // the tin: a thin metal rim round the wax (pewter, brushed), bright where it faces the light; inside it, a fine dark line
     // where the wax meets the metal
     const TIN0 = 0.962, METAL = [176, 172, 168];
@@ -489,39 +459,20 @@ export function mountMoonArc(hero: HTMLElement, stack: HTMLElement, imgFor: (key
         }
       }
       const t3 = k * 3, mot = tex[t3], frost = tex[t3 + 1], grain = tex[t3 + 2];
-      let pl = 0, gloss = 0, lip = 0, warm = 0, depth = 0, band = 0;
-      if (pool > 0) {
-        pl = pool * (1 - smooth(EDGE - 0.004, EDGE + 0.004, r));
-        lip = pool * Math.exp(-(((r - EDGE + 0.006) / 0.0065) ** 2));
-        depth = pl * smooth(0.15, EDGE, r);
-        // the mirror band: across the pool, brightest on the far side from the light, fading before the rim
-        const across = -(g.nx[k] * rlx + g.ny[k] * rly);
-        // a broad faint sheen on the far side, and the sky's reflection: a band across the liquid with crisp edges
-        gloss = pl * 0.3 * smooth(0.0, 0.62, across) * (1 - smooth(0.72, 0.9, r));
-        const bv = across - 0.12 * (g.nx[k] * rly - g.ny[k] * rlx) ** 2;
-        band = pl * smooth(0.34, 0.41, bv) * (1 - smooth(0.58, 0.66, bv)) * (1 - smooth(0.8, 0.88, r));
-        // the flame's light on the liquid wax, falling off from the wick
-        warm = pl * (0.7 + 0.5 * night01) * Math.exp(-(qx * qx + qy * qy) / (FLAME === 'B' ? 0.22 : 0.32));
-      }
       const tin = smooth(TIN0 - 0.006, TIN0 + 0.006, r), seam = Math.exp(-(((r - TIN0 + 0.012) / 0.008) ** 2));
       const facing = Math.max(0, g.nx[k] * rlx + g.ny[k] * rly);
-      const wr2 = fl > 0 ? (qx * qx + qy * qy) : 9, glow = fl * (UNLIT ? 0.1 : 0.26) * Math.exp(-wr2 / 0.16) * (1 - pool) + (FLAME === 'B' ? 0.42 : 0.3) * warm;
       // the wax's own surface: soft mottling, paler frosted patches (soy wax blooms), a fine matte grain (applied after the
       // highlights are eased, so the brightest wax keeps it)
-      const wax = (1 + (0.05 * mot + 0.035 * frost + 0.02 * grain - 0.02) * (1 - 0.85 * pl)) * (1 - tin) + tin; // (the liquid pool is smooth)
+      const wax = (1 + 0.05 * mot + 0.035 * frost + 0.02 * grain - 0.02) * (1 - tin) + tin;
       for (let c = 0; c < 3; c++) {
         let base = src[o + c];
-        base = base + (238 - base) * frost * 0.25 * (1 - pl);
-        // the pool mirrors the sky a little
-        base = base + (haze[c] - base) * pl * 0.12; // (frost is whiter, a touch less saturated)
-        base = base * (1 - pl * (1 - POOL[c])) * (1 - 0.12 * depth) * (1 - seam * 0.35);
-        // the sky in the liquid
-        base = base + (Math.max(SKY[c], haze[c]) * 1.05 - base) * band * 0.3;
+        base = base + (238 - base) * frost * 0.25; // (frost is whiter, a touch less saturated)
+        base = base * (1 - seam * 0.35);
         // the tin's rim: brushed metal lit from the light's side, with a bright edge on that side
         base = base * (1 - tin) + tin * METAL[c] * (0.55 + 0.6 * facing + 0.25 * grain);
-        const l = (base * (diff + (0.9 - diff) * pl) * ao * (lit[c] / 255) + 255 * (sp * (1 - tin) * (1 - pl) + 0.34 * lip * (0.5 + 0.5 * facing) + 0.12 * band) + lit[c] * 0.4 * gloss + haze[c] * 0.12 * gloss + rimC[c] * rim * ph * (1 - tin) + tin * 255 * 0.35 * facing ** 6) * (1 - sh * shC[c]);
+        const l = (base * diff * ao * (lit[c] / 255) + 255 * sp * (1 - tin) + rimC[c] * rim * ph * (1 - tin) + tin * 255 * 0.35 * facing ** 6) * (1 - sh * shC[c]);
         const d = dark[c] * shine * (1 - es) + base * es * EARTH[c];
-        let v = d + (l - d) * ph + FL[c] * glow;
+        let v = d + (l - d) * ph;
         v = v + (haze[c] - v) * hz;
         px3[c] = v;
       }
