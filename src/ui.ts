@@ -1,9 +1,6 @@
-import { MOODS } from './config';
 import { money, type Item } from './wix';
 import { cardOrbit, skeletonOrbit } from './celestial';
-
-/** The mood colours lifted for a 2px star on a dark ground (see celestial tokens in site.css). */
-const STAR: Record<string, string> = { fresh: '#A3C8C0', sunny: '#ECB76A', floral: '#CF8A7D', woody: '#C09571', grounding: '#8EAA86' };
+import { FAMILIES, type Family } from './data/scents';
 
 export const esc = (s: string) =>
   s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -18,18 +15,22 @@ export const metaText = (i: Item) => (i.sizeLabel ? `${i.formatLabel} · ${i.siz
 
 export const productHref = (i: Item) => `#/product/${i.slug}`;
 
+/** A scent's families as small swatches and names ("Woody · Amber"), for cards and product pages. */
+export function familiesHTML(fams: Family[], cls = 'fams'): string {
+  if (!fams.length) return '';
+  return `<span class="${cls}">${fams.map(f => `<span class="fam" data-family="${f}"><span class="swatch" style="background:${FAMILIES[f].swatch}" aria-hidden="true"></span>${esc(FAMILIES[f].label)}</span>`).join('<span class="fam-sep" aria-hidden="true"> · </span>')}</span>`;
+}
+/** The card's hover colours: --fam-c colours the label, --fam-s is the star at the top of the orbit ring (the leading family). */
+export const familyTone = (fams: Family[]) => fams.length ? ` style="--fam-c:${FAMILIES[fams[0]].swatch};--fam-s:${FAMILIES[fams[0]].star}"` : '';
+
 /** The canvas ProductCard, filled from a live product. */
 export function cardHTML(i: Item, badge?: string): string {
-  const mood = i.mood ? MOODS[i.mood] : undefined;
-  // (no second picture on hover: the mood backdrops were generic renders of amber jars, not Daily Rituals packaging)
-  const sw = mood ? `<span class="swatch" style="background:${mood.swatch}"></span>` : '';
+  // (no second picture on hover: the old backdrops were generic renders of amber jars, not Daily Rituals packaging)
   const single = i.choices.length <= 1;
   const qa = single && i.inStock
     ? `<button class="qa" data-qa="${i.id}">Quick add · ${money(i.priceMin)}</button>`
     : `<a class="qa" href="${productHref(i)}">${i.inStock ? 'Choose an option' : 'Sold out'}</a>`;
-  // --mood-c colours the label on hover; --mood-s is the star that lights at the top of the orbit ring
-  const tone = mood ? ` style="--mood-c:${mood.swatch};--mood-s:${STAR[i.mood!] ?? mood.swatch}"` : '';
-  return `<div class="card" data-format="${i.format}" data-mood="${i.mood ?? ''}"${tone}>
+  return `<div class="card" data-format="${i.format}" data-families="${i.families.join(' ')}"${familyTone(i.families)}>
     <div class="ph">${badge ? `<span class="badge">${esc(badge)}</span>` : ''}
       <a href="${productHref(i)}" aria-label="${esc(i.name)}">${cardImg(i)}</a>
       ${cardOrbit()}
@@ -37,7 +38,8 @@ export function cardHTML(i: Item, badge?: string): string {
     </div>
     <a href="${productHref(i)}" style="text-decoration:none;display:flex;flex-direction:column;gap:4px">
       <div class="meta"><h3>${esc(i.scent)}</h3><span>${priceText(i)}</span></div>
-      <div class="sub" style="display:flex;gap:8px;align-items:center">${sw}<span>${esc(i.formatLabel)}${i.sizeLabel ? ` · <span class="nw">${esc(i.sizeLabel)}</span>` : ''}</span></div>
+      <div class="sub" style="display:flex;gap:8px;align-items:center"><span>${esc(i.formatLabel)}${i.sizeLabel ? ` · <span class="nw">${esc(i.sizeLabel)}</span>` : ''}</span></div>
+      ${familiesHTML(i.families, 'fams card-fams')}
     </a>
   </div>`;
 }

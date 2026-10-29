@@ -30,23 +30,22 @@ export interface Moon {
 
 const M = (slug: string, name: string, season: Season, quote?: string, extra: Partial<Moon> = {}): Moon => ({ slug, name, season, quote, ...extra });
 
-/** Every named moon, in the order the archive shows them. (The unnamed black-crescent moon is left out on purpose.) */
+/** Every named past moon, in the order the archive shows them. (The unnamed black-crescent moon is left out on purpose.)
+ *  Midnight Forest, Lavender Haze and Mulled Wine are current scents again (src/data/scents.ts), so they are no longer here:
+ *  the archive only keeps pours that are genuinely in the past. */
 export const MOONS: Moon[] = [
   M('christmas-eve', 'Christmas Eve', 'winter', 'I call this one Christmas Eve'),
-  M('mulled-wine', 'Mulled Wine', 'winter', 'will have you dreaming of Christmas & cozy nights by the fire. With notes of balsam fir, citrus, cinn…', { when: 'December 2025' }),
   M('candy-cane-lane', 'Candy Cane Lane', 'winter', 'with notes of peppermint, …'),
   M('sweet-romance', 'Sweet Romance', 'love', "just in time for Valentine's Day. With notes of cedar, ylang ylang, jasmine, & bergamot."),
   M('easter-bread', 'Easter Bread', 'spring', 'Some call it Easter Bread, some call it Paska'),
   M('spring-blooms', 'Spring Blooms', 'spring', 'Step into that fresh April morning, sun is shining, and what do you smell? Spring Blooms of course!'),
   M('mothers-garden', "Mother's Garden", 'spring', "Introducing Mother's Garden"),
   M('apple-cider', 'Cozy Apple Cider', 'autumn', undefined, { when: 'October 2024' }),
-  M('lavender-haze', 'Lavender Haze', 'any', 'The Queen of scents, Lavender, is married with French Vanilla to bring you into a dreamy Lavender Haze'),
   M('sea-salt-sage', 'Sea Salt & Sage', 'any', 'with notes of lime, crisp green melon, warm sandalwood, sage, ocean lily, and sea salt'),
   M('jarrah', 'Jarrah', 'any', 'named after the gorgeous Jarrah trees in Australia. Sweet, fragrant, & woodsy', { quote2: 'if you like to feel grounded and centred' }),
   M('tuscan-sandalwood', 'Tuscan Sandalwood', 'any', 'will transport you to the rolling hills and forests of Tuscany'),
   M('irish-coffee', 'Irish Coffee', 'any', "for when that hit of coffee just isn't quite doing the trick"),
   M('hello-cupcake', 'Hello Cupcake', 'any', "smells exactly like you'd think: a sweet vanilla cupcake with butter cream frosting"),
-  M('midnight-forest', 'Midnight Forest', 'any', 'my personal fave and might become yours too if you love all things woodsy'),
 ];
 export const SEASONS: { key: Season; label: string }[] = [
   { key: 'winter', label: 'Winter' }, { key: 'love', label: 'Love' }, { key: 'spring', label: 'Spring' }, { key: 'autumn', label: 'Autumn' }, { key: 'any', label: 'Any time' },
@@ -55,10 +54,7 @@ export const moonSrc = (slug: string) => `/img/studio/moons/${slug}.webp`;
 const byId = Object.fromEntries(MOONS.map(m => [m.slug, m])) as Record<string, Moon>;
 /** Alt text: what is really on the wax (from the photographs), no stone names. */
 const ALT: Record<string, string> = {
-  'midnight-forest': 'Midnight Forest: a white candle in a black tin with two small moon-shaped stones',
-  'lavender-haze': 'Lavender Haze: a crescent of lavender buds along the rim',
   'irish-coffee': 'Irish Coffee: a crescent of coffee beans along the rim',
-  'mulled-wine': 'Mulled Wine: a dried orange slice, star anise and pink peppercorns',
   'easter-bread': 'Easter Bread: the whole face covered in pastel sprinkles',
   'spring-blooms': 'Spring Blooms: dried flowers and blue petals along the rim',
   jarrah: 'Jarrah: a crescent of wood chips along the rim',
@@ -147,7 +143,7 @@ const cut = (k: string, w: number, h: number, alt: string, two = true) => two
 // (the moons in /img/studio/moons, the same faces the opening uses) set in a black tin rim. They are placed like objects set
 // down with care on the bench: each at its own height and turned its own way (the toppings all sit along the right of the
 // photographs, so the turn is what keeps the row from looking stamped), a soft shadow under it. The caption names the topping,
-// never the scent (they are past pours, so nothing here reads as buyable). Captions are drafts for Claire.
+// never the scent (most are past pours, so nothing here reads as buyable). Captions are drafts for Claire.
 interface Top { slug: string; cap: string; alt: string; y: number; r: number; s: number }
 const TOPS: Top[] = [
   { slug: 'sweet-romance', cap: 'Dried flowers', alt: 'A candle seen from above, topped by hand with dried rose petals and a sprig of small purple flowers', y: 30, r: -24, s: 1 },
@@ -224,15 +220,12 @@ export function wireStudio(app: HTMLElement) {
 
 // ---------- Moon Drops: the past moons archive ----------
 export function pastMoonsHTML(): string {
-  // Midnight Forest closes the archive as a feature card: it is the candle with moon- and star-shaped stones, the one the
-  // whole moon idea grew from, and its photograph (midnight-forest-moons.jpg) shows them.
-  const card = (m: Moon) => `<li class="pm-card${m.slug === 'midnight-forest' ? ' feature' : ''}" data-moon="${m.slug}" id="pm-${m.slug}">
+  const card = (m: Moon) => `<li class="pm-card" data-moon="${m.slug}" id="pm-${m.slug}">
       <img src="${moonSrc(m.slug)}" alt="${esc(alt(m.slug))}" width="520" height="520" loading="lazy" decoding="async">
       <div class="pm-tx"><h4>${esc(m.name)}</h4>
         ${m.quote ? `<q>${esc(m.quote)}</q>` : ''}${m.quote2 ? `<q>${esc(m.quote2)}</q>` : ''}
         <small>${esc(SEASONS.find(s => s.key === m.season)!.label)}${m.when ? ` · ${esc(m.when)}` : ''}</small>
         <button type="button" class="pm-ret" data-return="${m.slug}" aria-label="Tell me if ${esc(m.name)} returns"><span class="d">Tell me if it returns</span></button></div>
-      ${m.slug === 'midnight-forest' ? `<img class="pm-photo" src="/img/studio/tins/midnight-forest-moons-900.webp" srcset="/img/studio/tins/midnight-forest-moons-480.webp 480w, /img/studio/tins/midnight-forest-moons-900.webp 900w" sizes="(max-width: 820px) 90vw, 360px" alt="Midnight Forest candles in black tins seen from above, each topped with small moon- and star-shaped stones" width="900" height="821" loading="lazy" decoding="async">` : ''}
     </li>`;
   // the groups pack into three columns (two on tablets): a season with one candle takes one column, so Love and Autumn share a row
   const groups = SEASONS.map(s => {

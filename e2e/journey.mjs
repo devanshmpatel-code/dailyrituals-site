@@ -22,12 +22,14 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   // shop + filter
   await p.goto(base + '/shop'); await p.waitForSelector('#app .grid .card:not(.sk)'); await p.waitForTimeout(600);
   await shot('3-shop'); await overflow('shop');
-  // one card per scent (a scent's candle, roller and diffuser share a card): 27 products (the deodorant is hidden) on 16 cards
-  const all = await p.locator('#app .grid .card:not([data-concept])').count(); ok(`${label}: shop lists live products, one card per scent`, all === 16 && /^27 products/.test(await p.locator('.shop-count > span').first().innerText()), `${all}`);
-  await p.goto(base + '/shop?f=diffuser&m=all&s=low'); await p.waitForSelector('#app .grid .card:not(.sk)'); await p.waitForTimeout(400);
-  const dif = await p.locator('#app .grid .card:not([data-concept])').count(); ok(`${label}: diffuser filter`, dif === 7, `${dif}`);
-  await p.goto(base + '/shop?f=all&m=woody&s=featured'); await p.waitForSelector('#app .grid .card:not(.sk)'); await p.waitForTimeout(400);
-  ok(`${label}: mood filter returns some`, (await p.locator('#app .grid .card:not([data-concept])').count()) > 0);
+  // one card per scent (a scent's candle, roller and diffuser share a card): the 25 products on the owner's list (the deodorant,
+  // Licorice Sweets and Fleur de Lilac are hidden) on 14 cards; the 14 scents Wix does not sell yet follow as "Coming soon"
+  const all = await p.locator('#app .grid .card:not([data-concept]):not([data-soon])').count(), soon = await p.locator('#app .grid .card[data-soon]').count();
+  ok(`${label}: shop lists live products, one card per scent, then the coming-soon scents`, all === 14 && soon === 14 && /^25 products/.test(await p.locator('.shop-count > span').first().innerText()), `${all} + ${soon} soon`);
+  await p.goto(base + '/shop?f=diffuser&fam=all&s=low'); await p.waitForSelector('#app .grid .card:not(.sk)'); await p.waitForTimeout(400);
+  const dif = await p.locator('#app .grid .card:not([data-concept]):not([data-soon])').count(); ok(`${label}: diffuser filter`, dif === 7, `${dif}`);
+  await p.goto(base + '/shop?f=all&fam=woody&s=featured'); await p.waitForSelector('#app .grid .card:not(.sk)'); await p.waitForTimeout(400);
+  ok(`${label}: family filter returns the live woody scents`, (await p.locator('#app .grid .card:not([data-concept]):not([data-soon])').count()) === 6);
 
   // product with sizes (candle)
   await p.goto(base + '/product/cabana'); await p.waitForSelector('#app h1'); await p.waitForTimeout(700);

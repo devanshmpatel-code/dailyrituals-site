@@ -6,7 +6,8 @@ import { loadCatalogue, loadProduct, toItem, imgSrc, money, type Item } from '..
 import { cardHTML, fixImages, errorBox, wireCommon, toast, toastAdded, esc } from '../ui';
 import { add } from '../cart';
 import { canvasSlugToLive, wireQuickAdd, previewOff } from './shared';
-import { MOODS, LOYALTY_ENABLED, SHOW_DEODORANT, FREE_SHIPPING_THRESHOLD, type Format } from '../config';
+import { FAMILIES } from '../data/scents';
+import { LOYALTY_ENABLED, SHOW_DEODORANT, FREE_SHIPPING_THRESHOLD, type Format } from '../config';
 import { productStudioHTML } from '../moons';
 import { givingNote } from './giving';
 
@@ -62,12 +63,15 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     const live = canvasSlugToLive(items, slug);
     if (live) { replaceRoute(`/product/${live.slug}`); return; }
     if (!SHOW_DEODORANT && /deodorant/i.test(slug)) return renderUnavailable(app);
-    return renderNotInStore(app, slug);
+    // the canvas's own sample addresses (roller-…, diffuser-…, candle-…) are concepts; any other address is a product that is
+    // not on the owner's list (hidden site-wide, src/data/scents.ts) or not in the store at all
+    if (/^(roller|diffuser|candle|deodorant)-/.test(slug)) return renderNotInStore(app, slug);
+    return renderUnavailable(app, false);
   }
 
   let p: any;
   try { p = await loadProduct(item.slug); } catch { p = null; }
-  if (p) item = { ...toItem(p), mood: item.mood };
+  if (p) item = toItem(p);
   const it = item!;
 
   app.innerHTML = fixImages(Product);
@@ -79,7 +83,7 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   if (it.format === 'candle') $('.pdp > div:first-child')?.insertAdjacentHTML('beforeend', productStudioHTML());
 
   // breadcrumbs
-  $('.crumbs')!.innerHTML = `<a href="#/">Home</a> / <a href="#/shop">Shop</a> / <a href="#/shop?f=${it.format}&m=all&s=featured">${PLURAL[it.format]}</a> / <span aria-current="page">${esc(it.scent)}</span>`;
+  $('.crumbs')!.innerHTML = `<a href="#/">Home</a> / <a href="#/shop">Shop</a> / <a href="#/shop?f=${it.format}&fam=all&s=featured">${PLURAL[it.format]}</a> / <span aria-current="page">${esc(it.scent)}</span>`;
 
   // gallery: Claire's photos first; canvas renders only fill empty slots
   const live = (p?.media?.itemsInfo?.items ?? []).map((m: any) => imgSrc(m, 1000, 1250)).filter(Boolean);
@@ -109,9 +113,12 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   else $('#vidBtn')?.addEventListener('click', () => toast('The how-to video has not been added yet.'));
 
   // title block
-  const mood = it.mood ? MOODS[it.mood] : undefined;
+  // the scent's families from the owner's list (one compact line, so the price stays above the fold on a phone)
   const eyebrow = $('.buy .eyebrow')!;
-  eyebrow.innerHTML = mood ? `<span class="swatch" style="background:${mood.swatch}"></span>${mood.label}` : `<span class="d confirm">[Confirm: scent family]</span>`;
+  eyebrow.classList.add('p-fams');
+  eyebrow.innerHTML = it.families.length
+    ? it.families.map(f => `<span class="fam" data-family="${f}"><span class="swatch" style="background:${FAMILIES[f].swatch}" aria-hidden="true"></span>${esc(FAMILIES[f].label)}</span>`).join('<span class="fam-sep" aria-hidden="true"> · </span>')
+    : `<span class="d confirm">[Confirm: scent family]</span>`;
   $('.buy h1')!.textContent = it.scent;
   const metaRow = $('.buy h1')!.nextElementSibling as HTMLElement;
   const metaSpan = metaRow.querySelector('span')!;
@@ -227,12 +234,12 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     <div class="gt-panel" id="giftPanel" hidden><p><span class="d">Gift wrap is available on every order. To send it straight to someone with a note in Claire's card, use Send a Sky.</span></p><a class="btn line" href="#/gift">Send a Sky</a></div></div>`);
   const gt = $<HTMLButtonElement>('.gt-btn')!;
   gt.addEventListener('click', () => { const on = gt.getAttribute('aria-expanded') !== 'true'; gt.setAttribute('aria-expanded', String(on)); $('#giftPanel')!.hidden = !on; });
-  // sticky local nav under the header: name + mood mark, the page's sections, and an add pill that drives #addBtn.
+  // sticky local nav under the header: name + the leading family's mark, the page's sections, and an add pill that drives #addBtn.
   // Section labels are nav words, not product copy: draft for Claire.
   const sectionOf = (el: Element | null | undefined, id: string, label: string) => { if (!el) return null; el.id = id; return { id, label }; };
   const pageSections = app.querySelectorAll<HTMLElement>(':scope > .wrap > section');
   mountLocalNav(app, {
-    name: it.scent, sub: it.formatLabel, mood: it.mood,
+    name: it.scent, sub: it.formatLabel, family: it.families[0],
     sections: [
       sectionOf($('.pdp'), 'p-scent', 'Scent'),
       sectionOf($('.tabsbar')?.parentElement, 'p-details', 'Details'),
@@ -270,12 +277,13 @@ export async function renderProduct(app: HTMLElement, slug: string) {
     ? `${paras(shipParas)}<p class="small muted">From the product information in the store.</p>`
     : `<p><span class="d">Ships in 2 to 3 business days. Free shipping on Canadian orders over ${money(FREE_SHIPPING_THRESHOLD).replace(/\.00$/, '')}.</span></p>`;
 
-  // You may also like: same scent family, then same format (the same scent's other formats have their own row above)
+  // You may also like: the most families in common, then same format (the same scent's other formats have their own row above)
   const grid = app.querySelectorAll<HTMLElement>('section .grid');
   const g = grid[grid.length - 1];
   if (g) {
     const pool = items.filter(i => i.id !== it.id && i.inStock && i.scent.toLowerCase() !== it.scent.toLowerCase());
-    const picks = [...pool.filter(i => it.mood && i.mood === it.mood), ...pool.filter(i => i.format === it.format)]
+    const shared = (i: Item) => i.families.filter(f => it.families.includes(f)).length;
+    const picks = [...pool.filter(i => shared(i) > 0).sort((a, b) => shared(b) - shared(a) || Number(b.format === it.format) - Number(a.format === it.format)), ...pool.filter(i => i.format === it.format)]
       .filter((x, n, a) => a.indexOf(x) === n).slice(0, 4);
     g.innerHTML = picks.map(i => cardHTML(i)).join('');
     wireQuickAdd(g, items);
@@ -283,12 +291,13 @@ export async function renderProduct(app: HTMLElement, slug: string) {
   document.title = `${it.name} · Daily Rituals Co.`;
 }
 
-/** A product that is switched off for now (the natural deodorant, while SHOW_DEODORANT is false): a friendly page, not an error. */
-function renderUnavailable(app: HTMLElement) {
+/** A product that is switched off for now (the natural deodorant while SHOW_DEODORANT is false, or a Wix product that is not on
+ *  the owner's list): a friendly page, not an error. */
+function renderUnavailable(app: HTMLElement, deodorant = true) {
   document.title = 'Not available right now · Daily Rituals Co.';
   app.innerHTML = `<div class="wrap" style="padding-block:clamp(64px,8vw,112px);display:flex;flex-direction:column;gap:16px;max-width:640px">
     <span class="eyebrow">Not available right now</span><h1 style="font-size:clamp(36px,5vw,56px)"><span class="d">This one is <span class="it">resting for now</span></span></h1>
-    <p class="muted"><span class="d">The natural deodorant is not available right now. Our candles, fragrance rollers and mini diffusers are all in the shop.</span></p>
+    <p class="muted"><span class="d">${deodorant ? 'The natural deodorant is' : 'This product is'} not available right now. Our candles, fragrance rollers and mini diffusers are all in the shop.</span></p>
     <a class="btn" href="#/shop" style="align-self:flex-start">Browse the shop</a></div>`;
 }
 

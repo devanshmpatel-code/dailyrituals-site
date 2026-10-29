@@ -297,10 +297,6 @@
 .pm-form input[type=email]::placeholder { color: rgba(237, 230, 218, .6); }
 .pm-form input[type=email]:focus-visible { outline: 2px solid var(--gold-light, #E9D4A1); outline-offset: 2px; }
 .pm-form .btn { min-height: 48px; background: var(--gold-light, #E9D4A1); color: var(--nocturne, #120F1F); border: 0; }
-/* Midnight Forest closes the archive with its photograph beside it */
-.pm-card.feature { grid-column: 1 / -1; grid-template-columns: 92px minmax(0, 1fr) minmax(0, 300px); align-items: center; }
-.pm-card.feature .pm-photo { width: min(100%, 320px); height: auto; justify-self: center; filter: drop-shadow(0 18px 20px rgba(0, 0, 0, .45)); }
-.pm-card.feature q { font-size: 18px; }
 .pm-card { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 16px; align-items: start; padding: 18px; border: 1px solid rgba(201, 163, 90, .3); border-radius: 24px 6px 24px 6px; background: rgba(237, 230, 218, .035); transition: border-color .3s, box-shadow .3s; }
 .pm-card img { width: 92px; height: 92px; border-radius: 50%; display: block; box-shadow: 0 0 0 1px rgba(201, 163, 90, .4), 0 16px 30px -14px rgba(0, 0, 0, .85); }
 .pm-card:hover { border-color: rgba(201, 163, 90, .6); }
@@ -310,9 +306,8 @@
 .pm-tx q { font: italic 400 15px/1.45 var(--display); color: rgba(237, 230, 218, .92); quotes: "\201C" "\201D"; }
 .pm-tx small { font: 500 12px var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--gold-leaf); margin-top: 2px; }
 .pm-noq { font: italic 400 14px var(--display); color: rgba(237, 230, 218, .6); }
-@media (max-width: 1040px) { .pm-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pm-group { grid-column: span var(--n2, 2); } .pm-grid { grid-template-columns: repeat(var(--n2, 2), minmax(0, 1fr)); } .pm-card.feature { grid-template-columns: 92px minmax(0, 1fr); } .pm-card.feature .pm-photo { grid-column: 1 / -1; min-height: 0; aspect-ratio: 16 / 9; } }
-@media (max-width: 640px) { .pm-groups, .pm-grid { grid-template-columns: 1fr; } .pm-group, .pm-card.feature { grid-column: auto; } .pm-aside { margin-top: 0; } .pm-card, .pm-card.feature { grid-template-columns: 76px minmax(0, 1fr); padding: 16px; } .pm-card img:not(.pm-photo) { width: 76px; height: 76px; } }
-
+@media (max-width: 1040px) { .pm-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pm-group { grid-column: span var(--n2, 2); } .pm-grid { grid-template-columns: repeat(var(--n2, 2), minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pm-groups, .pm-grid { grid-template-columns: 1fr; } .pm-group { grid-column: auto; } .pm-aside { margin-top: 0; } .pm-card { grid-template-columns: 76px minmax(0, 1fr); padding: 16px; } .pm-card img { width: 76px; height: 76px; } }
 /* ---- coaching: the portrait frame keeps its width on phones (the arch is an aspect-ratio box with no intrinsic width) ---- */
 @media (max-width: 820px) { .split > .cel-portrait { width: 100%; } }
 

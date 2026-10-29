@@ -19,7 +19,8 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   const stack = await p.evaluate(() => [...document.querySelectorAll('#dStack img[data-mimg]')].map(i => ({ k: i.dataset.mimg, src: i.getAttribute('src') || i.dataset.src })));
   const per = stack.reduce((o, x) => (o[x.k] = (o[x.k] || 0) + 1, o), {});
   ok(`${label}: the opening's five moons are Claire's real photographs, one per moment`, stack.length === 5 && Object.keys(per).length === 5 && Object.values(per).every(n => n === 1) && new Set(stack.map(x => x.src)).size === 5 && stack.every(x => /^\/img\/studio\/moons\/[a-z-]+\.webp$/.test(x.src) && !/midnight-forest/.test(x.src)), JSON.stringify(per));
-  const scentNames = /midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|christmas eve|mulled wine|candy cane|hello cupcake|easter bread|apple cider|mother|tuscan|irish coffee/i;
+  // (Midnight Forest, Lavender Haze and Mulled Wine are current scents again: no longer past ones)
+  const scentNames = /jarrah|sweet romance|spring blooms|sea salt|christmas eve|candy cane|hello cupcake|easter bread|apple cider|mother|tuscan|irish coffee/i;
   const pic = () => p.evaluate(() => { const s = document.querySelector('#dStack'); return { role: s.getAttribute('role'), label: s.getAttribute('aria-label') || '', alts: [...s.querySelectorAll('img')].map(i => i.alt) }; });
   const pic0 = await pic();
   ok(`${label}: the opening is one described picture of candles that names no past scent`, pic0.role === 'img' && pic0.label.length > 30 && /candles/i.test(pic0.label) && !scentNames.test(pic0.label) && pic0.alts.every(a => a === ''), pic0.label);
@@ -76,7 +77,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   }, label === 'phone'));
   // From the studio is switched off on home by the owner (October 2026); its code stays behind STUDIO_ON in src/moons.ts
   ok(`${label}: From the studio is switched off on home`, (await p.locator('main .studio, main .st-tops, main .shelf').count()) === 0);
-  ok(`${label}: no past scent is named on the home page outside Moon Drops`, !/midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|hello cupcake|irish coffee|mulled wine/i.test(await p.evaluate(() => document.querySelector('.claire').innerText + document.querySelector('.ritflow').innerText)));
+  ok(`${label}: no past scent is named on the home page outside Moon Drops`, !/jarrah|sweet romance|spring blooms|sea salt|hello cupcake|irish coffee/i.test(await p.evaluate(() => document.querySelector('.claire').innerText + document.querySelector('.ritflow').innerText)));
   ok(`${label}: no healing or crystal claims in the new copy`, !/heal|crystal/i.test(await p.evaluate(() => (document.querySelector('.claire').innerText + document.querySelector('.repeatflow').innerText + document.querySelector('.dropflow').innerText + document.querySelector('.ritflow').innerText + document.querySelector('.gift-grid').innerText))));
   ok(`${label}: home has no sideways scroll`, (await noScroll(p)) <= 1);
 
@@ -109,12 +110,12 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
   // ---- moon drops: the past moons archive
   await p.goto(base + '/drops'); await p.waitForSelector('#pastMoons .pm-card'); await p.waitForTimeout(800);
   const cards = await p.evaluate(() => [...document.querySelectorAll('#pastMoons .pm-card')].map(c => c.querySelector('h4').textContent.trim()));
-  ok(`${label}: the archive lists 15 named moons`, cards.length === 15 && new Set(cards).size === 15 && !cards.some(n => /crescent/i.test(n)), cards.join(', '));
-  ok(`${label}: every card has a moon, Claire's words where she gave them, and no "No caption yet" placeholder`, await p.evaluate(() => [...document.querySelectorAll('#pastMoons .pm-card')].every(c => c.querySelector('img').alt.length > 10) && !/No caption yet/i.test(document.querySelector('#pastMoons').innerText) && document.querySelectorAll('#pastMoons .pm-card q').length >= 14));
+  ok(`${label}: the archive lists 12 named past moons (Midnight Forest, Lavender Haze and Mulled Wine are current scents now)`, cards.length === 12 && new Set(cards).size === 12 && !cards.some(n => /midnight forest|lavender haze|mulled wine/i.test(n)) && !cards.some(n => /crescent/i.test(n)), cards.join(', '));
+  ok(`${label}: every card has a moon, Claire's words where she gave them, and no "No caption yet" placeholder`, await p.evaluate(() => [...document.querySelectorAll('#pastMoons .pm-card')].every(c => c.querySelector('img').alt.length > 10) && !/No caption yet/i.test(document.querySelector('#pastMoons').innerText) && document.querySelectorAll('#pastMoons .pm-card q').length >= 11));
   const archiveText = await p.locator('#pastMoons').innerText();
   // (its only buttons are "Tell me if it returns", one per candle, and the Monthly Ritual sign-up they lead to)
   ok(`${label}: nothing in the archive can be bought`, (await p.locator('#pastMoons button:not([data-return]):not(#pmForm button[type=submit]), #pastMoons [data-add], #pastMoons [data-qa], #pastMoons .qa, #pastMoons a[href*="product"]').count()) === 0 && !/add to cart|quick add|\$\d/i.test(archiveText) && /not for sale/i.test(archiveText));
-  ok(`${label}: every past candle offers "Tell me if it returns"`, (await p.locator('#pastMoons .pm-card [data-return]').count()) === 15 && /tell me if it returns/i.test(archiveText));
+  ok(`${label}: every past candle offers "Tell me if it returns"`, (await p.locator('#pastMoons .pm-card [data-return]').count()) === 12 && /tell me if it returns/i.test(archiveText));
   await p.locator('#pm-christmas-eve [data-return]').click(); await p.waitForTimeout(900);
   const asked = await p.evaluate(() => ({ focus: document.activeElement?.id, interest: document.querySelector('#pmInterest').value, ask: document.querySelector('#pmAsk').hidden ? '' : document.querySelector('#pmAsk').innerText, r: document.querySelector('#pmForm').getBoundingClientRect().top, h: innerHeight }));
   ok(`${label}: "Tell me if it returns" on Christmas Eve leads to the Monthly Ritual sign-up and notes the candle`, asked.focus === 'nemail' && asked.interest === 'returns:christmas-eve' && /Christmas Eve/.test(asked.ask) && /Monthly Ritual/.test(asked.ask) && asked.r > 0 && asked.r < asked.h, JSON.stringify(asked));
@@ -128,7 +129,7 @@ for (const [label, vp] of [['desktop', { width: 1440, height: 900 }], ['phone', 
 
   // ---- shop: a real format photograph on the candle head, the renders left for rollers and diffusers
   // (the deodorant is hidden for now, SHOW_DEODORANT in config.ts, so it has no group on the shop)
-  await p.goto(base + '/shop'); await p.waitForSelector('.ghead'); await p.waitForTimeout(600);
+  await p.goto(base + '/shop?f=candle&fam=all&s=featured'); await p.waitForSelector('.ghead'); await p.waitForTimeout(600);
   ok(`${label}: the candle group head carries a studio photograph, and there is no deodorant group`, await p.evaluate(() => { const h = [...document.querySelectorAll('.grid.grouped .ghead')]; const by = t => h.find(x => new RegExp(t, 'i').test(x.querySelector('h2')?.textContent ?? '')); return !!by('candle')?.querySelector('.ghead-ph[src*="studio"]') && !by('deodorant') && !by('roller')?.querySelector('.ghead-ph') && !by('diffuser')?.querySelector('.ghead-ph'); }));
   await p.goto(base + '/shop?f=candle'); await p.waitForTimeout(1500);
   const chref = await p.evaluate(() => document.querySelector('a[href*="/product/"]')?.getAttribute('href'));

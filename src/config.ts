@@ -1,3 +1,5 @@
+import type { Family } from './data/scents';
+
 // Site configuration for the Daily Rituals Co. headless preview.
 // Business facts that Claire has not confirmed stay marked as drafts in the UI.
 
@@ -32,33 +34,8 @@ export const FREE_SHIPPING_THRESHOLD = 150;
 /** The natural deodorant is hidden for now (shop, product links, menus, sitemap). It stays in Wix: set this to true to bring it back. */
 export const SHOW_DEODORANT = false;
 
-export type Mood = 'fresh' | 'sunny' | 'floral' | 'woody' | 'grounding';
 export type Format = 'roller' | 'diffuser' | 'candle' | 'deodorant';
-
-export const MOODS: Record<Mood, { label: string; swatch: string; backdrop: string }> = {
-  fresh: { label: 'Fresh and coastal', swatch: '#7FA8A0', backdrop: '/img/mood-fresh.jpg' },
-  sunny: { label: 'Sunny and tropical', swatch: '#D9953A', backdrop: '/img/mood-sunny.jpg' },
-  floral: { label: 'Soft and floral', swatch: '#A8574A', backdrop: '/img/mood-floral.jpg' },
-  woody: { label: 'Warm and woody', swatch: '#9C6B45', backdrop: '/img/mood-woody.jpg' },
-  grounding: { label: 'Grounding', swatch: '#5E7A58', backdrop: '/img/mood-grounding.jpg' },
-};
-
-/** Scent families as listed in the Daily Rituals design system (tokens.json, mood-* usage notes). */
-export const SCENT_MOOD: Record<string, Mood> = {
-  'windy beach': 'fresh',
-  'sea foam': 'fresh',
-  'citrus & sun': 'fresh',
-  cabana: 'sunny',
-  'tropical passion': 'sunny',
-  'peony bloom': 'floral',
-  'golden apricot': 'floral',
-  'cedar santal': 'woody',
-  'campfire stories': 'woody',
-  'desert vesper': 'woody',
-  'inner sanctum': 'grounding',
-  'golden meridian': 'grounding',
-  verdant: 'grounding',
-};
+// Scent families and the product list live in src/data/scents.ts (the owner's list is the one source of truth).
 
 export const FORMAT_LABEL: Record<Format, string> = {
   roller: 'Fragrance Roller',
@@ -78,7 +55,8 @@ export interface Moment {
   line: string;
   /** true when the line or product pairing is not from the approved canvas */
   draft: boolean;
-  mood: Mood;
+  /** the family the moment points to (its ritual's shared family), from src/data/scents.ts */
+  family: Family;
   /** the "ritual" pairing: scent of the diffuser and scent of the roller */
   pair: { diffuser: string; roller: string };
   sky: [string, string, string];
@@ -93,13 +71,13 @@ export interface Moment {
 // The arch pictures are Claire's past candle work, one per moment: a top-down floral for dawn (Spring Blooms: "that fresh
 // April morning"), salt and green stones for the salt-air morning (Sea Salt & Sage), wood chips for the grounding midday
 // (Jarrah: "grounded and centred"), the lit Cabana tumbler for golden hour (Cabana is in the golden ritual) and the lit
-// Midnight Forest tin for night. Past scents are shown as craft, never as buyable: the alt text names what is in the picture.
+// Midnight Forest tin for night (Midnight Forest is a current scent again). Past scents are shown as craft, never as buyable.
 export const MOMENTS: Moment[] = [
-  { key: 'dawn', name: 'Dawn', time: '6:30 am', hour: 6.5, title: 'Wake up bright', line: 'Bright and clean. Citrus & Sun opens the day before the inbox does.', draft: true, mood: 'fresh', pair: { diffuser: 'citrus & sun', roller: 'windy beach' }, sky: ['#6E5A8C', '#F2A58E', '#FCE5CE'], land: ['#C7A9BE', '#A07FA4', '#6F5690'], orb: '#FFD9B0', dark: false },
-  { key: 'morning', name: 'Morning', time: '9:00 am', hour: 9, title: 'Head out lighter', line: 'Salt air on your wrists for the walk, the commute or the school run.', draft: true, mood: 'sunny', pair: { diffuser: 'cabana', roller: 'sea foam' }, sky: ['#7FB2D6', '#CFE6EE', '#FBF3E0'], land: ['#B5D1D0', '#86B0AA', '#5A8A82'], orb: '#FFF1C6', dark: false },
-  { key: 'midday', name: 'Midday', time: '1:00 pm', hour: 13, title: 'Reset at your desk', line: 'A grounding scent between meetings. One breath, then back to it.', draft: true, mood: 'grounding', pair: { diffuser: 'inner sanctum', roller: 'golden meridian' }, sky: ['#5FA3CB', '#B7DCE8', '#EEF4EA'], land: ['#A9CABD', '#78A595', '#4A7A69'], orb: '#FFFBE3', dark: false },
-  { key: 'golden', name: 'Golden hour', time: '6:00 pm', hour: 18, title: 'Come home to yourself', line: 'Warm, dry and glowing. Desert Vesper or Cabana marks the line between work and the rest of your evening.', draft: false, mood: 'woody', pair: { diffuser: 'desert vesper', roller: 'cabana' }, sky: ['#7A4F78', '#E9955B', '#F7CF94'], land: ['#C98597', '#9A6283', '#5A3A5C'], orb: '#FFB66E', dark: false },
-  { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, mood: 'floral', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2B2145', '#4A2D4F'], land: ['#4A3F73', '#33295A', '#1E1838'], orb: '#F5EBD3', dark: true },
+  { key: 'dawn', name: 'Dawn', time: '6:30 am', hour: 6.5, title: 'Wake up bright', line: 'Bright and clean. Citrus & Sun opens the day before the inbox does.', draft: true, family: 'citrus', pair: { diffuser: 'citrus & sun', roller: 'windy beach' }, sky: ['#6E5A8C', '#F2A58E', '#FCE5CE'], land: ['#C7A9BE', '#A07FA4', '#6F5690'], orb: '#FFD9B0', dark: false },
+  { key: 'morning', name: 'Morning', time: '9:00 am', hour: 9, title: 'Head out lighter', line: 'Salt air on your wrists for the walk, the commute or the school run.', draft: true, family: 'marine', pair: { diffuser: 'cabana', roller: 'sea foam' }, sky: ['#7FB2D6', '#CFE6EE', '#FBF3E0'], land: ['#B5D1D0', '#86B0AA', '#5A8A82'], orb: '#FFF1C6', dark: false },
+  { key: 'midday', name: 'Midday', time: '1:00 pm', hour: 13, title: 'Reset at your desk', line: 'A grounding scent between meetings. One breath, then back to it.', draft: true, family: 'amber', pair: { diffuser: 'inner sanctum', roller: 'golden meridian' }, sky: ['#5FA3CB', '#B7DCE8', '#EEF4EA'], land: ['#A9CABD', '#78A595', '#4A7A69'], orb: '#FFFBE3', dark: false },
+  { key: 'golden', name: 'Golden hour', time: '6:00 pm', hour: 18, title: 'Come home to yourself', line: 'Warm, dry and glowing. Desert Vesper or Cabana marks the line between work and the rest of your evening.', draft: false, family: 'aromatic', pair: { diffuser: 'desert vesper', roller: 'cabana' }, sky: ['#7A4F78', '#E9955B', '#F7CF94'], land: ['#C98597', '#9A6283', '#5A3A5C'], orb: '#FFB66E', dark: false },
+  { key: 'night', name: 'Night', time: '9:30 pm', hour: 21.5, title: 'Wind down', line: 'Lights low and the candle lit. Campfire Stories for the last hour of the day.', draft: true, family: 'woody', pair: { diffuser: 'campfire stories', roller: 'inner sanctum' }, sky: ['#0F0D1C', '#2B2145', '#4A2D4F'], land: ['#4A3F73', '#33295A', '#1E1838'], orb: '#F5EBD3', dark: true },
 ];
 
 /**

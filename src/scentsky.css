@@ -1,0 +1,121 @@
+/* The Scent Sky (src/pages/scentsky.ts): ten scent families as constellations on the night sky, in the site's celestial
+   language (nocturne ground, grain, moonstone stars, gold hairlines that draw themselves). Kept apart from site.css. */
+.ssky { --noct: #1C2140; --deep: #2A3358; --dusk: #15111F; --moon: #EDE6DA; --gold: #C9A35A; --goldl: #E9D4A1; --mist: rgba(237, 230, 218, .16);
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: start; min-width: 0; }
+@media (min-width: 1200px) { .ssky { grid-template-columns: minmax(0, 1fr) 360px; } .ssky-panel { position: sticky; top: 96px; } }
+
+/* ---- the sky ---- */
+.ssky-stage { position: relative; isolation: isolate; overflow: hidden; container-type: inline-size; min-width: 0; border-radius: 22px 6px 22px 6px;
+  padding: clamp(14px, 2.6vw, 28px); color: var(--moon); background: linear-gradient(180deg, var(--deep) 0%, var(--noct) 55%, var(--dusk) 100%);
+  box-shadow: 0 30px 60px -30px rgba(21, 17, 31, .6), 0 0 0 1px rgba(201, 163, 90, .2); }
+.ssky-stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0; border-radius: inherit; background: var(--cel-grain), var(--cel-grid); opacity: .5; mix-blend-mode: screen; }
+.ssky-field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.ssky-field circle { fill: var(--moon); opacity: var(--o); }
+@keyframes ssTw { 0%, 100% { opacity: var(--o); } 50% { opacity: calc(var(--o) * .35); } }
+.ssky:not(.calm) .ssky-field circle { animation: ssTw var(--t) ease-in-out var(--d) infinite; }
+.ssky-cap { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;
+  font: 500 12px/1.4 var(--mono, "DM Mono", monospace); letter-spacing: .18em; text-transform: uppercase; color: var(--gold); }
+.ssky-cap span + span { color: rgba(237, 230, 218, .62); }
+.ssky-all, .ssky-focus { position: relative; z-index: 1; }
+.ssky-all[hidden], .ssky-focus[hidden] { display: none; }
+
+/* level 1: ten constellations, two to a row on a phone, five on a wide sky */
+.ssky-fams { list-style: none; margin: 0; padding: 0 0 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 10px; }
+@container (min-width: 620px) { .ssky-fams { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 12px; } }
+.sf { min-width: 0; transition: opacity .45s; }
+.sf:nth-child(even) { transform: translateY(18px); }
+.sf-btn { width: 100%; min-height: 44px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 6px 12px; border-radius: 18px;
+  border: 1px solid transparent; background: transparent; color: inherit; font: inherit; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent;
+  transition: background .25s, border-color .25s; }
+.sf-btn:hover { background: rgba(237, 230, 218, .05); border-color: rgba(201, 163, 90, .32); }
+.sf-btn:focus-visible { outline: 2px solid var(--goldl); outline-offset: 2px; }
+.sf-btn[aria-pressed="true"] { border-color: rgba(233, 212, 161, .6); }
+.sf-chart { width: 100%; max-width: 190px; height: auto; display: block; overflow: visible; }
+.sf-loop { fill: none; stroke: var(--gold); stroke-opacity: .5; stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1; animation: ssDraw 1.1s cubic-bezier(.2, .7, .2, 1) calc(.15s + var(--i, 0) * .07s) forwards; }
+@keyframes ssDraw { to { stroke-dashoffset: 0; } }
+.sd { fill: var(--c); transform-box: fill-box; transform-origin: center; transition: transform .45s cubic-bezier(.2, .8, .2, 1), fill .3s; }
+.sd-h { fill: var(--c); opacity: 0; transition: opacity .45s; }
+.sd.on { fill: #FFFDF6; transform: scale(2.1); }
+.sd-h.on { opacity: .55; }
+.sf-core { fill: var(--c); } .sf-core-h { fill: var(--c); opacity: .22; }
+.sf-name { font: 400 clamp(18px, 2.4vw, 22px)/1.1 var(--display); letter-spacing: -.01em; color: var(--moon); }
+.sf-n { font: 500 12px/1.3 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: rgba(237, 230, 218, .66); }
+/* a scent chosen: the families it belongs to light up, the others step back, a thread runs between its stars */
+.ssky[data-view="scent"] .sf.dim { opacity: .34; }
+.sf.lit .sf-btn { border-color: rgba(233, 212, 161, .55); background: rgba(233, 212, 161, .07); }
+.sf.lit .sf-name { color: var(--goldl); }
+.sf.lit .sf-core-h { opacity: .4; }
+.ssky-threads { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.st-path { fill: none; stroke: var(--goldl); stroke-opacity: .75; stroke-width: 1.2; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ssDraw 1.2s cubic-bezier(.2, .7, .2, 1) .1s forwards; }
+.st-pt { fill: none; stroke: var(--goldl); stroke-opacity: .7; stroke-width: 1; }
+
+/* level 2: one family's scents as named stars */
+.ssf { display: flex; flex-direction: column; gap: 14px; }
+.ssf-head { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+.ssf-head > div { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ssf-head .eyebrow { color: var(--gold); }
+.ssf-head h3 { margin: 0; font-size: clamp(32px, 4vw, 46px); color: var(--moon); outline: none; }
+.ssf-head p { margin: 0; color: rgba(237, 230, 218, .82); max-width: 46ch; }
+.ssf-core { flex: none; width: 34px; height: 34px; margin-top: 6px; border-radius: 50%; background: radial-gradient(circle at 36% 32%, #FFF8EA, var(--c) 46%, var(--sw)); box-shadow: 0 0 0 7px color-mix(in srgb, var(--c) 18%, transparent), 0 0 30px var(--c); }
+.ssf-back { min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid rgba(237, 230, 218, .32); background: rgba(237, 230, 218, .06); color: var(--moon); font: 600 14px var(--body); cursor: pointer; }
+.ssf-back:hover { background: rgba(237, 230, 218, .14); }
+.ssf-back:focus-visible, .ss-btn:focus-visible { outline: 2px solid var(--goldl); outline-offset: 2px; }
+.ssf-wrap { position: relative; }
+.ssf-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.ssf-lines path { fill: none; stroke: var(--gold); stroke-opacity: .42; stroke-width: 1; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ssDraw 1.4s cubic-bezier(.2, .7, .2, 1) .2s forwards; }
+.ssf-list { position: relative; list-style: none; margin: 0; padding: 14px 0 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(152px, 100%), 1fr)); gap: 22px 12px; }
+@container (max-width: 420px) { .ssf-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 8px; } }
+.ssf-list li { min-width: 0; transform: translateY(var(--dy, 0)); animation: ssIn .5s cubic-bezier(.2, .8, .2, 1) calc(var(--k, 0) * .035s) both; }
+@keyframes ssIn { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+.ss-btn { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 8px; border-radius: 16px; text-align: left;
+  border: 1px solid rgba(237, 230, 218, .1); background: rgba(21, 17, 31, .42); color: var(--moon); font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: border-color .25s, background .25s; }
+.ss-btn:hover { border-color: rgba(201, 163, 90, .5); background: rgba(21, 17, 31, .62); }
+.ss-btn[aria-pressed="true"] { border-color: var(--goldl); background: rgba(233, 212, 161, .1); }
+.ss-star { flex: none; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #FFFDF6, var(--c) 60%); box-shadow: 0 0 10px var(--c); transition: transform .35s; }
+.ss-btn.soon .ss-star { background: transparent; box-shadow: none; border: 1.5px solid var(--c); }
+.ss-btn[aria-pressed="true"] .ss-star { transform: scale(1.35); }
+.ss-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ss-tx b { font: 600 15px/1.2 var(--body); overflow-wrap: anywhere; }
+.ss-tx small { font: 500 12px/1.35 var(--mono, "DM Mono", monospace); letter-spacing: .06em; text-transform: uppercase; color: rgba(237, 230, 218, .7); }
+.ss-btn.soon .ss-tx small { color: var(--gold); }
+
+/* ---- the panel ---- */
+.ssky-panel { min-width: 0; }
+.ssp { position: relative; display: flex; flex-direction: column; gap: 12px; }
+.ssp h3 { margin: 0; font-size: clamp(30px, 3.4vw, 42px); outline: none; }
+.ssp-scent h3 { padding-right: 56px; }
+.ssp p { margin: 0; max-width: 46ch; }
+.ssp .cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.ssp .btn { min-height: 44px; }
+.ssp-close { position: absolute; top: 0; right: 0; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(42, 31, 51, .2); background: #fff; color: var(--ink, #2A1F33); display: grid; place-items: center; cursor: pointer; }
+.ssp-close:hover { border-color: var(--ink, #2A1F33); }
+.ssp-close:focus-visible, .ssp-fam:focus-visible, .ssp-fmts a:focus-visible { outline: 2px solid var(--plum, #4A3050); outline-offset: 2px; }
+.ssp-sub { margin-top: 6px; }
+.ssp-fams { display: flex; flex-wrap: wrap; gap: 8px; }
+.ssp-fam { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(42, 31, 51, .16); background: rgba(255, 255, 255, .75); color: var(--ink, #2A1F33); font: 600 14px var(--body); cursor: pointer; }
+.ssp-fam .swatch { width: 10px; height: 10px; border-radius: 50%; background: var(--sw); flex: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--sw) 18%, transparent); }
+.ssp-fam:hover, .ssp-fam.on { border-color: var(--ink, #2A1F33); background: #fff; }
+.ssp-fmts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ssp-fmts a, .ssp-row { min-height: 48px; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 18px; border-radius: 999px; font-size: 15px; }
+.ssp-fmts a { background: #fff; border: 1px solid rgba(42, 31, 51, .14); color: var(--ink, #2A1F33); text-decoration: none; transition: border-color .2s, translate .2s; }
+.ssp-fmts a:hover { border-color: var(--ink, #2A1F33); translate: 3px 0; }
+.ssp-fmts b { font-weight: 600; white-space: nowrap; }
+.ssp-fmt.out b { color: var(--ink-2, #5E5361); font-weight: 500; }
+.ssp-row { border: 1px dashed rgba(42, 31, 51, .28); color: var(--ink-2, #5E5361); }
+.ssp-row em { font: 500 12px var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; font-style: normal; white-space: nowrap; }
+
+/* ---- the full list under the sky ---- */
+.fl-lead { margin: 0 0 18px; }
+.fl-all { grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr)); }
+.fl-fams { margin: -6px 0 0; color: var(--ink-2, #5E5361); }
+.fl-soon { display: flex; justify-content: space-between; gap: 10px; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px dashed rgba(42, 31, 51, .25); font-size: 14px; color: var(--ink-2, #5E5361); }
+.fl-soon em { font: 500 12px var(--mono, "DM Mono", monospace); letter-spacing: .12em; text-transform: uppercase; font-style: normal; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ssky *, .ssky *::before, .ssky *::after { animation: none !important; transition: none !important; }
+  .sf-loop, .st-path, .ssf-lines path { stroke-dashoffset: 0; }
+}
+.ssky.calm .sf-loop, .ssky.calm .st-path, .ssky.calm .ssf-lines path { animation: none; stroke-dashoffset: 0; }
+.ssky.calm .ssf-list li { animation: none; }

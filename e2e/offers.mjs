@@ -66,8 +66,8 @@ for (const [w, h] of VPS) {
   await quickAdd(p, 0); await quickAdd(p, 2); await p.waitForTimeout(300);
   ok(`${tag}: three items unlock 15% off`, JSON.stringify((await ladder(p)).slice(0, 2)) === '[true,true]' && /15% off is yours/.test(await msg(p)), await msg(p));
   const spend = num((await p.locator('.offers .of-money').innerText().catch(() => '')) || '0');
-  // push past free shipping with more rollers (each $25)
-  for (let i = 0; i < 6 && !(await ladder(p))[2]; i++) { await quickAdd(p, 3 + i); await p.waitForTimeout(200); }
+  // push past free shipping with more quick adds (the shop opens each scent card on its candle where it has one: from $12)
+  for (let i = 0; i < 16 && !(await ladder(p))[2]; i++) { await quickAdd(p, (3 + i) % 8); await p.waitForTimeout(200); }
   const done = await ladder(p);
   ok(`${tag}: reaching the threshold unlocks free shipping in Canada`, done[2] === true && /All unlocked: 15% off and free shipping in Canada/.test(await msg(p)), await msg(p));
   ok(`${tag}: the estimate is labelled, never a promise`, await p.evaluate(() => { const t = document.querySelector('.offers').textContent; return /Estimate/i.test(t) && /Discounts apply at checkout once live/.test(t) && /Estimated savings/.test(t) && /Estimated total/.test(t); }));

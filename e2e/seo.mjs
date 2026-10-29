@@ -74,7 +74,7 @@ ok('home title says what the site is (not just the name)', /Hand-poured candles/
 await p.locator('.mainnav a[data-nav="shop"]').click(); await p.waitForURL('**/shop'); await p.waitForFunction(() => document.head.querySelector('link[rel="canonical"]')?.href.endsWith('/shop'));
 ok('moving to Shop updates the title and canonical without a reload', /^Shop/.test(await p.title()) && (await tags()).canon.endsWith('/shop'), await p.title());
 // the shop filter does not make a new canonical address
-await p.goto(origin + '/shop?f=roller&m=all&s=featured'); await p.waitForSelector('.grid .card');
+await p.goto(origin + '/shop?f=roller&fam=all&s=featured'); await p.waitForSelector('.grid .card');
 ok('a filtered shop view keeps /shop as its canonical address', new URL((await tags()).canon).pathname === '/shop', (await tags()).canon);
 ok('the old quiz address points at Find your scent', await (async () => { await p.goto(origin + '/quiz'); await p.waitForSelector('h1'); await p.waitForTimeout(600); return new URL((await tags()).canon).pathname === '/explore'; })());
 ok('an unknown address has no canonical', await (async () => { await p.goto(origin + '/no-such-page'); await p.waitForTimeout(1000); const t = await tags(); return t.canon === null && /not found/i.test(t.title); })());

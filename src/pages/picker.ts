@@ -31,13 +31,13 @@ export const PICKER_CANDLES: PickerCandle[] = [
   {
     slug: 'cabana', name: 'Cabana', image: 'cabana', w: 900, h: 900, scale: 0.91, foot: 0.991,
     wicks: [{ x: 0.6889, y: 0.1077, h: 0.098, w: 0.122, tip: 0.25, rim: true }, { x: 0.2267, y: 0.7411, h: 0.066, w: 0.071, tip: 0.05 }],
-    line: 'Sunny and warm, for a slow golden evening.', draft: true,
+    line: 'Fruity and warm, for a slow golden evening.', draft: true,
     alt: 'Cabana: a candle in a white glass tumbler with the black Daily Rituals label, a small black tin and its Cabana lid in front',
   },
   {
     slug: 'verdant', name: 'Verdant', image: 'verdant', w: 900, h: 841, scale: 1, foot: 0.99,
     wicks: [{ x: 0.7356, y: 0.1141, h: 0.098, w: 0.115, tip: 0.85, rim: true }, { x: 0.2056, y: 0.6813, h: 0.06, w: 0.069, tip: 0.1 }],
-    line: 'Green and grounding, for a quieter mind.', draft: true,
+    line: 'Green and woody, for a quieter evening.', draft: true,
     alt: 'Verdant: a candle in a white glass tumbler with the black Daily Rituals label, a small black tin and its Verdant lid in front',
   },
 ];

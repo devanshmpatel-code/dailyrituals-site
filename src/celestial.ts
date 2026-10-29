@@ -1,4 +1,4 @@
-// The celestial system: a small library of line-art motifs (constellation of the five moods, moon phases with tonight's real
+// The celestial system: a small library of line-art motifs (a five-star constellation in scent-family colours, moon phases with tonight's real
 // phase, orbit rings, an astrolabe and star-chart grid, an engraved sun, a flower-of-life fragment) and the code that places
 // them on the pages. Every motif is drawn on one grid (a 120 box, centre 60, outer radius 48, twelve divisions) with one line
 // weight: 1px for motifs, 0.75px for grids, held at any size with vector-effect. Colour comes from CSS (currentColor and the
@@ -6,7 +6,7 @@
 // phase, which carries real information (tonight's sky), is labelled.
 import { moonPhase } from './pages/sky';
 import { isNewMoonToday } from './drop';
-import type { Mood } from './config';
+import type { Family } from './data/scents';
 
 const A = 'aria-hidden="true" focusable="false"';
 const NS = 'vector-effect="non-scaling-stroke"';
@@ -71,19 +71,20 @@ export function moonLarge(): string {
     <circle cx="${C}" cy="${C}" r="${r + 7}" ${line(0.75, 'stroke-dasharray="1 5"')} opacity=".5"/>`;
 }
 
-// ---------- the constellation of five moods ----------
-const STARS: Record<Mood, [number, number]> = { fresh: [-38, 42], sunny: [22, 24], floral: [96, 44], woody: [172, 32], grounding: [244, 44] };
-const LINKS: [Mood, Mood][] = [['grounding', 'woody'], ['woody', 'sunny'], ['sunny', 'fresh'], ['sunny', 'floral']];
+// ---------- a constellation of five stars, each in a scent family's star colour (decoration: no family is claimed) ----------
+type Star5 = Extract<Family, 'marine' | 'citrus' | 'floral' | 'woody' | 'green'>;
+const STARS: Record<Star5, [number, number]> = { marine: [-38, 42], citrus: [22, 24], floral: [96, 44], woody: [172, 32], green: [244, 44] };
+const LINKS: [Star5, Star5][] = [['green', 'woody'], ['woody', 'citrus'], ['citrus', 'marine'], ['citrus', 'floral']];
 const FAINT: [number, number][] = [[-100, 30], [132, 18], [296, 16], [60, 47]];
-/** Five stars, one per mood, joined by hairlines; a few fainter stars for depth. With labels, the mood names sit beside them. */
+/** Five stars joined by hairlines; a few fainter stars for depth. With labels, the family names sit beside them. */
 export function constellation(opts: { labels?: boolean; cls?: string } = {}): string {
-  const P = Object.fromEntries((Object.keys(STARS) as Mood[]).map(m => [m, pt(...STARS[m])])) as Record<Mood, [number, number]>;
+  const P = Object.fromEntries((Object.keys(STARS) as Star5[]).map(m => [m, pt(...STARS[m])])) as Record<Star5, [number, number]>;
   const links = LINKS.map(([a, b], i) => `<path class="cel-link" style="--i:${i}" d="M${P[a][0]},${P[a][1]}L${P[b][0]},${P[b][1]}" pathLength="100"/>`).join('');
   const faint = FAINT.map(([d, r]) => { const [x, y] = pt(d, r); return `<circle cx="${x}" cy="${y}" r="1" fill="currentColor" opacity=".55"/>`; }).join('');
-  const stars = (Object.keys(STARS) as Mood[]).map((m, i) => {
+  const stars = (Object.keys(STARS) as Star5[]).map((m, i) => {
     const [x, y] = P[m];
     const lab = opts.labels ? `<text x="${x + (x > C ? 9 : -9)}" y="${y + 3.5}" text-anchor="${x > C ? 'start' : 'end'}" class="cel-lab">${m[0].toUpperCase() + m.slice(1)}</text>` : '';
-    return `<g class="cel-star" data-mood="${m}" style="--c:var(--star-${m});--i:${i}"><circle class="cel-halo" cx="${x}" cy="${y}" r="6" fill="var(--c)"/><circle class="cel-pt" cx="${x}" cy="${y}" r="2.2" fill="currentColor"/>${lab}</g>`;
+    return `<g class="cel-star" data-family="${m}" style="--c:var(--star-${m});--i:${i}"><circle class="cel-halo" cx="${x}" cy="${y}" r="6" fill="var(--c)"/><circle class="cel-pt" cx="${x}" cy="${y}" r="2.2" fill="currentColor"/>${lab}</g>`;
   }).join('');
   return svg(`<g class="cel-links" ${line(1)}>${links}</g>${faint}${stars}`, opts.labels ? '-28 0 176 120' : '0 0 120 120', `cel-const ${opts.cls ?? ''}`);
 }
@@ -223,7 +224,7 @@ export function shipArc(pct: number): string {
   return `<svg class="cel ship-arc${full ? ' full' : ''}" viewBox="0 0 40 40" ${A}><circle class="t" cx="20" cy="20" r="15" ${line(1)}/><circle class="p" cx="20" cy="20" r="15" pathLength="100" style="--p:${f(p)}" ${line(1.5)}/><circle class="s" cx="20" cy="5" r="2"/></svg>`;
 }
 
-/** The orbit ring that draws itself around a product picture on hover, with the mood's star at its top. */
+/** The orbit ring that draws itself around a product picture on hover, with the leading scent family's star at its top. */
 export function cardOrbit(): string {
   return `<svg class="cel cel-orbit" viewBox="0 0 100 125" ${A}><rect class="cel-dim" width="100" height="125"/><g transform="rotate(-18 50 62.5)"><ellipse cx="50" cy="62.5" rx="41" ry="52" pathLength="100" ${NS}/><circle class="cel-halo" cx="50" cy="10.5" r="7"/><circle class="cel-pt" cx="50" cy="10.5" r="2.4"/></g></svg>`;
 }

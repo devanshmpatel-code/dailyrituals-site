@@ -10,6 +10,15 @@ const origin = (get('SITE_URL') || get('VITE_SITE_URL') || 'https://www.dailyrit
 const clientId = get('VITE_WIX_CLIENT_ID');
 // the natural deodorant is hidden for now: one flag, SHOW_DEODORANT in src/config.ts, brings it (and its sitemap entry) back
 const showDeodorant = /SHOW_DEODORANT\s*=\s*true/.test(readFileSync('src/config.ts', 'utf8'));
+// the owner's product list (src/data/scents.ts) is the allow-list: a Wix product that is not on it is left out of the sitemap,
+// as it is hidden everywhere on the site. The list is read from the source, so there is only one copy of it.
+const scentKey = s => s.toLowerCase().replace(/\s*\+\s*/g, ' & ').replace(/\band\b/g, '&').replace(/\s*&\s*/g, ' & ').replace(/\s+/g, ' ').trim();
+const LIST = new Map(readFileSync('src/data/scents.ts', 'utf8').match(/const LIST = `([\s\S]*?)`;/)[1].trim().split('\n').map(row => {
+  const [name, , fmts] = row.split('|').map(x => x.trim());
+  return [scentKey(name), fmts.split(/\s+/).map(c => ({ C: 'candle', D: 'diffuser', R: 'roller' })[c])];
+}));
+const classify = name => /\s*fragrance roller$/i.test(name) ? [name.replace(/\s*fragrance roller$/i, ''), 'roller'] : /\s*mini diffuser$/i.test(name) ? [name.replace(/\s*mini diffuser$/i, ''), 'diffuser'] : /deodorant/i.test(name) ? [name, 'deodorant'] : [name, 'candle'];
+const onList = name => { const [scent, format] = classify(name ?? ''); return format === 'deodorant' ? showDeodorant : !!LIST.get(scentKey(scent))?.includes(format); };
 
 const pages = ['', 'shop', 'explore', 'coaching', 'subscribe', 'drops', 'gift', 'wall', 'club', 'story', 'giving', 'journal', 'journal/wooden-wick', 'journal/first-burn', 'journal/candle-safety', 'journal/wax-guide', 'journal/candle-and-roller', 'help', 'privacy', 'terms', 'accessibility', 'refund-policy'];
 
@@ -18,7 +27,7 @@ async function productSlugs() {
   try {
     const tok = await fetch('https://www.wixapis.com/oauth2/token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ clientId, grantType: 'anonymous' }) }).then(r => r.json());
     const res = await fetch('https://www.wixapis.com/stores/v3/products/query', { method: 'POST', headers: { 'content-type': 'application/json', authorization: tok.access_token }, body: JSON.stringify({ query: { cursorPaging: { limit: 100 } } }) }).then(r => r.json());
-    return (res.products ?? []).filter(p => p.visible !== false && p.slug && (showDeodorant || !/deodorant/i.test(`${p.slug} ${p.name ?? ''}`))).map(p => p.slug);
+    return (res.products ?? []).filter(p => p.visible !== false && p.slug && onList(p.name)).map(p => p.slug);
   } catch (e) { console.warn(`seo: could not read the Wix catalogue (${e.message}); sitemap lists main pages only`); return []; }
 }
 

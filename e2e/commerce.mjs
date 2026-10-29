@@ -7,7 +7,7 @@ const base = process.env.BASE ?? 'http://localhost:4173/#';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const count = p => p.locator('#cartCount').innerText().then(Number);
-const PAGES = ['/shop', '/shop?f=candle&m=all&s=featured', '/product/cabana', '/product/cabana-fragrance-roller', '/product/cabana-mini-diffuser', '/product/natural-deodorant', '/drops', '/subscribe', '/journal', '/journal/wooden-wick', '/help', '/account', '/wall', '/club', '/reset', '/book', '/gift', '/order-confirmed', '/explore', '/explore?tab=quiz'];
+const PAGES = ['/shop', '/shop?f=candle&fam=all&s=featured', '/product/cabana', '/product/cabana-fragrance-roller', '/product/cabana-mini-diffuser', '/product/natural-deodorant', '/drops', '/subscribe', '/journal', '/journal/wooden-wick', '/help', '/account', '/wall', '/club', '/reset', '/book', '/gift', '/order-confirmed', '/explore', '/explore?tab=quiz'];
 // visible controls in the page body that are smaller than 44px (inline text links in running text, radio dots inside a
 // bigger label, and draft notes for Claire are left out)
 const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :is(a, button, select, summary, input:not([type=radio]), [role=tab]), .drawer :is(a, button)')].filter(el => {
@@ -26,8 +26,8 @@ const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(base + '/shop'); await p.waitForSelector('.grid.grouped .ghead'); await p.waitForTimeout(500);
   const heads = await p.locator('.grid.grouped .ghead h2').allInnerTexts();
-  // one card per scent: the shop is grouped by scent family first, then the products with no family yet, by format
-  ok('phone /shop: scent families come first, then the formats', /Fresh and coastal/.test(heads[0] ?? '') && heads.some(h => /candles/i.test(h)) && /Kits and boxes/.test(heads.at(-1) ?? ''), heads.join(' / '));
+  // one card per scent, in the owner's list order, each naming its families; then the scents on the list that Wix does not sell yet, then the kits
+  ok('phone /shop: the live scents come first, then the scents coming soon, then the kits', heads.length === 2 && /on the way/.test(heads[0] ?? '') && /Kits and boxes/.test(heads.at(-1) ?? '') && await p.evaluate(() => { const g = [...document.querySelector('.grid.grouped').children]; const firstHead = g.findIndex(x => x.matches('.ghead')); return firstHead > 0 && g.slice(0, firstHead).every(x => x.matches('.scard:not([data-soon])')); }), heads.join(' / '));
   const jump = await p.locator('.shop-jump a').evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href'), a.getBoundingClientRect().height]));
   ok('phone /shop: a shortcut row of Candles, Rollers, Diffusers and Gifts sits near the top', jump.map(j => j[0]).join(',') === 'Candles,Rollers,Diffusers,Gifts' && /\/gift$/.test(jump[3][1]) && jump.every(j => j[2] >= 44) && await p.evaluate(() => document.querySelector('.shop-jump').getBoundingClientRect().top < innerHeight), JSON.stringify(jump));
   ok('phone /shop: the format heads keep their photograph clear of the words', await p.evaluate(() => [...document.querySelectorAll('.ghead .ghead-ph')].every(img => { const r = img.getBoundingClientRect(), h = img.closest('.ghead').querySelector('h2').getBoundingClientRect(); return r.bottom <= h.top + 1; })));
@@ -75,7 +75,7 @@ const smallTargets = p => p.evaluate(() => [...document.querySelectorAll('#app :
   for (let i = 0; i < 4; i++) { await p.locator('[data-ans="3"]').click(); await p.waitForTimeout(120); }
   await p.waitForSelector('.qres');
   ok('quiz: the result says why, in the answers given', /Because you chose .*a cabin with a fire going/i.test(await p.locator('.qres-why').innerText()), await p.locator('.qres-why').innerText());
-  ok('quiz: the best match comes first and leads with a candle', await p.evaluate(() => { const best = document.querySelector('.qbest'), grid = document.querySelector('#qGrid'); return !!best && best.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING && /Candle/.test(best.querySelector('.qbest-fmts a')?.textContent ?? ''); }));
+  ok('quiz: the best match comes first, leading with the format the first answer asked for when it has it', await p.evaluate(() => { const best = document.querySelector('.qbest'), grid = document.querySelector('#qGrid'), q = document.querySelector('.qres'); return !!best && best.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING && !!q.dataset.format && new RegExp(q.dataset.format === 'diffuser' ? 'Mini Diffuser' : q.dataset.format, 'i').test(best.querySelector('.qbest-fmts a')?.textContent ?? ''); }));
   await p.click('[data-for="gift"]');
   ok('quiz: "A gift" turns the next step into sending it as a gift', /\/gift$/.test(await p.locator('#qCta a').first().getAttribute('href')));
   // the Journal ends with the two next steps
@@ -159,8 +159,10 @@ for (const [w, h] of [[1440, 900], [390, 844]]) { // one card per scent: format 
   const phone = w < 600, ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: phone, hasTouch: phone }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(base + '/shop'); await p.waitForSelector('.grid .scard'); await p.waitForTimeout(700);
-  const names = await p.locator('.grid .card:not([data-concept]) h3').allInnerTexts();
-  ok(`${w} /shop: one card per scent (no scent twice)`, names.length === 16 && new Set(names).size === names.length, names.join(', '));
+  const names = await p.locator('.grid .card:not([data-concept]):not([data-soon]) h3').allInnerTexts(), soonNames = await p.locator('.grid .card[data-soon] h3').allInnerTexts();
+  ok(`${w} /shop: one card per scent (no scent twice): 14 live, then the 14 on the list that Wix does not sell yet`, names.length === 14 && soonNames.length === 14 && new Set([...names, ...soonNames]).size === 28, names.join(', '));
+  ok(`${w} /shop: a coming-soon card has no price, no photograph and no add to cart`, await p.evaluate(() => [...document.querySelectorAll('.card[data-soon]')].every(c => !c.querySelector('img, button[data-qa], .sc-add') && !/\$\d/.test(c.textContent) && /coming soon/i.test(c.textContent))));
+  ok(`${w} /shop: Licorice Sweets and Fleur de Lilac (not on the list) are hidden`, !/licorice|lilac/i.test(await p.locator('.grid').innerText()));
   const cab = p.locator('.scard[data-scent="cabana"]');
   const state = () => cab.evaluate(c => ({ href: c.querySelector('a.sc-link').getAttribute('href'), ph: c.querySelector('a.sc-ph').getAttribute('href'), price: c.querySelector('.sc-price').textContent, sub: c.querySelector('.sc-sub').textContent, img: c.querySelector('img.main')?.getAttribute('src'), add: c.querySelector('.sc-add').textContent.replace(/\s+/g, ' ').trim(), pressed: c.querySelector('.sc-fmt[aria-pressed="true"]').getAttribute('aria-label') }));
   ok(`${w} /shop: Cabana's card offers its candle, roller and diffuser`, (await cab.locator('.sc-fmt').evaluateAll(bs => bs.map(x => x.getAttribute('aria-label')).join())) === 'Candle,Roller,Diffuser');
@@ -183,8 +185,8 @@ for (const [w, h] of [[1440, 900], [390, 844]]) { // one card per scent: format 
   ok(`${w} /shop: sizes read one way ("10 ml", never "10ml")`, !(await p.locator('.grid').innerText()).match(/\d(ml|oz)\b/i));
   const small = await p.locator('.scard :is(.sc-fmt, .sc-add)').evaluateAll(els => els.filter(e => { const r = e.getBoundingClientRect(); return r.width < 43.5 || r.height < 43.5; }).length);
   ok(`${w} /shop: format chips and quick add are at least 44px`, small === 0, String(small));
-  await p.goto(base + '/shop?f=roller&m=all&s=featured'); await p.waitForSelector('.grid .scard'); await p.waitForTimeout(400);
-  const rl = await p.locator('.grid .scard').evaluateAll(cs => cs.map(c => c.dataset.format));
+  await p.goto(base + '/shop?f=roller&fam=all&s=featured'); await p.waitForSelector('.grid .scard'); await p.waitForTimeout(400);
+  const rl = await p.locator('.grid .scard:not([data-soon])').evaluateAll(cs => cs.map(c => c.dataset.format));
   ok(`${w} /shop?f=roller: only scents with a roller, each card open on its roller`, rl.length === 11 && rl.every(x => x === 'roller'), rl.join());
   ok(`${w} /shop: no sideways scroll`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 1);
   ok(`${w} /shop: no JS errors`, errs.length === 0, errs.join(' | '));
@@ -202,7 +204,7 @@ for (const [w, h] of [[1440, 900], [390, 844]]) { // one card per scent: format 
 }
 { // desktop: the cards lift on hover; the quick add's toast
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p = await ctx.newPage(); p.setDefaultTimeout(8000); await setupMocks(p);
-  await p.goto(base + '/shop?f=roller&m=all&s=featured'); await p.waitForSelector('.grid .card:not(.sk) button[data-qa]'); await p.waitForTimeout(500);
+  await p.goto(base + '/shop?f=roller&fam=all&s=featured'); await p.waitForSelector('.grid .card:not(.sk) button[data-qa]'); await p.waitForTimeout(500);
   const card = p.locator('.grid .card:not(.sk):not(.ghead)').first();
   await card.hover(); await p.waitForFunction(() => /matrix3d/.test(getComputedStyle(document.querySelector('.grid .card:not(.sk) .ph')).transform), null, { timeout: 2500 }).catch(() => {});
   ok('desktop /shop: a card lifts in 3D on hover', /matrix3d|rotate/.test(await card.locator('.ph').evaluate(el => getComputedStyle(el).transform)), await card.locator('.ph').evaluate(el => getComputedStyle(el).transform));

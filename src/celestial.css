@@ -35,12 +35,12 @@
 .c-hero .has-glyph, .coachflow .has-glyph, .club .has-glyph, .night .has-glyph, .clubsoon .has-glyph, .ghead.soon .has-glyph, .plan.best .has-glyph { color: var(--gold-light); }
 .night .has-glyph { color: var(--gold-leaf); }
 
-/* ---- product cards: a 1px orbit draws itself, the mood's star lights, the label takes the mood colour, nothing scales ---- */
+/* ---- product cards: a 1px orbit draws itself, the leading family's star lights, the label takes the family colour, nothing scales ---- */
 .card .ph .cel-orbit { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; fill: none; stroke: var(--gold-leaf); stroke-width: 1; opacity: 0; transition: opacity .25s; }
 .card .ph .cel-orbit ellipse { stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset .55s cubic-bezier(.2, .7, .2, 1) .05s; }
 .card .ph .cel-orbit .cel-dim { fill: #15111F; stroke: none; opacity: 0; transition: opacity .3s; }
-.card .ph .cel-orbit .cel-pt { fill: var(--mood-s, var(--gold-light)); stroke: none; opacity: 0; transition: opacity .3s .45s; }
-.card .ph .cel-orbit .cel-halo { fill: var(--mood-s, var(--gold-light)); stroke: none; opacity: 0; transition: opacity .4s .5s; }
+.card .ph .cel-orbit .cel-pt { fill: var(--fam-s, var(--gold-light)); stroke: none; opacity: 0; transition: opacity .3s .45s; }
+.card .ph .cel-orbit .cel-halo { fill: var(--fam-s, var(--gold-light)); stroke: none; opacity: 0; transition: opacity .4s .5s; }
 @media (hover: hover) {
   .card:hover .ph .cel-orbit, .card:focus-within .ph .cel-orbit { opacity: 1; }
   .card:hover .ph .cel-orbit ellipse, .card:focus-within .ph .cel-orbit ellipse { stroke-dashoffset: 0; }
@@ -51,7 +51,7 @@
 .card:hover .ph img.main { transform: none !important; }
 .card:hover .ph { transform: none !important; }
 .card .sub { font: 500 12px/1.5 var(--mono, "DM Mono", monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--euc); transition: color .3s; }
-.card:hover .sub, .card:focus-within .sub { color: var(--mood-c, var(--euc)); }
+.card:hover .sub, .card:focus-within .sub { color: var(--fam-c, var(--euc)); }
 .card .sub .swatch { width: 8px; height: 8px; }
 
 /* ---- loading: sand blocks with an orbit that pulses between 40% and 60% ---- */
