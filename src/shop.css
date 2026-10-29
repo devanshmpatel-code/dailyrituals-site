@@ -33,7 +33,26 @@
 }
 
 /* scent-family heads: the family's own colour, washed out */
-.grid.grouped .ghead.gmood { background: linear-gradient(160deg, color-mix(in srgb, var(--mw) 16%, #FBF6EE), color-mix(in srgb, var(--mw) 40%, #F4ECDF)); color: var(--ink, #2A1F33); }
-.ghead.gmood .eyebrow { display: inline-flex; align-items: center; gap: 8px; }
+.grid.grouped .ghead.gfam { background: linear-gradient(160deg, color-mix(in srgb, var(--mw) 16%, #FBF6EE), color-mix(in srgb, var(--mw) 40%, #F4ECDF)); color: var(--ink, #2A1F33); }
+.ghead.gfam .eyebrow { display: inline-flex; align-items: center; gap: 8px; }
+.ghead.gfam .muted { color: var(--ink-2, #5E5361); }
+
+/* the family chips: ten families wrap on a wide screen; on a phone the row scrolls inside its own container (site.css) */
+.toolbar .fam-chips .chip { gap: 8px; }
+.toolbar .fam-chips .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.toolbar .chips .chip { min-height: 44px; }
+
+/* a card's scent families, and the formats on the list that are not in the shop yet */
+.scard .card-fams { margin-top: -2px; }
+.sc-later { font-size: 12.5px; }
+.grid:not(.grouped) .ghead.soon { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding: 22px 24px; border-radius: 24px; }
+
+/* "Coming soon": a scent on the owner's list that Wix does not sell yet. No photograph (none is invented), no price, no add. */
+.scard.soon .soon-ph { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 5; border-radius: 120px 120px 18px 18px; overflow: hidden; text-decoration: none;
+  color: var(--fam-s, #E9D4A1); background: var(--cel-grain), radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--fam-s, #E9D4A1) 22%, transparent), transparent 62%), var(--night-sky); }
+.scard.soon .soon-sky svg { filter: drop-shadow(0 0 10px currentColor); }
+.scard.soon .soon-tag { position: absolute; left: 50%; bottom: 16px; translate: -50% 0; white-space: nowrap; font: 500 12px var(--mono, "DM Mono", monospace); letter-spacing: .16em; text-transform: uppercase; color: #F6EEDF; background: rgba(21, 17, 31, .6); padding: 6px 12px; border-radius: 999px; }
+.scard.soon .soon-ph:focus-visible { outline: 2px solid var(--plum, #4A3050); outline-offset: 3px; }
+.scard.soon .soon-note { font: 500 12px var(--mono, "DM Mono", monospace); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2, #5E5361); white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) { .sc-fmt, .sc-add { transition: none; } .sc-add:active { transform: none; } }

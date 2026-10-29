@@ -1,5 +1,6 @@
 import Main from '../canvas/pages/Main.html?raw';
-import { MOMENTS, MOODS, type Moment, type MomentKey } from '../config';
+import { MOMENTS, type Moment, type MomentKey } from '../config';
+import { FAMILIES, type Family } from '../data/scents';
 import { ritualistsHTML, wireRitualists } from '../ritualists';
 import { loadCatalogue, findLive, money, type Item } from '../wix';
 import { cardHTML, fixImages, skeletonCards, errorBox, wireCommon, toast, esc } from '../ui';
@@ -157,9 +158,8 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
     const total = pair.reduce((n, p) => n + p.priceMin, 0);
     const names = pair.length === 2 && pair[0].scent === pair[1].scent ? `${pair[0].scent}, two ways` : pair.map(p => p.scent).join(' + ');
     const kinds = pair.map(p => (p.format === 'diffuser' ? 'diffuser' : p.format === 'roller' ? 'roller' : p.formatLabel.toLowerCase())).join(' + ');
-    // link to the mood of the lead scent shown, so the compass opens on a family that contains it
-    // (the moment's own mood can differ: Night is floral, but its ritual leads with Campfire Stories, which is woody)
-    const ritual = pair.length ? `<a class="sp sp-ritual" href="#/explore?mood=${pair[0].mood ?? m.mood}" aria-label="The ${esc(m.name.toLowerCase())} ritual: ${esc(names)}, ${money(total)} together">
+    // link to the Scent Sky on a family the ritual's lead scent belongs to (the moment's own family when it does)
+    const ritual = pair.length ? `<a class="sp sp-ritual" href="#/explore?family=${famFor(pair[0], m)}" aria-label="The ${esc(m.name.toLowerCase())} ritual: ${esc(names)}, ${money(total)} together">
         <span class="sp-thumbs" aria-hidden="true">${pair.map(p => `<img src="${p.thumb}" alt="" width="240" height="300" decoding="async">`).join('')}</span>
         <span><small>The ritual</small><b>${esc(names)}</b><em>${esc(kinds.charAt(0).toUpperCase() + kinds.slice(1))} · ${money(total)} together</em></span></a>` : heroItems.length ? '' : ritualHold(m);
     const c = PRACTICE[m.key];
@@ -171,12 +171,12 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
   const cta = app.querySelector<HTMLElement>('#dCta');
   if (cta) {
     const total = (diffuser?.priceMin ?? 0) + (roller?.priceMin ?? 0);
-    // the shop link follows the ritual's lead scent, the same mood the ritual label opens (night leads with Campfire Stories: woody)
-    const leadMood = (diffuser ?? roller)?.mood ?? m.mood;
-    const mood = MOODS[leadMood];
+    // the shop link follows the ritual's lead scent, the same family the ritual label opens
+    const lead = diffuser ?? roller;
+    const leadFam = lead ? famFor(lead, m) : m.family;
     const label = m.draft ? 'scents' : `${m.name.toLowerCase()} scents`;
     cta.innerHTML = `<button class="btn" data-addmoment="${m.key}" ${total ? '' : 'disabled'}>Add this ritual${total ? ` · ${money(total)}` : ''}</button>` +
-      `<a class="btn line" href="#/shop?m=${leadMood}">Shop ${m.draft ? esc(mood.label.toLowerCase()) : label}</a>`;
+      `<a class="btn line" href="#/shop?f=all&fam=${leadFam}&s=featured">Shop ${m.draft ? esc(FAMILIES[leadFam].label.toLowerCase()) : label}</a>`;
     cta.querySelector<HTMLButtonElement>('[data-addmoment]')?.addEventListener('click', async () => {
       for (const p of [diffuser, roller]) if (p) await add({ productId: p.id, slug: p.slug, name: p.name, price: p.priceMin, image: p.thumb, choice: p.choices[0]?.name, optionName: p.optionName });
       toast(`${m.name} ritual added to your cart`);
@@ -188,6 +188,9 @@ function setMoment(app: HTMLElement, m: Moment, _animate = true, lookHour?: numb
   app.querySelector('#arc')?.setAttribute('aria-valuetext', `${useRealClock ? clockParts(new Date()).join(' ') : m.time}, ${m.name}`);
   app.querySelectorAll<HTMLButtonElement>('.moments [data-jump]').forEach(b => b.setAttribute('aria-current', String(b.dataset.jump === m.key)));
 }
+
+/** The family a moment's ritual opens: the moment's own family when the lead scent is in it, else the scent's leading family. */
+const famFor = (i: Item, m: Moment): Family => (i.families.includes(m.family) ? m.family : i.families[0] ?? m.family);
 
 // ---------- the continuous day: look, sun, clock and tweens ----------
 let liveHour = 18, heroCurrent: Moment | null = null, raf = 0;
@@ -312,7 +315,7 @@ export function pickOurCandles(items: Item[]): Item[] {
   for (const w of OUR_CANDLES) {
     const free = (i: Item) => !picked.includes(i);
     const x = items.find(i => i.slug === w.slug && free(i)) ?? [findLive(items, w.scent, w.format)].find(i => i && free(i))
-      ?? items.find(i => i.format === w.format && i.inStock && free(i) && !/-need-pics$/.test(i.slug));
+      ?? items.find(i => i.format === w.format && i.inStock && free(i));
     if (x) picked.push(x);
   }
   return picked;
@@ -332,8 +335,8 @@ function wireMomentShop(app: HTMLElement, items: Item[]) {
 // that; the sizes are 2 oz and 8 oz.) Until the catalogue has loaded, no price is shown rather than a guess.
 const sizeNum = (s: string) => parseFloat(s) || Number.POSITIVE_INFINITY;
 export function refillPrice(items: Item[], format: string, scent: string): { price: number; size: string; exact: boolean } | null {
-  // (the three candles whose Wix addresses end in -need-pics may be past seasonals: never offered as a refill, see LAUNCH.md)
-  const pool = items.filter(i => i.format === format && i.priceMin > 0 && !/-need-pics$/.test(i.slug));
+  // (the catalogue is already limited to the owner's list, src/data/scents.ts)
+  const pool = items.filter(i => i.format === format && i.priceMin > 0);
   if (!pool.length) return null;
   const own = findLive(pool, scent, format as Item['format']);
   const pick = own ?? pool.reduce((a, b) => (b.priceMin < a.priceMin ? b : a));

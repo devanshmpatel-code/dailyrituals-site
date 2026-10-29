@@ -161,25 +161,17 @@ body:not(.show-drafts) .confirm { display: none !important; }
 
 #sets > .panel:last-child .btn { align-self: flex-start; }
 
-/* Scent wheel */
-.wheelwrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 64px); align-items: center; }
-.wheel { max-width: 600px; width: 100%; margin-inline: auto; }
-.wheel svg { width: 100%; height: auto; overflow: visible; display: block; }
-.wseg { cursor: pointer; outline: none; transition: opacity .25s, fill-opacity .25s; }
-.wseg:hover { opacity: 1 !important; filter: brightness(1.06); }
-.wseg:focus-visible { stroke: var(--ink); stroke-width: 4; }
-.wlab { font: 500 13px var(--mono, "DM Mono", monospace); letter-spacing: .12em; pointer-events: none; }
-.wnow { font: 600 12px var(--mono, "DM Mono", monospace); letter-spacing: .14em; fill: var(--ink-2); }
-.whub-t { font-family: var(--display); font-size: 38px; fill: var(--ink); }
-.whub-s { font-family: var(--display); font-size: 28px; fill: var(--ink); }
-.whub-n { font: 500 13px var(--mono, "DM Mono", monospace); letter-spacing: .1em; text-transform: uppercase; fill: var(--ink-2); }
-.wpanel { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.wpanel h3 { font-size: clamp(30px, 3.6vw, 46px); margin: 0; }
-.wpanel p { margin: 0; max-width: 46ch; }
-.wmoods { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--line); }
 .linkbtn { all: unset; cursor: pointer; text-decoration: underline; font-weight: 600; color: var(--ink); }
 .linkbtn:focus-visible { outline: 3px solid var(--marigold); }
-@media (max-width: 820px) { .wheelwrap { grid-template-columns: minmax(0, 1fr); } .wlab { font-size: 15px; } }
+
+/* a scent's families (src/data/scents.ts) on cards, the quiz and product pages: a small swatch and the family's name */
+.fams { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; font: 500 12px/1.5 var(--mono, "DM Mono", monospace); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2, #5E5361); }
+.fams .fam { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.fams .fam .swatch, .p-fams .swatch { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.fams .fam-sep { opacity: .5; }
+.p-fams { display: flex !important; flex-wrap: wrap; align-items: center; gap: 2px 6px; font: 600 13px/1.4 var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; }
+.p-fams .fam { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.p-fams .fam-sep { opacity: .5; }
 
 /* Find your scent: tabs, and a two-card ways row */
 .findtabs { display: inline-flex; margin: 4px 0 24px; background: var(--sand); border-radius: 26px; padding: 4px; }
@@ -532,7 +524,7 @@ button.soon { background: transparent !important; color: inherit !important; bor
   .gc-sky i { transition: none !important; }
 }
 
-/* Find your scent: the full list, grouped by mood with the mood colour carried into each card */
+/* Find your scent: the full list under the Scent Sky, in the owner's order, each scent with its families and formats */
 .fl-title { font-size: clamp(28px, 3.4vw, 40px); margin: 56px 0 8px; }
 .fl-group { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; padding: 28px 0; border-top: 1px solid rgba(42, 31, 51, .1); }
 .fl-head { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; position: sticky; top: 110px; align-self: start; }
@@ -972,7 +964,7 @@ body[data-page="club"] .clubsoon { padding-bottom: clamp(56px, 7vw, 96px); }
    ====================================================================== */
 :root {
   --nocturne: #1C2140; --deep-sky: #2A3358; --moonstone: #EDE6DA; --gold-leaf: #C9A35A; --gold-light: #E9D4A1; --mist: rgba(237, 230, 218, .16);
-  --star-fresh: #A3C8C0; --star-sunny: #ECB76A; --star-floral: #CF8A7D; --star-woody: #C09571; --star-grounding: #8EAA86;
+  --star-fruity: #E795A4; --star-green: #9CBC92; --star-marine: #8FC6D4; --star-floral: #E0A092; --star-aromatic: #B3A8DB; --star-woody: #C49B76; --star-amber: #EDAE5A; --star-gourmand: #E8BE96; --star-spicy: #EC8A6C; --star-citrus: #F2D36B;
   --night-sky: linear-gradient(180deg, #2A3358 0%, #1C2140 55%, #15111F 100%);
   /* 2-3% monochrome grain for every night panel (photography never gets it) */
   --cel-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='.07'/%3E%3C/svg%3E");

@@ -1,6 +1,6 @@
 import { add } from '../cart';
 import { money, loadProduct } from '../wix';
-import { MOODS } from '../config';
+import { FAMILIES } from '../data/scents';
 import { PICKER_CANDLES, pickerSrc, matchLive, rememberCandle, lastCandle, type PickerCandle, type LiveCandle } from './picker';
 import { PhotoFlames, createFlicker } from './candleflame';
 import { createCrackle, type Crackle } from './pickersound';
@@ -141,7 +141,7 @@ export function openBreathe(opener: HTMLElement) {
     </div>
     <div class="fb-low">
       <div class="fb-info">
-        <p class="fb-mood"></p>
+        <p class="fb-fam"></p>
         <div class="fb-namerow"><button class="fb-nav prev" type="button" aria-label="Previous candle"><span aria-hidden="true">‹</span></button><h2 class="fb-name"></h2><button class="fb-nav next" type="button" aria-label="Next candle"><span aria-hidden="true">›</span></button></div>
         <div class="fb-dots" aria-hidden="true">${candles.map(() => '<i></i>').join('')}</div>
         <p class="fb-line"></p>
@@ -182,7 +182,8 @@ export function openBreathe(opener: HTMLElement) {
   const renderInfo = () => {
     const c = cur(), it = itemOf(c), lv = live.get(c.slug);
     $('.fb-name').textContent = c.name;
-    $('.fb-mood').textContent = it?.mood ? `${MOODS[it.mood].label} · candle` : 'Candle';
+    // (the leading two families, so the line stays one line above the candles)
+    $('.fb-fam').textContent = it?.families.length ? `${it.families.slice(0, 2).map(f => FAMILIES[f].label).join(' · ')} · candle` : 'Candle';
     $('.fb-line').innerHTML = c.draft ? `<span class="d">${esc(c.line)}</span>` : esc(c.line);
     el.querySelectorAll('.fb-dots i').forEach((n, i) => n.classList.toggle('on', i === sel));
     const choice = choiceOf(c), p = priceOf(c, choice);

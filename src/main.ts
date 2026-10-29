@@ -26,7 +26,7 @@ import './nav.css';
 import './giving.css';
 import './coaching.css';
 import './giftbook.css';
-import './wheel.css';
+import './scentsky.css';
 import './brand.css'; // the footer's signature (the logo, lit by candlelight)
 import { renderGiving, givingNote } from './pages/giving';
 import { mountNav, navRouteChange } from './nav';
@@ -234,7 +234,7 @@ async function route() {
       case 'journal': return (await page(import('./pages/journal'))).renderJournal(app, arg ? decodeURIComponent(arg) : undefined);
       case 'account': return (await page(import('./pages/info'))).renderAccount(app);
       case 'explore': return (await page(import('./pages/info'))).renderExplore(app, params);
-      // older links: the quiz is a tab of Find your scent; build a ritual and ritual sets live in the wheel
+      // older links: the quiz is a tab of Find your scent; build a ritual and ritual sets live in the Scent Sky
       case 'quiz': return (await page(import('./pages/info'))).renderExplore(app, new URLSearchParams('tab=quiz'));
       case 'build': case 'sets': return (await page(import('./pages/info'))).renderExplore(app);
       // the free 7-day reset is retired: old links go to the free discovery call

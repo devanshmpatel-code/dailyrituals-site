@@ -10,6 +10,7 @@ import { getLines, onCart, subtotal, type Line } from '../cart';
 import { FREE_SHIPPING_THRESHOLD } from '../config';
 import { classify, loadCatalogue, money, type Item } from '../wix';
 import { esc } from '../ui';
+import { isBuyable, scentDef, scentKey } from '../data/scents';
 
 /** Draft ladder (confirm with Claire): the share off the whole order once the cart holds this many items. */
 export const ITEM_TIERS: { items: number; pct: number }[] = [{ items: 2, pct: 10 }, { items: 3, pct: 15 }];
@@ -31,7 +32,7 @@ export function offerState(lines: Line[], cat: Item[] | null = catalogue): State
   const saving = Math.round(spend * pct) / 100;
   const byScent = new Map<string, Set<string>>();
   for (const l of lines) {
-    const { scent, format } = classify(l.name, []);
+    const c = classify(l.name, []), format = c.format, scent = scentDef(c.scent)?.name ?? c.scent; // ("Amber + Rose" is the list's Amber & Rose)
     if (!FORMAT_ORDER.includes(format)) continue;
     byScent.set(scent, (byScent.get(scent) ?? new Set()).add(format));
   }
@@ -42,7 +43,7 @@ export function offerState(lines: Line[], cat: Item[] | null = catalogue): State
     else if (cat) {
       // one format so far: the nearest way to a Ritual Pair is this scent's roller (or its candle, for a roller or diffuser)
       const want = formats[0] === 'candle' ? 'roller' : 'candle';
-      const sib = cat.find(i => i.scent === scent && i.format === want && i.inStock && i.priceMin > 0 && !/-need-pics$/.test(i.slug));
+      const sib = cat.find(i => scentKey(i.scent) === scentKey(scent) && i.format === want && isBuyable(i));
       if (sib) combos.push({ scent, formats, name: '', missing: sib });
     }
   }

@@ -9,6 +9,7 @@
 import { LAUNCHED } from './config';
 import { currentRoute } from './router';
 import { loadCatalogue, type Item } from './wix';
+import { FAMILIES } from './data/scents';
 import { ARTICLES } from './pages/journal';
 
 const SITE = 'Daily Rituals Co.';
@@ -28,7 +29,7 @@ const HOME_DESC = 'Hand-poured scents and mindful rituals for every part of your
 const PAGES: Record<string, Page> = {
   '': { title: HOME_TITLE, description: HOME_DESC },
   shop: { title: `Shop candles, rollers & diffusers · ${SITE}`, description: 'Every scent comes in more than one format, so you can wear it, diffuse it and light it. Explore by scent, build a ritual or browse everything.' },
-  explore: { title: `Find your scent · ${SITE}`, description: 'Two ways in: read the scent atlas, where every mood is a constellation and every star a scent, or answer four quick questions.' },
+  explore: { title: `Find your scent · ${SITE}`, description: 'Two ways in: explore the Scent Sky, where each of ten scent families is a constellation and every star a scent, or answer four quick questions.' },
   coaching: { title: `Neuro coaching with Claire · ${SITE}`, description: 'Neuro coaching helps you build new responses through small, repeatable daily practice. The first call is free.' },
   book: { title: `Book your free discovery call · ${SITE}`, description: 'A free 20-minute call with Claire to talk about your goals and whether neuro coaching is a fit.' },
   subscribe: { title: `Ritual on Repeat · ${SITE}`, description: 'Coming soon: the scents that shape your day, sent before you run out. It is not open yet.' },
@@ -97,7 +98,7 @@ async function resolve(): Promise<Resolved> {
     let items: Item[] = [];
     try { items = await loadCatalogue(); } catch { /* no catalogue: the page is generic */ }
     const it = items.find(i => i.slug === slug);
-    if (!it) return { ...base, title: /deodorant/i.test(slug) ? `Not available right now · ${SITE}` : `Product · ${SITE}`, description: HOME_DESC, path: `/product/${encodeURIComponent(slug)}` };
+    if (!it) return { ...base, title: /^(roller|diffuser|candle)-/.test(slug) ? `Product · ${SITE}` : `Not available right now · ${SITE}`, description: HOME_DESC, path: `/product/${encodeURIComponent(slug)}` };
     const about = it.description.trim() || aboutOnPage();
     const description = clip(about ? (about.toLowerCase().includes(it.scent.toLowerCase()) ? about : `${it.name}. ${about}`) : `${it.name}${it.sizeLabel ? `, ${it.sizeLabel}` : ''}. Made in small batches in British Columbia.`);
     return { ...base, title: `${it.name} · ${SITE}`, description, path: `/product/${encodeURIComponent(it.slug)}`, image: it.image || base.image, imageAlt: it.name, product: it };
@@ -139,7 +140,7 @@ export async function applySeo() {
     const offers = it.priceMin === it.priceMax
       ? { '@type': 'Offer', url, priceCurrency: cur, price: it.priceMin.toFixed(2), availability }
       : { '@type': 'AggregateOffer', url, priceCurrency: cur, lowPrice: it.priceMin.toFixed(2), highPrice: it.priceMax.toFixed(2), availability };
-    graph.push({ '@type': 'Product', '@id': `${url}#product`, name: it.name, description: r.description, url, image: it.image ? [it.image] : undefined, brand: { '@id': org['@id'] }, offers });
+    graph.push({ '@type': 'Product', '@id': `${url}#product`, name: it.name, description: r.description, url, category: it.families.length ? it.families.map(f => FAMILIES[f].label).join(', ') : undefined, image: it.image ? [it.image] : undefined, brand: { '@id': org['@id'] }, offers });
   }
   jsonLd(graph);
 }

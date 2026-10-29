@@ -2,10 +2,8 @@ import { createClient, OAuthStrategy, media } from '@wix/sdk';
 import { productsV3, readOnlyVariantsV3 } from '@wix/stores';
 import { currentCartV2 } from '@wix/ecom';
 import { redirects } from '@wix/redirects';
-import {
-  WIX_CLIENT_ID, SCENT_MOOD, FORMAT_LABEL, SHOW_DEODORANT,
-  type Format, type Mood,
-} from './config';
+import { WIX_CLIENT_ID, FORMAT_LABEL, SHOW_DEODORANT, type Format } from './config';
+import { familiesOf, onList, scentDef, scentKey, type Family } from './data/scents';
 
 // One visitor client for the whole site (non-Astro path: manual OAuthStrategy, clientId only).
 // Visitor tokens are kept in sessionStorage so a refresh keeps the same visitor (and cart).
@@ -65,7 +63,8 @@ export interface Item {
   format: Format;
   formatLabel: string;
   sizeLabel: string;
-  mood?: Mood;
+  /** the scent's families from the owner's list (src/data/scents.ts), leading family first; empty when not on the list */
+  families: Family[];
   priceMin: number;
   priceMax: number;
   image: string;
@@ -107,17 +106,18 @@ export function toItem(p: any): Item {
     .filter((c: any) => c.visible !== false)
     .map((c: any) => ({ name: c.name, inStock: c.inStock !== false }));
   const { scent, format } = classify(p.name, choices.map(c => c.name));
-  const mood = SCENT_MOOD[scent.toLowerCase()];
+  // the list's spelling of the scent ("Amber + Rose" in Wix is "Amber & Rose" on the list)
+  const listed = scentDef(scent);
   const main = p.media?.main;
   return {
     id: p._id,
     slug: p.slug,
     name: p.name,
-    scent,
+    scent: listed?.name ?? scent,
     format,
     formatLabel: FORMAT_LABEL[format],
     sizeLabel: sizeLabelFor(format, choices.map(c => c.name)),
-    mood,
+    families: familiesOf(scent),
     priceMin: Number(p.actualPriceRange?.minValue?.amount ?? 0),
     priceMax: Number(p.actualPriceRange?.maxValue?.amount ?? 0),
     image: imgSrc(main, 900, 1125),
@@ -134,7 +134,14 @@ export function toItem(p: any): Item {
 export const PRODUCT_FIELDS = ['CURRENCY', 'PLAIN_DESCRIPTION'] as const;
 
 let catalogue: Promise<Item[]> | null = null;
-/** Every visible product in the live store (a visitor token only sees visible products). */
+/**
+ * A live product the site may show: its scent and format are on the owner's list (src/data/scents.ts). Everything else in
+ * Wix (Licorice Sweets, Fleur de Lilac, ...) is hidden site-wide: shop, product pages, search, sitemap, quiz and gifts all
+ * read the catalogue through this. The natural deodorant is not on the list; SHOW_DEODORANT still brings it back.
+ */
+export const allowed = (i: Pick<Item, 'scent' | 'format'>) => onList(i.scent, i.format) || (SHOW_DEODORANT && i.format === 'deodorant');
+
+/** Every visible product in the live store that is on the owner's list (a visitor token only sees visible products). */
 export function loadCatalogue(): Promise<Item[]> {
   if (!catalogue) {
     catalogue = (async () => {
@@ -143,7 +150,7 @@ export function loadCatalogue(): Promise<Item[]> {
       out.push(...res.items.map(toItem));
       while (res.hasNext()) { res = await res.next(); out.push(...res.items.map(toItem)); }
       saveTokens();
-      return SHOW_DEODORANT ? out : out.filter(i => i.format !== 'deodorant');
+      return out.filter(allowed);
     })().catch(err => { catalogue = null; throw err; });
   }
   return catalogue;
@@ -158,7 +165,7 @@ export async function loadProduct(slug: string) {
 
 /** Find the live product for a scent + format (used to bind canvas cards to the live catalogue). */
 export function findLive(items: Item[], scent: string, format: Format): Item | undefined {
-  const s = scent.toLowerCase().replace(/\band\b/g, '&').replace(/\s+/g, ' ').trim();
-  return items.find(i => i.format === format && i.scent.toLowerCase() === s);
+  const s = scentKey(scent);
+  return items.find(i => i.format === format && scentKey(i.scent) === s);
 }
 

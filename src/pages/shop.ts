@@ -1,11 +1,12 @@
 import Shop from '../canvas/pages/Shop.html?raw';
 import { loadCatalogue, loadProduct, money, type Item } from '../wix';
-import { esc, fixImages, cardImg, skeletonCards, errorBox, wireCommon, priceText, productHref, toastAdded } from '../ui';
+import { esc, fixImages, cardImg, skeletonCards, errorBox, wireCommon, priceText, productHref, toastAdded, familiesHTML, familyTone } from '../ui';
 import { wireNotify } from './shared';
 import { add } from '../cart';
 import { cardOrbit } from '../celestial';
 import { navigate } from '../router';
-import { MOODS, FORMAT_LABEL, SHOW_DEODORANT, type Mood, type Format } from '../config';
+import { FORMAT_LABEL, SHOW_DEODORANT, type Format } from '../config';
+import { FAMILIES, SCENTS, familyList, isFamily, offersOf, scentKey, type Family, type ScentDef } from '../data/scents';
 import { mountOffers } from './offers';
 import '../shop.css';
 
@@ -33,7 +34,7 @@ function conceptCards(): string {
         if (cp.srcset) { pic.setAttribute('srcset', cp.srcset); pic.setAttribute('sizes', '(max-width: 820px) 46vw, 300px'); }
         pic.setAttribute('width', String(cp.w)); pic.setAttribute('height', String(cp.h)); pic.setAttribute('loading', 'lazy'); pic.setAttribute('decoding', 'async');
       }
-      // there is no Discovery Kit page yet: its picture and name lead to the scent atlas, the closest real thing
+      // there is no Discovery Kit page yet: its picture and name lead to the Scent Sky, the closest real thing
       if (href === '#/discovery') card.querySelectorAll('a[href="#/discovery"]').forEach(a => a.setAttribute('href', '#/explore'));
       card.querySelector('.ph')?.insertAdjacentHTML('beforeend', '<span class="concept-tag">Concept · not in store yet</span>');
       out.push(card.outerHTML);
@@ -65,30 +66,46 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   let f = (params.get('f') ?? 'all') as Format | 'all';
   // the natural deodorant is hidden for now (SHOW_DEODORANT in config.ts): no chip for it, and an old ?f=deodorant link shows everything
   if (!SHOW_DEODORANT) { if (f === 'deodorant') f = 'all'; app.querySelectorAll('.toolbar a.chip[href*="f=deodorant"]').forEach(a => a.remove()); }
-  const m = (params.get('m') ?? 'all') as Mood | 'all';
+  // the scent family (src/data/scents.ts); an unknown or old mood address shows every family
+  const fp = params.get('fam');
+  const m: Family | 'all' = isFamily(fp) ? fp : 'all';
   const s = params.get('s') ?? 'featured';
 
   // breadcrumbs name the filter you are in; the phone shortcut row (Candles · Rollers · Diffusers · Gifts) sits under the title
   const FMT_NAME: Record<Format, string> = { candle: 'Candles', roller: 'Fragrance rollers', diffuser: 'Mini diffusers', deodorant: 'Natural deodorant' };
   if (f !== 'all') app.querySelector('.phead .crumbs')!.innerHTML = `<a href="#/">Home</a> / <a href="#/shop">Shop</a> / ${FMT_NAME[f]}`;
-  const jump: [string, string, string][] = [['candle', 'Candles', '#/shop?f=candle&m=all&s=featured'], ['roller', 'Rollers', '#/shop?f=roller&m=all&s=featured'], ['diffuser', 'Diffusers', '#/shop?f=diffuser&m=all&s=featured'], ['gift', 'Gifts', '#/gift']];
+  const jump: [string, string, string][] = [['candle', 'Candles', '#/shop?f=candle&fam=all&s=featured'], ['roller', 'Rollers', '#/shop?f=roller&fam=all&s=featured'], ['diffuser', 'Diffusers', '#/shop?f=diffuser&fam=all&s=featured'], ['gift', 'Gifts', '#/gift']];
   app.querySelector('.ways.two')?.insertAdjacentHTML('beforebegin', `<nav class="shop-jump" aria-label="Shop by type">${jump.map(([k, label, href]) =>
     `<a href="${href}"${k === f ? ' aria-current="page"' : ''}><span class="sj-ic">${glyph(k)}</span><span>${label}</span></a>`).join('')}</nav>`);
 
+  // the family chips replace the canvas's old mood row: All and the ten families of the owner's list, each in its colour
+  const rows = app.querySelectorAll<HTMLElement>('.toolbar .chips');
+  // (the canvas keeps the sort inside that row: it is moved out first, and placed with the product count below)
+  const keep = [...(rows[1]?.querySelectorAll('label[for="sort"], #sort') ?? [])];
+  rows[1]?.after(...keep);
+  rows[1]?.replaceWith(Object.assign(document.createElement('div'), {
+    className: 'chips fam-chips',
+    innerHTML: `<a class="chip" href="#/shop?f=all&fam=all&s=featured">All families</a>${familyList().map(x =>
+      `<a class="chip" data-family="${x.key}" href="#/shop?f=all&fam=${x.key}&s=featured"><span class="swatch" style="background:${x.swatch}" aria-hidden="true"></span>${esc(x.label)}</a>`).join('')}`,
+  }));
+  app.querySelector('.toolbar .fam-chips')?.setAttribute('role', 'group');
+  app.querySelector('.toolbar .fam-chips')?.setAttribute('aria-label', 'Scent families');
+  app.querySelector('.toolbar .chips')?.setAttribute('aria-label', 'Formats');
+  app.querySelector('.toolbar .chips')?.setAttribute('role', 'group');
   app.querySelectorAll<HTMLAnchorElement>('.toolbar a.chip').forEach(a => {
     const p = new URLSearchParams(a.getAttribute('href')!.split('?')[1]);
-    const af = p.get('f') ?? 'all', am = p.get('m') ?? 'all';
-    const isFormat = am === 'all' && a.closest('.chips') === app.querySelector('.toolbar .chips');
-    const pressed = isFormat ? af === f && (f !== 'all' || m === 'all') : am === m;
+    const af = p.get('f') ?? 'all', am = p.get('fam') ?? 'all';
+    const isFormat = !a.closest('.fam-chips');
+    const pressed = isFormat ? af === f : am === m;
     a.setAttribute('aria-pressed', String(pressed));
     // keep the other filter when switching one
-    const np = new URLSearchParams({ f: isFormat ? af : f, m: isFormat ? m : am, s });
+    const np = new URLSearchParams({ f: isFormat ? af : f, fam: isFormat ? m : am, s });
     a.setAttribute('href', `#/shop?${np}`);
   });
   const sort = app.querySelector<HTMLSelectElement>('#sort');
   if (sort) {
     sort.value = s;
-    sort.addEventListener('change', () => { navigate(`/shop?${new URLSearchParams({ f, m, s: sort.value })}`); });
+    sort.addEventListener('change', () => { navigate(`/shop?${new URLSearchParams({ f, fam: m, s: sort.value })}`); });
   }
 
   const grid = app.querySelector<HTMLElement>('.grid')!;
@@ -100,14 +117,15 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   try { items = await loadCatalogue(); } catch (e) { grid.innerHTML = errorBox(String((e as Error).message ?? e)); return; }
 
   // the products that match the filters (the count names these), then one card per scent for them
-  const list = items.filter(i => (f === 'all' || i.format === f) && (m === 'all' || i.mood === m));
+  // (a product appears under every family it belongs to)
+  const list = items.filter(i => (f === 'all' || i.format === f) && (m === 'all' || i.families.includes(m)));
   const scents = scentGroups(items)
-    .filter(g => (f === 'all' || g.items.some(i => i.format === f)) && (m === 'all' || g.mood === m))
+    .filter(g => (f === 'all' || g.items.some(i => i.format === f)) && (m === 'all' || g.families.includes(m)))
     // a format filter opens each card on that format; otherwise on its first format (candle, roller, diffuser) in stock
     .map(g => ({ ...g, sel: (f !== 'all' && g.items.find(i => i.format === f)) || g.items.find(i => i.inStock) || g.items[0] }));
   if (s === 'low') scents.sort((a, b) => a.sel.priceMin - b.sel.priceMin || a.scent.localeCompare(b.scent));
   else if (s === 'high') scents.sort((a, b) => b.sel.priceMin - a.sel.priceMin || a.scent.localeCompare(b.scent));
-  else scents.sort((a, b) => a.scent.localeCompare(b.scent));
+  else scents.sort((a, b) => listIndex(a.scent) - listIndex(b.scent) || a.scent.localeCompare(b.scent));
 
   const showConcepts = f === 'all' && m === 'all';
   const GROUP: Record<Format, [string, string]> = {
@@ -124,22 +142,27 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
   };
   const n = (k: number) => `${k} scent${k === 1 ? '' : 's'}`;
   const formatHead = (fm: Format, k: number, cards: number, more: boolean) => `<header class="ghead g${k % 4}">${FORMAT_PHOTO[fm] ?? ''}<span class="eyebrow">${GROUP[fm][0]}</span><h2>${more ? `<span class="d">More ${FORMAT_LABEL[fm].toLowerCase()}s</span>` : `${FORMAT_LABEL[fm]}s`}</h2><span class="gc">${cards === 1 ? 'Choose your scent' : n(cards)}</span><p class="muted">${GROUP[fm][1]}</p></header>`;
-  const moodHead = (md: Mood, cards: number) => `<header class="ghead gmood" style="--mw:${MOODS[md].swatch}"><span class="eyebrow"><span class="swatch" style="background:${MOODS[md].swatch}"></span><span class="d">Scent family</span></span><h2>${MOODS[md].label}</h2><span class="gc">${n(cards)}</span></header>`;
+  const famHead = (fm: Family, cards: number) => `<header class="ghead gfam" data-family="${fm}" style="--mw:${FAMILIES[fm].swatch}"><span class="eyebrow"><span class="swatch" style="background:${FAMILIES[fm].swatch}"></span>Scent family</span><h2>${esc(FAMILIES[fm].label)}</h2><span class="gc">${n(cards)}</span><p class="muted"><span class="d">${esc(FAMILIES[fm].desc)}</span></p></header>`;
+  // the scents on the owner's list that the shop cannot sell yet (in this family and format): shown as "Coming soon",
+  // with no price, no photograph and no Add to cart. Each becomes a normal card by itself once it is in Wix and in stock.
+  const soon = SCENTS.filter(d => (m === 'all' || d.families.includes(m)) && offersOf(d, items).some(o => !o.item && (f === 'all' || o.format === f))
+    && !(f === 'all' && offersOf(d, items).some(o => o.item)));
+  const soonHead = soon.length ? `<header class="ghead soon" id="shopSoon"><span class="eyebrow">Coming soon</span><h2>${m === 'all' ? 'More scents on the way' : `More ${esc(FAMILIES[m].label.toLowerCase())} on the way`}</h2><span class="gc">${n(soon.length)}</span><p class="muted"><span class="d">On our list and not in the shop yet. No prices until they are.</span></p></header>${soon.map(d => soonCard(d, f)).join('')}` : '';
   grid.classList.toggle('grouped', s === 'featured');
   let html = '';
   if (s === 'featured' && f === 'all') {
-    // every scent once, under its scent family; scents with no family yet (and the deodorant) follow under their format
-    (Object.keys(MOODS) as Mood[]).forEach(md => { const g = scents.filter(x => x.mood === md); if (g.length) html += moodHead(md, g.length) + g.map(scentCard).join(''); });
-    const rest = scents.filter(x => !x.mood), shown = new Set(scents.filter(x => x.mood).map(x => x.sel.format));
-    FORMAT_ORDER.filter(fm => rest.some(x => x.sel.format === fm)).forEach((fm, k) => { const g = rest.filter(x => x.sel.format === fm); html += formatHead(fm, k, g.length, shown.has(fm)) + g.map(scentCard).join(''); });
+    // every scent once, in the owner's list order; a family filter puts the family's name and line above its scents
+    if (scents.length) html = (m !== 'all' ? famHead(m, scents.length) : '') + scents.map(scentCard).join('');
+    html += soonHead;
     if (showConcepts) html += `<header class="ghead soon"><span class="eyebrow">Coming soon</span><h2>Kits and boxes</h2><p class="muted">Ideas we are getting ready. Not in the store yet.</p></header>${concepts}`;
   } else if (s === 'featured') {
     if (scents.length) html = formatHead(f as Format, FORMAT_ORDER.indexOf(f as Format), scents.length, false) + scents.map(scentCard).join('');
-  } else html = scents.map(scentCard).join('') + (showConcepts ? concepts : '');
+    html += soonHead;
+  } else html = scents.map(scentCard).join('') + soonHead + (showConcepts ? concepts : '');
   grid.innerHTML = html;
-  if (!scents.length) grid.insertAdjacentHTML('afterbegin', `<div class="shop-none"><p class="muted">Nothing matches ${m !== 'all' ? MOODS[m].label.toLowerCase() : 'that filter'} right now.</p><div class="cta"><a class="btn line" href="#/shop">See everything</a><a class="btn line" href="#/explore?tab=quiz">Take the scent quiz</a></div></div>`);
+  if (!scents.length) grid.insertAdjacentHTML('afterbegin', `<div class="shop-none"><p class="muted">Nothing ${m !== 'all' ? `in ${esc(FAMILIES[m].label.toLowerCase())}` : 'matches that filter'} can be bought right now.</p><div class="cta"><a class="btn line" href="#/shop">See everything</a><a class="btn line" href="#/explore?tab=quiz">Take the scent quiz</a></div></div>`);
   if (countEl) {
-    countEl.textContent = `${list.length} product${list.length === 1 ? '' : 's'} · ${matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth > 820 ? 'Hover over a product to see its scent family' : 'Tap a product for its scent and sizes'}`;
+    countEl.textContent = `${list.length} product${list.length === 1 ? '' : 's'} · ${matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth > 820 ? 'Every card names its scent families' : 'Tap a product for its scent and sizes'}`;
     // the sort sits with the count, where it is easy to find on a phone (not at the end of a sideways row of chips)
     const row = countEl.parentElement!; row.classList.add('shop-count');
     if (sort) row.append(...[app.querySelector('label[for="sort"]'), sort].filter((x): x is HTMLElement => !!x));
@@ -150,21 +173,21 @@ export async function renderShop(app: HTMLElement, params: URLSearchParams) {
 
 // ---------- one card per scent ----------
 const FORMAT_ORDER: Format[] = ['candle', 'roller', 'diffuser', 'deodorant'];
-/** The mood colours lifted for the star at the top of the card's orbit ring (as in ui.ts cardHTML). */
-const STAR: Record<Mood, string> = { fresh: '#A3C8C0', sunny: '#ECB76A', floral: '#CF8A7D', woody: '#C09571', grounding: '#8EAA86' };
-interface ScentGroup { key: string; scent: string; mood?: Mood; items: Item[] }
+interface ScentGroup { key: string; scent: string; families: Family[]; items: Item[] }
+/** Where a scent sits on the owner's list (the shop's "featured" order). */
+const listIndex = (scent: string) => { const k = SCENTS.findIndex(d => scentKey(d.name) === scentKey(scent)); return k < 0 ? 999 : k; };
 
 /**
  * The catalogue as scents: a scent's candle, roller and diffuser share one card (grouped by scent name, as the product
- * page's "Also in" row and the scent atlas do). Products that are not a scent in several formats (the natural deodorant,
+ * page's "Also in" row and the Scent Sky do). Products that are not a scent in several formats (the natural deodorant,
  * whose choice is its scent) keep a card of their own.
  */
 function scentGroups(items: Item[]): ScentGroup[] {
   const by = new Map<string, ScentGroup>();
   items.forEach(i => {
     const key = i.format === 'deodorant' ? `id:${i.id}` : i.scent.toLowerCase();
-    const g = by.get(key) ?? { key, scent: i.scent, mood: i.mood, items: [] };
-    g.items.push(i); g.mood ??= i.mood; by.set(key, g);
+    const g = by.get(key) ?? { key, scent: i.scent, families: i.families, items: [] };
+    g.items.push(i); by.set(key, g);
   });
   by.forEach(g => g.items.sort((a, b) => FORMAT_ORDER.indexOf(a.format) - FORMAT_ORDER.indexOf(b.format)));
   return [...by.values()];
@@ -217,23 +240,38 @@ function addHTML(i: Item, price?: number): string {
   return `<button type="button" class="sc-add" data-qa="${i.id}"${c ? ` data-choice="${esc(c.name)}"` : ''}><span class="sa-a">Quick add</span>${b ? `<span class="sa-dot" aria-hidden="true"> · </span><span class="sa-b">${esc(b)}</span>` : ''}</button>`;
 }
 
+/** A scent on the list that cannot be bought yet: its name, families and formats, "Coming soon", and a way to it in the Sky. */
+function soonCard(d: ScentDef, f: Format | 'all'): string {
+  const fmts = d.formats.filter(x => f === 'all' || x === f).map(x => fmtWord(x));
+  return `<div class="card scard soon" data-scent="${esc(scentKey(d.name))}" data-soon="1" data-families="${d.families.join(' ')}"${familyTone(d.families)}>
+    <a class="sc-ph soon-ph" href="#/explore?scent=${d.id}" aria-label="${esc(d.name)} in the Scent Sky"><span class="soon-sky" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34"><path fill="currentColor" d="M12 1.5C12.7 8.3 15.7 11.3 22.5 12C15.7 12.7 12.7 15.7 12 22.5C11.3 15.7 8.3 12.7 1.5 12C8.3 11.3 11.3 8.3 12 1.5Z"/></svg></span><span class="soon-tag">Coming soon</span></a>
+    <div class="meta"><h3>${esc(d.name)}</h3><span class="sc-price soon-note">Coming soon</span></div>
+    ${familiesHTML(d.families, 'fams card-fams')}
+    <div class="sub"><span class="sc-sub">${esc(fmts.join(' · '))}</span></div>
+  </div>`;
+}
+
 function scentCard(g: ScentGroup & { sel: Item }): string {
-  const i = g.sel, mood = g.mood ? MOODS[g.mood] : undefined;
-  const tone = mood ? ` style="--mood-c:${mood.swatch};--mood-s:${STAR[g.mood!]}"` : '';
+  const i = g.sel;
+  const tone = familyTone(g.families);
+  // a format on the list that Wix does not sell yet is named, without a price
+  const def = SCENTS.find(d => scentKey(d.name) === g.key);
+  const later = def ? def.formats.filter(x => !g.items.some(it => it.format === x)).map(x => fmtWord(x).toLowerCase()) : [];
   const chips = g.items.length > 1
     ? `<div class="sc-fmts" role="group" aria-label="${esc(g.scent)} formats">${g.items.map(x =>
       `<button type="button" class="sc-fmt" data-pick="${x.id}" aria-pressed="${x.id === i.id}" aria-label="${esc(fmtWord(x.format))}">${GLYPH[x.format] ? glyph(x.format, 20) : ''}<span class="sc-fl">${esc(fmtWord(x.format))}</span></button>`).join('')}</div>`
     : '';
-  return `<div class="card scard" data-scent="${esc(g.key)}" data-sel="${i.id}" data-format="${i.format}" data-formats="${g.items.map(x => x.format).join(' ')}" data-mood="${g.mood ?? ''}"${tone}>
+  return `<div class="card scard" data-scent="${esc(g.key)}" data-sel="${i.id}" data-format="${i.format}" data-formats="${g.items.map(x => x.format).join(' ')}" data-families="${g.families.join(' ')}"${tone}>
     <div class="ph">${i.inStock ? '' : '<span class="badge">Sold out</span>'}
       <a class="sc-ph" href="${productHref(i)}" aria-label="${esc(i.name)}">${i.image ? cardImg(i) : ''}</a>
       ${cardOrbit()}
     </div>
     <a class="sc-link" href="${productHref(i)}">
       <div class="meta"><h3>${esc(g.scent)}</h3><span class="sc-price">${priceText(i)}</span></div>
-      <div class="sub">${mood ? `<span class="swatch" style="background:${mood.swatch}"></span>` : ''}<span class="sc-sub">${subText(i)}</span></div>
+      <div class="sub"><span class="sc-sub">${subText(i)}</span></div>
     </a>
-    <div class="sc-foot">${chips}${addHTML(i, knownPrice(i))}</div>
+    ${familiesHTML(g.families, 'fams card-fams')}
+    <div class="sc-foot">${chips}${later.length ? `<span class="sc-later small muted">${esc(later.join(' and ').replace(/^./, c => c.toUpperCase()))} coming soon</span>` : ''}${addHTML(i, knownPrice(i))}</div>
   </div>`;
 }
 

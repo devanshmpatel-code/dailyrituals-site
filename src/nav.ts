@@ -5,43 +5,45 @@
 //    page scrim. Modelled on Apple's globalnav and the WAI-ARIA APG disclosure-navigation pattern:
 //    aria-expanded + aria-controls, Esc closes and refocuses the button, focus leaving the item closes it.
 //  - Phones: a full-screen night-sky overlay (role=dialog, aria-modal, focus trapped, page inert, scroll locked)
-//    with large serif rows, accordions and the five-mood constellation.
-//  - Product pages: an Apple-style sticky local nav (name + mood mark, scroll-spied section links, an
+//    with large serif rows, accordions and the ten-family constellation.
+//  - Product pages: an Apple-style sticky local nav (name + family mark, scroll-spied section links, an
 //    "Add to cart · $X" pill that drives the page's real add button). Transparent at rest, frosted once stuck.
 //
 // Timing lives in CSS custom properties (nav.css) so reduced motion is one override and JS reads the same values.
 // Every route used here exists in main.ts's switch, static.ts's PAGES or the pages' own query handling.
 import './nav.css';
-import { MOODS, SHOW_DEODORANT, type Mood } from './config';
+import { SHOW_DEODORANT } from './config';
+import { FAMILIES, FAMILY_ORDER, type Family } from './data/scents';
 import { esc, lockBackground } from './ui';
 
-const MOOD_KEYS = Object.keys(MOODS) as Mood[];
-/** Lifted "star" variants of the mood swatches so a small star still reads on night blue (celestial brief, §3a). */
-const STAR: Record<Mood, string> = { fresh: '#A3C8C0', sunny: '#ECB76A', floral: '#CF8A7D', woody: '#C09571', grounding: '#8EAA86' };
-/** Where the five stars sit in the constellation (a layout choice in a 240 x 170 box, not a claim about any scent). */
-const CST: Record<Mood, [number, number]> = { fresh: [34, 50], sunny: [116, 22], woody: [208, 60], grounding: [166, 144], floral: [74, 128] };
-const CST_LINES: [Mood, Mood][] = [['fresh', 'sunny'], ['sunny', 'woody'], ['woody', 'grounding'], ['grounding', 'floral'], ['floral', 'fresh']];
+/** Where the ten family stars sit in the constellation (a layout choice in a 240 x 170 box, not a claim about any scent):
+ *  two gentle arcs, cool to warm, each star a 44px target. */
+const CST: Record<Family, [number, number]> = {
+  marine: [28, 44], citrus: [76, 22], fruity: [126, 30], floral: [176, 18], green: [218, 52],
+  aromatic: [30, 116], woody: [78, 146], amber: [128, 120], gourmand: [176, 150], spicy: [216, 116],
+};
+const CST_LINES: [Family, Family][] = [['marine', 'citrus'], ['citrus', 'fruity'], ['fruity', 'floral'], ['floral', 'green'], ['green', 'spicy'], ['aromatic', 'woody'], ['woody', 'amber'], ['amber', 'gourmand'], ['gourmand', 'spicy'], ['aromatic', 'marine']];
 
-interface Link { label: string; href: string; mood?: Mood }
-interface Column { title?: string; kind?: 'elevated' | 'moods' | 'list'; links: Link[]; /** left out of the phone accordion (its links are rows of their own there) */ phone?: false }
+interface Link { label: string; href: string; family?: Family }
+interface Column { title?: string; kind?: 'elevated' | 'families' | 'list'; links: Link[]; /** left out of the phone accordion (its links are rows of their own there) */ phone?: false }
 interface Entry { id: string; label: string; href: string; columns?: Column[]; constellation?: boolean }
 
-const moodLinks = (href: (m: Mood) => string): Link[] => MOOD_KEYS.map(m => ({ label: MOODS[m].label, href: href(m), mood: m }));
+const familyLinks = (href: (f: Family) => string): Link[] => FAMILY_ORDER.map(f => ({ label: FAMILIES[f].label, href: href(f), family: f }));
 
 // Link labels reuse names already on the site (page titles, footer, shop groups, the home hero). The column
-// headings "By mood", "More", "Start from a mood", "Still unsure?" and "About" are new: draft for Claire.
+// headings "By family", "More", "Start from a family", "Still unsure?" and "About" are new: draft for Claire.
 const MENU: Entry[] = [
   {
     id: 'shop', label: 'Shop', href: '#/shop', constellation: true, columns: [
       { kind: 'elevated', links: [{ label: 'Shop all', href: '#/shop' }, { label: 'Fragrance rollers', href: '#/shop?f=roller' }, { label: 'Mini diffusers', href: '#/shop?f=diffuser' }, { label: 'Candles', href: '#/shop?f=candle' }, ...(SHOW_DEODORANT ? [{ label: 'Natural deodorant', href: '#/shop?f=deodorant' }] : [])] },
-      { title: 'By mood', kind: 'moods', links: moodLinks(m => `#/shop?f=all&m=${m}&s=featured`) },
+      { title: 'By family', kind: 'families', links: familyLinks(f => `#/shop?f=all&fam=${f}&s=featured`) },
       { title: 'More', phone: false, links: [{ label: 'Ritual on Repeat', href: '#/subscribe' }, { label: 'Moon Drops', href: '#/drops' }, { label: 'Send a Sky', href: '#/gift' }, { label: 'The Journal', href: '#/journal' }, { label: 'The Ritualists', href: '#/club' }, { label: 'Ritual Wall', href: '#/wall' }] },
     ],
   },
   {
     id: 'explore', label: 'Find your scent', href: '#/explore', columns: [
-      { kind: 'elevated', links: [{ label: 'Scent atlas', href: '#/explore' }, { label: 'Take the quiz', href: '#/explore?tab=quiz' }] },
-      { title: 'Start from a mood', kind: 'moods', links: moodLinks(m => `#/explore?mood=${m}`) },
+      { kind: 'elevated', links: [{ label: 'Scent Sky', href: '#/explore' }, { label: 'Take the quiz', href: '#/explore?tab=quiz' }] },
+      { title: 'Start from a family', kind: 'families', links: familyLinks(f => `#/explore?family=${f}`) },
       { title: 'Still unsure?', links: [{ label: 'Free 20-minute discovery call', href: '#/book' }, { label: 'Help and contact', href: '#/help' }] },
     ],
   },
@@ -73,12 +75,12 @@ export const starGlyph = (color: string, size = 12, cls = 'star') =>
   `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="${color}" d="M12 1.5C12.7 8.3 15.7 11.3 22.5 12C15.7 12.7 12.7 15.7 12 22.5C11.3 15.7 8.3 12.7 1.5 12C8.3 11.3 11.3 8.3 12 1.5Z"/></svg>`;
 const chevron = '<svg class="chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-/** The five moods as a constellation: stars joined by hairlines that draw themselves; each star links to its mood on the atlas. */
+/** The ten scent families as a constellation: stars joined by hairlines that draw themselves; each star opens its family in the Scent Sky. */
 export function constellationHTML(extraClass = '', g = 0): string {
   const lines = CST_LINES.map(([a, b], i) => `<line x1="${CST[a][0]}" y1="${CST[a][1]}" x2="${CST[b][0]}" y2="${CST[b][1]}" pathLength="1" style="--i:${i}"/>`).join('');
-  const stars = MOOD_KEYS.map((m, i) => `<a class="cst-star" href="#/explore?mood=${m}" style="--x:${(CST[m][0] / 240 * 100).toFixed(1)}%;--y:${(CST[m][1] / 170 * 100).toFixed(1)}%;--c:${STAR[m]};--i:${i}">${starGlyph('currentColor', 16)}<span class="cst-name">${esc(MOODS[m].label)}</span></a>`).join('');
+  const stars = FAMILY_ORDER.map((f, i) => `<a class="cst-star" href="#/explore?family=${f}" style="--x:${(CST[f][0] / 240 * 100).toFixed(1)}%;--y:${(CST[f][1] / 170 * 100).toFixed(1)}%;--c:${FAMILIES[f].star};--i:${i}">${starGlyph('currentColor', 14)}<span class="cst-name">${esc(FAMILIES[f].label)}</span></a>`).join('');
   // draft for Claire: the caption under the constellation
-  return `<div class="cst ${extraClass}" style="--g:${g}"><div class="cst-sky"><svg class="cst-lines" viewBox="0 0 240 170" aria-hidden="true" focusable="false">${lines}</svg>${stars}</div><span class="cst-cap">Five moods. Follow a star to see its scents on the atlas.</span></div>`;
+  return `<div class="cst ${extraClass}" style="--g:${g}"><div class="cst-sky"><svg class="cst-lines" viewBox="0 0 240 170" aria-hidden="true" focusable="false">${lines}</svg>${stars}</div><span class="cst-cap"><span class="d">Ten scent families. Follow a star to see its scents in the Scent Sky.</span></span></div>`;
 }
 
 // ---------------------------------------------------------------- desktop flyouts
@@ -88,7 +90,7 @@ let mainnav: HTMLElement | null = null, scrim: HTMLElement | null = null;
 let openId: string | null = null, openTimer = 0, closeTimer = 0;
 
 function linkHTML(l: Link, i: number, cls: string) {
-  return `<li class="gn-pi" style="--i:${i}"><a class="${cls}" href="${l.href}">${l.mood ? starGlyph(MOODS[l.mood].swatch, 12, 'star moodstar') : ''}<span>${esc(l.label)}</span></a></li>`;
+  return `<li class="gn-pi" style="--i:${i}"><a class="${cls}" href="${l.href}">${l.family ? starGlyph(FAMILIES[l.family].swatch, 12, 'star famstar') : ''}<span>${esc(l.label)}</span></a></li>`;
 }
 function panelHTML(e: Entry) {
   const cols = e.columns!.map((c, g) => `<div class="gn-col gn-col-${c.kind ?? 'list'}" style="--g:${g}">${c.title ? `<span class="gn-eyebrow gn-pi" style="--i:0">${esc(c.title)}</span>` : ''}<ul>${c.links.map((l, i) => linkHTML(l, i + (c.title ? 1 : 0), c.kind === 'elevated' ? 'gn-big' : 'gn-sm')).join('')}</ul></div>`).join('');
@@ -173,7 +175,7 @@ function phoneRows() {
   const row = (inner: string, cls = '') => `<li class="mm-row ${cls}" style="--i:${n++}">${inner}</li>`;
   const acc = MENU.filter(e => e.columns).map(e => row(
     `<button class="mm-acc" type="button" aria-expanded="false" aria-controls="mm-sub-${e.id}"><span>${esc(e.label)}</span>${chevron}</button>
-     <div class="mm-sub" id="mm-sub-${e.id}"><div class="mm-sub-in">${e.columns!.filter(c => c.phone !== false).map(c => `${c.title ? `<span class="mm-eyebrow">${esc(c.title)}</span>` : ''}<ul>${c.links.map((l, i) => `<li style="--i:${i}"><a href="${l.href}">${l.mood ? starGlyph(STAR[l.mood], 12, 'star moodstar') : ''}<span>${esc(l.label)}</span></a></li>`).join('')}</ul>`).join('')}
+     <div class="mm-sub" id="mm-sub-${e.id}"><div class="mm-sub-in">${e.columns!.filter(c => c.phone !== false).map(c => `${c.title ? `<span class="mm-eyebrow">${esc(c.title)}</span>` : ''}<ul>${c.links.map((l, i) => `<li style="--i:${i}"><a href="${l.href}">${l.family ? starGlyph(FAMILIES[l.family].star, 12, 'star famstar') : ''}<span>${esc(l.label)}</span></a></li>`).join('')}</ul>`).join('')}
        <a class="mm-all" href="${e.href}">${esc(e.id === 'shop' ? 'Shop all' : e.label)} →</a></div></div>`)).join('');
   const plain = [...MENU.filter(e => !e.columns).map(e => ({ label: e.label, href: e.href })), ...PHONE_ROWS].map(l => row(`<a class="mm-link" href="${l.href}">${esc(l.label)}</a>`)).join('');
   return acc + plain;
@@ -259,7 +261,8 @@ export function navRouteChange() {
 export interface LocalNavOptions {
   name: string;
   sub?: string;
-  mood?: Mood;
+  /** the scent's leading family: its mark sits beside the name */
+  family?: Family;
   /** sections of the page, in order; only ones that exist should be passed */
   sections: { id: string; label: string }[];
   /** the page's real add-to-cart button: the pill mirrors its text and disabled state and clicks it */
@@ -273,7 +276,7 @@ export function mountLocalNav(app: HTMLElement, o: LocalNavOptions) {
   const nav = document.createElement('nav');
   nav.className = 'lnav'; nav.setAttribute('aria-label', `${o.name}: on this page`);
   nav.innerHTML = `<div class="wrap lnav-in">
-    <a class="lnav-name" href="#${secs[0]?.id ?? ''}" data-sec="${secs[0]?.id ?? ''}">${o.mood ? starGlyph(MOODS[o.mood].swatch, 14, 'star moodstar') : ''}<b>${esc(o.name)}</b>${o.sub ? `<em>${esc(o.sub)}</em>` : ''}</a>
+    <a class="lnav-name" href="#${secs[0]?.id ?? ''}" data-sec="${secs[0]?.id ?? ''}">${o.family ? starGlyph(FAMILIES[o.family].swatch, 14, 'star famstar') : ''}<b>${esc(o.name)}</b>${o.sub ? `<em>${esc(o.sub)}</em>` : ''}</a>
     ${secs.length ? `<button class="lnav-more" type="button" aria-expanded="false" aria-controls="lnavLinks"><span class="lnav-cur">${esc(secs[0].label)}</span>${chevron}</button>
     <ul class="lnav-links" id="lnavLinks">${secs.map((s, i) => `<li style="--i:${i}"><a href="#${s.id}" data-sec="${s.id}"${i === 0 ? ' aria-current="true"' : ''}>${esc(s.label)}</a></li>`).join('')}</ul>` : ''}
     <button class="lnav-add" type="button"></button>

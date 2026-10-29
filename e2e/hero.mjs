@@ -15,17 +15,17 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', 
   ok(`${label}: the hero shows exactly two offers, a ritual and a practice`, (await p.locator('#dProducts .sp').count()) === 2 && (await p.locator('#dProducts .sp-ritual').count()) === 1 && (await p.locator('#dProducts .sp-coach').count()) === 1);
   // (the free 7-day reset is gone: owner, October 2026; every moment offers the free 20-minute discovery call)
   const expect = { dawn: '/book', morning: '/book', midday: '/book', golden: '/book', night: '/book' };
-  // the mood of each ritual's lead scent (night leads with Campfire Stories, which is woody)
-  const MOOD = { dawn: 'fresh', morning: 'sunny', midday: 'grounding', golden: 'woody', night: 'woody' };
+  // the scent family each ritual opens: the moment's own family, which its lead scent (the diffuser) belongs to
+  const FAM = { dawn: 'citrus', morning: 'marine', midday: 'amber', golden: 'aromatic', night: 'woody' };
   for (const k of Object.keys(expect)) {
     await pick(p, k);
     const rit = p.locator('#dProducts .sp-ritual');
     ok(`${label} ${k}: the ritual shows both products`, (await rit.locator('.sp-thumbs img').count()) === 2 && / \+ |two ways/.test(await rit.locator('b').innerText()), await rit.locator('b').innerText());
     const chipTotal = money(await rit.locator('em').innerText()), ctaTotal = money(await p.locator('#dCta [data-addmoment]').innerText());
     ok(`${label} ${k}: the ritual price matches the Add button`, chipTotal > 0 && chipTotal === ctaTotal, `${chipTotal} vs ${ctaTotal}`);
-    ok(`${label} ${k}: the ritual links to the mood of its lead scent`, (await rit.getAttribute('href')).endsWith(`mood=${MOOD[k]}`), await rit.getAttribute('href'));
+    ok(`${label} ${k}: the ritual links to the Scent Sky on its family`, (await rit.getAttribute('href')).endsWith(`family=${FAM[k]}`), await rit.getAttribute('href'));
     const shopHref = await p.locator('#dCta a.btn.line').getAttribute('href');
-    ok(`${label} ${k}: the Shop button follows the same mood as the ritual`, shopHref.includes(`m=${MOOD[k]}`), shopHref);
+    ok(`${label} ${k}: the Shop button follows the same family as the ritual`, shopHref.includes(`fam=${FAM[k]}`), shopHref);
     const coach = p.locator('#dProducts .sp-coach');
     ok(`${label} ${k}: the practice offers the free discovery call`, (await coach.getAttribute('href')) === expect[k] && /Free 20-minute discovery call/.test(await coach.innerText()) && !/reset/i.test(await coach.innerText()), await coach.getAttribute('href'));
   }
@@ -34,7 +34,8 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['phone', 
   await p.waitForSelector('.bk-title'); ok(`${label}: the call offer opens booking for the free discovery call`, /Book your free discovery call/.test(await p.locator('.bk-title').innerText()));
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await pick(p, 'golden');
   await p.locator('#dProducts .sp-ritual').click(); await p.waitForURL('**/explore**');
-  ok(`${label}: the ritual opens the scent wheel on its mood`, /Warm and woody/.test(await p.locator('.wpanel').innerText()));
+  await p.waitForSelector('#sskyFamH');
+  ok(`${label}: the ritual opens the Scent Sky on its family`, (await p.locator('#sskyFamH').innerText()) === 'Aromatic');
   // the hero's own Add button is the only ritual CTA: no one-product bar rises later on the page
   await p.goto(origin + '/'); await p.waitForSelector('#dProducts .sp-ritual'); await p.waitForTimeout(500);
   await p.evaluate(() => window.scrollTo(0, (Number(document.querySelector('.daypin')?.dataset.len) || 0) + 1500)); await p.waitForTimeout(700);

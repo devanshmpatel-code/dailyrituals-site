@@ -13,11 +13,11 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   for (let i = 0; i < 4; i++) { ok(`${label}: quiz question ${i + 1} shown`, /Question \d of 4/.test(await p.locator('.eyebrow').nth(1).innerText().catch(() => '')) || true); await p.locator('[data-ans="2"]').click(); await p.waitForTimeout(150); }
   await p.waitForSelector('#qGrid .card:not(.sk)', { timeout: 8000 }).catch(() => {});
   const nres = await p.locator('#qGrid .card').count(); ok(`${label}: quiz shows matching scents`, nres > 0, `${nres} cards`); await shot('q-result');
-  ok(`${label}: quiz result names a mood`, /Your mood/i.test(await p.locator('#wheelMount h2').innerText()), await p.locator('#wheelMount h2').innerText());
+  ok(`${label}: quiz result names a scent family`, /Your scent family/i.test(await p.locator('#wheelMount h2').innerText()), await p.locator('#wheelMount h2').innerText());
   const c0 = await count(); const qa = p.locator('#qGrid button[data-qa]'); if (await qa.count()) { await qa.first().click(); await p.waitForTimeout(400); ok(`${label}: quiz quick-add works`, (await count()) === c0 + 1); }
   await p.locator('#qAgain').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: quiz can restart`, true);
   // old links still land on Find your scent
-  for (const r of ['/build', '/sets', '/explore']) { await p.goto(base + r); await p.waitForSelector('.wheel svg'); ok(`${label}: ${r} opens the scent wheel`, /Find your scent/.test(await p.locator('h1').innerText())); }
+  for (const r of ['/build', '/sets', '/explore']) { await p.goto(base + r); await p.waitForSelector('.ssky .sf-btn'); ok(`${label}: ${r} opens the Scent Sky`, /Find your scent/.test(await p.locator('h1').innerText())); }
   await p.goto(base + '/explore'); await p.waitForSelector('.findtabs'); await p.locator('.findtabs a:has-text("Take the quiz")').click(); await p.waitForSelector('[data-ans]'); ok(`${label}: the Take the quiz tab opens the quiz`, true);
   await p.goto(base + '/reset'); await p.waitForSelector('.bk-title'); await p.waitForTimeout(300); ok(`${label}: the retired /reset link goes to the free discovery call`, /book/.test(p.url()) && /discovery/i.test(await p.locator('h1').innerText()), p.url());
   // dead ends

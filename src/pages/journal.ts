@@ -1,6 +1,7 @@
 import { esc, cardHTML, productHref, priceText, metaText } from '../ui';
 import { replaceRoute } from '../router';
 import { loadCatalogue, type Item } from '../wix';
+import { isBuyable } from '../data/scents';
 import { wireQuickAdd } from './shared';
 import '../journal.css';
 
@@ -119,7 +120,7 @@ export const ARTICLES: Article[] = [
 
 /** The close of every Journal page: shop the candles, or let the quiz choose a scent. */
 const endCTA = (h: string) => `<section class="jr-end" aria-label="Next steps"><div><span class="eyebrow">From the studio</span><h2>${h}</h2></div>
-  <div class="cta"><a class="btn" href="#/shop?f=candle&m=all&s=featured">Shop candles</a><a class="btn line" href="#/explore?tab=quiz">Take the scent quiz</a></div></section>`;
+  <div class="cta"><a class="btn" href="#/shop?f=candle&fam=all&s=featured">Shop candles</a><a class="btn line" href="#/explore?tab=quiz">Take the scent quiz</a></div></section>`;
 
 // Each article has its own picture: ONE whole tin seen from above, a different candle for each, cut from Claire's bench
 // photographs (public/img/studio/journal/<slug>.webp, made by tools/photo/journal_singles.py at the cut-out's own size). They
@@ -159,9 +160,9 @@ export function renderJournal(app: HTMLElement, slug?: string) {
 }
 
 // ---------- the way back to the shop: real products, only ones that exist and can be bought ----------
-// Past and seasonal pours never appear (the three candles whose Wix addresses end in -need-pics may be past seasonals, see
-// LAUNCH.md), nor anything sold out or without a price. If the catalogue cannot load, the article simply has no product links.
-const buyable = (i: Item) => i.inStock && i.priceMin > 0 && !!i.image && !/-need-pics$/.test(i.slug);
+// Only products on the owner's list ever reach here (src/data/scents.ts), and nothing sold out or without a price. If the
+// catalogue cannot load, the article simply has no product links.
+const buyable = (i: Item) => isBuyable(i) && !!i.image;
 
 /** Candles for an article (a different starting point per article, so the Journal does not repeat one candle everywhere). */
 function candlesFor(items: Item[], a: Article, n: number): Item[] {

@@ -1,4 +1,4 @@
-// Runs the menu on /shop (the home page's opening animation is heavy in headless Chromium and skews timing). The navigation: desktop flyouts (hover intent, click, keyboard, Esc, focusout, crossfade, scrim), the five-mood
+// Runs the menu on /shop (the home page's opening animation is heavy in headless Chromium and skews timing). The navigation: desktop flyouts (hover intent, click, keyboard, Esc, focusout, crossfade, scrim), the ten-family
 // constellation, the phone night-sky menu (dialog, focus trap, inert, scroll lock, accordions, pills), every menu
 // link landing on a real page, and the product page's sticky local nav (scroll-spy, add pill, phone tray).
 import { chromium } from 'playwright-core';
@@ -7,7 +7,8 @@ const origin = (process.env.BASE ?? 'http://localhost:4173/#').replace(/\/?#?$/,
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const res = []; const ok = (n, c, x = '') => { res.push(c); console.log(c ? 'PASS' : 'FAIL', n, x); };
 const overflow = p => p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
-const MOODS = ['fresh', 'sunny', 'floral', 'woody', 'grounding'];
+const FAMS = ['fruity', 'green', 'marine', 'floral', 'aromatic', 'woody', 'amber', 'gourmand', 'spicy', 'citrus'];
+const FAM_LABELS = ['Fruity', 'Green', 'Marine Ozonic', 'Floral', 'Aromatic', 'Woody', 'Amber', 'Gourmand', 'Spicy', 'Citrus'];
 let menuHrefs = [];
 
 { // ---------- desktop 1440 x 900 ----------
@@ -35,18 +36,18 @@ let menuHrefs = [];
   await p.mouse.move(...await p.locator('.gn-item[data-id="shop"] .gn-link').evaluate(e => { const r = e.getBoundingClientRect(); return [r.x + r.width / 2 - 1, r.y + r.height / 2]; })); await p.waitForTimeout(500);
   ok('desktop: a page scrim sits over the page while a flyout is open', await p.evaluate(() => document.body.classList.contains('gn-open') && document.elementFromPoint(720, 820)?.classList.contains('gn-scrim')));
   ok('desktop: the other top-level items dim while one is open', parseFloat(await p.locator('.gn-item[data-id="coaching"]').evaluate(e => getComputedStyle(e).opacity)) < 1);
-  ok('desktop: the Shop flyout lists the formats, the five moods and the extra pages', await p.evaluate(() => { const t = document.getElementById('gn-panel-shop').innerText; return ['Shop all', 'Fragrance rollers', 'Mini diffusers', 'Candles', 'Fresh and coastal', 'Sunny and tropical', 'Soft and floral', 'Warm and woody', 'Grounding', 'Ritual on Repeat', 'Moon Drops', 'Send a Sky'].every(s => t.includes(s)); }));
-  ok('desktop: each mood link carries a star in its mood colour', (await p.locator('#gn-panel-shop .gn-col-moods .moodstar').count()) === 5);
+  ok('desktop: the Shop flyout lists the formats, the ten scent families and the extra pages', await p.evaluate(L => { const t = document.getElementById('gn-panel-shop').innerText; return ['Shop all', 'Fragrance rollers', 'Mini diffusers', 'Candles', ...L, 'Ritual on Repeat', 'Moon Drops', 'Send a Sky'].every(s => t.includes(s)) && !/mood/i.test(t); }, FAM_LABELS));
+  ok('desktop: each family link carries a star in its family colour', (await p.locator('#gn-panel-shop .gn-col-families .famstar').count()) === 10);
   ok('desktop: panel links reveal with a stagger (later links wait longer)', await p.evaluate(() => { const [a, , c] = document.querySelectorAll('#gn-panel-shop .gn-col-elevated .gn-pi'); return parseFloat(getComputedStyle(c).transitionDelay) > parseFloat(getComputedStyle(a).transitionDelay); }));
 
   // the constellation
   const stars = p.locator('#gn-panel-shop .cst-star');
-  ok('desktop: the Shop flyout holds a constellation of the five moods', (await stars.count()) === 5);
-  ok('desktop: each star links to its mood on the atlas and is named after the mood', await stars.evaluateAll(as => as.every(a => /^\/explore\?mood=(fresh|sunny|floral|woody|grounding)$/.test(a.getAttribute('href')) && /coastal|tropical|floral|woody|Grounding/.test(a.textContent))));
+  ok('desktop: the Shop flyout holds a constellation of the ten families', (await stars.count()) === 10);
+  ok('desktop: each star links to its family in the Scent Sky and is named after it', await stars.evaluateAll((as, L) => as.every((a, i) => new RegExp(`^/?#?/explore\\?family=[a-z]+$`).test(a.getAttribute('href')) && a.textContent.trim() === L[i]), FAM_LABELS));
   await p.waitForTimeout(1600);
   ok('desktop: the hairlines between the stars have drawn themselves', await p.evaluate(() => [...document.querySelectorAll('#gn-panel-shop .cst-lines line')].every(l => parseFloat(getComputedStyle(l).strokeDashoffset) < 0.01)));
   await hover('#gn-panel-shop .cst-star[href*="woody"]'); await p.waitForTimeout(1100);
-  ok('desktop: hovering a star shows its mood name and lights it', await p.evaluate(() => { const a = document.querySelector('#gn-panel-shop .cst-star[href*="woody"]'); return getComputedStyle(a.querySelector('.cst-name')).opacity === '1' && a.querySelector('.cst-name').textContent === 'Warm and woody' && getComputedStyle(a.querySelector('.star')).transform !== 'none'; }));
+  ok('desktop: hovering a star shows its family name and lights it', await p.evaluate(() => { const a = document.querySelector('#gn-panel-shop .cst-star[href*="woody"]'); return getComputedStyle(a.querySelector('.cst-name')).opacity === '1' && a.querySelector('.cst-name').textContent === 'Woody' && getComputedStyle(a.querySelector('.star')).transform !== 'none'; }));
   ok('desktop: stars are 44px targets', await stars.first().evaluate(e => { const r = e.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; }));
   ok('desktop: no sideways scroll with the flyout open', (await overflow(p)) <= 1);
 
@@ -55,7 +56,7 @@ let menuHrefs = [];
   const stillOpen = (await anyOpen()) >= 1;
   await p.waitForTimeout(250);
   ok('desktop: moving to Find your scent switches panels without closing first', stillOpen && (await isOpen('explore')) && !(await isOpen('shop')));
-  ok('desktop: the Find your scent flyout offers the atlas, the quiz and a mood to start from', await p.evaluate(() => { const t = document.getElementById('gn-panel-explore').innerText; return ['scent atlas', 'take the quiz', 'start from a mood', 'free 20-minute discovery call'].every(s => t.toLowerCase().includes(s)); }));
+  ok('desktop: the Find your scent flyout offers the Scent Sky, the quiz and a family to start from', await p.evaluate(() => { const t = document.getElementById('gn-panel-explore').innerText; return ['scent sky', 'take the quiz', 'start from a family', 'free 20-minute discovery call'].every(s => t.toLowerCase().includes(s)); }));
   await hover('.gn-item[data-id="coaching"] .gn-link'); await p.waitForTimeout(300);
   ok('desktop: the Coaching flyout leads with the free call (the 7-day reset is retired)', await p.evaluate(() => { const t = document.getElementById('gn-panel-coaching').innerText; return !t.includes('7-day') && t.includes('Free 20-minute discovery call') && t.includes('Neuro coaching'); }));
   await p.mouse.move(720, 820); await p.waitForTimeout(40);
@@ -105,20 +106,20 @@ let menuHrefs = [];
     await p.goto(origin + h); await p.waitForTimeout(h.includes('explore') ? 900 : 500);
     const t = await p.locator('main').innerText();
     if (t.trim().length < 40 || (await p.locator('main .missing').count()) || /still putting this page together|canvas|Not designed|14 screens/i.test(t)) bad.push(h);
-    if (/explore\?mood=/.test(h) && !(await p.locator('.wpanel').count())) bad.push(h + ' (no atlas panel)');
+    if (/explore\?family=/.test(h) && !(await p.locator('.ssf-list').count())) bad.push(h + ' (no family in the Scent Sky)');
   }
   ok(`desktop: all ${menuHrefs.length} menu links open real pages (no coming-soon or draft pages)`, bad.length === 0, bad.join(', '));
-  ok('desktop: the menus reach the finder, the quiz, the call and every mood', ['/explore', '/explore?tab=quiz', '/book', '/coaching', '/shop', ...MOODS.map(m => `/explore?mood=${m}`), ...MOODS.map(m => `/shop?f=all&m=${m}&s=featured`)].every(h => menuHrefs.includes(h)));
+  ok('desktop: the menus reach the finder, the quiz, the call and every family', ['/explore', '/explore?tab=quiz', '/book', '/coaching', '/shop', ...FAMS.map(m => `/explore?family=${m}`), ...FAMS.map(m => `/shop?f=all&fam=${m}&s=featured`)].every(h => menuHrefs.includes(h)), menuHrefs.filter(h => /family|fam=/.test(h)).length);
 
-  // the star takes you to its mood on the atlas
+  // the star takes you to its family in the Scent Sky
   await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(400);
   await p.click('.gn-item[data-id="shop"] .gn-disclose'); await p.waitForTimeout(700);
-  await p.click('#gn-panel-shop .cst-star[href*="woody"]'); await p.waitForURL('**/explore?mood=woody'); await p.waitForSelector('.wpanel'); await p.waitForTimeout(500);
-  ok('desktop: a star opens the atlas on its mood', /Warm and woody/.test(await p.locator('.wpanel').innerText()));
+  await p.click('#gn-panel-shop .cst-star[href*="woody"]'); await p.waitForURL('**/explore?family=woody'); await p.waitForSelector('#sskyFamH'); await p.waitForTimeout(500);
+  ok('desktop: a star opens the Scent Sky on its family', (await p.locator('#sskyFamH').innerText()) === 'Woody');
 
   // ---------- product local nav ----------
   await p.goto(origin + '/product/roller-citrus-and-sun'); await p.waitForSelector('.lnav'); await p.waitForTimeout(800);
-  ok('product: the local nav names the product with its mood mark', /Citrus & Sun/.test(await p.locator('.lnav-name b').innerText()) && (await p.locator('.lnav-name .moodstar').count()) === 1);
+  ok('product: the local nav names the product with its leading family\'s mark', /Citrus & Sun/.test(await p.locator('.lnav-name b').innerText()) && (await p.locator('.lnav-name .famstar').count()) === 1);
   const secLinks = await p.locator('.lnav-links a').evaluateAll(as => as.map(a => [a.textContent, a.getAttribute('href'), !!document.getElementById(a.dataset.sec)]));
   ok('product: section links only point at sections that exist', secLinks.length >= 3 && secLinks.every(s => s[2]), JSON.stringify(secLinks));
   ok('product: at rest the bar is transparent and not stuck', await p.evaluate(() => { const n = document.querySelector('.lnav'); return !n.classList.contains('is-stuck') && getComputedStyle(n).backgroundColor === 'rgba(0, 0, 0, 0)'; }));
@@ -153,7 +154,7 @@ let menuHrefs = [];
   await p.goto(origin + '/shop'); await p.waitForSelector('.grid .card'); await p.waitForTimeout(500);
   ok('1024: the top-level items stay on one line and the page does not scroll sideways', (await overflow(p)) <= 1 && await p.evaluate(() => document.querySelector('.mainnav').getBoundingClientRect().height <= 80 && document.querySelector('.menu-btn').offsetParent === null));
   await p.click('.gn-item[data-id="shop"] .gn-disclose'); await p.waitForTimeout(600);
-  ok('1024: the Shop flyout fits without sideways scroll', (await overflow(p)) <= 1 && (await p.locator('#gn-panel-shop .cst-star').count()) === 5);
+  ok('1024: the Shop flyout fits without sideways scroll', (await overflow(p)) <= 1 && (await p.locator('#gn-panel-shop .cst-star').count()) === 10);
   await ctx.close();
 }
 
@@ -185,14 +186,14 @@ let menuHrefs = [];
   ok('phone: rows arrive with a stagger', await p.evaluate(() => { const r = document.querySelectorAll('.mm-rows > .mm-row'); return parseFloat(getComputedStyle(r[3]).transitionDelay) > parseFloat(getComputedStyle(r[0]).transitionDelay); }));
   ok('phone: the free discovery call stays prominent (no 7-day reset)', await p.evaluate(() => { const c = document.querySelector('.mm-coach'); return c && !c.querySelector('a[href$="/reset"]') && c.querySelector('a[href$="/book"]') && !/7-day/.test(c.innerText) && /Free 20-minute discovery call/.test(c.innerText); }));
   ok('phone: the footer pills are Find your scent and Shop all', await p.locator('.mm-foot .mm-pill').evaluateAll(as => as.map(a => a.textContent.trim() + '>' + a.getAttribute('href')).join('|')) === 'Find your scent>/explore|Shop all>/shop');
-  ok('phone: the constellation is in the menu with all five stars', (await p.locator('#mobileMenu .cst-star').count()) === 5);
+  ok('phone: the constellation is in the menu with all ten family stars', (await p.locator('#mobileMenu .cst-star').count()) === 10);
   ok('phone: menu text meets AA contrast on the night sky (moonstone on nocturne)', await p.evaluate(() => { const c = getComputedStyle(document.querySelector('.mm-acc')).color; return c === 'rgb(237, 230, 218)'; }));
   ok('phone: no sideways scroll with the menu open', (await overflow(p)) <= 1 && await p.evaluate(() => document.getElementById('mobileMenu').scrollWidth <= innerWidth));
   // accordions
   const acc = p.locator('.mm-acc[aria-controls="mm-sub-shop"]');
   ok('phone: accordion rows are disclosure buttons', (await acc.getAttribute('aria-expanded')) === 'false' && await p.evaluate(() => getComputedStyle(document.querySelector('#mm-sub-shop .mm-sub-in')).visibility === 'hidden'));
   await acc.click(); await p.waitForTimeout(600);
-  ok('phone: opening Shop reveals its links with mood stars', (await acc.getAttribute('aria-expanded')) === 'true' && (await p.locator('#mm-sub-shop a:visible').count()) >= 10 && (await p.locator('#mm-sub-shop .moodstar').count()) === 5);
+  ok('phone: opening Shop reveals its links with family stars', (await acc.getAttribute('aria-expanded')) === 'true' && (await p.locator('#mm-sub-shop a:visible').count()) >= 10 && (await p.locator('#mm-sub-shop .famstar').count()) === 10);
   await p.locator('.mm-acc[aria-controls="mm-sub-coaching"]').click(); await p.waitForTimeout(600);
   ok('phone: opening another row closes the first', (await acc.getAttribute('aria-expanded')) === 'false' && (await p.locator('#mm-sub-coaching a:visible').count()) >= 3);
   // focus trap
@@ -213,7 +214,7 @@ let menuHrefs = [];
   await p.locator('.mm-rows a[href$="/drops"]').click(); await p.waitForURL('**/drops'); await p.waitForTimeout(600);
   ok('phone: a row link opens its page and the menu closes', (await mm.isHidden()) && await p.evaluate(() => document.getElementById('root').inert === false));
   await p.click('#menuBtn'); await p.waitForTimeout(500);
-  await p.locator('.mm-foot .mm-pill[href$="/explore"]').click(); await p.waitForURL('**/explore'); await p.waitForSelector('.wheel svg');
+  await p.locator('.mm-foot .mm-pill[href$="/explore"]').click(); await p.waitForURL('**/explore'); await p.waitForSelector('.ssky .sf-btn');
   ok('phone: the Find your scent pill opens the finder', /Find your scent/.test(await p.locator('h1').innerText()));
   // the product local nav on a phone
   await p.goto(origin + '/product/roller-citrus-and-sun'); await p.waitForSelector('.lnav'); await p.waitForTimeout(800);

@@ -3,10 +3,10 @@
 import { chromium } from 'playwright-core';
 import { setupMocks } from './mock.mjs';
 import { readFileSync } from 'node:fs';
-// the saved catalogue: what "live and buyable" means here (in stock, priced, and not one of the -need-pics past seasonals)
+// the saved catalogue: what "live and buyable" means here (in stock, priced, and on the owner's list: not the deodorant, Licorice Sweets or Fleur de Lilac)
 const CAT = JSON.parse(readFileSync(new URL('./products.json', import.meta.url), 'utf8')).products;
-const BUYABLE = new Set(CAT.filter(x => x.inventory?.availabilityStatus === 'IN_STOCK' && Number(x.actualPriceRange?.minValue?.amount) > 0 && !/-need-pics$/.test(x.slug)).map(x => x.slug));
-const PAST = /midnight forest|jarrah|sweet romance|lavender haze|spring blooms|sea salt|hello cupcake|irish coffee|mulled wine|apple cider|candy cane|christmas eve|easter bread|mother'?s garden|pumpkin spice|crystal mushroom/i;
+const BUYABLE = new Set(CAT.filter(x => x.inventory?.availabilityStatus !== 'OUT_OF_STOCK' && Number(x.actualPriceRange?.minValue?.amount) > 0 && !/deodorant|licorice|lilac/i.test(x.slug)).map(x => x.slug));
+const PAST = /jarrah|sweet romance|spring blooms|sea salt|hello cupcake|irish coffee|apple cider|candy cane|christmas eve|easter bread|mother'?s garden|pumpkin spice|crystal mushroom/i;
 const slugOf = h => (h.match(/product\/([^?#/]+)/) || [])[1];
 const base = process.env.BASE ?? 'http://localhost:4173/#';
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined });
